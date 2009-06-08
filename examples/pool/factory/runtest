@@ -1,0 +1,4 @@
+#!/bin/bash
+
+jstar -l ./logic -a ./abs  -s ./specs -q -f ./$1
+

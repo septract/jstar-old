@@ -1,0 +1,4 @@
+#!/bin/bash
+
+../../invader -v -l logic -a abs -s ./NewVisitors.specs -f ./$1
+

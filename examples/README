@@ -1,0 +1,10 @@
+This directory contains examples from the original jStar paper.  
+
+  popl2008 - examples taken from "Separation logic, abstraction and
+             inheritance."  
+
+  pool - examples of connection pools, using a single class and
+  refactored using a template method pattern and a factory pattern.
+
+  visitor - example of a visitor over a simple abstract syntax tree of
+  arithmetic expressions.  

@@ -1,0 +1,23 @@
+/******************
+ *  Some simple properties of addition
+ ******************/
+
+rule builtin_plus_inj_first :
+| | |- builtin_plus(?t,?g) = builtin_plus(?t,?h) | 
+if
+| | |- ?g = ?h | 
+
+rule builtin_plus_inj_second :
+| | |- builtin_plus(?g,?t) = builtin_plus(?h,?t) | 
+if
+| | |- ?g = ?h | 
+
+
+rewrite builtin_plus_assoc :
+        builtin_plus(builtin_plus(?x,?y),?z) = builtin_plus(?x,builtin_plus(?y,?z))
+
+
+rule bp :
+  | | |- builtin_plus(?x,?x) = builtin_plus(?y,?y) | 
+if
+  | | |- ?x=?y | 

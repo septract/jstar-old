@@ -1,0 +1,239 @@
+/*************************************
+ * Simple subtraction rules from TACAS 2006 paper
+ *************************************/
+
+
+
+//Roll up a complete NodeLL if we have both fields.
+rule field_remove2:
+  | | field(?x,"<NodeLL: NodeLL next>",?e1) * field(?x,"<NodeLL: java.lang.String content>",_y) |- | 
+if
+  | | NodeLL(?x,?e1) |- |  
+
+/****************nil() rules******************/
+
+rule nil_neq_remove_nodell :
+  | ?x != nil() | NodeLL(?x,?y) |- |
+if
+  | | NodeLL(?x,?y) |- |
+
+rule nil_neq_remove_field :
+  | ?x != nil() | field(?x,?f,?y) |- |
+if
+  | | field(?x,?f,?y) |- |
+
+rule nil_neq_remove_ls :
+  | ?x != nil() | ls(?x,?y) |- |
+if
+  | | ls(?x,?y) |- |
+
+/*************** Junk Rules *******************/
+
+rule garbage_garbage :
+| | Garbage * Garbage |- |
+if
+| | Garbage |- |
+
+
+
+rule gb1_ls :
+| | ls(_x,?e) |- | 
+where 
+   _x notincontext 
+if
+| | Garbage |- |
+
+rule gb1_ast :
+| | Ast(_x,?e) |- | 
+where 
+   _x notincontext 
+if
+| | |- |
+
+
+
+rule gb1_pto :
+| | NodeLL(_x,?e)|- | 
+where 
+   _x notincontext 
+if
+| | Garbage |- |
+
+
+rule gb2_ls_ls:
+| | ls(_x,_y) * ls(_y,_x) |- |   /* this is for empty | true */
+where 
+   _x,_y notincontext
+if
+| | Garbage |- |
+
+
+rule gb2_ls_pto:
+| | ls(_x,_y) * NodeLL(_y,_x) |- |   /* this is for empty | true */
+where 
+   _x,_y notincontext
+if
+| | Garbage |- |
+
+
+rule gb2_pto_pto:
+| | NodeLL(_x,_y) * NodeLL(_y,_x) |- |   /* this is for empty | true */
+where 
+   _x,_y notincontext
+if
+| | Garbage |- |
+
+
+/*************** End Junk Rules *******************/
+
+
+/*************** Abs1 Rule *******************/
+rule ls_ls:
+| | ls(?x,_x) * ls(_x,nil()) |- |   /* this is for empty | true */
+where 
+  _x notincontext;
+  _x notin ?x
+if 
+| | ls(?x,nil()) |- |   /* result */
+
+
+rule ls_pto:
+| | ls(?x,_x) * NodeLL(_x,nil()) |- |   /* this is for empty | true */
+where 
+  _x notincontext;
+  _x notin ?x
+if 
+| | ls(?x,nil()) |- |   /* result */
+
+
+rule pto_ls:
+| | NodeLL(?x,_x) * ls(_x,nil()) |- |   /* this is for empty | true */
+where 
+  _x notincontext;
+  _x notin ?x
+if 
+| | ls(?x,nil()) |- |   /* result */
+
+
+rule pto_pto:
+| | NodeLL(?x,_x) * NodeLL(_x,nil()) |- |   /* this is for empty | true */
+where 
+  _x notincontext;
+  _x notin ?x
+if 
+| | ls(?x,nil()) |- |   /* result */
+
+
+
+/*************** End Abs1 Rule *******************/
+
+
+
+/*************** Abs2 Rule *******************/
+rule ls_ls_ls:
+| | ls(?x,_x) * ls(_x,?y) * ls(?y,?z) |- |   /* this is for empty | true */
+where 
+  _x notincontext;
+  _x notin ?x;
+  _x notin ?y;
+  _x notin ?z
+if 
+| | ls(?x,?y) * ls(?y,?z) |- |   /* result */
+
+
+rule ls_ls_pto:
+| | ls(?x,_x) * ls(_x,?y) * NodeLL(?y,?z) |- |   /* this is for empty | true */
+where 
+  _x notincontext;
+  _x notin ?x;
+  _x notin ?y;
+  _x notin ?z
+if 
+| | ls(?x,?y) * NodeLL(?y,?z) |- |   /* result */
+
+
+rule ls_pto_ls:
+| | ls(?x,_x) * NodeLL(_x,?y) * ls(?y,?z) |- |   /* this is for empty | true */
+where 
+    _x notincontext;
+  _x notin ?x;
+  _x notin ?y;
+  _x notin ?z
+
+if 
+| | ls(?x,?y) * ls(?y,?z) |- |   /* result */
+
+
+rule ls_pto_pto:
+| | ls(?x,_x) * NodeLL(_x,?y) * NodeLL(?y,?z) |- |   /* this is for empty | true */
+where 
+  _x notincontext;
+  _x notin ?x;
+  _x notin ?y;
+  _x notin ?z
+if 
+| | ls(?x,?y) * NodeLL(?y,?z) |- |   /* result */
+
+
+rule pto_ls_ls:
+| | NodeLL(?x,_x) * ls(_x,?y) * ls(?y,?z) |- |   /* this is for empty | true */
+where 
+  _x notincontext;
+  _x notin ?x;
+  _x notin ?y;
+  _x notin ?z
+if 
+| | ls(?x,?y)  * ls(?y,?z) |- |   /* result */
+
+
+rule pto_ls_pto:
+| | NodeLL(?x,_x) * ls(_x,?y) * NodeLL(?y,?z) |- |   /* this is for empty | true */
+where 
+  _x notincontext;
+  _x notin ?x;
+  _x notin ?y;
+  _x notin ?z
+if 
+| | ls(?x,?y)  * NodeLL(?y,?z) |- |   /* result */
+
+
+rule pto_pto_ls:
+| | NodeLL(?x,_x) * NodeLL(_x,?y) * ls(?y,?z) |- |   /* this is for empty | true */
+where 
+  _x notincontext;
+  _x notin ?x;
+  _x notin ?y;
+  _x notin ?z
+if 
+| | ls(?x,?y) * ls(?y,?z) |- |   /* result */
+
+
+rule pto_pto_pto:
+| | NodeLL(?x,_x) * NodeLL(_x,?y) * NodeLL(?y,?z) |- |   /* this is for empty | true */
+where 
+  _x notincontext;
+  _x notin ?x;
+  _x notin ?y;
+  _x notin ?z
+if 
+| | ls(?x,?y) * NodeLL(?y,?z) |- |   /* result */
+
+
+/*************************************
+ *  Empty rules
+ ************************************
+rule NodeLL_nil2:
+NodeLL(nil(),?x) | | |- | 
+if
+
+rule NodeLL_not_nil:
+NodeLL(?x,?y) | ?x!=nil() | |- |
+if
+| | |- |
+
+rule NodeLL_not_eq:
+NodeLL(?x,?y) * NodeLL(?z,?w) | ?x!=?z | |- |
+if
+| | |- |
+
+/*************** End Abs2 Rule *******************/

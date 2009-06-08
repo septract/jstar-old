@@ -1,0 +1,102 @@
+/*****************************
+ *
+ *  This file contains the rewrite 
+ *  rules based on 
+ *
+ *  datatype ast = 
+ *     plus of ast * ast
+ *   | const of nat
+ *
+ *****************************/
+
+
+
+/*****************************
+ *   Inequalities
+ *****************************/
+rule plus_const_neq_right : 
+  | | |- plus(?s,?t) != const(?n) |
+if
+  | | |- |
+
+rule plus_const_neq_left :
+  | plus(?s,?t) != const(?n) | |- |
+if
+  | | |- |
+
+
+
+/******************************
+ *  Contradictions
+ ******************************/
+rule plus_const_eq_left :
+ | plus(?s,?t) = const(?n) | |- |
+if
+
+
+rule plus_const_eq_right :
+ | | |- plus(?s,?t) = const(?n) |
+if
+ | | |- | False
+
+
+
+/*******************************
+ *  Injective axioms
+ *******************************/
+rule plus_inj_right :
+  | | |- plus(?s,?g) = plus(?t,?h) | 
+if
+  | | |- ?g = ?h * ?s = ?t | 
+
+rule plus_inj_left :
+  | plus(?s,?g) = plus(?t,?h) | |- |
+without
+  ?g=?h
+if
+  | ?g = ?h * ?s = ?t | |- |
+
+rule plus_inj_left :
+  | plus(?s,?g) = plus(?t,?h) | |- |
+without 
+  ?s = ?t
+if
+  | ?g = ?h * ?s = ?t | |- |
+
+rule const_inj_right :
+  | | |- const(?s) = const(?t) | 
+if
+  | | |- ?s=?t | 
+
+rule const_inj_left :
+  | const(?s) = const(?t) | |- |
+without
+  ?s = ?t
+if
+  | ?s=?t | |- |
+
+
+
+/*******************************
+ *  Injective axioms for neq
+ *******************************/
+
+rule const_inj_neq_right :
+  | | |- const(?s) != const(?t) | 
+if
+  | | |- ?s!=?t | 
+
+rule const_inj_neq_left :
+  | const(?s) != const(?t) | |- |
+if
+  | ?s!=?t | |- |
+
+rule plus_inj_neq_right :
+  | | |- plus(?s,?g) != plus(?t,?h) | 
+if
+  | | |- | (?g != ?h | ) || (?s != ?t | )  
+
+rule plus_inj_neq_left :
+  | plus(?s,?g) != plus(?t,?h) | |- |
+if
+  | | (?g != ?h | ) || (?s != ?t | ) |- |

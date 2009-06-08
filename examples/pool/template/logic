@@ -1,0 +1,108 @@
+import "../../../src/prover/tests/field_logic";
+
+import "../../../src/prover/tests/boolean_logic";
+
+import "../../../src/prover/tests/listDatatype_logic";
+
+
+rule ls_val_exists :
+| | ls(?x,?y,?v) |- | ls(?x,?y,?v2)
+if
+ls(?x,?y,?v) | | |- ?v2=?v| 
+
+rule ls_tail_exists :
+| | ls(?x,?y,?v) |- | ls(?x,?y2,?v)
+if
+ls(?x,?y,?v) | | |- ?y2=?y |
+
+
+
+/****************
+ *  setof
+ ****************/
+rewrite app_setof :
+setof(app(?x,?y)) = union(setof(?x),setof(?y))
+
+rewrite cons_setof :
+setof(cons(?x,?y)) = add(?x,setof(?y))
+
+rewrite emp_setof :
+setof(empty()) = empty()
+
+rewrite union_add_1 :
+union(add(?x,?y),?z) = add(?x,union(?y,?z))
+
+rewrite union_add_2 :
+union(?z,add(?x,?y)) = add(?x,union(?z,?y))
+
+rule setof :
+| | |- setof(?x) = setof(?y) |
+without 
+  ?x!=?y
+if
+| | |- ?x=?y |
+or
+| | |- setof(?x) = setof(?y) * ?x!=?y |
+
+
+
+/******************************
+ *  Iterated Resrouces
+********************************/
+rule iterresright_empty:
+| | |- | IterRes(empty(),?z,?t) 
+if
+| | |- | 
+
+rule iterresleft_empty:
+| | IterRes(empty(),?z,?t) |- | 
+if
+| | |- | 
+
+rule iterresleft_add:
+| | IterRes(add(?x,?y),?z,?t) |- |
+if
+| | IterRes(?y,?z,?t) * Resource(?z,{handle=?x; type = ?t}) |- |
+
+rule iterresright_add:
+| | |- | IterRes(add(?x,?y),?z,?t)
+if
+| | |- | IterRes(?y,?z,?t) * Resource(?z,{handle=?x; type = ?t}) 
+
+rule iterresleft_union:
+| | IterRes(union(?x,?y),?z,?t) |- |
+if
+| | IterRes(?y,?z,?t) * IterRes(?x,?z,?t) |- |
+
+rule iterresright_union:
+| | |- | IterRes(union(?x,?y),?z,?t) 
+if
+| | |- | IterRes(?y,?z,?t) * IterRes(?x,?z,?t) 
+
+
+rule iterres_elim:
+| | IterRes(?x,?z,?t) |- | IterRes(?x,?z2,?t2) 
+if
+IterRes(?x,?z,?t) | | |- ?z=?z2 * ?t=?t2| 
+
+
+
+
+
+//Some hacks
+
+rule ResourceFactory :
+  | | PoolData(?x,?y) |- | PoolData(?x,?z)
+if
+  PoolData(?x,?y) | |  |- ?y=?z| 
+
+
+rule subeq_hack :
+  | | |- | subeq({handle=?x; type=?t}, {handle=?y; type=?s})
+if
+  | | |- ?x=?y * ?t =?s | 
+
+rule subeq_hack :
+  | | |- | subeq({type=?t}, {type=?s})
+if
+  | | |- ?t =?s | 

@@ -1,0 +1,105 @@
+class java.lang.Object
+{
+  static void <init>() : { | } { | };
+}
+
+class java.util.LinkedList
+{
+  static void <init>() : { | } { | ls(@this:,nil(), empty()) };
+
+  boolean add(java.lang.Object) : 
+    { | ls(@this:,nil(),_s) }
+    { _s = app(_s0,_s1) | ls(@this:,nil(),app(_s0,cons(@parameter0:,_s1)))};
+
+  java.lang.Object removeFirst() :
+    { length(_l) != numeric_const(0) | ls(@this:,nil(),_l) }
+    { _x=$ret_var * _l = cons(_x,_l2) | ls(@this:,nil(),_l2) };
+
+  int size() :
+    { | ls(@this:,nil(),_l) }
+    { length(_l)=$ret_var | ls(@this:,nil(),_l) };
+}
+
+class java.sql.DriverManager 
+{
+  static java.sql.Connection getConnection(java.lang.String, java.lang.String, java.lang.String) :
+    { | }
+    { | DBConnection($ret_var, {connection=sql(@parameter0:,@parameter1:,@parameter2:)})}; 
+}
+
+class java.sql.Connection
+{
+  static void close() : 
+    { | } { | };
+}
+
+
+
+
+interface ResourceFactory
+{
+  java.lang.Object makeResource() : 
+    { | ResourceFactory(@this:, {type=_t}) } 
+    { | Resource(@this:, { handle=$ret_var; type=_t }) * ResourceFactory(@this:,{type=_t}) };
+
+  void destructResource(java.lang.Object) : 
+    { | Resource(@this:, { handle=@parameter0:; type=_t }) * ResourceFactory(@this:,{type=_t}) }
+    { | ResourceFactory(@this:, {type=_t}) };
+}
+
+
+
+class ConnectionFactory
+{
+  define ResourceFactory(x,type=t) = t = sql(_url,_user,_password)| 
+	    field(x, <ConnectionFactory: java.lang.String url>, _url) *
+	    field(x, <ConnectionFactory: java.lang.String user>, _user) *
+	    field(x, <ConnectionFactory: java.lang.String password>, _password);
+
+  export Resource(x, handle=y;type=t) = | DBConnection(y, {connection=t});
+
+  void <init>(java.lang.String, java.lang.String, java.lang.String) :
+    { | }
+    { | ResourceFactory$(@this:, {type=sql(@parameter0:,@parameter1:,@parameter2:)}) };
+
+  java.lang.Object makeResource() : 
+    { | ResourceFactory(@this:, {type=_t}) } 
+    { | Resource(@this:, { handle=$ret_var; type=_t }) * ResourceFactory(@this:,{type=_t}) };
+
+  java.sql.Connection makeResource() : 
+    { | ResourceFactory$(@this:, {type=_t}) } 
+    { | Resource$(@this:, { handle=$ret_var; type=_t }) * ResourceFactory$(@this:,{type=_t}) };
+
+  void destructResource(java.lang.Object) : 
+    { | Resource(@this:, { handle=@parameter0:; type=_t }) * ResourceFactory(@this:,{type=_t}) }
+    { | ResourceFactory(@this:, {type=_t}) };
+
+  void destructResource(java.sql.Connection) : 
+    { | Resource$(@this:, { handle=@parameter0:; type=_t }) * ResourceFactory$(@this:,{type=_t}) }
+    { | ResourceFactory$(@this:, {type=_t}) };
+}
+
+
+
+
+class ResourcePool {
+  define ResourcePool(x,factory=f;type=t) = | 
+    field(x,<ResourcePool: java.util.LinkedList resources>,_y) *
+    field(x, <ResourcePool: ResourceFactory rf>, f) * 
+    ResourceFactory(f,{type=t}) * 
+    ls(_y,nil(),_R) * IterRes(setof(_R),f,t) ;
+
+  void <init>(ResourceFactory) :
+    { | ResourceFactory(@parameter0:, {type=_t})}
+    { | ResourcePool$(@this:, {factory=@parameter0:; type=_t}) };
+
+  void freeResource(java.lang.Object) : 
+    { | ResourcePool$(@this:, {factory=_f; type=_t}) * Resource(_f, {handle=@parameter0:; type=_t})} 
+    { | ResourcePool$(@this:, {factory=_f; type=_t}) };
+
+  java.lang.Object getResource() : 
+    { | ResourcePool$(@this:, {factory=_f; type=_t}) }
+    { | ResourcePool$(@this:, {factory=_f; type=_t}) * Resource(_f, {handle=$ret_var; type=_t})};
+}
+
+

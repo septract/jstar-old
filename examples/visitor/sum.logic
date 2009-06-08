@@ -1,0 +1,15 @@
+/************************************
+ *
+ *  Definition of sum
+ * 
+ *  sum(x + y) = sum(x) + sum(y)
+ *  sum(n) = n 
+ * 
+ ************************************/
+
+rewrite sum_plus :
+	sum(plus(?x,?y)) = builtin_plus(sum(?x),sum(?y))
+
+rewrite sum_const :
+        sum(const(?n)) = ?n
+

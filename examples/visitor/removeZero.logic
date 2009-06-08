@@ -1,0 +1,18 @@
+/********
+ *  Definition of rz on terms.
+ ********/
+
+rewrite rz_const: rz(const(?x)) = const(?x)
+
+rewrite rz_plus1: rz(plus(?x,?y)) = rz2(plus(rz(?x),rz(?y)))
+
+rewrite rz_plus2: rz2(plus(const(numeric_const("0")),?y)) = ?y
+
+rewrite rz_plus3: rz2(plus(?y,const(numeric_const("0")))) = ?y
+
+rewrite rz_plus4: 
+  rz2(plus(?y,?z)) = plus(?y,?z)
+if 
+  ?y != const(numeric_const("0")) 
+* ?z != const(numeric_const("0")) 
+
