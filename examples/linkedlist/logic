@@ -1,5 +1,5 @@
-import "../../src/prover/tests/field_logic";
-import "../../src/prover/tests/boolean_logic";
+import "field_logic";
+import "boolean_logic";
 
 
 /***************************************

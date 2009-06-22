@@ -1,11 +1,11 @@
 //Basic definitions of fields
-import "../../src/prover/tests/field_logic";
+import "field_logic";
 
 //Constants for booleans
-import "../../src/prover/tests/boolean_logic";
+import "boolean_logic";
 
 //Definitions for builtin_plus
-import "../../src/prover/tests/builtin_plus_logic";
+import "builtin_plus_logic";
 
 //Definitions of remove zeros
 import "removeZero.logic";

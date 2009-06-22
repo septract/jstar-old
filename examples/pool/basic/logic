@@ -1,4 +1,4 @@
-import "../../../src/prover/tests/field_logic";
+import "field_logic";
 
 
 rule ls_val_exists :

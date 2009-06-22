@@ -5,7 +5,7 @@
     Matthew Parkinson <Matthew.Parkinson@cl.cam.ac.uk>
  All rights reserved. 
 *******************************************************************)
-
+open Jparsetree
 
 let program_file_name = ref ""
 let logic_file_name = ref ""
@@ -50,19 +50,6 @@ let arg_list =[
  ]
 
 
-(* read a file into a string *)
-let string_of_file fname =
-  let ichan = if fname = "-" then stdin else open_in fname
-  and str = String.create 1024
-  and buf = Buffer.create 1024 in
-  let rec loop () =
-    let len = input ichan str 0 1024 in
-    Buffer.add_substring buf str 0 len;
-    if len = 0 then Buffer.contents buf else loop () in
-  let s = loop () in
-  close_in ichan;
-  s
-
 (*
 let parse_one_class cname =
   let cname= !path_class_files ^ cname ^".jimple" in
@@ -74,12 +61,27 @@ let parse_one_class cname =
   parsed_class_file
 *)
 
+
 let parse_program () =
   if !Support_symex.sym_debug then Printf.printf "Parsing program file  %s...\n" !program_file_name;
-  let s = string_of_file !program_file_name  in
+  let s = System.string_of_file !program_file_name  in
   let program =Jparser.file Jlexer.token (Lexing.from_string s)
   in if !Support_symex.sym_debug then Printf.printf "Program Parsing... done!\n";
-  program
+  (* Replace specialinvokes of <init> after news with virtual invokes of <init>*)
+  let program = program in 
+  let rec spec_to_virt x = match x with 
+      DOS_stm(Assign_stmt(x,New_simple_exp(y)))::DOS_stm(Invoke_stmt(Invoke_nostatic_exp(Special_invoke,b,(Method_signature (c1,c2,Identifier_name "<init>",c4)),d)))::ys when x=Var_name b->
+	DOS_stm(Assign_stmt(x,New_simple_exp(y)))::DOS_stm(Invoke_stmt(Invoke_nostatic_exp(Virtual_invoke,b,(Method_signature (c1,c2,Identifier_name "<init>",c4)),d)))::(spec_to_virt ys)
+    | x::ys -> x::(spec_to_virt ys)
+    | [] -> [] in  
+  match program with 
+    JFile(a,b,c,d,e,f) -> 
+      JFile(a,b,c,d,e,List.map 
+	      (function 
+		  Method (a,b,c,d,e,Some (f,g)) 
+		  -> Method(a,b,c,d,e,Some(spec_to_virt f,g))
+		| x -> x) f )
+ 
 
 
 let main () =
@@ -103,11 +105,13 @@ let main () =
        )
      else 
        try 
-	 let logic = Load_logic.load_logic !logic_file_name in 
+	 let logic = 
+	     Load_logic.load_logic  (System.getenv_dirlist "JSTAR_LOGIC_LIBRARY") !logic_file_name
+	 in 
 	
-	 let abs_rules = Load_logic.load_logic !absrules_file_name in
+	 let abs_rules = Load_logic.load_logic  (System.getenv_dirlist "JSTAR_LOGIC_LIBRARY") !absrules_file_name in
 	 
-	 let s = string_of_file !spec_file_name 
+	 let s = System.string_of_file !spec_file_name 
 	 in if !Support_symex.sym_debug then Printf.printf "Start parsing specs in %s...\n" !spec_file_name;
 	 let spec_list  = Jparser.spec_file Jlexer.token (Lexing.from_string s) 
 	 in if !Support_symex.sym_debug then Printf.printf "Specs Parsing... done!\n";

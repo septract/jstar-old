@@ -24,31 +24,27 @@ SYMBEXE_SOURCES = config.ml jparsetree.ml pprinter.mli pprinter.ml jlogic.ml spe
 
 TOPLEVEL_SOURCES = $(SYMBEXE_SOURCES)
 
-MAIN = SOURCES="$(TOPLEVEL_SOURCES)" \
-       LIBS="str sepprover" \
+DEFAULT_ARGS = SOURCES="$(TOPLEVEL_SOURCES)" \
+       LIBS="str utils sepprover" \
        OCAMLLDFLAGS="-g -I $(LIB)" \
-       OCAMLFLAGS="-g -I ../prover" \
-       RESULT=$(BIN)/jstar.byte \
+       OCAMLFLAGS="-g -I ../prover -I ../utils" \
        TRASH=""
 
-MAINOPT = SOURCES="$(TOPLEVEL_SOURCES)" \
-       LIBS="str sepprover" \
-       OCAMLLDFLAGS="-g -I $(LIB)" \
-       OCAMLFLAGS="-g -I ../prover" \
-       RESULT=$(BIN)/jstar \
-       TRASH=""
+MAIN = $(DEFAULT_ARGS) RESULT=$(BIN)/jstar.byte
 
-default: invader
+MAINOPT = $(DEFAULT_ARGS)  RESULT=$(BIN)/jstar
 
-all: invader
+default: jstar
 
-.PHONY: invader.byte
-invader.byte:
+all: jstar
+
+.PHONY: jstar.byte
+jstar.byte:
 	$(MAKE) -f $(OCAMLMAKEFILE) $(MAIN) 
 
 
-.PHONY: invader
-invader:
+.PHONY: jstar
+jstar:
 	$(MAKE) -f $(OCAMLMAKEFILE) $(MAINOPT) native-code
 
 clean:

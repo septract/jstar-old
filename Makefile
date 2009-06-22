@@ -1,5 +1,9 @@
+PATH:=$(PATH):`pwd`/bin
+
+JSTAR_LOGIC_LIBRARY = `pwd`/library/logic
+JSTAR_ABS_LIBRARY = `pwd`/library/abstraction
+JSTAR_SPECS_LIBRARY = `pwd`/library/specs
 
 default:
-	export PATH=`echo $PATH`:`pwd`/bin
 	cd src; make
-	cd examples; make test
+	export JSTAR_LOGIC_LIBRARY=$(JSTAR_LOGIC_LIBRARY); export PATH=$(PATH); cd examples; make test

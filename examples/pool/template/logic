@@ -1,8 +1,8 @@
-import "../../../src/prover/tests/field_logic";
+import "field_logic";
 
-import "../../../src/prover/tests/boolean_logic";
+import "boolean_logic";
 
-import "../../../src/prover/tests/listDatatype_logic";
+import "listDatatype_logic";
 
 
 rule ls_val_exists :

@@ -34,35 +34,28 @@ TESTPROVERSOURCE = $(CORESOURCE) logic_parser.mly logic_lexer.mll load_logic.ml 
 
 LIBRARYSOURCE = $(CORESOURCE) logic_parser.mly logic_lexer.mll load_logic.ml
 
-MAIN = SOURCES="$(PROVERSOURCE)" \
-       LIBS="str" \
-       OCAMLLDFLAGS="-g" \
-       OCAMLFLAGS="-g" \
-       RESULT=$(BIN)/run_logic.byte \
+DEFAULT_ARGS = LIBS="str utils" \
+       OCAMLLDFLAGS="-g -I $(LIB)" \
+       OCAMLFLAGS="-g -I ../utils" \
        TRASH=""
 
-MAINOPT = SOURCES="$(PROVERSOURCE)" \
-       LIBS="str" \
-       RESULT=$(BIN)/run_logic \
-       TRASH=""
+MAIN = $(DEFAULT_ARGS) SOURCES="$(PROVERSOURCE)" \
+       RESULT=$(BIN)/run_logic.byte 
 
-TMAIN = SOURCES="$(TESTPROVERSOURCE)" \
-       LIBS="str" \
-       OCAMLLDFLAGS="-g" \
-       OCAMLFLAGS="-g" \
-       RESULT=$(BIN)/testharness.byte \
-       TRASH=""
+MAINOPT = $(DEFAULT_ARGS) SOURCES="$(PROVERSOURCE)" \
+       RESULT=$(BIN)/run_logic
 
-TMAINOPT = SOURCES="$(TESTPROVERSOURCE)" \
-       LIBS="str" \
-       RESULT=$(BIN)/testharness \
-       TRASH=""
+TMAIN = $(DEFAULT_ARGS) SOURCES="$(TESTPROVERSOURCE)" \
+       RESULT=$(BIN)/testharness.byte 
+
+TMAINOPT = $(DEFAULT_ARGS) SOURCES="$(TESTPROVERSOURCE)" \
+       RESULT=$(BIN)/testharness 
 
 #       LIBS="str" \
 
 LIBRARY = SOURCES="$(LIBRARYSOURCE)" \
        OCAMLLDFLAGS="-g -a" \
-       OCAMLFLAGS="-g" \
+       OCAMLFLAGS="-g -I ../utils" \
        RESULT="$(LIB)/sepprover.cmxa" \
        TRASH=""
 

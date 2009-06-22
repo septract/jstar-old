@@ -38,8 +38,8 @@ let main () =
   else if !logic_file_name="" then
     Printf.printf "Logic file name not specified. Can't continue....\n %s \n" usage_msg
   else 
-    let logic = load_logic !logic_file_name in
-    let s = string_of_file !program_file_name  in
+    let logic = load_logic (System.getenv_dirlist "JSTAR_LOGIC_LIBRARY") !logic_file_name in
+    let s = System.string_of_file !program_file_name  in
     if !(Debug.debug_ref) then Printf.printf "Start parsing tests in %s...\n" !program_file_name;
     let test_list  = Logic_parser.test_file Logic_lexer.token (Lexing.from_string s) 
     in if !(Debug.debug_ref) then Printf.printf "Parsed %s!\n" !program_file_name;
