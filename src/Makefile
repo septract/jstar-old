@@ -1,7 +1,7 @@
 default: 
 	cd utils; make
 	cd prover; make
-	cd symbexe; make 
+	cd symbexe;  make 
 
 clean: 
 	cd utils; make clean
