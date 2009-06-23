@@ -16,6 +16,15 @@ let sym_debug = ref true
 
 let symb_debug() = !sym_debug 
 
+let warning () =
+  Printf.printf "%c[%d;%dm"  (Char.chr 0x1B ) 1 31
+
+let good () =
+  Printf.printf "%c[%d;%dm"  (Char.chr 0x1B ) 1 32 
+
+let reset () =
+  Printf.printf "%c[%dm" (Char.chr 0x1B) 0 
+
 
 type var_hashtbl = (string, Vars.var) Hashtbl.t
 

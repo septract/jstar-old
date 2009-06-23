@@ -1,0 +1,5 @@
+export PATH=$PATH:`pwd`/bin
+
+export JSTAR_LOGIC_LIBRARY=`pwd`/library/logic
+export JSTAR_ABS_LIBRARY=`pwd`/library/abstraction
+export JSTAR_SPECS_LIBRARY=`pwd`/library/specs

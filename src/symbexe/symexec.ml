@@ -115,8 +115,8 @@ let formset_table_find key =
   try 
     Hashtbl.find formset_table key
   with Not_found -> 
-    let _ =Printf.printf "\n ERROR: cannot find formset for %i in the table. Abort! \n" key in
-    assert false
+    warning(); let _ =Printf.printf "\n ERROR: cannot find formset for %i in the table. Abort! \n" key in
+    reset(); assert false
 
 let remove_id_formset formset =
   fst (List.split formset)
@@ -129,7 +129,7 @@ type transition = formset_entry * string * formset_entry
 
 let transition_system = ref [] 
 
-let add_transition_TS t = transition_system:=t::!transition_system 
+let add_transition_TS (t : formset_entry * string * formset_entry) = transition_system:=t::!transition_system 
 
 let get_transition_system () = !transition_system
 
@@ -174,7 +174,7 @@ let exec_identity_stmt  n id ty (sheap: Rlogic.ts_form) =
   sheap
 
 (* execute v=[e] *)
-let exec_lookup_assign (v:Jparsetree.variable) (e:Jparsetree.reference) (sheap: Rlogic.ts_form) node = 
+let exec_lookup_assign (v:Jparsetree.variable) (e:Jparsetree.reference) (sheap,id) node = 
   if symb_debug() then Printf.printf "\nExecuting lookup statement\n ";
   let e_var = freshe() in
   let pointed_to_var = Arg_var (e_var) in
@@ -184,10 +184,15 @@ let exec_lookup_assign (v:Jparsetree.variable) (e:Jparsetree.reference) (sheap: 
 	mk_pointsto (name2args n) (signature2args si) pointed_to_var
     | _ -> assert false  (* TODO other types of reference *) in   
   let frames = check_implication_frame_pform (!curr_logic) sheap find_pointsto in
-  match frames with [] -> 
-    Printf.printf "\n\nWhile executing node %d:\n   %s\n"  (node_get_id node) (Pprinter.statement2str (node_get_stmt node).skind);
-    Prover.print_counter_example ();
-    Printf.printf "\nCannot find location!\n"; assert false | _-> ();
+  match frames with 
+    [] ->
+      add_transition_TS ((sheap,id),"ERROR: "^(Pprinter.statement2str (node_get_stmt node).skind),(sheap,id)); 
+      warning(); 
+      Printf.printf "\n\nERROR: While executing node %d:\n   %s\n"  (node_get_id node) (Pprinter.statement2str (node_get_stmt node).skind);
+      Prover.print_counter_example ();
+      Printf.printf "\nCannot find location!\n"; 
+      reset(); []
+  | _-> ();
   List.map
     (fun res -> 
       (* put back the points to *)
@@ -200,7 +205,7 @@ let exec_lookup_assign (v:Jparsetree.variable) (e:Jparsetree.reference) (sheap: 
 
 
 (* execute  [v]=e *)
-let exec_mutation_assign  (v:Jparsetree.reference) (e:Jparsetree.immediate) (sheap:Rlogic.ts_form) node = 
+let exec_mutation_assign  (v:Jparsetree.reference) (e:Jparsetree.immediate) (sheap,id)  node = 
   let e_var = freshe() in
   let pointed_to_var = Arg_var (e_var) in
   let find_pointsto,new_pointsto = 
@@ -210,10 +215,18 @@ let exec_mutation_assign  (v:Jparsetree.reference) (e:Jparsetree.immediate) (she
 	mk_pointsto (name2args n) (signature2args si) (immediate2args e) 
     | _ -> assert false  (* TODO other types of reference *) in    
   let frames = check_implication_frame_pform (!curr_logic) sheap find_pointsto in
-  match frames with [] -> 
-    Printf.printf "\n\nWhile executing node %d:\n   %s\n"  (node_get_id node) (Pprinter.statement2str (node_get_stmt node).skind);
-    Prover.print_counter_example ();
-    Printf.printf "\nCannot find location!\n"; assert false | _-> ();
+  match frames with 
+    [] ->
+      add_transition_TS ((sheap,id),"ERROR: "^(Pprinter.statement2str (node_get_stmt node).skind),(sheap,id));
+      warning(); 
+      Printf.printf "\n\nERROR: While executing node %d:\n   %s\n"  
+	(node_get_id node) 
+	(Pprinter.statement2str (node_get_stmt node).skind);
+      Prover.print_counter_example ();
+      Printf.printf "\nCannot find location!\n"; 
+      reset();
+      [](*assert false *)
+  | _-> ();
   List.map
     (fun res -> 
       (* put back the new points to *)
@@ -299,7 +312,7 @@ let param_this_sub il n =
   add nthis_var (name2args n)  sub 
  
 
-let call_jsr_static sheap spec il si node = 
+let call_jsr_static (sheap,id) spec il si node = 
   let sub' = param_sub il in
   let sub''= freshening_subs sub' in
   let spec'=Specification.sub_spec sub'' spec  in 
@@ -309,23 +322,27 @@ let call_jsr_static sheap spec il si node =
     | Some r -> fst r
 
 
-let call_jsr sheap spec n il si node = 
+let call_jsr (sheap,id) spec n il si node = 
   let sub' = param_this_sub il n in 
   let sub''= freshening_subs sub' in
   let spec'=Specification.sub_spec sub'' spec  in 
   let res = (jsr !curr_logic sheap spec') in
     match res with 
       None ->   
-        Printf.printf "\n\nWhile executing node %d:\n   %s\n"  (node_get_id node) (Pprinter.statement2str (node_get_stmt node).skind);
+	add_transition_TS ((sheap,id),"ERROR: "^ (Pprinter.statement2str (node_get_stmt node).skind),(sheap,id));
+        warning();
+	Printf.printf "\n\nERROR: While executing node %d:\n   %s\n"  (node_get_id node) (Pprinter.statement2str (node_get_stmt node).skind);
 	Prover.print_counter_example ();
-	assert false
+	reset(); 
+	[]
+	(*assert false*)
 (*	  "Preheap:\n    %s\n\nPrecondition:\n   %s\nCannot find splitting to apply spec. Giving up! \n\n" sheap_string (Plogic.string_form spec.pre); assert false *)
     | Some r -> fst r
 
 
   
 (* execute method calls *)
-let exec_invoke_stmt  (iexp: Jparsetree.invoke_expr) (sheap: Rlogic.ts_form) node = 
+let exec_invoke_stmt  (iexp: Jparsetree.invoke_expr) sheap  node = 
   if symb_debug() then Printf.printf "\nExecuting invoke statement\n ";
   match iexp with
   | Invoke_nostatic_exp (Virtual_invoke,n,si,il) 
@@ -333,27 +350,27 @@ let exec_invoke_stmt  (iexp: Jparsetree.invoke_expr) (sheap: Rlogic.ts_form) nod
       (match get_dynamic_spec si with
        | Some dspec -> call_jsr  sheap dspec n il si node
        | _ -> 
-	   Printf.printf "\n No dynamic specs found for %s. Abort!\n\n" (Pprinter.signature2str si); 
+	   warning(); Printf.printf "\n No dynamic specs found for %s. Abort!\n\n" (Pprinter.signature2str si); reset();
 	   assert false	  
       )
   | Invoke_nostatic_exp (Special_invoke,n,si,il) ->
       (match get_static_spec si with
       | Some sspec -> call_jsr  sheap sspec n il si node
       |  _ ->	
-	   Printf.printf "\n No static specs found for %s. Abort!\n\n" (Pprinter.signature2str si); 
+	   warning(); Printf.printf "\n No static specs found for %s. Abort!\n\n" (Pprinter.signature2str si); reset();
 	   assert false	  
       )
   | Invoke_static_exp (si,il) -> 
       (match get_static_spec si with
       | Some sspec -> call_jsr_static  sheap sspec il si node
       |  _ ->	
-	   Printf.printf "\n No static specs found for %s. Abort!\n\n" (Pprinter.signature2str si); 
+	   warning(); Printf.printf "\n No static specs found for %s. Abort!\n\n" (Pprinter.signature2str si); reset();
 	   assert false	  
       )
 
 
 
-let exec_method_invocation  (v:Jparsetree.variable) (ie: Jparsetree.invoke_expr) (sheap: Rlogic.ts_form) n =
+let exec_method_invocation  (v:Jparsetree.variable) (ie: Jparsetree.invoke_expr) sheap  n =
 (*  let mname =signature_get_name (invoke_exp_get_signature ie) in*)
   let ret_var = var_table_find (name_ret_var) in
   let v_var=variable2var v in
@@ -385,10 +402,10 @@ let immediate2var e =
   | _ -> assert false
 
 
-let exec_assign_stmt  (v:Jparsetree.variable) (e:Jparsetree.expression) (sheap: Rlogic.ts_form) node : Rlogic.ts_form list =
+let exec_assign_stmt  (v:Jparsetree.variable) (e:Jparsetree.expression) (sheap,id)  node : Rlogic.ts_form list =
   match v, e with 
   | Var_ref r, Immediate_exp e'  -> 
-      let hs=exec_mutation_assign  r e' sheap node in
+      let hs=exec_mutation_assign  r e' (sheap,id) node in
       (* if e is a dollar variable and we have used then it's not
 	 gonna be used anymore.  We need to get rid of it because
 	 otherwise we diverge.  We existentially quantify it and
@@ -404,9 +421,9 @@ let exec_assign_stmt  (v:Jparsetree.variable) (e:Jparsetree.expression) (sheap: 
 (*      if is_dollar_variable e' then 
 	List.iter (fun h -> kill_var (immediate2var e') h) hs;*)
       hs
-  | Var_name n, Reference_exp r  -> exec_lookup_assign  v r sheap node
+  | Var_name n, Reference_exp r  -> exec_lookup_assign  v r (sheap,id) node
   | Var_name n, New_simple_exp ty -> exec_simple_allocation  v ty sheap
-  | Var_name n , Invoke_exp ie ->  exec_method_invocation  v ie sheap node
+  | Var_name n , Invoke_exp ie ->  exec_method_invocation  v ie (sheap,id) node
   | Var_name n , Binop_exp(name,x,y)-> exec_binop_assign v (Binop_exp(name,x,y)) sheap
   | Var_name n , Cast_exp (_,e') -> (* TODO : needs something for the cast *) 
       exec_simple_assign  v e' sheap
@@ -518,9 +535,11 @@ let rec execute_stmt n (sheap : formset_entry) : unit =
 	if !Support_symex.sym_debug then Printf.printf "\n\nPost okay %s \n" (Pprinter.name2str m.name);
 	add_transition_TS (sheap,"EXIT: "^(Pprinter.name2str m.name), (heap,id));
        with Not_found -> 
-	let _= Printf.printf "\n\nError: cannot prove post for method %s\n" (Pprinter.name2str m.name) in
+	 warning();
+	 let _= Printf.printf "\n\nERROR: cannot prove post for method %s\n" (Pprinter.name2str m.name) in
 	Prover.print_counter_example ();
-	List.iter (fun heap -> add_transition_TS (sheap,"ERROR: "^(Pprinter.name2str m.name), heap)) heaps
+	 reset();
+	List.iter (fun heap -> add_transition_TS (sheap,"ERROR EXIT: "^(Pprinter.name2str m.name), heap)) heaps
 	(*print_formset "\n\n Failed Heap:\n" [sheap]    *)
       )
   | _ -> 
@@ -580,7 +599,7 @@ let rec execute_stmt n (sheap : formset_entry) : unit =
 	  exec_one h 
       | Identity_no_type_stmt(n,id) -> assert false (*exec_identity_no_type_stmt sheap*)
       | Assign_stmt(v,e) -> 
-	  let hs=(exec_assign_stmt  v e (fst sheap) n) in
+	  let hs=(exec_assign_stmt  v e sheap n) in
 	  let hs=add_id_formset hs in
 	  List.iter (fun h ->
 		       add_transition_TS (id_clone sheap,Pprinter.statement2str stm.skind,id_clone h)) hs;
@@ -610,7 +629,7 @@ let rec execute_stmt n (sheap : formset_entry) : unit =
 	  add_transition_TS (id_clone sheap,Pprinter.statement2str stm.skind, id_clone h);
 	  exec_one h
       | Invoke_stmt ie -> 
-	  let hs=(exec_invoke_stmt ie (fst sheap) n) in
+	  let hs=(exec_invoke_stmt ie sheap n) in
 	  let hs=add_id_formset hs in
 	  List.iter (fun h -> 
 		       add_transition_TS (id_clone sheap,Pprinter.statement2str stm.skind,id_clone h)) hs;
@@ -656,7 +675,7 @@ let initialize_node_formsets mdl fields cname=
       try 
 	MethodMap.find msi !curr_static_methodSpecs 
       with  Not_found -> 
-	Format.printf "\n\n Error: Cannot find spec for method %s\n\n" (Pprinter.name2str m.name);
+	warning(); Format.printf "\n\n Error: Cannot find spec for method %s\n\n" (Pprinter.name2str m.name); reset();
 	assert false
     in
     let meth_initial_form=if is_init_method m then (* we treat <init> in a special way*)
@@ -757,7 +776,7 @@ let compute_fixed_point (f : Jparsetree.jimple_file)
 (*  List.iter (fun m -> check_post sspecs_prog m lo cname) mdl*)
 
 let formset_entry_to_dot_label h1 =
-  Str.global_replace (Str.regexp "\\\\n") "\l" (String.escaped (Debug.toString (string_ts_form (Rterm.rao_create ())) (fst h1))) 
+  Str.global_replace (Str.regexp "\\\\n") "\\l" (String.escaped (Debug.toString (string_ts_form (Rterm.rao_create ())) (fst h1))) 
 
 let pp_dotty_transition_system () =
   let printed = ref [] in
@@ -776,18 +795,23 @@ let pp_dotty_transition_system () =
   in
   if symb_debug() then Printf.printf "\n Writing transition system file execution.dot  \n";
   Printf.fprintf dotty_outf "digraph main { \nnode [shape=box,  labeljust=l];\n";
-  List.iter pp_forms_node ((List.filter (fun (_,l,_) -> not((String.sub l 0 6)="ERROR:" || (String.sub l 0 5)="EXIT:")) (get_transition_system ())));
+  List.iter pp_forms_node ((List.filter (fun (_,l,_) -> not((String.sub l 0 5)="ERROR" || (String.sub l 0 5)="EXIT:")) (get_transition_system ())));
   List.iter (fun (n1,l,n2) ->
 	       if (String.sub l 0 7)="METHOD:" then
 		 let i=get_counter_TS () in
 		 inc_counter_TS();		 
 		 Printf.fprintf dotty_outf "\n state%i[label=\"%s\", color=green,  style=filled]\n" i l;
 		 Printf.fprintf dotty_outf "\n state%i -> state%i" i (snd n1); 
-	       else if (String.sub l 0 6)="ERROR:" then
+	       else if String.length l > 11 && (String.sub l 0 11)="ERROR EXIT:" then
 		 let i=get_counter_TS () in
 		 inc_counter_TS();		 
 		 Printf.fprintf dotty_outf "\n state%i[label=\"%s\\n%s\", color=red,  style=filled]\n" i l (formset_entry_to_dot_label n2);
 		 Printf.fprintf dotty_outf "\n state%i -> state%i" (snd n1) i; 
+	       else if (String.sub l 0 6)="ERROR:" then
+		 let i=get_counter_TS () in
+		 inc_counter_TS();		 
+		 Printf.fprintf dotty_outf "\n state%i[label=\"ERROR\", color=red,  style=filled]\n" i ;
+		 Printf.fprintf dotty_outf "\n state%i -> state%i [label=\"%s\"]" (snd n1) i (String.sub l 6 (String.length l -6)) ; 
 	       else if (String.sub l 0 5)="EXIT:" then
 		 let i=get_counter_TS () in
 		 inc_counter_TS();		 

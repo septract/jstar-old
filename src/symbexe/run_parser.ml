@@ -70,8 +70,14 @@ let parse_program () =
   (* Replace specialinvokes of <init> after news with virtual invokes of <init>*)
   let program = program in 
   let rec spec_to_virt x = match x with 
-      DOS_stm(Assign_stmt(x,New_simple_exp(y)))::DOS_stm(Invoke_stmt(Invoke_nostatic_exp(Special_invoke,b,(Method_signature (c1,c2,Identifier_name "<init>",c4)),d)))::ys when x=Var_name b->
-	DOS_stm(Assign_stmt(x,New_simple_exp(y)))::DOS_stm(Invoke_stmt(Invoke_nostatic_exp(Virtual_invoke,b,(Method_signature (c1,c2,Identifier_name "<init>",c4)),d)))::(spec_to_virt ys)
+      DOS_stm(Assign_stmt(x,New_simple_exp(y)))
+    ::DOS_stm(Invoke_stmt(Invoke_nostatic_exp(Special_invoke,b,(Method_signature (c1,c2,Identifier_name "<init>",c4)),d)))
+    ::ys 
+    when x=Var_name b && y=Class_name c1
+    ->
+      DOS_stm(Assign_stmt(x,New_simple_exp(y)))
+      ::DOS_stm(Invoke_stmt(Invoke_nostatic_exp(Virtual_invoke,b,(Method_signature (c1,c2,Identifier_name "<init>",c4)),d)))
+      ::(spec_to_virt ys)
     | x::ys -> x::(spec_to_virt ys)
     | [] -> [] in  
   match program with 
@@ -80,6 +86,32 @@ let parse_program () =
 	      (function 
 		  Method (a,b,c,d,e,Some (f,g)) 
 		  -> Method(a,b,c,d,e,Some(spec_to_virt f,g))
+		| x -> x) f )
+
+let parse_program () =
+  if !Support_symex.sym_debug then Printf.printf "Parsing program file  %s...\n" !program_file_name;
+  let s = System.string_of_file !program_file_name  in
+  let program =Jparser.file Jlexer.token (Lexing.from_string s)
+  in if !Support_symex.sym_debug then Printf.printf "Program Parsing... done!\n";
+  (* Replace specialinvokes of <init> after news with virtual invokes of <init>*)
+  let program = program in 
+  let rec spec_to_virt x maps = match x with 
+    DOS_stm(Assign_stmt(x,New_simple_exp(y)))::xs -> 
+      DOS_stm(Assign_stmt(x,New_simple_exp(y)))::(spec_to_virt xs ((x,y)::maps))  
+  | DOS_stm(Invoke_stmt(Invoke_nostatic_exp(Special_invoke,b,(Method_signature (c1,c2,Identifier_name "<init>",c4)),d)))
+    ::xs 
+    when List.mem (Var_name b,Class_name c1) maps
+    ->
+      DOS_stm(Invoke_stmt(Invoke_nostatic_exp(Virtual_invoke,b,(Method_signature (c1,c2,Identifier_name "<init>",c4)),d)))
+      ::(spec_to_virt xs (List.filter (fun x -> fst x <> Var_name b) maps))
+    | x::xs -> x::(spec_to_virt xs maps)
+    | [] -> [] in  
+  match program with 
+    JFile(a,b,c,d,e,f) -> 
+      JFile(a,b,c,d,e,List.map 
+	      (function 
+		  Method (a,b,c,d,e,Some (f,g)) 
+		  -> Method(a,b,c,d,e,Some(spec_to_virt f [],g))
 		| x -> x) f )
  
 
