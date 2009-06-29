@@ -248,7 +248,7 @@ let exec_mutation_assign  (v:Jparsetree.reference) (e:Jparsetree.immediate) (she
 *)
 let exec_simple_allocation  x ty sheap = 
   kill_var (variable2var x) sheap;
-  [sheap]
+  [conj_convert (Jlogic.mk_type_all (var2args (variable2var x)) ty) sheap ]
 
 
 (* retrieve dynamic spec of a method from table of specs*)

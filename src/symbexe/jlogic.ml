@@ -18,9 +18,16 @@ let mk_pointsto n si e = [P_SPred("field",[n; si; e])]
 (* create cl1 <: cl2 *)
 let mk_subtype cl1 cl2 = [P_PPred("subtype", (class2args cl1)::(class2args cl2)::[])]
 
+
+let base_type2args ty = 
+  Arg_string (Pprinter.j_base_type2str ty)
+
 (* create var : cl   (precise type not static type) *) 
 let objtype_name = "type"
 let mk_type var cl = [P_PPred(objtype_name, var::(class2args cl)::[])]
+
+let mk_type_all var cl = [P_PPred(objtype_name, var::(base_type2args cl)::[])]
+
 let objtype receiver classname = [P_PPred(objtype_name, [(Arg_var receiver);(Arg_string classname)])]
 
 

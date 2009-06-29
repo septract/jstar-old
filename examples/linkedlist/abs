@@ -10,6 +10,12 @@ rule field_remove2:
 if
   | | NodeLL(?x,?e1) |- |  
 
+
+rule type_remove :
+   | type(?x,"NodeLL") | NodeLL(?x,?y) |- | 
+if
+   | | NodeLL(?x,?y) |- | 
+
 /****************nil() rules******************/
 
 rule nil_neq_remove_nodell :
