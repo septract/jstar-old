@@ -143,7 +143,7 @@ let  ignored_helper = (blank | line_comment)+
 let  newline = ('\013' | '\010' | "\010\013")
 
 let full_identifier =
-       ((first_id_char | escape_char) (simple_id_char | escape_char)* '.')+  (first_id_char | escape_char) (simple_id_char | escape_char)*  
+       ((first_id_char | escape_char) (simple_id_char | escape_char)* '.')+  '$'? (first_id_char | escape_char) (simple_id_char | escape_char)*
 
 let identifier = 
       (first_id_char | escape_char) (simple_id_char | escape_char)* | "<clinit>" | "<init>"

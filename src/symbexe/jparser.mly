@@ -564,6 +564,7 @@ fldlist:
    | identifier EQUALS argument SEMICOLON fldlist  { ($1,$3) :: $5 }
 ;
 paramlist_question_mark:
+   | COMMA L_BRACE paramlist R_BRACE { Some $3 }
    | COMMA paramlist { Some $2 }
    | /* empty */ { None }
 ;
@@ -609,6 +610,7 @@ combine:
 spatial:
    | argument DOT field_signature MAPSTO  argument { [P_SPred("field", [$1; Arg_string(field_signature2str $3); $5] )] }
    | identifier L_PAREN argument_list R_PAREN {if List.length $3 =1 then [P_SPred($1,$3 @ [mkArgRecord []])] else [P_SPred($1,$3)] }
+   | full_identifier L_PAREN argument_list R_PAREN {if List.length $3 =1 then [P_SPred($1,$3 @ [mkArgRecord []])] else [P_SPred($1,$3)] }
    | L_PAREN combine R_PAREN { $2 }
 /*   | FALSE {False}*/
 ;
