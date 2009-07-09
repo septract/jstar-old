@@ -88,7 +88,7 @@ let rec list_format sep f ppf list =
   match list with 
     [] -> Format.fprintf ppf ""
   | [x] -> Format.fprintf ppf "%a" f x 
-  | x::xs -> Format.fprintf ppf "%a%s@%a" f x sep (list_format sep f) xs 
+  | x::xs -> Format.fprintf ppf "%a%s@ %a" f x sep (list_format sep f) xs 
 
 let rec string_form_at ppf pa =  
   match pa with 

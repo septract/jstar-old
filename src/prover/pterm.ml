@@ -168,12 +168,12 @@ and string_args_list ppf argsl =
   match argsl with 
     [] -> Format.fprintf ppf ""
   | [a] -> Format.fprintf ppf "%a" string_args a
-  | a::al -> Format.fprintf ppf "%a,@%a" string_args a string_args_list al
+  | a::al -> Format.fprintf ppf "%a,@ %a" string_args a string_args_list al
 and string_args_fldlist ppf fdl =  
   match fdl with 
     [] -> Format.fprintf ppf ""
   | [(f,a)] -> Format.fprintf ppf "%s=%a" f string_args a
-  | (f,a)::fdl -> Format.fprintf ppf "%s=%a;@%a" f string_args a string_args_fldlist fdl
+  | (f,a)::fdl -> Format.fprintf ppf "%s=%a;@ %a" f string_args a string_args_fldlist fdl
 
 
 
