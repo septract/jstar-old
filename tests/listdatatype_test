@@ -1,0 +1,11 @@
+Implication:
+  hd(tl(cons(a,cons(x,empty())))) = a  | |-  hd(app(empty(),cons(x,y))) = a |
+? True
+
+Implication:
+  cons(a,x) = x | |- tl(tl(x)) = x |
+? True
+
+Implication:
+  app(x,y) = empty() | |- x=empty() |
+? True
