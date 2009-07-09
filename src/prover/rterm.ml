@@ -1281,11 +1281,12 @@ and unifies_list ts al rl interp cont =
 let rec unifies_eq_inner ts rl a1 a2 interp cont =
   match rl with 
     [] -> raise No_match
-  | r::rl -> 
+  | r::rl -> if ts_debug then Format.printf "Trying representative@ %a@ for@ %a =@ %a.@\n" string_rep_term_db r string_args a1 string_args a2;
     (try 
-(*      if ts_debug then Printf.printf "Trying to match %s in %s.\n" (string_args a1) (string_rep_term_db r);*)
+      if ts_debug then Format.printf "Trying to match %a in %a.@\n" string_args a1  string_rep_term_db r;
       unifies ts a1 r interp 
         ( fun interp-> 
+	  if ts_debug then Format.printf "Trying to match %a in %a.@\n" string_args a2  string_rep_term_db r;
           unifies ts a2 r interp 
             ( fun interp ->
               try 

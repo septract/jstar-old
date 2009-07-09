@@ -153,6 +153,7 @@ let rec unify_form_at ts (pa : representative pform_at) (f : form) (use_ep) (int
 	pl
 	with No_match when use_ep != None -> 
 	  (try 
+	    Format.printf "Asking rterm.@\n" ;
 	    Rterm.unifies_eq ts (rv_form (pl,sl,cl) (Rset.empty)) a1 a2 interp (fun interp -> cont (interp, (pl,sl,cl)))
 	  with No_match ->  (* Try to prove guard equality with external prover *) 
 	    (match use_ep with 
@@ -238,8 +239,9 @@ and match_form ts (pattern : representative pform) (target : form) (use_ep) (int
 let rec contains ts (pattern : representative pform)  (target : form) use_ep interp : bool 
     =  
   try 
-    match_form ts pattern target use_ep interp false (fun _ -> true)
-  with No_match -> false 
+    if Rterm.ts_debug then Format.printf "Contains:@ %a@\n" Plogic.string_form pattern; 
+    match_form ts pattern target use_ep interp false (fun _ -> if Rterm.ts_debug then Format.printf "Match@\n"; true)
+  with No_match -> if Rterm.ts_debug then Format.printf "No Match@\n" ;false 
 
 
 
@@ -292,13 +294,13 @@ let apply_rule (rule : sequent_rule) (seq : ts_sequent)  ep : ts_sequent list li
       (pff,pfl,pfr),premises,name,without,wherelist ->
 	(*Printf.printf "\n\n Trying rule %s\n" name;*)
 	match seq with
-	  ts,(ff,fl,fr) ->
+	  ts,(ff,afl,fr) ->
 	    (* match right bit *)
 	    match_form ts pfr fr None Rterm.empty_vs true
 	      (
 	    fun (interp,fr) ->
               (* match left_bit *)
-	      match_form ts pfl fl (Some ep) interp true
+	      match_form ts pfl afl (Some ep) interp true
 		   ((* match frame bit *)
 		    fun (interp,fl) ->
 		      match_form ts pff (f2f ff @@@ fl) None interp true
@@ -306,7 +308,7 @@ let apply_rule (rule : sequent_rule) (seq : ts_sequent)  ep : ts_sequent list li
 			  (* check if there is a without clause, and if it is matched
 			     If it is matched, then throw no_match as we don't want to apply*)
 			  if without != []  && 
-			    (contains ts without ((f2f ff)@@@ fl) (Some ep) interp) 
+			    (contains ts without ((f2f ff)@@@ afl) (Some ep) interp) 
 			  then (raise No_match );
 			  (* check where clauses are satisfied *)
 			  if List.for_all (fun where -> check where (f2f ff@@@fl,interp) ts) wherelist 
