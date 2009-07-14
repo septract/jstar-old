@@ -71,6 +71,6 @@ if
 rule field_not_null :
   field(?x,?f,?y) | | |- ?x!=nil() | 
 if
-  field(?x,?f,?y) | | |- | 
+  | | |- |
 
 
