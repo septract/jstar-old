@@ -287,7 +287,7 @@ rule token = parse
    | integer_constant {
        let s=Lexing.lexeme lexbuf in
        if (String.get s (String.length s -1)) = 'L' then
-	 INTEGER_CONSTANT_LONG(int_of_string(String.sub s 0 (String.length s - 2)))
+	 INTEGER_CONSTANT_LONG(int_of_string(String.sub s 0 (String.length s - 1)))
        else 
 	 INTEGER_CONSTANT(int_of_string(s))}
 
