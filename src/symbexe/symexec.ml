@@ -559,9 +559,9 @@ let rec execute_stmt n (sheap : formset_entry) : unit =
 	let heap,id = List.find (fun (heap,id) -> (check_implication_frame !curr_logic sheap_noid heap)!=[]) heaps in
 	if !Support_symex.sym_debug then Printf.printf "\n\nPost okay %s \n" (Pprinter.name2str m.name);
 
-	let idd = add_good_node ("EXIT: "^(Pprinter.name2str m.name)) in 
+(*	let idd = add_good_node ("EXIT: "^(Pprinter.name2str m.name)) in *)
 	add_edge (snd sheap) id "";
-	add_edge id idd "";
+(*	add_edge id idd "";*)
        with Not_found -> 
 	 warning();
 	 let _= Printf.printf "\n\nERROR: cannot prove post for method %s\n" (Pprinter.name2str m.name) in
@@ -724,10 +724,12 @@ let initialize_node_formsets mdl fields cname=
     let meth_initial_form_noid = convert meth_initial_form in
     let meth_initial_form = add_id_form meth_initial_form_noid in 
     let id = add_good_node ("METHOD: "^(Pprinter.name2str m.name)) in 
+    let id_exit = add_good_node ("EXIT: "^(Pprinter.name2str m.name)) in 
     add_edge id (snd meth_initial_form) "";
     let meth_initial_formset =  [meth_initial_form] in
     let meth_final_formset_noid = [convert spec.post] in 
     let meth_final_formset = add_id_formset meth_final_formset_noid in
+    List.iter (fun (_,id) -> add_edge id id_exit "") meth_final_formset; 
     if symb_debug () then print_formset ("\n"^(Pprinter.name2str m.name)^" init_form=") [meth_initial_form_noid] ;
     if symb_debug () then print_formset ("\n"^(Pprinter.name2str m.name)^" final_form=") meth_final_formset_noid ;
     let minfo=Cfg.mcfginfo_tbl_find (key_method m) in
