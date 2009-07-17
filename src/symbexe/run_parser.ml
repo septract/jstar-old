@@ -136,6 +136,7 @@ let main () =
 	Mkspecs.print_specs_template program
        )
      else 
+       Sys.catch_break true;
        at_exit Symexec.pp_dotty_transition_system;
        try 
 	 let logic = 
