@@ -153,7 +153,6 @@ let rec unify_form_at ts (pa : representative pform_at) (f : form) (use_ep) (int
 	pl
 	with No_match when use_ep != None -> 
 	  (try 
-	    Format.printf "Asking rterm.@\n" ;
 	    Rterm.unifies_eq ts (rv_form (pl,sl,cl) (Rset.empty)) a1 a2 interp (fun interp -> cont (interp, (pl,sl,cl)))
 	  with No_match ->  (* Try to prove guard equality with external prover *) 
 	    (match use_ep with 
