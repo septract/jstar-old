@@ -125,25 +125,46 @@ let remove_id_formset formset =
 
 (* ================  transition system ==================  *)
 
+type id = int
+
+
+
+let fresh_node = let node_counter = ref 0 in fun () ->  let x = !node_counter in node_counter := x+1; x
+
+type ntype = 
+    Plain | Good | Error
+
+type node = string * id * ntype
+
+type edge = string * id * id 
+
+let graphe = ref []
+let graphn = ref []
+
+let add_node (label : string) (ty : ntype) : id = 
+  let id = fresh_node () in 
+  graphn := (label, id, ty)::!graphn; id 
+
+let add_error_node label = add_node label Error
+let add_good_node label = add_node label Good
+let add_node label = add_node label Plain
+
+let add_heap_node (heap : Rlogic.ts_form) = 
+  (Format.fprintf (Format.str_formatter) "%a" (string_ts_form (Rterm.rao_create ())) heap);
+  add_node (Format.flush_str_formatter ())
+
+let add_error_heap_node (heap : Rlogic.ts_form) = 
+  (Format.fprintf (Format.str_formatter) "%a" (string_ts_form (Rterm.rao_create ())) heap);
+  add_error_node (Format.flush_str_formatter ())
+
+
+let add_edge src dest label = graphe := (label, src, dest)::!graphe
+
+
 type transition = formset_entry * string * formset_entry
 
-let transition_system = ref [] 
-
-let add_transition_TS (t : formset_entry * string * formset_entry) = transition_system:=t::!transition_system 
-
-let get_transition_system () = !transition_system
-
-let counter_TS = ref 0
-
-let get_counter_TS () = !counter_TS
-
-let inc_counter_TS () = 
-  counter_TS:=!counter_TS +1
-
-
 let add_id_form h =
-    let id=get_counter_TS () in
-    inc_counter_TS ();
+    let id=add_heap_node h in
     (h,id)
 
 let add_id_formset sheaps =  List.map add_id_form sheaps
@@ -185,8 +206,9 @@ let exec_lookup_assign (v:Jparsetree.variable) (e:Jparsetree.reference) (sheap,i
     | _ -> assert false  (* TODO other types of reference *) in   
   let frames = check_implication_frame_pform (!curr_logic) sheap find_pointsto in
   match frames with 
-    [] ->
-      add_transition_TS ((sheap,id),"ERROR: "^(Pprinter.statement2str (node_get_stmt node).skind),(sheap,id)); 
+    [] ->      
+      let idd = add_error_node "ERROR" in 
+      add_edge id idd (Pprinter.statement2str (node_get_stmt node).skind);
       warning(); 
       Printf.printf "\n\nERROR: While executing node %d:\n   %s\n"  (node_get_id node) (Pprinter.statement2str (node_get_stmt node).skind);
       Prover.print_counter_example ();
@@ -217,7 +239,8 @@ let exec_mutation_assign  (v:Jparsetree.reference) (e:Jparsetree.immediate) (she
   let frames = check_implication_frame_pform (!curr_logic) sheap find_pointsto in
   match frames with 
     [] ->
-      add_transition_TS ((sheap,id),"ERROR: "^(Pprinter.statement2str (node_get_stmt node).skind),(sheap,id));
+      let idd = add_error_node "Error" in 
+      add_edge id idd (Pprinter.statement2str (node_get_stmt node).skind);
       warning(); 
       Printf.printf "\n\nERROR: While executing node %d:\n   %s\n"  
 	(node_get_id node) 
@@ -329,7 +352,8 @@ let call_jsr (sheap,id) spec n il si node =
   let res = (jsr !curr_logic sheap spec') in
     match res with 
       None ->   
-	add_transition_TS ((sheap,id),"ERROR: "^ (Pprinter.statement2str (node_get_stmt node).skind),(sheap,id));
+	let idd = add_error_node "ERROR" in
+	add_edge id idd (Pprinter.statement2str (node_get_stmt node).skind);
         warning();
 	Printf.printf "\n\nERROR: While executing node %d:\n   %s\n"  (node_get_id node) (Pprinter.statement2str (node_get_stmt node).skind);
 	Prover.print_counter_example ();
@@ -520,6 +544,7 @@ let rec execute_stmt n (sheap : formset_entry) : unit =
   if symb_debug() then Format.printf "@\nwith heap:@\n    %a@\n@\n@."  (string_ts_form (Rterm.rao_create ())) sheap_noid;
   if (Prover.check_inconsistency !curr_logic (form_clone sheap_noid)) then 
     (if symb_debug() then Printf.printf "\n\nInconsistent heap. Skip it!\n";
+     let idd = add_good_node "Inconsistent"  in add_edge (snd sheap) idd "";
      ())
   else (
   if symb_debug() then Printf.printf "\nStarting execution of node %i \n" (node_get_id n);
@@ -533,13 +558,16 @@ let rec execute_stmt n (sheap : formset_entry) : unit =
        try 
 	let heap,id = List.find (fun (heap,id) -> (check_implication_frame !curr_logic sheap_noid heap)!=[]) heaps in
 	if !Support_symex.sym_debug then Printf.printf "\n\nPost okay %s \n" (Pprinter.name2str m.name);
-	add_transition_TS (sheap,"EXIT: "^(Pprinter.name2str m.name), (heap,id));
+
+	let idd = add_good_node ("EXIT: "^(Pprinter.name2str m.name)) in 
+	add_edge (snd sheap) id "";
+	add_edge id idd "";
        with Not_found -> 
 	 warning();
 	 let _= Printf.printf "\n\nERROR: cannot prove post for method %s\n" (Pprinter.name2str m.name) in
 	Prover.print_counter_example ();
 	 reset();
-	List.iter (fun heap -> add_transition_TS (sheap,"ERROR EXIT: "^(Pprinter.name2str m.name), heap)) heaps
+	List.iter (fun heap -> let idd = add_error_heap_node (fst heap) in add_edge (snd sheap) idd ("ERROR EXIT: "^(Pprinter.name2str m.name))) heaps
 	(*print_formset "\n\n Failed Heap:\n" [sheap]    *)
       )
   | _ -> 
@@ -584,41 +612,51 @@ let rec execute_stmt n (sheap : formset_entry) : unit =
 	    let sheaps_with_id = List.filter 
 		(fun (sheap2,id2) -> List.for_all
 		    (fun (form,id) -> 
-		      if check_implication !curr_logic (form_clone sheap2) form  then (add_transition_TS (sheap,Pprinter.statement2str stm.skind,(form,id));false) else true)
+		      if check_implication !curr_logic (form_clone sheap2) form  then 
+			(add_edge (snd sheap) id (Pprinter.statement2str stm.skind) ;false) 
+		      else true)
 		    formset;
 		) sheaps_with_id in
 	    List.iter (fun h ->
-			 add_transition_TS (id_clone sheap,Pprinter.statement2str stm.skind, id_clone h)) sheaps_with_id;
+			 add_edge (snd sheap) (snd h) (Pprinter.statement2str stm.skind)) sheaps_with_id;
 	    formset_table_replace id (sheaps_with_id @ formset);
 	    execs_one (List.map id_clone sheaps_with_id)
 	  with Contained -> if symb_debug() then Printf.printf "Formula contained.\n")
       | Identity_stmt (n,id,ty) -> 
 	  let h=exec_identity_stmt  n id ty (fst sheap) in
 	  let h=add_id_form h in
-	  add_transition_TS (id_clone sheap,Pprinter.statement2str stm.skind,id_clone h);
+	  add_edge (snd sheap) (snd h) (Pprinter.statement2str stm.skind);
 	  exec_one h 
       | Identity_no_type_stmt(n,id) -> assert false (*exec_identity_no_type_stmt sheap*)
       | Assign_stmt(v,e) -> 
 	  let hs=(exec_assign_stmt  v e sheap n) in
 	  let hs=add_id_formset hs in
 	  List.iter (fun h ->
-		       add_transition_TS (id_clone sheap,Pprinter.statement2str stm.skind,id_clone h)) hs;
+		       add_edge (snd sheap) (snd h) (Pprinter.statement2str stm.skind)) hs;
 	  execs_one hs
       | If_stmt(e,l) ->
 	  let sheap2 = (form_clone (fst sheap), snd sheap) in 
 	  (match succs with
-	  | [s1;s2] -> 
+	  | [s1;s2] ->  
 	      (match s1.nd_stmt.skind with
 	      | Label_stmt l' when l'=l -> 
 		  let cc_h=(conj_convert (expression2pure e) (fst sheap)) in
-		  exec s1 (cc_h, snd sheap);
+		  let cc_h_id = add_id_form cc_h in 
+		  add_edge (snd sheap) (snd cc_h_id) (Pprinter.expression2str e);
+		  exec s1 cc_h_id;
 		  let cc_h2=(conj_convert (expression2pure (negate e)) (fst sheap2)) in
-		  exec s2 (cc_h2,snd sheap2)
+		  let cc_h2_id = add_id_form cc_h2 in 
+		  add_edge (snd sheap) (snd cc_h2_id) (Pprinter.expression2str (negate e));
+		  exec s2 (cc_h2_id)
 	      | _ -> 
 		  let cc_h=(conj_convert (expression2pure (negate e)) (fst sheap)) in
-		  exec s1 (cc_h,snd sheap);
+		  let cc_h_id = add_id_form cc_h in 
+		  add_edge (snd sheap) (snd cc_h_id) (Pprinter.expression2str (negate e));
+		  exec s1 cc_h_id;
 		  let cc_h2=(conj_convert (expression2pure e) (fst sheap2)) in
-		  exec s2 (cc_h2,snd sheap2)
+		  let cc_h2_id = add_id_form cc_h2 in 
+		  add_edge (snd sheap) (snd cc_h2_id) (Pprinter.expression2str e);
+		  exec s2 (cc_h2_id)
 	      )
 	  | _ -> assert false )
       | Goto_stmt _ | Nop_stmt  -> exec_one sheap
@@ -626,13 +664,13 @@ let rec execute_stmt n (sheap : formset_entry) : unit =
       | Return_stmt v -> 
 	  let h=exec_return_stmt stm v (fst sheap) in
 	  let h=add_id_form h in
-	  add_transition_TS (id_clone sheap,Pprinter.statement2str stm.skind, id_clone h);
+	  add_edge (snd sheap) (snd h) (Pprinter.statement2str stm.skind);
 	  exec_one h
       | Invoke_stmt ie -> 
 	  let hs=(exec_invoke_stmt ie sheap n) in
 	  let hs=add_id_formset hs in
 	  List.iter (fun h -> 
-		       add_transition_TS (id_clone sheap,Pprinter.statement2str stm.skind,id_clone h)) hs;
+		       add_edge (snd sheap) (snd h) (Pprinter.statement2str stm.skind) ) hs;
 	  execs_one hs
       (* TODO These ones *)
       | Throw_stmt _ | Breakpoint_stmt | Entermonitor_stmt _ | Exitmonitor_stmt _ 
@@ -685,7 +723,8 @@ let initialize_node_formsets mdl fields cname=
 
     let meth_initial_form_noid = convert meth_initial_form in
     let meth_initial_form = add_id_form meth_initial_form_noid in 
-    add_transition_TS (meth_initial_form,"METHOD: "^(Pprinter.name2str m.name), meth_initial_form);
+    let id = add_good_node ("METHOD: "^(Pprinter.name2str m.name)) in 
+    add_edge id (snd meth_initial_form) "";
     let meth_initial_formset =  [meth_initial_form] in
     let meth_final_formset_noid = [convert spec.post] in 
     let meth_final_formset = add_id_formset meth_final_formset_noid in
@@ -775,50 +814,24 @@ let compute_fixed_point (f : Jparsetree.jimple_file)
 (*  if !Config.dotty_print then print_file_dotty "conf_node" (icfg_nodes2list mdl);*)
 (*  List.iter (fun m -> check_post sspecs_prog m lo cname) mdl*)
 
-let formset_entry_to_dot_label h1 =
-  Str.global_replace (Str.regexp "\\\\n") "\\l" (String.escaped (Debug.toString (string_ts_form (Rterm.rao_create ())) (fst h1))) 
+let escape_for_dot_label s =
+  Str.global_replace (Str.regexp "\\\\n") "\\l" (String.escaped s)
 
 let pp_dotty_transition_system () =
-  let printed = ref [] in
   let foname="execution.dot" in
   let dotty_outf=open_out foname in
-  let pp_forms_node (h1,_,h2) =
-    if not (List.mem (snd h1) !printed) then 
-      let hstr1=formset_entry_to_dot_label h1 in 
-      Printf.fprintf dotty_outf "\n state%i[label=\"%s\",labeljust=l]\n" (snd h1) hstr1;
-      printed:=(snd h1)::!printed
-    else ();
-    if not (List.mem (snd h2) !printed) then 
-      let hstr2=formset_entry_to_dot_label h2 in 
-      Printf.fprintf dotty_outf "\n state%i[label=\"%s\",labeljust=l]\n" (snd h2) hstr2;
-      printed:=(snd h2)::!printed;
-  in
   if symb_debug() then Printf.printf "\n Writing transition system file execution.dot  \n";
   Printf.fprintf dotty_outf "digraph main { \nnode [shape=box,  labeljust=l];\n";
-  List.iter pp_forms_node ((List.filter (fun (_,l,_) -> not((String.sub l 0 5)="ERROR" || (String.sub l 0 5)="EXIT:")) (get_transition_system ())));
-  List.iter (fun (n1,l,n2) ->
-	       if (String.sub l 0 7)="METHOD:" then
-		 let i=get_counter_TS () in
-		 inc_counter_TS();		 
-		 Printf.fprintf dotty_outf "\n state%i[label=\"%s\", color=green,  style=filled]\n" i l;
-		 Printf.fprintf dotty_outf "\n state%i -> state%i" i (snd n1); 
-	       else if String.length l > 11 && (String.sub l 0 11)="ERROR EXIT:" then
-		 let i=get_counter_TS () in
-		 inc_counter_TS();		 
-		 Printf.fprintf dotty_outf "\n state%i[label=\"%s\\n%s\", color=red,  style=filled]\n" i l (formset_entry_to_dot_label n2);
-		 Printf.fprintf dotty_outf "\n state%i -> state%i" (snd n1) i; 
-	       else if (String.sub l 0 6)="ERROR:" then
-		 let i=get_counter_TS () in
-		 inc_counter_TS();		 
-		 Printf.fprintf dotty_outf "\n state%i[label=\"ERROR\", color=red,  style=filled]\n" i ;
-		 Printf.fprintf dotty_outf "\n state%i -> state%i [label=\"%s\"]" (snd n1) i (String.sub l 6 (String.length l -6)) ; 
-	       else if (String.sub l 0 5)="EXIT:" then
-		 let i=get_counter_TS () in
-		 inc_counter_TS();		 
-		 Printf.fprintf dotty_outf "\n state%i[label=\"%s\\n%s\", color=green,  style=filled]\n" i l (formset_entry_to_dot_label n2);
-		 Printf.fprintf dotty_outf "\n state%i -> state%i" (snd n1) i; 
-	       else
-		 Printf.fprintf dotty_outf "\n state%i -> state%i[label=\"%s\"]" (snd n1) (snd n2) l
-	    ) (get_transition_system ()); 
+  List.iter (fun (label,id,ty) ->
+    let label=escape_for_dot_label label in 
+    match ty with 
+      Plain ->  Printf.fprintf dotty_outf "\n state%i[label=\"%s\",labeljust=l]\n" id label
+    | Good ->  Printf.fprintf dotty_outf "\n state%i[label=\"%s\",labeljust=l, color=green, style=filled]\n" id label
+    | Error ->  Printf.fprintf dotty_outf "\n state%i[label=\"%s\",labeljust=l, color=red, style=filled]\n" id label)
+    !graphn;
+  List.iter (fun (l,s,d) ->
+    let l = escape_for_dot_label l in 
+    Printf.fprintf dotty_outf "\n state%i -> state%i [label=\"%s\"]" s d l)
+    !graphe;
   Printf.fprintf dotty_outf "\n\n\n}";
   close_out dotty_outf
