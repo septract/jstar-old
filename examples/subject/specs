@@ -1,25 +1,25 @@
 class java.lang.Object
 {
-  static void <init>() : { | } { | };
+  static void <init>() : { } { };
 }
 
 class java.util.Iterator
 {
-static void <init>() : { | } { | };
+static void <init>() : { } { };
 
 // Anyhow, I assume that the given iterator is pointing to the beginning of a segment.
 // What we have already traversed is not shown in the pre. 
  boolean hasNext() : 
-{ | Iterator(@this:,_x) } 
-{ | ($ret_var=false() * _x=nil() | Iterator(@this:,nil())
-  || $ret_var=true() * _x!=nil() | Iterator(@this:,_x)) };
+{ Iterator(@this:,_x) } 
+{ $ret_var=false() * _x=nil() * Iterator(@this:,nil())
+  || $ret_var=true() * _x!=nil() * Iterator(@this:,_x) };
 
 
 java.lang.Object next() :
-{ | ls(_x,_y,_v1) * Iterator(@this:,_x) }
-{ | ($ret_var=_v * _v1=cons(_v,empty()) | ls(_x,_y,cons(_v,empty())) * Iterator(@this:,_y)
+{ ls(_x,_y,_v1) * Iterator(@this:,_x) }
+{ $ret_var=_v * _v1=cons(_v,empty()) * ls(_x,_y,cons(_v,empty())) * Iterator(@this:,_y)
   ||
-  $ret_var=_v * _v1=cons(_v,_v2) |  ls(_x,_x1,cons(_v,empty())) * ls(_x1,_y,_v2) * Iterator(@this:,_x1))
+  $ret_var=_v * _v1=cons(_v,_v2) *  ls(_x,_x1,cons(_v,empty())) * ls(_x1,_y,_v2) * Iterator(@this:,_x1)
 };
 
 
@@ -27,31 +27,31 @@ java.lang.Object next() :
 
 class java.util.LinkedList
 {
-static void <init>() : { | } { @this: = nil() | };
+static void <init>() : { } { @this: = nil() };
 
  boolean add(java.lang.Object) : 
-  { | lspe(@this:,nil(),_s1) }
-  { | ls(@this:,nil(),app(_s1,cons(@parameter0:,empty())))};
+  { lspe(@this:,nil(),_s1) }
+  { ls(@this:,nil(),app(_s1,cons(@parameter0:,empty())))};
 
 // ddino:
 // Iterator(x,y) means the iterator x is currently at position y
 java.util.Iterator iterator() :
-  { | lspe(@this:,nil(),_v)}
-  { _I=$ret_var | lspe(@this:,nil(),_v) * Iterator(_I,@this:)};
+  { lspe(@this:,nil(),_v)}
+  { _I=$ret_var * lspe(@this:,nil(),_v) * Iterator(_I,@this:)};
 
 int size() :
-  { | lspe(@this:,nil(),_v)}
-  { length(_v)=$ret_var | ls(@this:,nil(),_v)};
+  { lspe(@this:,nil(),_v)}
+  { length(_v)=$ret_var * ls(@this:,nil(),_v)};
 
 java.lang.Object remove(int) :
-{ LT(@parameter0:,length(_v1)) | ls(@this:,nil(),_v1)} 
-{ @this: = $ret_var * _v1=app(_v2, cons(_v3,_v4)) * length(_v2) = @parameter0: | lspe(@this:,nil(),app(_v2,_v4)) };
+{ @parameter0: < length(_v1) * ls(@this:,nil(),_v1)} 
+{ @this: = $ret_var * _v1=app(_v2, cons(_v3,_v4)) * length(_v2) = @parameter0: * lspe(@this:,nil(),app(_v2,_v4)) };
 
 // ddino: this is strange. I don't understand why we need this that return boolean???????
 // I cannot find it in the code!!!!
 boolean remove(java.lang.Object) :
-  { | ls(@this:,nil(),app(_s0,cons(@parameter0:,_s1))) }
-  { | lspe(@this:,nil(),app(_s0,_s1))};
+  { ls(@this:,nil(),app(_s0,cons(@parameter0:,_s1))) }
+  { lspe(@this:,nil(),app(_s0,_s1))};
 
 }
 
@@ -60,17 +60,17 @@ class Observer
 {
 
 void update(Subject) : 
-{ | Observer(@this:,{vals=_v; subject=@parameter0:}) * SubjectData(@parameter0:, {vals=_v2}) } 
-{ | Observer(@this:,{vals=_v2; subject=@parameter0:}) * SubjectData(@parameter0:, {vals=_v2}) } ;
+{ Observer(@this:,{vals=_v; subject=@parameter0:}) * SubjectData(@parameter0:, {vals=_v2}) } 
+{ Observer(@this:,{vals=_v2; subject=@parameter0:}) * SubjectData(@parameter0:, {vals=_v2}) } ;
 
 }
 
 
 class Driver
 {
-static void <init>() : { | } { | };
+static void <init>() : { } { };
 
-static void main(java.lang.String[]) : { | } { | };
+static void main(java.lang.String[]) : { } { };
 
 }
 
@@ -78,16 +78,16 @@ static void main(java.lang.String[]) : { | } { | };
 class IntegerSize
 {
 define Observer(x, vals=V; subject=s) = 
-	   type(s,"IntegerDataBag") | field(x,"<IntegerSize: int size>", length(V))
+	   s : IntegerDataBag * field(x,"<IntegerSize: int size>", length(V))
 	   * field(x,"<IntegerSize: IntegerDataBag bag>", s);
 
 static void <init>(IntegerDataBag) : 
-       { type(@this:,"IntegerSize") * type(@parameter0:,"IntegerDataBag") | SubjectObs(@parameter0:,{obs=_O;vals=_V})} 
-       { | SubjectObs(@parameter0:, {obs=add(@this:,_O);vals=_V}) };
+       { @this: : IntegerSize * @parameter0: : IntegerDataBag * SubjectObs(@parameter0:,{obs=_O;vals=_V})} 
+       { SubjectObs(@parameter0:, {obs=add(@this:,_O);vals=_V}) };
 
 void update(Subject) : 
-  { | Observer$(@this:,{vals=_v; subject=@parameter0:}) * SubjectData(@parameter0:, {vals=_v2}) } 
-  { | Observer$(@this:,{vals=_v2; subject=@parameter0:}) * SubjectData(@parameter0:, {vals=_v2}) } ;
+  { Observer$(@this:,{vals=_v; subject=@parameter0:}) * SubjectData(@parameter0:, {vals=_v2}) } 
+  { Observer$(@this:,{vals=_v2; subject=@parameter0:}) * SubjectData(@parameter0:, {vals=_v2}) } ;
 
 }
 
@@ -96,52 +96,49 @@ void update(Subject) :
 class IntegerDataBag
 {
 define SubjectInternal(s, obs=O) =
- | 
     field(s,"<IntegerDataBag: java.util.LinkedList observers>",_o)*
     lspe(_o,nil(),O) ;
 
-export SubjectData(s, vals=V) = |
+export SubjectData(s, vals=V) = 
     field(s,"<IntegerDataBag: java.util.LinkedList list>",_l)*
     lspe(_l,nil(),V) ;
 
 define Subject(s, obs=O; vals=V) =
- | 
     SubjectInternal$IntegerDataBag(s,{obs=O}) *
     SubjectData(s, {vals=V}) ;
 
 define SubjectObs(s, obs=O; vals=V) =
- | 
  Subject$IntegerDataBag(s,{obs=O;vals=V}) * ObsSet(O,V,s);
 
 
 
 void <init>() : 
-{ | } 
-{ | Subject$(@this:, {obs=empty(); vals=empty()}) };
+{ } 
+{ Subject$(@this:, {obs=empty(); vals=empty()}) };
 
 static void <init>() : 
-{ | } 
-{ | SubjectData$IntegerDataBag(@this:, {vals=empty()}) * SubjectInternal$IntegerDataBag(@this:, {obs=empty()}) };
+{ } 
+{ SubjectData$IntegerDataBag(@this:, {vals=empty()}) * SubjectInternal$IntegerDataBag(@this:, {obs=empty()}) };
 
 void beginModification() : 
-{ | SubjectObs$(@this:, {obs=_O; vals=_V}) }
-{ | SubjectInternal$(@this:, {obs=_O}) * SubjectData(@this:, {vals=_V}) * ObsSet(_O,_V,@this:) };
+{ SubjectObs$(@this:, {obs=_O; vals=_V}) }
+{ SubjectInternal$(@this:, {obs=_O}) * SubjectData(@this:, {vals=_V}) * ObsSet(_O,_V,@this:) };
 
 void endModification() : 
-{ | SubjectInternal$(@this:, {obs=_O}) * SubjectData(@this:, {vals=_V2}) * ObsSet(_O,_V,@this:) }
-{ | SubjectObs$(@this:, {obs=_O; vals=_V2}) };
+{ SubjectInternal$(@this:, {obs=_O}) * SubjectData(@this:, {vals=_V2}) * ObsSet(_O,_V,@this:) }
+{ SubjectObs$(@this:, {obs=_O; vals=_V2}) };
 
 void addObserver(Observer) : 
-{ | SubjectObs$(@this:, {obs=_O; vals=_V}) * Observer(@parameter0:, {vals=_V2; subject=@this:}) }
-{ | SubjectObs$(@this:, {obs=add(@parameter0:,_O); vals=_V} ) };
+{ SubjectObs$(@this:, {obs=_O; vals=_V}) * Observer(@parameter0:, {vals=_V2; subject=@this:}) }
+{ SubjectObs$(@this:, {obs=add(@parameter0:,_O); vals=_V} ) };
 
 void removeObserver(Observer) : 
-{ | SubjectObs$(@this:, {obs=add(@parameter0:,_O); vals=_V} ) }
-{ | SubjectObs$(@this:, {obs=_O; vals=_V}) * Observer(@parameter0:, {vals=_v2; subject=_s}) };
+{ SubjectObs$(@this:, {obs=add(@parameter0:,_O); vals=_V} ) }
+{ SubjectObs$(@this:, {obs=_O; vals=_V}) * Observer(@parameter0:, {vals=_v2; subject=_s}) };
 
 void notifyObservers() : 
-{ |  Subject$(@this:, {obs=_O; vals=_V}) * ObsSet(_O, _V2, @this:) }
-{ |  Subject$(@this:, {obs=_O; vals=_V}) * ObsSet(_O, _V, @this:) };
+{ Subject$(@this:, {obs=_O; vals=_V}) * ObsSet(_O, _V2, @this:) }
+{ Subject$(@this:, {obs=_O; vals=_V}) * ObsSet(_O, _V, @this:) };
 
 }
 
@@ -149,10 +146,10 @@ void notifyObservers() :
 
 class IntegerPrinter
 {
-static void <init>(IntegerDataBag) : { | } { | };
+static void <init>(IntegerDataBag) : { } { };
 
 static void update(Subject) :
-  { | Observer(@this:,{vals=_v; subject=@parameter0:}) * SubjectData(@parameter0:, {vals=_v2}) } 
-  { | Observer(@this:,{vals=_v2; subject=@parameter0:}) * SubjectData(@parameter0:, {vals=_v2}) } ;
+  { Observer(@this:,{vals=_v; subject=@parameter0:}) * SubjectData(@parameter0:, {vals=_v2}) } 
+  { Observer(@this:,{vals=_v2; subject=@parameter0:}) * SubjectData(@parameter0:, {vals=_v2}) } ;
 
 }

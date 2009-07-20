@@ -126,16 +126,7 @@ let reference2args r = (* not sure we need this. Maybe we need reference2PPred*)
   |Field_sig_ref(si) -> assert false
 
 
-(* for the moment only few cases are done of this. Need to be extended *)
-let expression2args e = 
-  match e with 
-  | New_simple_exp ty -> assert false
-  | New_array_exp (nv_ty,fad) -> assert false  
-  | New_multiarray_exp (ty,adl) -> assert false  
-  | Cast_exp (nv_ty,im) -> assert false  
-  | Instanceof_exp (im,nv_ty) -> assert false  
-  | Binop_exp (bop,im1,im2) -> 
-      Arg_op((match bop with 
+let bop_to_prover_arg = function
 	Jparsetree.And -> "builtin_and"
       | Jparsetree.Or -> "builtin_or"
       | Xor -> "builtin_xor"
@@ -155,7 +146,18 @@ let expression2args e =
       | Plus -> "builtin_plus"
       | Minus -> "builtin_minus"
       | Mult -> "builtin_mult"
-      | Div -> "builtin_div")  
+      | Div -> "builtin_div"
+
+(* for the moment only few cases are done of this. Need to be extended *)
+let expression2args e = 
+  match e with 
+  | New_simple_exp ty -> assert false
+  | New_array_exp (nv_ty,fad) -> assert false  
+  | New_multiarray_exp (ty,adl) -> assert false  
+  | Cast_exp (nv_ty,im) -> assert false  
+  | Instanceof_exp (im,nv_ty) -> assert false  
+  | Binop_exp (bop,im1,im2) -> 
+      Arg_op(bop_to_prover_arg bop
 	,   [immediate2args im1; immediate2args im2] )
   | Unop_exp (uop,im) -> assert false  
   | Invoke_exp ie -> assert false  
@@ -200,17 +202,22 @@ let negate e =
   | Binop_exp (Cmple,i1,i2) -> Binop_exp (Cmpgt,i1,i2)  
   | _ -> assert false (* ddino: many other cases should be filled in *)
 
+let bop_to_prover_pred bop i1 i2 = 
+  [match bop with 
+  | Cmpeq -> P_EQ (i1, i2)
+  | Cmpne -> P_NEQ (i1, i2)   
+  | Cmpgt -> P_PPred("GT",[i1; i2])
+  | Cmplt -> P_PPred("LT",[i1; i2])
+  | Cmpge -> P_PPred("GE",[i1; i2])
+  | Cmple -> P_PPred("LE",[i1; i2])
+  | _ -> Printf.printf "\n\n Operation %s not supported. Abort!" (Pprinter.binop2str bop);
+      assert false (* ddino: many other cases should be filled in *)]
+
 let expression2pure e =
-  [match e with
-  | Binop_exp (Cmpeq,i1,i2) -> P_EQ (immediate2args i1, immediate2args i2)
-  | Binop_exp (Cmpne,i1,i2) -> P_NEQ (immediate2args i1, immediate2args i2)   
-  | Binop_exp (Cmpgt,i1,i2) -> P_PPred("GT",[immediate2args i1; immediate2args i2])
-  | Binop_exp (Cmplt,i1,i2) -> P_PPred("LT",[immediate2args i1; immediate2args i2])
-  | Binop_exp (Cmpge,i1,i2) -> P_PPred("GE",[immediate2args i1; immediate2args i2])
-  | Binop_exp (Cmple,i1,i2) -> P_PPred("LE",[immediate2args i1; immediate2args i2])
+  match e with
+  | Binop_exp (op,i1,i2) -> bop_to_prover_pred op (immediate2args i1) (immediate2args i2)
   | _ -> Printf.printf "\n\n Expression %s not supported. Abort!" (Pprinter.expression2str e);
-      assert false (* ddino: many other cases should be filled in *)
-			      ]
+      assert false (* ddino: many other cases should be filled in *)			      
 
 (* ================= defines names for this, return and parameter =============== *)
 

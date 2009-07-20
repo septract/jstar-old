@@ -18,7 +18,7 @@ export LIB
 
 INCLUDES = 
 
-SYMBEXE_SOURCES = config.ml jparsetree.ml pprinter.mli pprinter.ml jlogic.ml specification.ml jparser.mly jlexer.mll methdec.ml cfg.ml abs.ml        support_symex.ml symexec.ml classverification.ml mkspecs.ml run_parser.ml
+SYMBEXE_SOURCES = config.ml jparsetree.ml pprinter.mli pprinter.ml jlogic.ml specification.ml support_symex.ml jparser.mly jlexer.mll methdec.ml cfg.ml abs.ml         symexec.ml classverification.ml mkspecs.ml run_parser.ml
 
 #dotty.ml
 

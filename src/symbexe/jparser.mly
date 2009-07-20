@@ -30,6 +30,11 @@ let parse_error s =
   let end_pos = Parsing.symbol_end_pos () in
   Printf.printf "Error between %s and %s\n" (location_to_string start_pos) (location_to_string end_pos)
 
+let parse_warning s =
+  let start_pos = Parsing.symbol_start_pos () in
+  let end_pos = Parsing.symbol_end_pos () in
+  Printf.printf "Warning %s (between %s and %s)\n" s (location_to_string start_pos) (location_to_string end_pos)
+
 let field_signature2str fs =
   match fs with 
   | Field_signature (c,t,n) ->  mkStrOfFieldSignature c t n
@@ -162,6 +167,27 @@ let field_signature2str fs =
 %left QUOTED_NAME
 %left FULL_IDENTIFIER
 
+%left OROR
+%left OR
+%left MULT
+%left AND
+%left XOR 
+%left MOD
+%left CMP 
+%left CMPG 
+%left CMPL 
+%left CMPEQ 
+%left CMPNE
+%left CMPGT
+%left CMPGE
+%left CMPLT
+%left CMPLE
+%left SHL 
+%left SHR 
+%left USHR 
+%left PLUS
+%left MINUS 
+%left DIV
 
 
 
@@ -205,11 +231,9 @@ methods_specs:
 
 spec:
    | L_BRACE formula R_BRACE L_BRACE formula R_BRACE exp_posts  {  {pre=$2;post=$5;excep=$7}  }
-   | error { Printf.printf "Was expecting spec of form {form} {form}\n"; raise Parse_error }
 specs:
    | spec ANDALSO specs  { $1 :: $3 }
    | spec     {[$1]}
-   | error ANDALSO specs { raise Parse_error }
 
 method_spec:
    | method_signature_short COLON specs  SEMICOLON  { Dynamic($1, $3) }
@@ -508,7 +532,7 @@ constant:
    | CLASS string_constant {Clzz_const($2)}    
    | NULL {Null_const}    
 ;
-binop:
+binop_no_mult:
    | AND {And}   
    | OR  {Jparsetree.Or}    
    | XOR {Xor}   
@@ -527,9 +551,38 @@ binop:
    | USHR {Ushr}  
    | PLUS {Plus}  
    | MINUS {Minus} 
-   | MULT {Mult}  
    | DIV {Div}   
 ;
+binop_val_no_multor:
+   | AND {And}   
+   | XOR {Xor}   
+   | MOD {Mod}   
+   | SHL {Shl}   
+   | SHR {Shr}   
+   | USHR {Ushr}  
+   | PLUS {Plus}  
+   | MINUS {Minus} 
+   | DIV {Div}   
+;
+binop_val:
+   | OR  {Jparsetree.Or}    
+   | MULT {Mult}
+   | binop_val_no_multor {$1}
+;
+binop_cmp:
+   | CMP {Cmp}   
+   | CMPG {Cmpg}  
+   | CMPL {Cmpl}  
+   | CMPEQ {Cmpeq} 
+   | CMPNE {Cmpne} 
+   | CMPGT {Cmpgt} 
+   | CMPGE {Cmpge} 
+   | CMPLT {Cmplt} 
+   | CMPLE {Cmple}   
+;
+binop: 
+   |  binop_no_mult { $1 } 
+   |  MULT { Mult }
 unop:
    | LENGTHOF   {Lengthof} 
    | NEG {Neg}
@@ -596,24 +649,40 @@ pure_list:
    | pure { $1 }
    | pure MULT pure_list {pconjunction $1 $3}
 ;
-combine: 
-   | formula OROR formula  { mkOr($1,$3) }
-   | formula WAND formula  { mkWand($1,$3) }
-spatial:
-   | argument DOT field_signature MAPSTO  argument { [P_SPred("field", [$1; Arg_string(field_signature2str $3); $5] )] }
-   | identifier L_PAREN argument_list R_PAREN {if List.length $3 =1 then [P_SPred($1,$3 @ [mkArgRecord []])] else [P_SPred($1,$3)] }
+
+
+
+jargument:
+   | lvariable {Arg_var ($1)}
+   | identifier L_PAREN jargument_list R_PAREN {Arg_op($1,$3) }        
+   | INTEGER_CONSTANT {Arg_string(string_of_int $1)} 
+   | STRING_CONSTANT {Arg_string($1)} 
+   | field_signature {Arg_string(field_signature2str $1)}
+   | L_BRACE fldlist R_BRACE {mkArgRecord $2}
+   | L_PAREN jargument binop_val_no_multor jargument R_PAREN { Arg_op(Support_symex.bop_to_prover_arg $3, [$2;$4]) }
+;
+
+jargument_list_ne:
+   | jargument {$1::[]}
+   | jargument COMMA jargument_list_ne { $1::$3 }
+jargument_list:
+   | /*empty*/  {[]}
+   | jargument_list_ne {$1}
+;
+  
+formula: 
+   |  { [] }
+   | jargument DOT field_signature MAPSTO  jargument { [P_SPred("field", [$1; Arg_string(field_signature2str $3); $5] )] }
+   | identifier L_PAREN jargument_list R_PAREN 
+       {if List.length $3 =1 then [P_SPred($1,$3 @ [mkArgRecord []])] else [P_SPred($1,$3)] }
    | full_identifier L_PAREN argument_list R_PAREN {if List.length $3 =1 then [P_SPred($1,$3 @ [mkArgRecord []])] else [P_SPred($1,$3)] }
-   | L_PAREN combine R_PAREN { $2 }
-/*   | FALSE {False}*/
-;
-spatial_list:
-   |      { [] }
-   | spatial { $1 }
-   | spatial MULT spatial_list {pconjunction $1 $3} 
-;
-formula:
-   | pure_list OR spatial_list { pconjunction $1 $3 }
-;
+   | formula MULT formula { pconjunction $1 $3 }
+   | formula OR formula { if Support_symex.symb_debug() || true then parse_warning "deprecated use of |"  ; pconjunction $1 $3 }
+   | formula OROR formula { mkOr ($1,$3) }
+   | jargument COLON identifier { [P_PPred("type", [$1;Arg_string($3)])] }
+   | jargument binop_cmp jargument { Support_symex.bop_to_prover_pred $2 $1 $3 }
+   | jargument EQUALS jargument { Support_symex.bop_to_prover_pred (Cmpeq) $1 $3 }
+   | L_PAREN formula R_PAREN { $2 }
 
 
 %% (* trailer *)

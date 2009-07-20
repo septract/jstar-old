@@ -1,36 +1,36 @@
 class java.lang.Object
 {
-  static void <init>() : { | } { | };
+  static void <init>() : { } { };
 }
 
 class java.util.LinkedList
 {
-  static void <init>() : { | } { | ls(@this:,nil(), empty()) };
+  static void <init>() : { } { ls(@this:,nil(), empty()) };
 
   boolean add(java.lang.Object) : 
-    { | ls(@this:,nil(),_s) }
-    { _s = app(_s0,_s1) | ls(@this:,nil(),app(_s0,cons(@parameter0:,_s1)))};
+    { ls(@this:,nil(),_s) }
+    { _s = app(_s0,_s1) * ls(@this:,nil(),app(_s0,cons(@parameter0:,_s1)))};
 
   java.lang.Object removeFirst() :
-    { length(_l) != numeric_const(0) | ls(@this:,nil(),_l) }
-    { _x=$ret_var * _l = cons(_x,_l2) | ls(@this:,nil(),_l2) };
+    { length(_l) != numeric_const(0) * ls(@this:,nil(),_l) }
+    { _x=$ret_var * _l = cons(_x,_l2) * ls(@this:,nil(),_l2) };
 
   int size() :
-    { | ls(@this:,nil(),_l) }
-    { length(_l)=$ret_var | ls(@this:,nil(),_l) };
+    { ls(@this:,nil(),_l) }
+    { length(_l)=$ret_var * ls(@this:,nil(),_l) };
 }
 
 class java.sql.DriverManager 
 {
   static java.sql.Connection getConnection(java.lang.String, java.lang.String, java.lang.String) :
-    { | }
-    { | DBConnection($ret_var, {connection=sql(@parameter0:,@parameter1:,@parameter2:)})}; 
+    { }
+    { DBConnection($ret_var, {connection=sql(@parameter0:,@parameter1:,@parameter2:)})}; 
 }
 
 class java.sql.Connection
 {
   static void close() : 
-    { | } { | };
+    { } { };
 }
 
 
@@ -40,121 +40,121 @@ class ResourcePool
 /* It might be nice for PoolInternal to specify non-emptyness of _R
    but the current prover cannot manage this. */
   define PoolInternal(x, type=t) = 
-          | field(x,<ResourcePool: java.util.LinkedList resources>,_r) *
+          field(x,<ResourcePool: java.util.LinkedList resources>,_r) *
 	  ls(_r,nil(),_R) * IterRes(setof(_R),x,t) ;
 
   define PoolInternalEmpty(x, ) = 
- 	  | field(x,<ResourcePool: java.util.LinkedList resources>,_r) *
+ 	  field(x,<ResourcePool: java.util.LinkedList resources>,_r) *
 	    ls(_r,nil(),empty()) ;
 
   export Pool(x, type=t) = 
-    | ( | PoolInternal$ResourcePool(x,{type=t}) * PoolData(x,{type=t})
+    PoolInternal$ResourcePool(x,{type=t}) * PoolData(x,{type=t})
        || 
-	| PoolInternalEmpty$ResourcePool(x,{}) * PoolData(x,{type=t}));
+   PoolInternalEmpty$ResourcePool(x,{}) * PoolData(x,{type=t});
 
-  void <init>() : { | } { | PoolInternalEmpty$(@this:,{}) };
+  void <init>() : {  } {  PoolInternalEmpty$(@this:,{}) };
 
   java.lang.Object makeResource() : 
-    { | PoolData(@this:, {type=_t}) } 
-    { | Resource(@this:, { handle=$ret_var; type=_t }) * PoolData(@this:,{type=_t}) };
+    { PoolData(@this:, {type=_t}) } 
+    { Resource(@this:, { handle=$ret_var; type=_t }) * PoolData(@this:,{type=_t}) };
 
   void destructResource(java.lang.Object) : 
-    { | PoolData(@this:, {type=_t}) * Resource(@this:, {handle=@parameter0:; type=_t}) } 
-    { | PoolData(@this:, {type=_t}) };
+    { PoolData(@this:, {type=_t}) * Resource(@this:, {handle=@parameter0:; type=_t}) } 
+    { PoolData(@this:, {type=_t}) };
 
   java.lang.Object getResource() : 
-    { | Pool$(@this:, {type=_t}) } 
-    { | Pool$(@this:, {type=_t}) * Resource(@this:, {handle=$ret_var; type=_t})  };
+    { Pool$(@this:, {type=_t}) } 
+    { Pool$(@this:, {type=_t}) * Resource(@this:, {handle=$ret_var; type=_t})  };
 
   void freeResource(java.lang.Object) : 
-    { | Pool$(@this:, {type=_t}) * Resource(@this:, {handle=@parameter0:;type=_t})  }
-    { | Pool$(@this:, {type=_t}) };
+    { Pool$(@this:, {type=_t}) * Resource(@this:, {handle=@parameter0:;type=_t})  }
+    { Pool$(@this:, {type=_t}) };
 }
 
 
 
 class ConnectionPool
 {
-  define Pool(x, type=t) = | Pool$ResourcePool(x,{type=t});
+  define Pool(x, type=t) = Pool$ResourcePool(x,{type=t});
   
-  define Resource(x, handle=y; type=t) = | DBConnection(y, {connection=t});
+  define Resource(x, handle=y; type=t) = DBConnection(y, {connection=t});
   
   define PoolData(x, type=t) = 
-	    t = sql(_url,_user,_password) |
+	    t = sql(_url,_user,_password) *
 	    field(x, <ConnectionPool: java.lang.String url>, _url) *
 	    field(x, <ConnectionPool: java.lang.String user>, _user) *
 	    field(x, <ConnectionPool: java.lang.String password>, _password); 
 
   static void <init>(java.lang.String,java.lang.String,java.lang.String) :
-    { | } 
-    { | PoolInternalEmpty$ResourcePool(@this:,{})
+    { } 
+    { PoolInternalEmpty$ResourcePool(@this:,{})
        * PoolData$ConnectionPool(@this:,{type=sql(@parameter0:,@parameter1:,@parameter2:)}) };
 
   void <init>(java.lang.String,java.lang.String,java.lang.String) :
-    { | } 
-    { | Pool(@this:,{type=sql(@parameter0:,@parameter1:,@parameter2:)}) };
+    { } 
+    { Pool(@this:,{type=sql(@parameter0:,@parameter1:,@parameter2:)}) };
 
 
   java.sql.Connection makeResource() : 
-    { | PoolData$(@this:, {type=_t}) } 
-    { | Resource$(@this:, { handle=$ret_var; type=_t }) * PoolData$(@this:,{type=_t}) };
+    { PoolData$(@this:, {type=_t}) } 
+    { Resource$(@this:, { handle=$ret_var; type=_t }) * PoolData$(@this:,{type=_t}) };
 
   void destructResource(java.sql.Connection) :
-    { | PoolData$(@this:, {type=_t}) * Resource$(@this:, {handle=@parameter0:; type=_t}) } 
-    { | PoolData$(@this:, {type=_t}) };
+    { PoolData$(@this:, {type=_t}) * Resource$(@this:, {handle=@parameter0:; type=_t}) } 
+    { PoolData$(@this:, {type=_t}) };
 
 
 /* Generated by Java's broken generics */
 
   void destructResource(java.lang.Object) : 
-    { | PoolData(@this:, {type=_t}) * Resource(@this:, {handle=@parameter0:; type=_t}) } 
-    { | PoolData(@this:, {type=_t}) };
+    { PoolData(@this:, {type=_t}) * Resource(@this:, {handle=@parameter0:; type=_t}) } 
+    { PoolData(@this:, {type=_t}) };
 
   java.lang.Object makeResource() :
-    { | PoolData(@this:, {type=_t}) } 
-    { | Resource(@this:, { handle=$ret_var; type=_t }) * PoolData(@this:,{type=_t}) };
+    { PoolData(@this:, {type=_t}) } 
+    { Resource(@this:, { handle=$ret_var; type=_t }) * PoolData(@this:,{type=_t}) };
 
 
 /* Better specs for inherited methods */
 
   java.sql.Connection getResource() : 
-    { | Pool(@this:, {type=_t}) } 
-    { | Pool(@this:, {type=_t}) * DBConnection($ret_var, {connection=_t})  };
+    { Pool(@this:, {type=_t}) } 
+    { Pool(@this:, {type=_t}) * DBConnection($ret_var, {connection=_t})  };
 
   static java.sql.Connection getResource() : 
-    { | Pool$ResourcePool(@this:, {type=_t}) } 
-    { | Pool$ResourcePool(@this:, {type=_t}) * Resource(@this:, { handle=$ret_var; type=_t })  };
+    { Pool$ResourcePool(@this:, {type=_t}) } 
+    { Pool$ResourcePool(@this:, {type=_t}) * Resource(@this:, { handle=$ret_var; type=_t })  };
 
   static java.lang.Object getResource() : 
-    { | Pool(@this:, {type=_t}) } 
-    { | Pool(@this:, {type=_t}) * DBConnection($ret_var, {connection=_t})  };
+    { Pool(@this:, {type=_t}) } 
+    { Pool(@this:, {type=_t}) * DBConnection($ret_var, {connection=_t})  };
 
 //This only works one way round, due to not backtracking for the andalso
   java.lang.Object getResource() : 
-    { type(@this:,ConnectionPool) | Pool(@this:, {type=_t}) } 
-    { | Pool(@this:, {type=_t}) * DBConnection($ret_var, {connection=_t})  }
+    { @this: : ConnectionPool * Pool(@this:, {type=_t}) } 
+    { Pool(@this:, {type=_t}) * DBConnection($ret_var, {connection=_t})  }
   andalso
-    { | Pool(@this:, {type=_t}) } 
-    { | Pool(@this:, {type=_t}) * Resource(@this:, {handle=$ret_var; type=_t})  }
+    { Pool(@this:, {type=_t}) } 
+    { Pool(@this:, {type=_t}) * Resource(@this:, {handle=$ret_var; type=_t})  }
 ;
 
 
   static void freeResource(java.sql.Connection) : 
-    { | Pool$ResourcePool(@this:, {type=_t}) * Resource(@this:, {handle=@parameter0:;type=_t})  }
-    { | Pool$ResourcePool(@this:, {type=_t}) }
+    { Pool$ResourcePool(@this:, {type=_t}) * Resource(@this:, {handle=@parameter0:;type=_t})  }
+    { Pool$ResourcePool(@this:, {type=_t}) }
   ;
 
   static void freeResource(java.lang.Object) : 
-    { | Pool$ResourcePool(@this:, {type=_t}) * Resource(@this:, {handle=@parameter0:;type=_t})  }
-    { | Pool$ResourcePool(@this:, {type=_t}) }
+    { Pool$ResourcePool(@this:, {type=_t}) * Resource(@this:, {handle=@parameter0:;type=_t})  }
+    { Pool$ResourcePool(@this:, {type=_t}) }
   ;
 
   void freeResource(java.lang.Object) : 
-    { | Pool(@this:, {type=_t}) * DBConnection(@parameter0:, {connection=_t})} 
-    { | Pool(@this:, {type=_t}) }
+    { Pool(@this:, {type=_t}) * DBConnection(@parameter0:, {connection=_t})} 
+    { Pool(@this:, {type=_t}) }
   andalso 
-    { | Pool(@this:, {type=_t}) * Resource(@this:, {handle=@parameter0:;type=_t})  }
-    { | Pool(@this:, {type=_t}) }
+    { Pool(@this:, {type=_t}) * Resource(@this:, {handle=@parameter0:;type=_t})  }
+    { Pool(@this:, {type=_t}) }
 ;
 
 

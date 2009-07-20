@@ -1,5 +1,6 @@
 class java.lang.Object {
-static void <init>() : {|}{|};
+    static void <init>() : 
+    {}{}
 }
 
 
@@ -7,9 +8,8 @@ static void <init>() : {|}{|};
 interface Ast
 {
 void accept(Visitor) : 
-      { | Visitor(@parameter0:,{context=_z}) * Ast(@this:,{content=_x}) } 
-      { | Visited(@parameter0:,{content=_x;context=_z;ast=@this:}) };
-
+      { Visitor(@parameter0:,{context=_z}) * Ast(@this:,{content=_x}) } 
+      { Visited(@parameter0:,{content=_x;context=_z;ast=@this:}) };
 }
 
 
@@ -19,14 +19,14 @@ void accept(Visitor) :
 
 class Const
 {
-export Ast(x,content=y) = y = const(_v) | field(x,<Const: int v>,_v) ;
+export Ast(x,content=y) = y = const(_v) * field(x,<Const: int v>,_v) ;
 
 void <init>(int) : 
-       { | } { | Ast$(@this:, {content=const(@parameter0:)})};
+       { } { Ast$(@this:, {content=const(@parameter0:)})};
 
 static void accept(Visitor) : 
-       { @this: : Const | Visitor(@parameter0:,{context=_z}) * Ast(@this:,{content=_x}) } 
-       { | Visited(@parameter0:,{content=_x;context=_z;ast=@this:})};
+       { @this: : Const * Visitor(@parameter0:,{context=_z}) * Ast(@this:,{content=_x}) } 
+       { Visited(@parameter0:,{content=_x;context=_z;ast=@this:})};
 
 }
 
@@ -39,23 +39,23 @@ class Plus
 {
 export Ast(x,content=y) = 
   y=plus(_lv,_rv) 
- | field(x,<Plus: Ast left>,_l) 
+   * field(x,<Plus: Ast left>,_l) 
    * field(x,<Plus: Ast right>,_r) 
    * Ast(_l,{content=_lv}) 
    * Ast(_r,{content=_rv});
 
 void <init>(Ast, Ast) : 
-       { | Ast(@parameter0:,{content=_x}) * Ast(@parameter1:, {content=_y})} 
-       { | Ast$(@this:, {content=plus(_x,_y)})};
+       { Ast(@parameter0:,{content=_x}) * Ast(@parameter1:, {content=_y})} 
+       { Ast$(@this:, {content=plus(_x,_y)})};
 
 static void accept(Visitor) :
        { @this: : Plus 
-         | Visitor(@parameter0:,{context=_z}) * Ast(@this:,{content=_x}) } 
-       { | Visited(@parameter0:,{content=_x;context=_z;ast=@this:})};
+         * Visitor(@parameter0:,{context=_z}) * Ast(@this:,{content=_x}) } 
+       { Visited(@parameter0:,{content=_x;context=_z;ast=@this:})};
 
 void accept(Visitor) :
-       { | Visitor(@parameter0:,{context=_z}) * Ast(@this:,{content=_x}) } 
-       { | Visited(@parameter0:,{content=_x;context=_z;ast=@this:})};
+       { Visitor(@parameter0:,{context=_z}) * Ast(@this:,{content=_x}) } 
+       { Visited(@parameter0:,{content=_x;context=_z;ast=@this:})};
 }
 
 
@@ -68,13 +68,13 @@ class Visitor
 {
 void visitC(Const) : 
        { @parameter0: : Const  
-         | Visitor(@this:,{context=_z}) *  Ast(@parameter0:,{content=_x}) } 
-       { | Visited(@this:,{content=_x;context=_z;ast=@parameter0:})};
+         * Visitor(@this:,{context=_z}) *  Ast(@parameter0:,{content=_x}) } 
+       { Visited(@this:,{content=_x;context=_z;ast=@parameter0:})};
 
 void visitP(Plus) : 
        { @parameter0: : Plus 
-         | Visitor(@this:,{context=_z}) * Ast(@parameter0:,{content=_x})}
-       { | Visited(@this:,{content=_x;context=_z;ast=@parameter0:}) };
+         * Visitor(@this:,{context=_z}) * Ast(@parameter0:,{content=_x})}
+       { Visited(@this:,{content=_x;context=_z;ast=@parameter0:}) };
 }
 
 
@@ -83,23 +83,23 @@ class Sum
 {
 
 define Visitor(x,context=y) = 
-   | field(x,<Sum: int amount>,y);
+   field(x,<Sum: int amount>,y);
 
 define Visited(x,content=z;context=y;ast=a) = 
-   | field(x,<Sum: int amount>,builtin_plus(y,sum(z))) * Ast(a,{content=z});
+   field(x,<Sum: int amount>,builtin_plus(y,sum(z))) * Ast(a,{content=z});
 
-void <init>() : { | } { | Visitor$(@this:,{context=numeric_const(0)}) };
+void <init>() : { } { Visitor$(@this:,{context=numeric_const(0)}) };
 
 
 static void visitP(Plus) :
        { @parameter0: : Plus *  @this: : Sum 
-       | Visitor(@this:,{context=_z}) * Ast(@parameter0:,{content=_p})}
-       { | Visited(@this:,{content=_p;context=_z;ast=@parameter0:}) };
+         * Visitor(@this:,{context=_z}) * Ast(@parameter0:,{content=_p})}
+       { Visited(@this:,{content=_p;context=_z;ast=@parameter0:}) };
 
 static void visitC(Const) :
        { @parameter0: : Const *  @this: : Sum 
-       | Visitor(@this:,{context=_z}) *  Ast(@parameter0:,{content=_x}) } 
-       { | Visited(@this:,{content=_x;context=_z;ast=@parameter0:})};
+         * Visitor(@this:,{context=_z}) *  Ast(@parameter0:,{content=_x}) } 
+       { Visited(@this:,{content=_x;context=_z;ast=@parameter0:})};
 
 }
 
@@ -108,32 +108,32 @@ static void visitC(Const) :
 
 class RZ
 {
-define Visitor(x,context=y) = |
+define Visitor(x,context=y) = 
 		     field(x,<RZ: boolean isZero>,false())
 //    		*    field(x,<RZ: boolean isChanged>,false())
     		*    field(x,<RZ: Ast newl>,nil())
 ;
 define Visited(x,content=z;context=y;ast=a) = 
-	        |    field(x,<RZ: boolean isZero>,_iz)
+	             field(x,<RZ: boolean isZero>,_iz)
 //    		*    field(x,<RZ: boolean isChanged>,_ic)
     		*    field(x,<RZ: Ast newl>,_al)
 		*    Ast(_al2, {content=rz(z)})
-		*    ( _iz != false() * rz(z) = const(zero()) |
-		     ||  _iz = false() * rz(z) != const(zero()) | )
-		*    ( _al != nil() * _al = _al2 |
-		     ||  _al = nil() * _al2 = a | )
+		*    ( _iz != false() * rz(z) = const(zero())
+		     ||  _iz = false() * rz(z) != const(zero()) )
+		*    ( _al != nil() * _al = _al2
+		     ||  _al = nil() * _al2 = a )
 ;
 
-static void <init>() : { | } { | Visitor$RZ(@this:,{context=_q})};
+static void <init>() : { } { Visitor$RZ(@this:,{context=_q})};
 
 static void visitP(Plus) :
        { @parameter0: : Plus * @this: : RZ 
-       | Visitor(@this:,{context=_z}) * Ast(@parameter0:,{content=_v})}
-       { | Visited(@this:,{content=_v;context=_z;ast=@parameter0:}) };
+         * Visitor(@this:,{context=_z}) * Ast(@parameter0:,{content=_v})}
+       { Visited(@this:,{content=_v;context=_z;ast=@parameter0:}) };
 
 static void visitC(Const) :
        { @parameter0: : Const * @this: : RZ 
-       | Visitor(@this:,{context=_z}) *  Ast(@parameter0:,{content=_x}) } 
-       { | Visited(@this:,{content=_x;context=_z;ast=@parameter0:})};
+         * Visitor(@this:,{context=_z}) *  Ast(@parameter0:,{content=_x}) } 
+       { Visited(@this:,{content=_x;context=_z;ast=@parameter0:})};
 
 }

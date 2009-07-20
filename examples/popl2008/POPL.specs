@@ -1,54 +1,54 @@
 class java.lang.Object 
 {
-  static void <init>() : { | } { | };
+  static void <init>() : { } { };
 }
 
 class Cell {
-  define Val(x,content=y) = | field(x, <Cell: int val>, y) ;
+  define Val(x,content=y) = field(x, <Cell: int val>, y) ;
 
-  static void <init>() : { | } { | field(@this:,<Cell: int val>,_z) };
+  static void <init>() : { } { field(@this:,<Cell: int val>,_z) };
   
   int get() : 
-  { | Val$(@this:, {content=_X})} 
-  { _X=$ret_var | Val$(@this:, {content=_X}) };
+  { Val$(@this:, {content=_X})} 
+  { _X=$ret_var * Val$(@this:, {content=_X}) };
 
   void set(int) : 
-  { | Val$(@this:, {content=_X})} 
-  { | Val$(@this:, {content=@parameter0:}) };
+  { Val$(@this:, {content=_X})} 
+  { Val$(@this:, {content=@parameter0:}) };
 }
 
 class Recell {
-  define Val(x,content=y;old=z) = | Val$Cell(x, {content=y}) * field(x, <Recell: int bak>, z) ;
+  define Val(x,content=y;old=z) = Val$Cell(x, {content=y}) * field(x, <Recell: int bak>, z) ;
 
-  static void <init>() : { | } { | field(@this:,<Recell: int bak>,_z) * field(@this:, <Cell: int val>,_w) };
+  static void <init>() : { } { field(@this:,<Recell: int bak>,_z) * field(@this:, <Cell: int val>,_w) };
   
   int get() : 
-  { | Val$(@this:, {content=_X; old=_Y})} 
-  { _X=$ret_var | Val$(@this:, {content=_X; old=_Y}) };
+  { Val$(@this:, {content=_X; old=_Y})} 
+  { _X=$ret_var * Val$(@this:, {content=_X; old=_Y}) };
 
   void set(int) : 
-  { | Val$(@this:, {content=_X; old=_Y})} 
-  { | Val$(@this:, {content=@parameter0:; old=_X}) };
+  { Val$(@this:, {content=_X; old=_Y})} 
+  { Val$(@this:, {content=@parameter0:; old=_X}) };
 }
 
 class DCell {
-  define Val(x,content=y) = y!=y | ;
-  define DVal(x,content=y) =  | Val$Cell(x,{content=builtin_plus(y,y)}) ;
+  define Val(x,content=y) = y!=y ;
+  define DVal(x,content=y) =  Val$Cell(x,{content=builtin_plus(y,y)}) ;
 
-  static void <init>() : { | } { | field(@this:, <Cell: int val>,_w) };
+  static void <init>() : { } { field(@this:, <Cell: int val>,_w) };
 
   int get() : 
-  { | Val$(@this:, {content=_X}) } 
-  { _X=$ret_var | Val$(@this:, {content=_X})} 
+  { Val$(@this:, {content=_X}) } 
+  { _X=$ret_var * Val$(@this:, {content=_X})} 
  andalso
-  { | DVal$(@this:, {content=_X})} 
-  { builtin_plus(_X,_X)=$ret_var | DVal$(@this:, {content=_X}) };
+  { DVal$(@this:, {content=_X})} 
+  { builtin_plus(_X,_X)=$ret_var * DVal$(@this:, {content=_X}) };
 
   void set(int) : 
-  { | Val$(@this:, {content=_X}) }
-  { | Val$(@this:, {content=@parameter0:}) } 
+  { Val$(@this:, {content=_X}) }
+  { Val$(@this:, {content=@parameter0:}) } 
 andalso
-  { | DVal$(@this:, {content=_X}) } 
-  { | DVal$(@this:, {content=@parameter0:}) };
+  { DVal$(@this:, {content=_X}) } 
+  { DVal$(@this:, {content=@parameter0:}) };
 
 }
