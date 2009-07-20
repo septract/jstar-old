@@ -21,7 +21,7 @@ exception No_match
 exception Failed
 exception Success
 
-(*let ts_debug=true*)
+let ts_debug=true
 let ts_debug=false
 
 
@@ -308,9 +308,12 @@ let lift f x =
     Some x -> Some (f x)
   | None -> None 
 
+let string_term ppf tid = 
+    Format.fprintf ppf "%a of %a" string_ft_db (!tid).term  string_rep_db (!tid).rep 
+
 let rec string_tlist ppf tl = 
   let f ppf tid = 
-    Format.printf "%a of %a" string_ft_db (!tid).term  string_rep_db (!tid).rep in
+    Format.fprintf ppf "%a of %a" string_ft_db (!tid).term  string_rep_db (!tid).rep in
   match tl with 
     [] -> Format.fprintf ppf ""
   | [t] -> f ppf t
@@ -1389,24 +1392,30 @@ let rewrite_ts (ts : term_structure) (rm : 'a rewrite_map) dtref rs (query : var
 			  if rep_eq r repid then 
 			    (match t with 
 			      Some (Inr ti) -> (* Term has been added *)
-				if TIDset.mem ti !dtref then () else ( dtref:=TIDset.add tid !dtref )
+				if TIDset.mem ti !dtref then () else 
+				( dtref:=TIDset.add tid !dtref;
+				 if ts_debug then Format.printf "Add removal flag to:%a@\n"  string_term tid)
 			    | Some (Inl ft) -> (* Lookup term id, as it preexisted *)
 				let ti : term =  (List.find (fun (y : term)-> ft_eq (!y).term ft) (!r).terms) in 
-				if TIDset.mem ti !dtref then () else ( dtref:=TIDset.add tid !dtref )
+				if TIDset.mem ti !dtref then () else 
+				( dtref:=TIDset.add tid !dtref ;
+				 if ts_debug then Format.printf "Add removal flag to:%a@\n"  string_term tid)
 			    | _ -> 
 				(* This means we have a anyvar on the right, I think, so should remove term *)
-				dtref:=TIDset.add tid !dtref 
+				dtref:=TIDset.add tid !dtref ;
+				if ts_debug then Format.printf "Add removal flag to:%a@\n"  string_term tid
 			    )
 			  else
 			  (if ts_debug then Format.printf "Make eq: %a %a\n" string_rep_term_db r    string_rep_term_db repid;
 			   (* if r does not use tid, then it should be removed later TODO make transitive check*)
-			   if Rset.exists (fun r ->  (List.exists ((==) tid) (!r).terms)) (rv_transitive r) then () else  
-			       dtref := TIDset.add tid !dtref;			         
+			   if Rset.exists (fun r ->  (List.exists ((==) tid) (!r).terms)) (rv_transitive r) then () else (
+			   if ts_debug then Format.printf "Add removal flag to:%a@\n"  string_term tid;  
+			       dtref := TIDset.add tid !dtref);			         
 			   (* Make terms equal *)
 			   subst := make_equal ts [r,repid] !subst;
 			   x := true;
-			   if ts_debug then Format.printf "Rewritten ts: %a\n" string_ts_db ts;
-			   if ts_debug then Format.printf "Done rule:%s\n" rule; raise Done); 
+			   if ts_debug then Format.printf "Rewritten ts: %a@\n" string_ts_db ts;
+			   if ts_debug then Format.printf "Done rule:%s@\n" rule; raise Done); 
 			  well_formed_rep repid; 
 			  well_formed_rep r;
 		      )
@@ -1437,7 +1446,7 @@ let kill_term_set ts tidset =
    TIDset.iter 
    (
     fun tid -> 
-      if ts_debug then Printf.printf "Removing term";
+      if ts_debug then Format.printf "Removing term:%a@\n"  string_term tid;
       let rid = (!tid).rep in 
       let terms = List.filter (fun t -> not (t == tid)) (!rid).terms in   
       (!rid).terms <- terms;

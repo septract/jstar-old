@@ -208,7 +208,8 @@ let exec_lookup_assign (v:Jparsetree.variable) (e:Jparsetree.reference) (sheap,i
   match frames with 
     [] ->      
       let idd = add_error_node "ERROR" in 
-      add_edge id idd (Pprinter.statement2str (node_get_stmt node).skind);
+      add_edge id idd 
+	(Format.fprintf (Format.str_formatter) "%s:@\n %a" (Pprinter.statement2str (node_get_stmt node).skind) Prover.pprint_counter_example (); Format.flush_str_formatter ());
       warning(); 
       Printf.printf "\n\nERROR: While executing node %d:\n   %s\n"  (node_get_id node) (Pprinter.statement2str (node_get_stmt node).skind);
       Prover.print_counter_example ();
@@ -240,7 +241,8 @@ let exec_mutation_assign  (v:Jparsetree.reference) (e:Jparsetree.immediate) (she
   match frames with 
     [] ->
       let idd = add_error_node "Error" in 
-      add_edge id idd (Pprinter.statement2str (node_get_stmt node).skind);
+      add_edge id idd
+	(Format.fprintf (Format.str_formatter) "%s:@\n %a" (Pprinter.statement2str (node_get_stmt node).skind) Prover.pprint_counter_example (); Format.flush_str_formatter ());
       warning(); 
       Printf.printf "\n\nERROR: While executing node %d:\n   %s\n"  
 	(node_get_id node) 
@@ -353,7 +355,12 @@ let call_jsr (sheap,id) spec n il si node =
     match res with 
       None ->   
 	let idd = add_error_node "ERROR" in
-	add_edge id idd (Pprinter.statement2str (node_get_stmt node).skind);
+	add_edge id idd 	
+	  (Format.fprintf 
+	     (Format.str_formatter) "%s:@\n %a" 
+	     (Pprinter.statement2str (node_get_stmt node).skind) 
+	     Prover.pprint_counter_example (); 
+	   Format.flush_str_formatter ());
         warning();
 	Printf.printf "\n\nERROR: While executing node %d:\n   %s\n"  (node_get_id node) (Pprinter.statement2str (node_get_stmt node).skind);
 	Prover.print_counter_example ();
@@ -567,7 +574,15 @@ let rec execute_stmt n (sheap : formset_entry) : unit =
 	 let _= Printf.printf "\n\nERROR: cannot prove post for method %s\n" (Pprinter.name2str m.name) in
 	Prover.print_counter_example ();
 	 reset();
-	List.iter (fun heap -> let idd = add_error_heap_node (fst heap) in add_edge (snd sheap) idd ("ERROR EXIT: "^(Pprinter.name2str m.name))) heaps
+	List.iter (fun heap -> 
+	  let idd = add_error_heap_node (fst heap) in 
+	  add_edge (snd sheap) idd 
+	  (Format.fprintf 
+	     (Format.str_formatter) "ERROR EXIT: %s:@\n %a" 
+	     (Pprinter.name2str m.name) 
+	     Prover.pprint_counter_example (); 
+	   Format.flush_str_formatter ()))
+	   heaps
 	(*print_formset "\n\n Failed Heap:\n" [sheap]    *)
       )
   | _ -> 

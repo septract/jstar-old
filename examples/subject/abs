@@ -98,10 +98,14 @@ rewrite app_empty_1 :
 rewrite app_empty_2 :
   app(?x,empty()) = ?x
 
+rewrite add_cons_empty: 
+  app(cons(?x,empty()), ?y) = cons(?x,?y)
+
 rewrite app_cons :
   app(cons(?x,?y),?z) = cons(?x,app(?y,?z))
-without
-  ?z=empty()
+without		 
+ | (?y=empty()|)
+    || (z=empty()|)
 
 
 rewrite app_app_assoc :
@@ -169,13 +173,13 @@ rewrite hack2_e :
   app(elist(?z),cons(_x,?y)) = app(elist(app(?z,s(_x))), ?y)
 
 rewrite hack3_e : 
-  app(elist(?z),app(elist(?x),?y)) = app(elist(app(?z,_x)), ?y)
+  app(elist(?z),app(elist(?x),?y)) = app(elist(app(?z,?x)), ?y)
 
 rewrite hack2 : 
   app(_z,cons(_x,?y)) = app(elist(app(_z,s(_x))), ?y)
 
 rewrite hack3 : 
-  app(_z,app(elist(?x),?y)) = app(elist(app(_z,_x)), ?y)
+  app(_z,app(elist(?x),?y)) = app(elist(app(_z,?x)), ?y)
 
 rewrite hack4 : 
   cons(_z,app(elist(?x),?y)) = app(elist(s(_z),?x), ?y)

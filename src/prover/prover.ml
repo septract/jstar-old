@@ -21,6 +21,11 @@ let print_counter_example ()  =
     (Debug.list_format "\nor" (string_ts_seq (rao_create())))
     !prover_counter_example
 
+let pprint_counter_example ppf () = 
+  Format.fprintf ppf "Needed to prove:@   @[%a@]@\n@\n"
+    (Debug.list_format "\nor" (string_ts_seq (rao_create())))
+    !prover_counter_example
+
 exception Failed_eg of ts_sequent list
 
 (* frame, P,S |- P',S' *)
@@ -391,6 +396,10 @@ let rec rewrites_sequent_inner rwm (ts,seq) rewrite_track ep abs =
     try 
       let ts_seq = (ts,subst_sequent subst seq) in 
       if !(Debug.debug_ref) then Format.printf "Rewritten to@\n %a@\n" (string_ts_seq (rao_create())) ts_seq;
+      if abs then (
+	Rterm.kill_term_set ts !rewrite_track;    
+	if Rterm.ts_debug then Format.printf "Tidied after rewrites@\n %a" string_ts_db ts
+	    ) ;
       rewrites_sequent_inner rwm ts_seq rewrite_track ep abs
     with Success -> 
       (ts,true_sequent)
