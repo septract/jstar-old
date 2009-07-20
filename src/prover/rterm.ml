@@ -241,7 +241,7 @@ let rmap_map f map =
   Rhash.iter (fun r r' -> Rhash.replace map r (f r')) map_copy; map  
 let rmap_mem r map = Rmap.mem r map
 let rmap_add r1 r2 map = Rmap.add r1 r2 map
-let rmap_printf map = Rmap.iter (fun r1 r2 -> Printf.printf "Maps %s to %s\n" (string_rep r1) (string_rep r2)) map
+let rmap_printf map = Rmap.iter (fun r1 r2 -> Format.printf "Maps %s to %s\n" (string_rep r1) (string_rep r2)) map
 *)
 
 (*Removed the following as it breaks in F# due to the semantics of iterator:
@@ -999,7 +999,7 @@ let rec make_equal (ts : term_structure) (eqs : (representative * representative
 	      r
 	    ); 
 	  Thash.remove ts.termhash ((!t2).term);
-	  if ts_debug then Printf.printf "Removed from hash!\n";
+	  if ts_debug then Format.printf "Removed from hash!\n";
 	  assert(not(Thash.mem ts.termhash (!t2).term));
 	  Thash.add ts.termhash ((!t2).term) r1; 
 	  (!t2).rep <- r1
@@ -1134,7 +1134,7 @@ let clone (ts : term_structure) (rs : rset_t) : term_structure * representative_
 	  (!rep).uses
     ) rs;
   newts.repset <- setmap (apply_subst subst) ts.repset;
-  if ts_debug then Printf.printf "Finished clone\n";
+  if ts_debug then Format.printf "Finished clone\n";
   if ts_debug then Format.printf "%a" printf_thash newts;
   newts,subst
 
@@ -1160,7 +1160,7 @@ let clone (ts : term_structure) (rs : rset_t) : term_structure * representative_
 (* Remove the program variable from the term structure *)
 let rec kill_var (ts : term_structure) (v : Vars.var) = 
   try 
-    if ts_debug then Printf.printf "Kill %s\n" (Vars.string_var v);
+    if ts_debug then Format.printf "Kill %s\n" (Vars.string_var v);
     let r = find_term ts (Arg_var v) in 
     if ts_debug then Format.printf "Rep currently looks like: %a\n" string_rep_term_db r;
     let tl = (!r).terms in
@@ -1350,14 +1350,14 @@ exception Done
 let rewrite_ts (ts : term_structure) (rm : 'a rewrite_map) dtref rs (query : var_subst * 'a -> bool) = 
   let x = ref true in
   let subst = ref (empty_subst () )in
-  if ts_debug then Printf.printf "Trying to rewrite stuff!\n";
-  if ts_debug then Printf.printf "Trying to rewrite stuff!\n";
+  if ts_debug then Format.printf "Trying to rewrite stuff!\n";
+  if ts_debug then Format.printf "Trying to rewrite stuff!\n";
   try 
     Thash.iter 
     (
      fun ft repid ->
        if (!repid).deleted then unsupported () else (
-       if ts_debug then Format.printf "Trying to rewrite: %a of %a\n" string_ft_db ft   string_rep_db repid;
+       if ts_debug then Format.printf "Trying to rewrite: %a of %a@\n" string_ft_db ft   string_rep_db repid;
        match ft with 
 	 FTFunct(name, rl) ->
 	   (try 
@@ -1366,7 +1366,7 @@ let rewrite_ts (ts : term_structure) (rm : 'a rewrite_map) dtref rs (query : var
 	       (
 		fun (al,a,extra,rule) ->
 		  try
-		    if ts_debug then Printf.printf "Trying rule:%s\n" rule;
+		    if ts_debug then Format.printf "Trying rule:%s@\n" rule;
 		    unifies_list ts al rl empty_vs
 		      (fun interp 
 			-> 
@@ -1377,17 +1377,28 @@ let rewrite_ts (ts : term_structure) (rm : 'a rewrite_map) dtref rs (query : var
 				    Arg_var (Vars.EVar _) 
 				    -> 
 				      let b = Rset.mem r rs in
-				      if ts_debug && b then Printf.printf "Not a free exists.\n"; b 
+				      if ts_debug && b then Format.printf "Not a free exists.@\n"; b 
 				  | _ -> false) 
 				rl al) 
 			  then raise No_match; 
 			  (* end Hack *)
 			  if not (query (interp,extra)) then raise No_match; 
+			  let tid : term =  (List.find (fun (y : term)-> ft_eq (!y).term ft) (!repid).terms) in
 			  let r,i,t = add_term_id ts interp a in 
 			  if !(Debug.debug_ref) && not(rep_eq r repid) then Format.printf "Using rule: %s gives %a equal to %a.\n" rule (string_rep_term (rao_create ())) r  (string_rep_term (rao_create ())) repid;
-			  if rep_eq r repid then () else
+			  if rep_eq r repid then 
+			    (match t with 
+			      Some (Inr ti) -> (* Term has been added *)
+				if TIDset.mem ti !dtref then () else ( dtref:=TIDset.add tid !dtref )
+			    | Some (Inl ft) -> (* Lookup term id, as it preexisted *)
+				let ti : term =  (List.find (fun (y : term)-> ft_eq (!y).term ft) (!r).terms) in 
+				if TIDset.mem ti !dtref then () else ( dtref:=TIDset.add tid !dtref )
+			    | _ -> 
+				(* This means we have a anyvar on the right, I think, so should remove term *)
+				dtref:=TIDset.add tid !dtref 
+			    )
+			  else
 			  (if ts_debug then Format.printf "Make eq: %a %a\n" string_rep_term_db r    string_rep_term_db repid;
-			   let tid : term =  (List.find (fun (y : term)-> ft_eq (!y).term ft) (!repid).terms) in
 			   (* if r does not use tid, then it should be removed later TODO make transitive check*)
 			   if Rset.exists (fun r ->  (List.exists ((==) tid) (!r).terms)) (rv_transitive r) then () else  
 			       dtref := TIDset.add tid !dtref;			         
@@ -1408,7 +1419,7 @@ let rewrite_ts (ts : term_structure) (rm : 'a rewrite_map) dtref rs (query : var
     ) ts.termhash;
     raise No_match
   with Done ->
-    (if ts_debug then (Printf.printf "Finished rewrites!\n"; print_termhash ts);
+    (if ts_debug then (Format.printf "Finished rewrites!@\n"; print_termhash ts);
     !subst)
 
 

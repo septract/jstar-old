@@ -57,8 +57,9 @@ let main () =
 	(match x with [] -> Printf.printf "Can't find frame!" | _ -> List.iter (fun form -> Format.printf "Frame:\n %a\n" (Rlogic.string_ts_form (Rterm.rao_create ())) form) x);
 	Printf.printf "\n"
     | Prover.Abs (heap1)  ->
+	Format.printf "Abstract@\n  @[%a@]@\nresults in@\n  " Plogic.string_form heap1;
 	let x = Prover.abs logic (Rlogic.convert heap1) in 
-(*e	List.iter (fun form -> Printf.printf "Abstracts to %s\n" (Logic.string_form form)) x;*)
+	List.iter (fun form -> Format.printf "%a\n" (Rlogic.string_ts_form (Rterm.rao_create ())) form) x;
 	Printf.printf "\n"
     | Prover.Inconsistency (heap1) ->
 	if Prover.check_inconsistency logic (Rlogic.convert heap1) 
