@@ -609,16 +609,17 @@ let rec execute_stmt n (sheap : formset_entry) : unit =
 	     );
 
 	    let sheaps_with_id = add_id_formset sheaps_abs in
+	    List.iter (fun sheap2 -> add_edge (snd sheap) (snd sheap2) ("Abstract@"^Pprinter.statement2str stm.skind)) sheaps_with_id;
 	    let sheaps_with_id = List.filter 
 		(fun (sheap2,id2) -> List.for_all
 		    (fun (form,id) -> 
 		      if check_implication !curr_logic (form_clone sheap2) form  then 
-			(add_edge (snd sheap) id (Pprinter.statement2str stm.skind) ;false) 
+			(add_edge id2 id ("Contains@"^Pprinter.statement2str stm.skind) ;false) 
 		      else true)
 		    formset;
 		) sheaps_with_id in
-	    List.iter (fun h ->
-			 add_edge (snd sheap) (snd h) (Pprinter.statement2str stm.skind)) sheaps_with_id;
+(*	    List.iter (fun h ->
+			 add_edge (snd sheap) (snd h) (Pprinter.statement2str stm.skind)) sheaps_with_id;*)
 	    formset_table_replace id (sheaps_with_id @ formset);
 	    execs_one (List.map id_clone sheaps_with_id)
 	  with Contained -> if symb_debug() then Printf.printf "Formula contained.\n")
