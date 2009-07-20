@@ -136,8 +136,7 @@ let main () =
 	Mkspecs.print_specs_template program
        )
      else 
-       Sys.catch_break true;
-       at_exit Symexec.pp_dotty_transition_system;
+       Sys.catch_break true;   
        try 
 	 let logic = 
 	     Load_logic.load_logic  (System.getenv_dirlist "JSTAR_LOGIC_LIBRARY") !logic_file_name
@@ -155,6 +154,7 @@ let main () =
 	 if !Support_symex.sym_debug then Printf.printf "\n\n Starting symbolic execution...";
 	 Classverification.verify_class program static_method_specs dynamic_method_specs apfmap logic abs_rules ;
 	   (*Symexec.compute_fixed_point program apfmap logic abs_rules static_method_specs dynamic_method_specs*)
-  Symexec.pp_dotty_transition_system () 
+	 Symexec.pp_dotty_transition_system () 
        with Assert_failure (e,l,c) -> Printf.printf "Error!!! Assert failure %s line %d character %d\n" e l c
+       |  Sys.Break ->   Symexec.pp_dotty_transition_system () 
 let _ = main ()

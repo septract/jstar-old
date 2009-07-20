@@ -148,6 +148,9 @@ let full_identifier =
 let identifier = 
       (first_id_char | escape_char) (simple_id_char | escape_char)* | "<clinit>" | "<init>"
 
+(*let identifier =
+    (first_id_char | escape_char) (simple_id_char | escape_char)* | '<' (first_id_char | escape_char) (simple_id_char | escape_char)* '>'*)
+
 let quoted_name = quote quotable_char+ quote
 
 let at_identifier = '@' (("parameter" dec_digit+ ':') | "this" ':' | "caughtexception") 

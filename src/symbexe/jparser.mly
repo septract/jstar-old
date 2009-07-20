@@ -1,6 +1,7 @@
 /* ddino implementation of a parser for Jimple */
 
 %{ (* header *)
+exception Give_up
 
 open Jparsetree
 
@@ -204,6 +205,7 @@ methods_specs:
 
 spec:
    | L_BRACE formula R_BRACE L_BRACE formula R_BRACE exp_posts  {  {pre=$2;post=$5;excep=$7}  }
+   | error { Format.printf "Was expecting spec of form {form} {form}@\n"; raise Give_up }
 specs:
    | spec ANDALSO specs  { $1 :: $3 }
    | spec     {[$1]}
@@ -211,6 +213,8 @@ specs:
 method_spec:
    | method_signature_short COLON specs  SEMICOLON  { Dynamic($1, $3) }
    | STATIC method_signature_short COLON specs SEMICOLON  { Static($2, $4) }
+   | method_signature_short COLON specs   { Dynamic($1, $3) }
+   | STATIC method_signature_short COLON specs  { Static($2, $4) }
 
 exp_posts:
    | L_BRACE class_name COLON formula R_BRACE exp_posts { ClassMap.add $2 $4 $6 }
@@ -245,10 +249,6 @@ implements_clause:
 ;
 file_body:
    | L_BRACE member_list_star R_BRACE {$2}
-;
-name_list:
-   | name  {[$1]} 
-   | name COMMA name_list {$1::$3}
 ;
 class_name_list:
    | class_name { [$1] } 
@@ -336,7 +336,7 @@ array_brackets_list_star:
 ;
 method_body:
    | SEMICOLON {None}
-   | L_BRACE declaration_or_statement_list_star /* declaration_list_star statement_list_star */ catch_clause_list_star R_BRACE  {Some($2,$3)}
+   | L_BRACE declaration_or_statement_list_star catch_clause_list_star R_BRACE  {Some($2,$3)}
 ;
 declaration_or_statement:
    | declaration { DOS_dec($1) }
@@ -348,14 +348,6 @@ declaration_or_statement_list_star:
 ;
 declaration:
    | jimple_type local_name_list SEMICOLON {Declaration($1,$2)}
-;
-declaration_list_star:
-   | /* empty */ { [] } 
-   | declaration  declaration_list_star {$1::$2}
-;
-statement_list_star:
-   | /* empty */ { [] } 
-   | statement  statement_list_star {$1::$2}
 ;
 catch_clause_list_star:
    | /* empty */ { [] } 
@@ -581,16 +573,15 @@ argument:
    | field_signature {Arg_string(field_signature2str $1)}
    | L_BRACE fldlist R_BRACE {mkArgRecord $2}
 ;
+
+argument_list_ne:
+   | argument {$1::[]}
+   | argument COMMA argument_list_ne { $1::$3 }
 argument_list:
    | /*empty*/  {[]}
-   | argument {$1::[]}
-   | argument COMMA argument_list_question_mark {let a=match $3 with Some b -> b | None -> [] in $1::a}
+   | argument_list_ne {$1}
 ;
 
-argument_list_question_mark:
-   | argument_list { Some $1 }
-   | /* empty */ { None }
-;
 
 
 pure: 
