@@ -144,10 +144,8 @@ let main () =
 	
 	 let abs_rules = Load_logic.load_logic  (System.getenv_dirlist "JSTAR_LOGIC_LIBRARY") !absrules_file_name in
 	 
-	 let s = System.string_of_file !spec_file_name 
-	 in if !Support_symex.sym_debug then Printf.printf "Start parsing specs in %s...\n" !spec_file_name;
-	 let spec_list  = Jparser.spec_file Jlexer.token (Lexing.from_string s) 
-	 in if !Support_symex.sym_debug then Printf.printf "Specs Parsing... done!\n";
+	 let spec_list = System.parse_file Jparser.spec_file Jlexer.token !spec_file_name "Specs" 
+	     !Support_symex.sym_debug in 
 	 let apfmap,logic = Specification.spec_file_to_classapfmap logic spec_list in
 	 let (static_method_specs,dynamic_method_specs) = Specification.spec_file_to_method_specs spec_list apfmap in
 	 

@@ -22,6 +22,21 @@ let string_of_file fname =
 
 
 
+let parse_file pars lexe fname ftype debug = 
+  try 
+    if debug then Printf.printf "Start parsing %s in %s...\n" ftype fname;
+    let ichan = open_in fname in 
+    let ret = pars lexe (Lexing.from_channel ichan) in 
+    Parsing.clear_parser ();
+    close_in ichan;
+    if debug then Printf.printf "Parsed %s!\n" fname;
+    ret
+  with Parsing.Parse_error -> Printf.printf "Failed to parse %s\n" fname; exit 1
+  |  Failure s ->  Printf.printf "Failed to parse %s\n%s\n" fname s; exit 1 
+
+
+
+
 
 (* 
   Check if file exists in current directory, or in list of directories supplied.  

@@ -205,10 +205,11 @@ methods_specs:
 
 spec:
    | L_BRACE formula R_BRACE L_BRACE formula R_BRACE exp_posts  {  {pre=$2;post=$5;excep=$7}  }
-   | error { Format.printf "Was expecting spec of form {form} {form}@\n"; raise Give_up }
+   | error { Printf.printf "Was expecting spec of form {form} {form}\n"; raise Parse_error }
 specs:
    | spec ANDALSO specs  { $1 :: $3 }
    | spec     {[$1]}
+   | error ANDALSO specs { raise Parse_error }
 
 method_spec:
    | method_signature_short COLON specs  SEMICOLON  { Dynamic($1, $3) }

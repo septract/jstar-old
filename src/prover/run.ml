@@ -26,9 +26,6 @@ let arg_list =[ ("-f", Arg.String(set_file_name ), "program file name" );
 
 
 
-
-
-
 let main () =
   let usage_msg="Usage: -f <file_name> -l <logic_file_name>" in 
   Arg.parse arg_list (fun s ->()) usage_msg;
@@ -39,10 +36,9 @@ let main () =
     Printf.printf "Logic file name not specified. Can't continue....\n %s \n" usage_msg
   else 
     let logic = load_logic (System.getenv_dirlist "JSTAR_LOGIC_LIBRARY") !logic_file_name in
-    let s = System.string_of_file !program_file_name  in
-    Printf.printf "Start parsing implication in %s...\n" !program_file_name;
-    let question_list  = Logic_parser.file Logic_lexer.token (Lexing.from_string s) 
-    in Printf.printf "Parsed %s!\n" !program_file_name;
+(*    let s = System.string_of_file !program_file_name  in*)
+    let question_list = System.parse_file Logic_parser.file Logic_lexer.token !program_file_name "Questions" true in
+
     List.iter (
     fun question ->
       match question with 

@@ -9,21 +9,44 @@
 
 { (* ddino implementation of a lexer for jimple *)
 (* header *)
-  
+open Lexing  
 open Jparser 
 
 type error =
   | Illegal_character of char
   | Unterminated_comment
 
-exception Error of error * int * int
+exception Error of error * Lexing.lexbuf
 
-let incr_linenum lexbuf = 
-  let pos = lexbuf.Lexing.lex_curr_p in 
+let new_line lexbuf =
+  let pos =  lexbuf.Lexing.lex_curr_p in 
   lexbuf.Lexing.lex_curr_p <- { pos with 
 				Lexing.pos_lnum = pos.Lexing.pos_lnum + 1; 
 				Lexing.pos_bol = pos.Lexing.pos_cnum; 
 			      } 
+ 
+
+let nest_depth = ref 0
+let nest_start_pos = ref dummy_pos
+let nest x =
+  nest_depth := !nest_depth + 1; nest_start_pos := (x.lex_curr_p)
+let unnest x = 
+  nest_depth := !nest_depth - 1; (!nest_depth)!=0 
+
+
+let error_message e lb = 
+  match e with 
+    Illegal_character c -> 
+      Printf.sprintf "Illegal character %c  found at line %d character %d.\n" 
+	c 
+	lb.lex_curr_p.pos_lnum 
+	(lb.lex_curr_p.pos_cnum - lb.lex_curr_p.pos_bol)
+  | Unterminated_comment -> Printf.sprintf "Unterminatated comment started at line %d character %d in %s.\n"
+	!nest_start_pos.pos_lnum 
+	(!nest_start_pos.pos_cnum  - !nest_start_pos.pos_bol)
+	lb.lex_curr_p.pos_fname
+
+
 
 (* association list of keywords. to be checked *)
 let keyword_al = [
@@ -89,11 +112,11 @@ let keyword_al = [
 (* error reporting *)
 open Format
 
-let report_error ppf = function
+let report_error = function
   | Illegal_character c ->
-      fprintf ppf "Illegal character (%s)" (Char.escaped c)
+      Format.printf  "Illegal character (%s)@\n" (Char.escaped c)
   | Unterminated_comment ->
-      fprintf ppf "Comment not terminated"
+      Format.printf "Comment not terminated@\n"
 
 }
 
@@ -166,8 +189,8 @@ let string_constant = '"' string_char* '"'
 (* Translation of section Tokens of jimple.scc *)
 
 rule token = parse
-   | newline { incr_linenum lexbuf; token lexbuf }
-   | "/*" { comment lexbuf; token lexbuf } 
+   | newline { new_line lexbuf; token lexbuf }
+   | "/*" { nest lexbuf; comment lexbuf; token lexbuf } 
    | ignored_helper  { token lexbuf }
    | "Abstract"  { ABSTRACT } 
    | "final" { FINAL }
@@ -301,14 +324,12 @@ rule token = parse
 			try List.assoc s keyword_al
 			with Not_found -> STRING_CONSTANT s }
 
-  | _ { raise (Error(Illegal_character ((Lexing.lexeme lexbuf).[0]),
-                     Lexing.lexeme_start lexbuf, Lexing.lexeme_end lexbuf)) }
+  | _ { raise (Failure (error_message (Illegal_character ((Lexing.lexeme lexbuf).[0])) lexbuf))}
 and comment = parse 
-  | "/*"  { comment lexbuf; }
-  | "*/"  { }
-  | newline  { incr_linenum lexbuf; comment lexbuf }
-  | eof      { raise (Error(Unterminated_comment,
-                     Lexing.lexeme_start lexbuf, Lexing.lexeme_end lexbuf))}
+  | "/*"  { nest lexbuf; comment lexbuf }
+  | "*/"  { if unnest lexbuf then comment lexbuf }
+  | newline  { new_line lexbuf; comment lexbuf }
+  | eof      { raise (Failure (error_message Unterminated_comment lexbuf))}
   | _     { comment lexbuf; }
 
 
