@@ -139,7 +139,7 @@ let  oct_constant = '0' oct_digit+
 	
 let  quote = '\''
 
-let  escapable_char = '\\' | ' ' | quote | '.' | '#' | '"' | 'n' | 't' | 'r' | 'b' | 'f'
+let  escapable_char = '\\' | ' ' | quote | '.' | '#' | '\"' | 'n' | 't' | 'r' | 'b' | 'f'
 let  escape_code = 'u' hex_digit hex_digit hex_digit hex_digit
 let  escape_char = '\\' (escapable_char | escape_code)  
 
@@ -288,6 +288,7 @@ rule token = parse
    | "/" { DIV }
    | "_" { UNDERSCORE }
    | "?" { QUESTIONMARK }
+   | "!" { BANG }
    | eof { EOF }
    | "listclassfiles" {LISTCLASSFILES} 
 

@@ -78,6 +78,7 @@ let field_signature2str fs =
 %token IMPLEMENTS 
 %token BREAKPOINT  
 %token CASE 
+%token BANG
 %token CATCH 
 %token CMP 
 %token CMPG 
@@ -673,6 +674,7 @@ jargument_list:
 formula: 
    |  { [] }
    | jargument DOT field_signature MAPSTO  jargument { [P_SPred("field", [$1; Arg_string(field_signature2str $3); $5] )] }
+   | BANG identifier L_PAREN jargument_list R_PAREN { [P_PPred($2, $4)] } 
    | identifier L_PAREN jargument_list R_PAREN 
        {if List.length $3 =1 then [P_SPred($1,$3 @ [mkArgRecord []])] else [P_SPred($1,$3)] }
    | full_identifier L_PAREN argument_list R_PAREN {if List.length $3 =1 then [P_SPred($1,$3 @ [mkArgRecord []])] else [P_SPred($1,$3)] }
