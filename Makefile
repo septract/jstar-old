@@ -6,4 +6,8 @@ JSTAR_SPECS_LIBRARY = `pwd`/library/specs
 
 default:
 	cd src; make
-	export JSTAR_LOGIC_LIBRARY=$(JSTAR_LOGIC_LIBRARY); export PATH=$(PATH); cd examples; make test
+	export JSTAR_LOGIC_LIBRARY="$(JSTAR_LOGIC_LIBRARY)"; export PATH="$(PATH)"; cd examples; make test
+
+clean: 
+	cd src; make clean
+	cd examples; make clean
