@@ -264,7 +264,7 @@ modifier:
 file_type:
    | CLASS  { ClassFile }
    | INTERFACE { InterfaceFile }
-;
+       
 extends_clause:
    | EXTENDS class_name {Some $2}
    | /* empty */ {None}
@@ -624,6 +624,7 @@ argument:
    | lvariable {Arg_var ($1)}
    | identifier L_PAREN argument_list R_PAREN {Arg_op($1,$3) }        
    | INTEGER_CONSTANT {Arg_string(string_of_int $1)} 
+   | MINUS INTEGER_CONSTANT {Arg_string("-" ^(string_of_int $2))}
    | STRING_CONSTANT {Arg_string($1)} 
    | field_signature {Arg_string(field_signature2str $1)}
    | L_BRACE fldlist R_BRACE {mkArgRecord $2}
