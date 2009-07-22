@@ -109,7 +109,8 @@ let next_tcount () =
   tcount := !tcount+1;
   !tcount
 
-let new_term rep ft : term = ref {rep=rep;term=ft;nn=next_tcount()}  
+let new_term rep ft : term =
+  ref {rep=rep;term=ft;nn=next_tcount()}  
 
 (***********************************************
  *  Ugly printer
@@ -190,6 +191,7 @@ let current = ref 0
 
 let next_rep() : representative = 
   let x = !current in current := x+1;
+  if ts_debug then Format.printf "Created new rep: r_%d@\n" x;
   ref { terms = [] ; uses = []; n=x; name="r" ; deleted = false} 
 
 let rep_hash r1 = (!r1).n 
@@ -730,10 +732,10 @@ let rec add_term_id (ts : term_structure) (interp : var_subst)
         rid, interp, None
       with Not_found -> 
 	(match v with 
-	  Vars.PVar _ -> let rid,tid = add_flat_term ts (FTPVar v) [] in 
+	  Vars.PVar _ 
+	| Vars.EVar _ -> let rid,tid = add_flat_term ts (FTPVar v) [] in 
 	                 rid,interp,Some tid
-        | Vars.EVar _ -> let rid,tid = (add_flat_term ts (FTPVar v) []) in (rid, add_vs v rid interp, Some tid)
-	| Vars.AnyVar _  -> let rid = add_existential ts in (rid, add_vs v rid interp, None) 
+        | Vars.AnyVar _  -> let rid = add_existential ts in (rid, add_vs v rid interp, None) 
 	| _ -> unsupported ()
       ))	    
   | Arg_string s ->  f( add_flat_term ts (FTString s) [], interp)

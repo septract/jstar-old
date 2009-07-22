@@ -28,7 +28,7 @@ let location_to_string pos =
 let parse_error s =
   let start_pos = Parsing.symbol_start_pos () in
   let end_pos = Parsing.symbol_end_pos () in
-  Printf.printf "Error between %s and %s\n" (location_to_string start_pos) (location_to_string end_pos)
+  Printf.printf "Error between %s and %s\n%s\n" (location_to_string start_pos) (location_to_string end_pos) s
 
 let parse_warning s =
   let start_pos = Parsing.symbol_start_pos () in
@@ -130,7 +130,6 @@ let field_signature2str fs =
 %token <string> IDENTIFIER 
 %token <string> AT_IDENTIFIER 
 %token <string> FULL_IDENTIFIER 
-%token <string> BOOL_CONSTANT
 %token COLON_EQUALS 
 %token EQUALS 
 %token AND 
@@ -150,16 +149,43 @@ let field_signature2str fs =
 %token PLUS 
 %token MINUS 
 %token WAND
+%token VDASH
 %token MULT 
 %token DIV 
 %token L_BRACKET 
 %token R_BRACKET 
 %token UNDERSCORE 
 %token QUESTIONMARK 
-%token ANDALSO 
+
 %token EOF
 
-%token LISTCLASSFILES 
+
+%token ANDALSO 
+%token DEFINE
+%token EXPORT
+
+%token FALSE
+%token TRUE
+%token IMPLICATION
+%token FRAME
+%token ABS
+%token INCONSISTENCY
+%token RULE
+%token PURERULE
+%token PRED
+%token REWRITERULE
+%token EMPRULE
+%token IF
+%token WITHOUT
+%token WHERE
+%token EV
+%token NOTIN
+%token NOTINCONTEXT
+%token ORTEXT
+%token GARBAGE
+%token IMPORT 
+
+
 
 /* ============================================================= */
 
@@ -191,6 +217,9 @@ let field_signature2str fs =
 %left DIV
 
 
+%left DEFINE
+%left EXPORT
+
 
 /* entry points */
 //%start listing_file
@@ -201,7 +230,16 @@ let field_signature2str fs =
 %start spec_file
 %type <Specification.spec_file> spec_file
 
+/*
+%start file
+%type <Prover.question list> question_file
 
+%start rule_file
+%type <Prover.rules list> rule_file
+
+%start test_file
+%type <Prover.test list> test_file
+*/
 %% /* rules */
 
 /* entry points */
@@ -223,8 +261,10 @@ apf_defines:
    | /*empty*/ { [] }
 
 apf_define:
-   | identifier L_PAREN lvariable paramlist_question_mark R_PAREN EQUALS formula SEMICOLON  {  let a=match $4 with | Some b -> b | None -> [] in ($1,$3,a,$7,false) }
-   | identifier identifier L_PAREN lvariable paramlist_question_mark R_PAREN EQUALS formula SEMICOLON  { let a=match $5 with | Some b -> b | None -> [] in if $1="export" then ($2,$4,a,$8,true) else if $1="define" then ($2,$4,a,$8,false) else assert false }
+   | EXPORT identifier L_PAREN lvariable paramlist_question_mark R_PAREN EQUALS formula SEMICOLON  
+       { let a=match $5 with | Some b -> b | None -> [] in ($2,$4,a,$8,true) }
+   | DEFINE identifier L_PAREN lvariable paramlist_question_mark R_PAREN EQUALS formula SEMICOLON  
+       { let a=match $5 with | Some b -> b | None -> [] in ($2,$4,a,$8,false) }
 
 methods_specs:
    | method_spec methods_specs { $1 :: $2 }
@@ -339,15 +379,30 @@ quoted_name:
 ;
 identifier:
    | IDENTIFIER { $1 }
+/*   | DEFINE     { "define" }
+   | EXPORT     { "export" }
+   | ANDALSO    { "andalso" }*/
+  | FALSE   { "False" }
+  | TRUE   { "True" }
+  | IMPLICATION   { "Implication" }
+  | FRAME   { "Frame" }
+  | GARBAGE   { "Garbage" }
+  | INCONSISTENCY   { "Inconsistency" }
+  | RULE   { "rule" }
+  | EMPRULE   { "emprule" }
+  | PURERULE   { "purerule" }
+  | WITHOUT   { "without" }  
+  | NOTIN   { "notin" }  
+  | NOTINCONTEXT   { "notincontext" }  
+  | EV   { "EV" }  
+  | WHERE   { "where" }
+  | ORTEXT   { "or" }
 ;
 at_identifier:
    | AT_IDENTIFIER { $1 }
 ;
 full_identifier:
    | FULL_IDENTIFIER { $1 }
-;
-bool_constant:
-   | BOOL_CONSTANT { $1 }
 ;
 nonvoid_type:
    | base_type_no_name array_brackets_list_star  {Base($1,$2)}
@@ -606,9 +661,9 @@ lvariable:
    | QUESTIONMARK identifier { newAnyVar($2) }
 ;
 fldlist: 
-   | identifier EQUALS argument { [($1,$3)] }
+   | identifier EQUALS jargument { [($1,$3)] }
    | /*empty*/ { [] }
-   | identifier EQUALS argument SEMICOLON fldlist  { ($1,$3) :: $5 }
+   | identifier EQUALS jargument SEMICOLON fldlist  { ($1,$3) :: $5 }
 ;
 paramlist_question_mark:
    | COMMA L_BRACE paramlist R_BRACE { Some $3 }
@@ -620,44 +675,27 @@ paramlist:
    | /*empty*/ { [] }
    | identifier EQUALS lvariable SEMICOLON fldlist  { ($1,Arg_var $3) :: $5 }
 ;
-argument:
-   | lvariable {Arg_var ($1)}
-   | identifier L_PAREN argument_list R_PAREN {Arg_op($1,$3) }        
-   | INTEGER_CONSTANT {Arg_string(string_of_int $1)} 
-   | MINUS INTEGER_CONSTANT {Arg_string("-" ^(string_of_int $2))}
-   | STRING_CONSTANT {Arg_string($1)} 
-   | field_signature {Arg_string(field_signature2str $1)}
-   | L_BRACE fldlist R_BRACE {mkArgRecord $2}
-;
 
-argument_list_ne:
-   | argument {$1::[]}
-   | argument COMMA argument_list_ne { $1::$3 }
-argument_list:
-   | /*empty*/  {[]}
-   | argument_list_ne {$1}
-;
-
-
-
+/*
 pure: 
-   | identifier L_PAREN argument_list R_PAREN {[P_PPred($1,$3)] }
-   | argument EQUALS argument { mkEQ($1,$3) }
-   | argument CMPNE argument { mkNEQ($1,$3) }
-   | argument COLON identifier { [P_PPred("type", [$1;Arg_string($3)])] }
+   | identifier L_PAREN jargument_list R_PAREN {[P_PPred($1,$3)] }
+   | jargument EQUALS jargument { mkEQ($1,$3) }
+   | jargument CMPNE jargument { mkNEQ($1,$3) }
+   | jargument COLON identifier { [P_PPred("type", [$1;Arg_string($3)])] }
 ;
 pure_list:
    |      { [] }
    | pure { $1 }
    | pure MULT pure_list {pconjunction $1 $3}
 ;
-
+*/
 
 
 jargument:
    | lvariable {Arg_var ($1)}
    | identifier L_PAREN jargument_list R_PAREN {Arg_op($1,$3) }        
    | INTEGER_CONSTANT {Arg_string(string_of_int $1)} 
+   | MINUS INTEGER_CONSTANT {Arg_string("-" ^(string_of_int $2))}
    | STRING_CONSTANT {Arg_string($1)} 
    | field_signature {Arg_string(field_signature2str $1)}
    | L_BRACE fldlist R_BRACE {mkArgRecord $2}
@@ -678,7 +716,7 @@ formula:
    | BANG identifier L_PAREN jargument_list R_PAREN { [P_PPred($2, $4)] } 
    | identifier L_PAREN jargument_list R_PAREN 
        {if List.length $3 =1 then [P_SPred($1,$3 @ [mkArgRecord []])] else [P_SPred($1,$3)] }
-   | full_identifier L_PAREN argument_list R_PAREN {if List.length $3 =1 then [P_SPred($1,$3 @ [mkArgRecord []])] else [P_SPred($1,$3)] }
+   | full_identifier L_PAREN jargument_list R_PAREN {if List.length $3 =1 then [P_SPred($1,$3 @ [mkArgRecord []])] else [P_SPred($1,$3)] }
    | formula MULT formula { pconjunction $1 $3 }
    | formula OR formula { if Support_symex.symb_debug() || true then parse_warning "deprecated use of |"  ; pconjunction $1 $3 }
    | formula OROR formula { mkOr ($1,$3) }
@@ -686,6 +724,41 @@ formula:
    | jargument binop_cmp jargument { Support_symex.bop_to_prover_pred $2 $1 $3 }
    | jargument EQUALS jargument { Support_symex.bop_to_prover_pred (Cmpeq) $1 $3 }
    | L_PAREN formula R_PAREN { $2 }
+/*
+formula_nb: 
+   |  { [] }
+   | jargument DOT field_signature MAPSTO  jargument { [P_SPred("field", [$1; Arg_string(field_signature2str $3); $5] )] }
+   | BANG identifier L_PAREN jargument_list R_PAREN { [P_PPred($2, $4)] } 
+   | identifier L_PAREN jargument_list R_PAREN 
+       {if List.length $3 =1 then [P_SPred($1,$3 @ [mkArgRecord []])] else [P_SPred($1,$3)] }
+   | full_identifier L_PAREN argument_list R_PAREN {if List.length $3 =1 then [P_SPred($1,$3 @ [mkArgRecord []])] else [P_SPred($1,$3)] }
+   | formula_nb MULT formula_nb { pconjunction $1 $3 }
+   | formula OROR formula { mkOr ($1,$3) }
+   | jargument COLON identifier { [P_PPred("type", [$1;Arg_string($3)])] }
+   | jargument binop_cmp jargument { Support_symex.bop_to_prover_pred $2 $1 $3 }
+   | jargument EQUALS jargument { Support_symex.bop_to_prover_pred (Cmpeq) $1 $3 }
+   | L_PAREN formula R_PAREN { $2 }
+*/
+
+
+/*
+rule:
+   | IMPORT STRING_CONSTANT SEMICOLON { Import($2) }
+   |  RULE identifier_op COLON sequent without where IF sequent_list_or_list { SeqRule($4,$8,$2,$5,$6) }
+   |  REWRITERULE identifier_op COLON identifier LEFTPAREN argument_list RIGHTPAREN EQUAL argument ifclause without where { RewriteRule($4,$6,$9,$11,$12,$10,$2) }
+
+rule_file:
+   | EOF  { [] }
+   | rule rule_file  {$1 :: $2}
+
+question_file: 
+   | EOF  { [] }
+   | question file  {$1 :: $2}
+
+test_file: 
+   | EOF  { [] }
+   | test test_file  {$1 :: $2}
+*/
 
 
 %% (* trailer *)

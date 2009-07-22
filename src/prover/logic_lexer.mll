@@ -96,7 +96,7 @@ let  hex_constant = '0' ('x' | 'X') hex_digit+
 
 let  quote = '\''
 
-let  escapable_char = '\\' | ' ' | quote | '.' | '#' | '"' | 'n' | 't' | 'r' | 'b' | 'f'
+let  escapable_char = '\\' | ' ' | quote | '.' | '#' | '\"' | 'n' | 't' | 'r' | 'b' | 'f'
 let  escape_code = 'u' hex_digit hex_digit hex_digit hex_digit
 let  escape_char = '\\' (escapable_char | escape_code)  
 

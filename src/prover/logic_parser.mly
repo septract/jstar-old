@@ -241,10 +241,7 @@ ifclause:
 
 rule:
    | IMPORT STRING SEMICOLON { Import($2) }
-/*   |  PRED identifier_op COLON identifier LEFTPAREN bitlist RIGHTPAREN  { PredPrecise($4,$6,$2) }*/
    |  RULE identifier_op COLON sequent without where IF sequent_list_or_list { SeqRule($4,$8,$2,$5,$6) }
-/*   |  EMPRULE identifier_op COLON spatial IF pure_list { EmpRule($4,$6,$2) }
-   |  PURERULE identifier_op COLON spatial_list IF plain_list_or_list { PureRule($4,$6,$2) }*/
    |  REWRITERULE identifier_op COLON identifier LEFTPAREN argument_list RIGHTPAREN EQUAL argument ifclause without where { RewriteRule($4,$6,$9,$11,$12,$10,$2) }
 
 rule_file:

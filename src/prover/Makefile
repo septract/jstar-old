@@ -72,7 +72,7 @@ toplevel.byte:
 toplevel:
 	$(MAKE) -f $(OCAMLMAKEFILE) $(MAINOPT) native-code
 
-sepprover.cmxa:
+sepprover.cmxa: 
 	$(MAKE) -f $(OCAMLMAKEFILE) $(LIBRARY) native-code
 
 .PHONY: testharness.byte

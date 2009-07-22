@@ -24,7 +24,7 @@ let new_line lexbuf =
 				Lexing.pos_lnum = pos.Lexing.pos_lnum + 1; 
 				Lexing.pos_bol = pos.Lexing.pos_cnum; 
 			      } 
- 
+
 
 let nest_depth = ref 0
 let nest_start_pos = ref dummy_pos
@@ -103,6 +103,24 @@ let keyword_al = [
    ( "with" , WITH );
    ( "cls" , CLS );
    ( "andalso" , ANDALSO );
+   ( "export" , EXPORT );
+   ( "define" , DEFINE );
+  ("False",FALSE);
+  ("True",TRUE);
+  ("Implication",IMPLICATION);
+  ("Frame",FRAME);
+  ("Garbage",GARBAGE);
+  ("Inconsistency",INCONSISTENCY);
+  ("rule",RULE);
+  ("emprule",EMPRULE);
+  ("purerule",PURERULE);
+  ("if",IF);
+  ("without",WITHOUT);  
+  ("notin",NOTIN);  
+  ("notincontext",NOTINCONTEXT);  
+  ("EV",EV);  
+  ("where",WHERE);
+  ("or",ORTEXT);
 ]
 
 
@@ -178,8 +196,6 @@ let quoted_name = quote quotable_char+ quote
 
 let at_identifier = '@' (("parameter" dec_digit+ ':') | "this" ':' | "caughtexception") 
 	
-let bool_constant =  "true" | "false"  
- 
 let integer_constant = (dec_constant | hex_constant | oct_constant) 'L'? 
 
 let float_constant = ((dec_constant '.' dec_constant) (('e'|'E') ('+'|'-')? dec_constant)? ('f'|'F')?)  | ('#' (('-'? "Infinity") | "NaN") ('f' | 'F')? ) 
@@ -192,67 +208,6 @@ rule token = parse
    | newline { new_line lexbuf; token lexbuf }
    | "/*" { nest lexbuf; comment lexbuf; token lexbuf } 
    | ignored_helper  { token lexbuf }
-   | "Abstract"  { ABSTRACT } 
-   | "final" { FINAL }
-   | "native" { NATIVE }
-   | "public" {PUBLIC} 
-   | "protected" { PROTECTED }
-   | "private" { PRIVATE }
-   | "static" { STATIC }
-   | "synchronized" { SYNCHRONIZED }
-   | "transient" { TRANSIENT }
-   | "volatile" { VOLATILE }
-   | "strictfp" { STRICTFP }
-   | "enum" { ENUM }
-   | "annotation"  { ANNOTATION }
-   | "class" { CLASS }
-   | "interface" { INTERFACE }
-   | "void" { VOID }
-   | "boolean" { BOOLEAN } 
-   | "byte" { BYTE } 
-   | "short" { SHORT }
-   | "char" { CHAR }
-   | "int" { INT }
-   | "long" { LONG }
-   | "float" { FLOAT }
-   | "double" { DOUBLE }
-   | "null_type" { NULL_TYPE }
-   | "unknown" { UNKNOWN }
-   | "extends" { EXTENDS }
-   | "implements" { IMPLEMENTS }
-   | "breakpoint" { BREAKPOINT } 
-   | "case" { CASE }
-   | "catch" { CATCH }
-   | "cmp" { CMP }
-   | "cmpg" { CMPG }
-   | "cmpl" { CMPL }
-   | "default" { DEFAULT }
-   | "entermonitor" { ENTERMONITOR }
-   | "exitmonitor" { EXITMONITOR }
-   | "goto" { GOTO }
-   | "if" { IF }
-   | "instanceof" { INSTANCEOF  }
-   | "interfaceinvoke" { INTERFACEINVOKE }
-   | "lengthof" { LENGTHOF }
-   | "lookupswitch" { LOOKUPSWITCH }
-   | "neg" { NEG }
-   | "new" { NEW }
-   | "newarray" { NEWARRAY }
-   | "newmultiarray" { NEWMULTIARRAY }
-   | "nop" { NOP }
-   | "ret" { RET }
-   | "return" { RETURN }
-   | "specialinvoke" { SPECIALINVOKE }
-   | "staticinvoke" { STATICINVOKE }
-   | "tableswitch" { TABLESWITCH }  
-   | "throw" { THROW  }
-   | "throws" { THROWS }
-   | "virtualinvoke" { VIRTUALINVOKE }
-   | "null" { NULL }
-   | "from" { FROM }
-   | "to" { TO }
-   | "with" { WITH }
-   | "cls" { CLS }
    | "," { COMMA }
    | "{" { L_BRACE }
    | "}" { R_BRACE }
@@ -289,8 +244,8 @@ rule token = parse
    | "_" { UNDERSCORE }
    | "?" { QUESTIONMARK }
    | "!" { BANG }
+   | "|-" { VDASH }
    | eof { EOF }
-   | "listclassfiles" {LISTCLASSFILES} 
 
    | at_identifier  { let s = Lexing.lexeme lexbuf in
           try List.assoc s keyword_al
@@ -307,10 +262,6 @@ rule token = parse
           try List.assoc s keyword_al
           with Not_found -> IDENTIFIER s}
 
-   | bool_constant  { let s = Lexing.lexeme lexbuf in
-          try List.assoc s keyword_al
-          with Not_found -> BOOL_CONSTANT s }
-  
    | integer_constant {
        let s=Lexing.lexeme lexbuf in
        if (String.get s (String.length s -1)) = 'L' then
