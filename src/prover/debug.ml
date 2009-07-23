@@ -12,6 +12,10 @@ let debug_ref = ref true
 
 let debug = !debug_ref
 
+let buffer_dump = Buffer.create 10000
+let dump = ref (Format.formatter_of_buffer buffer_dump)
+
+
 (*IF-OCAML*)
 exception Unsupported
 let unsupported () = raise Unsupported

@@ -131,12 +131,14 @@ type id = int
 
 let fresh_node = let node_counter = ref 0 in fun () ->  let x = !node_counter in node_counter := x+1; x
 
+let fresh_file = let file_id = ref 0 in fun () -> let x = !file_id in file_id := x+1;  Sys.getcwd() ^  "proof_file_"^(string_of_int x)^".txt"
+
 type ntype = 
     Plain | Good | Error | Abs
 
 type node = string * id * ntype
 
-type edge = string * id * id 
+type edge = string * id * id * string option
 
 let graphe = ref []
 let graphn = ref []
@@ -163,7 +165,14 @@ let add_error_heap_node (heap : Rlogic.ts_form) =
   add_error_node (Format.flush_str_formatter ())
 
 
-let add_edge src dest label = graphe := (label, src, dest)::!graphe
+let add_edge src dest label = graphe := (label, src, dest, None)::!graphe
+
+let add_edge_with_proof src dest label = 
+  let f = fresh_file() in
+  let out = open_out f in
+  Prover.pprint_proof out;
+  close_out out;
+  graphe := (label, src, dest, Some f)::!graphe
 
 
 type transition = formset_entry * string * formset_entry
@@ -217,6 +226,7 @@ let exec_lookup_assign (v:Jparsetree.variable) (e:Jparsetree.reference) (sheap,i
 	mk_pointsto (name2args n) (signature2args si) pointed_to_var
     | _ -> assert false  (* TODO other types of reference *) in   
   let frames = check_implication_frame_pform (!curr_logic) sheap find_pointsto in
+  Prover.pprint_proof stdout;
   match frames with 
     [] ->      
       let idd = add_error_node "ERROR" in 
@@ -250,6 +260,7 @@ let exec_mutation_assign  (v:Jparsetree.reference) (e:Jparsetree.immediate) (she
 	mk_pointsto (name2args n) (signature2args si) (immediate2args e) 
     | _ -> assert false  (* TODO other types of reference *) in    
   let frames = check_implication_frame_pform (!curr_logic) sheap find_pointsto in
+  Prover.pprint_proof stdout;
   match frames with 
     [] ->
       let idd = add_error_node "Error" in 
@@ -576,6 +587,7 @@ let rec execute_stmt n (sheap : formset_entry) : unit =
       (
        try 
 	let heap,id = List.find (fun (heap,id) -> (check_implication_frame !curr_logic sheap_noid heap)!=[]) heaps in
+	Prover.pprint_proof stdout;
 	if !Support_symex.sym_debug then Printf.printf "\n\nPost okay %s \n" (Pprinter.name2str m.name);
 
 (*	let idd = add_good_node ("EXIT: "^(Pprinter.name2str m.name)) in *)
@@ -624,6 +636,7 @@ let rec execute_stmt n (sheap : formset_entry) : unit =
 	  try
 	    if symb_debug() then Format.printf "@\nPre-abstraction:@\n    %a@."  (string_ts_form (Rterm.rao_create ())) sheap_noid;
 	    let sheaps_abs = Prover.abs !curr_abs_rules sheap_noid in 
+	    Prover.pprint_proof stdout;
 	    if symb_debug() then Format.printf "@\nPost-abstractionc count:@\n    %d@."  (List.length sheaps_abs);
 	    List.iter Rlogic.kill_all_exists_names sheaps_abs;
 	    if symb_debug() then List.iter (fun sheap -> Format.printf "@\nPost-abstraction:@\n    %a@."  (string_ts_form (Rterm.rao_create ())) sheap) sheaps_abs;
@@ -636,12 +649,13 @@ let rec execute_stmt n (sheap : formset_entry) : unit =
 	     );
 
 	    let sheaps_with_id = add_id_abs_formset sheaps_abs in
-	    List.iter (fun sheap2 -> add_edge (snd sheap) (snd sheap2) ("Abstract@"^Pprinter.statement2str stm.skind)) sheaps_with_id;
+	    List.iter (fun sheap2 -> add_edge_with_proof (snd sheap) (snd sheap2) ("Abstract@"^Pprinter.statement2str stm.skind)) sheaps_with_id;
 	    let sheaps_with_id = List.filter 
 		(fun (sheap2,id2) -> List.for_all
 		    (fun (form,id) -> 
 		      if check_implication !curr_logic (form_clone sheap2) form  then 
-			(add_edge id2 id ("Contains@"^Pprinter.statement2str stm.skind) ;false) 
+			(Prover.pprint_proof stdout;
+			(add_edge id2 id ("Contains@"^Pprinter.statement2str stm.skind) ;false) )
 		      else true)
 		    formset;
 		) sheaps_with_id in
@@ -860,9 +874,12 @@ let pp_dotty_transition_system () =
     | Error ->  Printf.fprintf dotty_outf "\n state%i[label=\"%s\",labeljust=l, color=red, style=filled]\n" id label
     | Abs ->  Printf.fprintf dotty_outf "\n state%i[label=\"%s\",labeljust=l, color=yellow, style=filled]\n" id label)
     !graphn;
-  List.iter (fun (l,s,d) ->
+  List.iter (fun (l,s,d, o) ->
     let l = escape_for_dot_label l in 
-    Printf.fprintf dotty_outf "\n state%i -> state%i [label=\"%s\"]" s d l)
+    Printf.fprintf dotty_outf "\n state%i -> state%i [label=\"%s\"%s]" s d l
+	    (match o with 
+	      None -> ""
+	    | Some f -> Printf.sprintf ", URL=\"file://localhost%s\", fontcolor=blue" f))
     !graphe;
   Printf.fprintf dotty_outf "\n\n\n}";
   close_out dotty_outf
