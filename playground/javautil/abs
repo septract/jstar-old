@@ -1,0 +1,213 @@
+rule length_cons_eq_1_abs:
+  | length(?a, ?alpha) = builtin_plus(numeric_const("1"), length(?beta)) * ?alpha = ?beta | |- |
+if
+  || |- |
+
+rule length_cons_eq_2_abs:
+  | length(?a, ?alpha) = builtin_plus(numeric_const("1"), length(?beta)) * ?alpha = ?beta | |- |
+if
+  || |- |
+
+rule length_cons_neq_abs:
+  | length(?a, ?alpha) = builtin_plus(numeric_const("1"), length(?beta)) | |- |
+without
+  ?alpha = ?beta
+if
+  | length(alpha) = length(?beta) | |- |
+
+rule node_rollup_abs:
+  || field(?i, "<java.util.LinkedList$Entry: java.util.LinkedList$Entry previous>", ?ip) *
+     field(?i, "<java.util.LinkedList$Entry: java.util.LinkedList$Entry next>", ?in) *
+     field(?i, "<java.util.LinkedList$Entry: java.lang.Object element>", ?a) |- |
+if
+  || node(?i, ?ip, ?in, ?a) |- |
+
+rule dseg_node_rollup_abs:
+  || node(?i, ?ip, ?in, ?a) |- |
+if
+  || dseg_ne(?i, ?ip, ?in, ?i, cons(?a, empty())) |- |
+
+rule dseg_cons_rollup_abs:
+  || node(?i, ?ip, _k, ?a) * dseg(_k, ?i, ?jn, ?j, ?alpha) |- |
+where
+  _k notincontext;
+  _k notin ?i;
+  _k notin ?ip;
+  _k notin ?a;
+  _k notin ?jn;
+  _k notin ?j;
+  _k notin ?alpha
+if
+  || dseg_ne(?i, ?ip, ?jn, ?j, cons(?a, ?alpha)) |- |
+
+rule dseg_app_rollup_abs:
+  || dseg_ne(?i, ?ip, _jn, _j, ?alpha) * dseg_ne(_jn, _j, ?kn, ?k, ?beta) |- |
+where
+  _j, _jn notincontext;
+  _j, _jn notin ?i;
+  _j, _jn notin ?ip;
+  _j, _jn notin ?alpha;
+  _j, _jn notin ?kn;
+  _j, _jn notin ?k;
+  _j, _jn notin ?beta
+if
+  || dseg_ne(?i, ?ip, ?kn, ?k, app(?alpha, ?beta)) |- |
+
+/*rule dseg_collapse_disj_abs:
+  || (?alpha = empty() | dseg(?i, ?ip, ?jn, ?j, ?alpha))
+     || (| dseg_ne(?i, ?ip, ?jn, ?j, ?alpha)) |- |
+if
+  || dseg(?i, ?ip, ?jn, ?j, ?alpha) |- |*/
+
+/*************** Junk Rules *******************/
+
+rule garbage_garbage :
+  || Garbage * Garbage |- |
+if
+  || Garbage |- |
+
+/*rule dseg_garbage_abs:
+  || dseg_ne(_i,?ip, ?jn, _j, ?l) |- |
+where
+  _i, _j notincontext
+if
+  | | Garbage |- |*/
+
+
+rule node_garbage_abs:
+  || node(_i, ?ip, ?in, ?e) |- |
+where
+  _i notincontext
+if
+  || Garbage |- |
+
+rule dseg_singleton_garbage_abs:
+  || dseg_ne(_i, ?ip, ?in, _i, ?l) |- |
+where
+  _i notincontext
+if
+  || Garbage |- |
+
+/*rule dseg_disj_cons_abs:
+  || (cons(?a, ?alpha) = empty() | dseg(?i, ?ip, ?jn, ?j, cons(?a, ?alpha)))
+     || (| dseg_ne(?i, ?ip, ?jn, ?j, cons(?a, ?alpha))) |- |
+if
+  || dseg_ne(?i, ?ip, ?jn, ?j, cons(?a, ?alpha)) |- |*/
+
+/*
+rule dseg_singleton_garbage_abs:
+  || dseg_ne(_i, ?ip, ?in, _i, cons(?a, empty()))|- |
+where
+  _i, ?ip, ?in notincontext
+if
+  || Garbage |- |*/
+
+/************ Length Rules ************/
+/*rule length_empty_abs:
+  | numeric_const("0") = length(empty()) | |- |
+if
+  || |- |
+
+/*rule length_cons_abs:
+  | length(cons(?a, ?alpha)) = builtin_plus(numeric_const("1"), length(?alpha)) | |- |
+if
+  || |- |*/
+
+rewrite id_concrete:
+  id(?name) = ?name
+
+rewrite length:
+  length(_x) = id(?y)
+without
+  length(_x) = id(?z)
+
+rewrite length_forget :
+  builtin_plus(numeric_const("1"), length(?alpha)) = id(?x)
+without
+  builtin_plus(numeric_const("1"), length(?alpha)) = id(?y)
+
+rewrite builtin_plus_one_forget :
+  builtin_plus(numeric_const("1"),numeric_const("1")) = id(?x)
+without
+  builtin_plus(numeric_const("1"),numeric_const("1")) = id(?y)
+
+rewrite builtin_plus_forget :
+  builtin_plus(_x, ?y) = id(?z)
+without
+  builtin_plus(_x, ?y) = id(?w)
+
+
+/*
+rewrite builtin_plus_forget :
+  builtin_plus(_z,numeric_const("1")) = id(_x)
+without
+  builtin_plus(_z,numeric_const("1")) = id(?y)
+
+rewrite id_concrete :
+  id(_x) = _x
+**************************/
+
+/*rewrite cons_empty_abs_radical:
+  cons(_a, ?alpha) = id(?beta)
+without
+  cons(_a, ?alpha) = id(?gamma)
+
+rewrite cons_abs:
+  cons(_a, cons(_b, ?alpha)) = cons(_a, id(?beta))
+without
+  cons(_a, cons(_b, ?alpha)) = cons(_a, id(?gamma))*/
+
+
+
+rewrite hack1 :
+  cons(_z,cons(_x,?y)) = app(elist(cons(_z,s(_x))), ?y)
+
+/* Try this later
+rewrite hack1 :
+  cons(_x,?y) = app(elist(s(_x)), ?y)
+*/
+
+rewrite hack2_e :
+  app(elist(?z),cons(_x,?y)) = app(elist(app(?z,s(_x))), ?y)
+
+rewrite hack3_e :
+  app(elist(?z),app(elist(?x),?y)) = app(elist(app(?z,?x)), ?y)
+
+rewrite hack2 :
+  app(_z,cons(_x,?y)) = app(elist(app(_z,s(_x))), ?y)
+
+rewrite hack3 :
+  app(_z,app(elist(?x),?y)) = app(elist(app(_z,?x)), ?y)
+
+rewrite hack4 :
+  cons(_z,app(elist(?x),?y)) = app(elist(s(_z),?x), ?y)
+
+rewrite hack4 :
+  cons(_z,app(_x,?y)) = app(elist(s(_z),_x), ?y)
+
+rewrite hack5 :
+  elist(?x) = id(?w)
+without
+  elist(?x) = id(?q)
+
+rewrite hack5 :
+  id(?w) = ?w
+
+
+
+rewrite length_empty:
+  length(empty()) = numeric_const("0")
+
+rewrite app_nil:
+  app(empty(), ?x) = ?x
+
+rewrite app_nil2:
+  app(?x, empty()) = ?x
+
+rewrite app_cons_empty:
+  app(cons(?a, empty()), ?alpha) = cons(?a, ?alpha)
+
+rule dseg_ineq:
+  | ?a != ?i | dseg_ne(?i, ?in, ?jp, ?j, ?l) * field(?a, ?t, ?e) |- |
+if
+  || dseg_ne(?i, ?in, ?jp, ?j, ?l) * field(?a, ?t, ?e) |- |

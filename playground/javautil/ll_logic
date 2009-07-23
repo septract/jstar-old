@@ -1,0 +1,822 @@
+import "field_logic";
+import "listdatatype_logic";
+import "builtin_plus_logic";
+
+/** Numeric equality **/
+rule numeric_const_eq:
+  | numeric_const(?x) = numeric_const(?y) | |- |
+without
+  ?x = ?y
+if
+  | ?x = ?y | |- |
+
+/** Not-equal is symmetric **/
+rule neq_symmetry:
+  | ?i != ?j | |- ?j != ?i |
+if
+  || |- |
+
+/** Extension of field logic. **/
+rule field_field_distinct:
+  field(?i1, ?t, ?e1) * field(?i2, ?t, ?e2) || |- ?i2 != ?i1 |
+if
+  || |- |
+
+/** Doubly-linked list segments (dseg). **/
+
+  /** Empty list segment. **/
+rule dseg_empty_left1:
+  || dseg(?i, ?j, ?i, ?j, empty()) |- |
+if
+  || |- |
+
+rule dseg_empty_left2:
+  || dseg(?i, ?ip, ?jn, ?j, empty()) |- |
+if
+  | ?i = ?jn * ?ip = ?j | |- |
+
+rule dseg_empty_right1:
+  || |- | dseg(?i, ?j, ?i, ?j, empty())
+if
+  || |- |
+
+rule dseg_empty_right2:
+  || |- | dseg(?i, ?ip, ?jn, ?j, empty())
+if
+  || |-  ?i = ?jn * ?j = ?ip |
+
+rule dseg_empty_right3:
+  || |- | dseg(?i, ?j, ?i, ?j, ?l)
+if
+  || |-  ?l = empty() |
+
+  /** Non-empty list segment. **/
+rule dseg_non_empty_left1:
+  | ?i != ?jn | dseg(?i, ?ip, ?jn, ?j, ?l) |- |
+without
+  ?l = cons(?a, ?alpha)
+if
+  | ?i != ?jn | dseg_ne(?i, ?ip, ?jn, ?j, ?l) |- |
+
+rule dseg_non_empty_left2:
+  | ?j != ?ip | dseg(?i, ?ip, ?jn, ?j, ?l) |- |
+without
+  ?l = cons(?a, ?alpha)
+if
+  | ?j != ?ip | dseg_ne(?i, ?ip, ?jn, ?j, ?l) |- |
+
+rule dseg_non_empty_left3:
+  || dseg(?i, ?ip, ?jn, ?j, cons(?a, ?alpha)) |- |
+if
+  || dseg_ne(?i, ?ip, ?jn, ?j, cons(?a, ?alpha)) |- |
+
+rule dseg_non_empty_right3:
+  || |- | dseg(?i, ?ip, ?jn, ?j, cons(?a, ?alpha))
+if
+  || |- | dseg_ne(?i, ?ip, ?jn, ?j, cons(?a, ?alpha))
+
+rule dseg_ne_left:
+  || dseg_ne(?i, ?ip, ?jn, ?j, ?l) |- |
+without
+  ?l = cons(?a, ?alpha)
+if
+  | ?l = cons(_a, _alpha) | dseg_ne(?i, ?ip, ?jn, ?j, ?l) |- |
+
+/*rule dseg_ne_right:
+  || |- | dseg_ne(?i, ?ip, ?jn, ?j, ?l)
+without
+  ?l = cons(?a, ?alpha)
+if
+  || |- ?l = cons(_a, _alpha) | dseg_ne(?i, ?ip, ?jn, ?j, ?l)*/
+
+/* Sound?
+rule dseg_ne_ineq1:
+  || field(?x, "<java.util.LinkedList: java.util.LinkedList$Entry header>", ?h) *
+     dseg_ne(?i, ?h, ?h, ?j, ?l) |- ?i != ?h |
+if
+  || field(?x, "<java.util.LinkedList: java.util.LinkedList$Entry header>", ?h) *
+     dseg_ne(?i, ?h, ?h, ?j, ?l) |- |
+
+rule dseg_ne_ineq2:
+  || field(?x, "<java.util.LinkedList: java.util.LinkedList$Entry header>", ?h) *
+     dseg_ne(?i, ?h, ?h, ?j, ?l) |- ?j != ?h |
+if
+  || field(?x, "<java.util.LinkedList: java.util.LinkedList$Entry header>", ?h) *
+     dseg_ne(?i, ?h, ?h, ?j, ?l) |- |*/
+
+/** List concatenation (app). **/
+
+  /** More general rule might be useful. **/
+
+/****rule dseg_app_cons_rollup1:
+  || dseg(?i, ?ip, ?k, ?n, ?l1) * node(?k, ?n, ?m, ?a) * dseg(?m, ?k, ?jn, ?j, ?l2) |- | dseg(?i, ?ip, ?jn, ?j, ?l)
+if
+  || dseg_ne(?i, ?ip, ?jn, ?j, app(?l1, cons(?a, ?l2))) |- | dseg(?i, ?ip, ?jn, ?j, ?l)
+
+rule dseg_app_right:
+  || |- | dseg_ne(?i, ?ip, ?jn, ?j, app(?alpha, ?beta))
+without
+  | (?beta = empty()|) || (?alpha =empty()|)
+if
+  || |- | dseg_ne(?i, ?ip, _kn, _k, ?alpha) * dseg_ne(_kn, _k, ?jn, ?j, ?beta)
+
+rule dseg_app_left:
+  || dseg_ne(?i, ?ip, ?jn, ?j, app(?alpha, ?beta)) |- |
+without
+  | (?beta = empty()|) || (?alpha =empty()|)
+if
+  || dseg_ne(?i, ?ip, _kn, _k, ?alpha) * dseg_ne(_kn, _k, ?jn, ?j, ?beta) |- |****/
+
+/** Splitting list into head and tail (cons). **/
+
+/****rule dseg_cons_right:
+  || |- | dseg_ne(?i, ?ip, ?jn, ?j, cons(?a, ?alpha))
+if
+  || |- | node(?i, ?ip, _k, ?a) * dseg(_k, ?i, ?jn, ?j, ?alpha)****/
+
+/** Expand list segment when neccessary. **/
+  /** First element **/
+
+rule dseg_cons_expand:
+  || dseg_ne(?i, ?ip, ?jn, j, cons(?a, ?alpha)) |- | dseg_ne(?i, ?ip2, ?jn2, ?j2, cons(?a2, ?alpha2))
+if
+  || dseg_ne(?i, ?ip, ?jn, j, cons(?a, ?alpha))
+    |- | node(?i, ?ip2, _m2, ?a2) * dseg(_m2, ?i, ?jn2, ?j2, ?alpha2)
+
+/*rule dseg_app_expand:
+  || dseg_ne(?i, ?ip, ?jn, j, app(?alpha, ?beta)) |- | dseg_ne(?i, ?ip2, ?jn2, ?j2, cons(?alpha, ?alpha2))
+if
+  || dseg_ne(?i, ?ip, ?jn, j, cons(?a, ?alpha))
+    |- | node(?i, ?ip2, _m2, ?a2) * dseg(_m2, ?i, ?jn2, ?j2, ?alpha2)*/
+
+rule dseg_node_lookup_first_left:
+  || dseg_ne(?i, ?ip, ?jn, ?j, ?alpha) |- | node(?i, ?ip2, ?in2, ?a2)
+if
+  || dseg_ne(?i, ?ip, ?jn, ?j, ?alpha)
+    |- | field(?i, "<java.util.LinkedList$Entry: java.util.LinkedList$Entry previous>", ?ip2) *
+         field(?i, "<java.util.LinkedList$Entry: java.util.LinkedList$Entry next>", ?in2) *
+         field(?i, "<java.util.LinkedList$Entry: java.lang.Object element>", ?a2)
+
+rule dseg_node_lookup_last_left:
+  || dseg_ne(?i, ?ip, ?jn, ?j, ?alpha) |- | node(?j, ?jp2, ?jn2, ?a2)
+if
+  || dseg_ne(?i, ?ip, ?jn, ?j, ?alpha)
+    |- | field(?j, "<java.util.LinkedList$Entry: java.util.LinkedList$Entry previous>", ?jp2) *
+         field(?j, "<java.util.LinkedList$Entry: java.util.LinkedList$Entry next>", ?jn2) *
+         field(?j, "<java.util.LinkedList$Entry: java.lang.Object element>", ?a2)
+
+rule dseg_cons_field_lookup_left:
+  || dseg_ne(?i, ?ip, ?jn, ?j, cons(?a, ?alpha)) |- | field(?i, ?t, ?e)
+if
+  || dseg(_k, ?i, ?jn, ?j, ?alpha) * node(?i, ?ip, _k, ?a) |- | field(?i, ?t, ?e)
+
+  /** Last element **/
+
+rule dseg_app_lookup_left:
+  || dseg_ne(?i, ?ip, ?jn, ?j, app(?alpha, cons(?a, empty()))) |- | field(?j, ?t, ?e)
+if
+  /*field(_k, "<java.util.LinkedList$Entry: java.util.LinkedList$Entry next>", ?j)*/ ||
+  dseg(?i, ?ip, ?j, _k, ?alpha) * node(?j, _k, ?jn, ?a) |- | field(?j, ?t, ?e)
+
+/** Warning: These rules can cause non-termination! **/
+/** A non-empty list has a first and a last element (not necessarily distinct). **/
+
+/*rule dseg_app_lookup_empty:
+  || dseg_ne(?i, ?ip, ?in, ?i, cons(?a, empty())) |- | field(?i, ?t, ?a2)
+if
+  || node(?i, ?ip, ?in, ?a) |- | field(?j, ?t, ?a2)*/
+
+rule dseg_app_lookup:
+  || dseg_ne(?i, ?ip, ?jn, ?j, cons(?a, ?alpha)) |- | field(?j, ?t, ?a2)
+if
+  | cons(?a, ?alpha) = app(_beta, cons(_b, empty())) | node(?j, _k, ?jn, _b) * dseg(?i, ?ip, ?j, _k, _beta)
+    |- | field(?j, ?t, ?a2)
+
+rule node_lookup_previous:
+  || node(?i,?ip1,?in,?e) |- | field(?i, "<java.util.LinkedList$Entry: java.util.LinkedList$Entry previous>" ,?ip2)
+if
+  field(?i, "<java.util.LinkedList$Entry: java.util.LinkedList$Entry previous>", ?ip1) ||
+  field(?i, "<java.util.LinkedList$Entry: java.util.LinkedList$Entry next>", ?in) *
+  field(?i, "<java.util.LinkedList$Entry: java.lang.Object element>", ?e)
+    |-  ?ip1 = ?ip2 |
+
+rule node_lookup_next:
+  || node(?i,?ip,?in1,?e) |- | field(?i, "<java.util.LinkedList$Entry: java.util.LinkedList$Entry next>" ,?in2)
+if
+  field(?i, "<java.util.LinkedList$Entry: java.util.LinkedList$Entry next>", ?in1) ||
+  field(?i, "<java.util.LinkedList$Entry: java.util.LinkedList$Entry previous>", ?ip) *
+  field(?i, "<java.util.LinkedList$Entry: java.lang.Object element>", ?e)
+    |-  ?in1 = ?in2 |
+
+rule node_lookup_element:
+  || node(?i,?ip,?in,?e1) |- | field(?i, "<java.util.LinkedList$Entry: java.lang.Object element>" ,?e2)
+if
+  field(?i, "<java.util.LinkedList$Entry: java.lang.Object element>", ?e1) ||
+  field(?i, "<java.util.LinkedList$Entry: java.util.LinkedList$Entry next>", ?in) *
+  field(?i, "<java.util.LinkedList$Entry: java.util.LinkedList$Entry previous>", ?ip)
+    |-  ?e1 = ?e2 |
+
+/** Doubly-linked list nodes (node). **/
+
+rule node_not_nil:
+  node(nil(), ?ip, ?in, ?a) || |- |
+if
+
+rule node_not_eq:
+  node(?x, ?ip, ?in, ?a) * node(?x, ?jp, ?jn, ?b) || |- |
+if
+
+/* Need to get rid of this rule! */
+/****rule node_expand_right:
+  || |- | node(?i, ?ip, ?in, ?a)
+if
+  || |- | field(?i, "<java.util.LinkedList$Entry: java.util.LinkedList$Entry previous>", ?ip) *
+          field(?i, "<java.util.LinkedList$Entry: java.util.LinkedList$Entry next>", ?in) *
+          field(?i, "<java.util.LinkedList$Entry: java.lang.Object element>", ?a)****/
+
+rule node_rollup_left:
+  || field(?i, "<java.util.LinkedList$Entry: java.util.LinkedList$Entry previous>", ?ip) *
+     field(?i, "<java.util.LinkedList$Entry: java.util.LinkedList$Entry next>", ?in) *
+     field(?i, "<java.util.LinkedList$Entry: java.lang.Object element>", ?a) |- |
+if
+  || node(?i, ?ip, ?in, ?a) |- |
+
+rule dseg_node_rollup_left:
+  || node(?i, ?ip, ?in, ?a) |- |
+if
+  || dseg_ne(?i, ?ip, ?in, ?i, cons(?a, empty())) |- |
+
+/* Maybe can find a more general rule? */
+rule dseg_app_rollup_left2:
+  || dseg_ne(?i, ?ip, ?jn, ?j, ?alpha) * dseg_ne(?jn, ?j, ?kn, ?k, ?beta) |- | dseg_ne(?i, ?ip2, ?kn2, ?k, ?list)
+if
+  || dseg_ne(?i, ?ip, ?kn, ?k, app(?alpha, ?beta)) |- | dseg_ne(?i, ?ip2, ?kn2, ?k, ?list)
+
+rule dseg_app_rollup_left3:
+  || dseg_ne(?i, ?ip, ?jn, ?j, ?alpha) * dseg_ne(?jn, ?j, ?ln, ?l, ?beta) * dseg_ne(?ln, ?l, ?kn, ?k, ?gamma) |- | dseg_ne(?i, ?ip2, ?kn2, ?k, ?list)
+if
+  || dseg_ne(?i, ?ip, ?kn, ?k, app(?alpha, app(?beta, ?gamma))) |- | dseg_ne(?i, ?ip2, ?kn2, ?k, ?list)
+
+rule node_expand_right:
+  || node(?i, ?ip1, ?in1, ?a1) |- | node(?i, ?ip2, ?in2, ?a2)
+if
+  || node(?i, ?ip1, ?in1, ?a1)
+    |- | field(?i, "<java.util.LinkedList$Entry: java.util.LinkedList$Entry previous>", ?ip2) *
+         field(?i, "<java.util.LinkedList$Entry: java.util.LinkedList$Entry next>", ?in2) *
+         field(?i, "<java.util.LinkedList$Entry: java.lang.Object element>", ?a2)
+
+rule node_rollup_right:
+  || |- | field(?i, "<java.util.LinkedList$Entry: java.util.LinkedList$Entry previous>", ?ip) *
+          field(?i, "<java.util.LinkedList$Entry: java.util.LinkedList$Entry next>", ?in) *
+          field(?i, "<java.util.LinkedList$Entry: java.lang.Object element>", ?a)
+if
+  || |- | node(?i, ?ip, ?in, ?a)
+
+/** Rule is in most cases useless. Replace this rule! **/
+/*rule dseg_node_rollup_right:
+  || |- | node(?i, ?ip, ?in, ?a)
+if
+  || |- | dseg_ne(?i, ?ip, ?in, ?i, cons(?a, empty()))*/
+
+/** Rule discards information on the RHS! Remove this rule! **/
+/*rule dseg_app_rollup_right:
+  || |- | dseg_ne(?i, ?ip, ?jn, ?j, ?alpha) * dseg_ne(?jn, ?j, ?kn, ?k, ?beta)
+if
+  || |- | dseg_ne(?i, ?ip, ?kn, ?k, app(?alpha, ?beta))*/
+
+rule dseg_dseg_eq:
+  || dseg_ne(?i, ?ip, ?jn, ?j, ?l1) |- | dseg_ne(?i, ?ip, ?jn, ?j, ?l2)
+if
+  || |- ?l1 = ?l2 |
+
+/*rewrite app_cons_empty:
+  app(cons(?a, empty()), ?alpha) = cons(?a, ?alpha)*/
+
+/** Contradictions. **/
+
+/** Subtraction rules. **/
+
+/*rule dseg_dseg_match :
+  dseg_ne(?i, ?ip, ?jn, ?j, ?l) || dseg_ne(?k, ?kp, ?y, ?l1) |- | dseg_ne(?k, ?kp,?z, ?l2)
+  dseg_ne(?z,?w) || dseg_ne(?x,?y) |- | dseg_ne(?x,?z)
+if
+  dseg_ne(?x,?y) || |- | dseg_(?y,?z)*/
+
+/** Plus commutativity. **/
+
+rule plus_commutativity:
+  | ?a = ?d * ?b = ?c | |- builtin_plus(?a, ?b) = builtin_plus(?c, ?d) |
+if
+  || |- |
+
+/** Very expensive! Applies to every term containing the builtin_plus predicate! **/
+/*rewrite plus_commutativity:
+  builtin_plus(?a, ?b) = builtin_plus(?b, ?a)*/
+
+/** Length of a list (length). **/
+rewrite app_cons_empty:
+  app(cons(?a, empty()), ?alpha) = cons(?a, ?alpha)
+
+rule app_cons_contradiction_left1:
+  | app(?alpha, cons(?b, ?beta)) = ?alpha | |- |
+if
+
+rule app_cons_contradiction_left2:
+  | app(?alpha, cons(?b, ?beta)) = ?beta | |- |
+if
+
+rule app_cons_contradiction_right1:
+  || |- app(?alpha, cons(?b, ?beta)) = ?beta |
+if
+  || |- | False
+
+rule app_eq_second_right:
+  || |- app(_a, ?beta) = app(?gamma, ?beta) |
+if
+  | _a = ?gamma | |- |
+
+/*rule app_eq_cons:
+  | app(?l1, ?l2) = cons(?a, ?l1) | |- |
+without
+  ?l2 = cons(?a, empty()) * ?l = empty()
+if
+  | ?l1 = empty() * ?l2 = cons(?a, empty()) | |- |*/
+
+rewrite app_assoc:
+  app(app(?alpha, ?beta), ?gamma) = app(?alpha, app(?beta, ?gamma))
+without
+  |( |( |( | (| (?alpha = empty() |)
+             || (?beta  = empty() |))
+             || (?gamma = empty() |))
+             || (app(app(?alpha, ?beta), ?gamma) = app(?alpha, ?beta)  |))
+             || (app(app(?alpha, ?beta), ?gamma) = app(?alpha, ?gamma) |))
+             || (app(app(?alpha, ?beta), ?gamma) = app(?beta,  ?gamma) |)
+
+rule plus_0_first:
+  | builtin_plus(?x, ?y) = ?x | |- |
+without
+  ?y = numeric_const("0")
+if
+  | ?y = numeric_const("0") | |- |
+
+rule plus_0_second:
+  | builtin_plus(?y, ?x) = ?x | |- |
+without
+  ?y = numeric_const("0")
+if
+  | ?y = numeric_const("0") | |- |
+
+rewrite length_empty:
+  length(empty()) = numeric_const("0")
+
+rewrite length_app:
+  length(app(?alpha, ?beta)) = builtin_plus(length(?alpha), length(?beta))
+without
+  | (?beta = empty() |) || (?alpha = empty() |)
+
+rewrite length_cons_empty:
+  length(cons(?a, empty())) = numeric_const("1")
+
+rewrite length_cons:
+  length(cons(?a, ?alpha)) = builtin_plus(numeric_const("1"), length(?alpha))
+without
+  ?alpha = empty()
+
+rule length_cons_not_zero_left:
+  | length(cons(?a, ?alpha)) = numeric_const("0") | |- |
+if
+
+rule length_cons_not_zero_right:
+  || |- length(cons(?a, ?alpha)) = numeric_const("0") |
+if
+  || |- | False
+
+rule empty_cons_left:
+  | empty() = cons(?a, ?alpha) | |- |
+if
+
+rule empty_cons_right:
+  || |- empty() = cons(?a, ?alpha) |
+if
+  || |- | False
+
+rule le_zero_length_left:
+  | LE(numeric_const("0"), length(?alpha)) | |- |
+if
+  || |- |
+
+rule le_zero_length_right:
+  || |- LE(numeric_const("0"), length(?alpha)) |
+if
+  || |- |
+
+rule le_length_cons_zero_left:
+  | LE(length(cons(?a, ?alpha)), numeric_const("0")) | |- |
+if
+
+rule le_zero_length_right:
+  || |- LE(length(cons(?a, ?alpha)), numeric_const("0")) |
+if
+  || |- | False
+
+rule le_zero_length_left:
+  | LT(numeric_const("0"), length(cons(?a, ?alpha))) | |- |
+if
+  || |- |
+
+rule lt_zero_length_right:
+  || |- LT(numeric_const("0"), length(cons(?a, ?alpha))) |
+if
+  || |- |
+
+rule lt_length_cons_zero_left:
+  | LT(length(?alpha), numeric_const("0")) | |- |
+if
+
+rule lt_zero_length_right:
+  || |- LT(length(?alpha), numeric_const("0")) |
+if
+  || |- | False
+
+/*----------------------------------------------------------------------------*/
+/*rule length_empty_left:
+  | length(empty()) = ?n | |- |
+without
+  numeric_const("0") = ?n
+if
+  | numeric_const("0") = ?n | |- |
+
+rule length_empty_right:
+  || |- length(empty()) = ?n |
+without
+  length(empty()) = ?n
+if
+  || |- numeric_const("0") = ?n |
+
+rule length_app_left:
+  | length(app(?alpha, ?beta)) = ?n | |- |
+without
+  | (| (?beta = empty() |) || (?alpha = empty() |)) || (builtin_plus(length(?alpha), length(?beta)) = ?n |)
+if
+  | builtin_plus(length(?alpha), length(?beta)) = ?n | |- |
+
+rule length_cons_empty_left:
+  | length(cons(?a, empty())) = ?n | |- |
+without
+  numeric_const("1") = ?n
+if
+  | numeric_const("1") = ?n | |- |
+
+rule length_cons_left:
+  | length(cons(?a, ?alpha)) = ?n | |- |
+without
+  | (?alpha = empty() |) || (builtin_plus(numeric_const("1"), length(?alpha)) = ?n |)
+if
+  | builtin_plus(numeric_const("1"), length(?alpha)) = ?n | |- |
+
+rule length_cons_empty_right:
+  || |- length(cons(?a, empty())) = numeric_const("1") |
+if
+  || |- |
+
+rule length_app_right:
+  || |- length(app(?alpha, ?beta)) = ?n |
+without
+  | (| (?beta = empty() |) || (?alpha = empty() |)) || (builtin_plus(length(?alpha), length(?beta)) = ?n |)
+if
+  || |- builtin_plus(length(?alpha), length(?beta)) = ?n |
+
+rule length_cons_empty_right:
+  || |- length(cons(?a, empty())) = ?n |
+without
+  numeric_const("1") = ?n
+if
+  || |- numeric_const("1") = ?n |
+
+rule length_cons_right:
+  || |- length(cons(?a, ?alpha)) = ?n |
+without
+  | (?alpha = empty() |) || (builtin_plus(numeric_const("1"), length(?alpha)) = ?n |)
+if
+  || |- builtin_plus(numeric_const("1"), length(?alpha)) = ?n |
+*/
+
+/** Rewriting rules. **/
+
+rewrite plus_0_second:
+  builtin_plus(numeric_const(?x), numeric_const("0")) = numeric_const(?x)
+
+rewrite plus_0_first:
+  builtin_plus(numeric_const("0"), numeric_const(?x)) = numeric_const(?x)
+
+rule plus_assoc_left:
+  | builtin_plus(builtin_plus(?x, ?y), ?z) = ?n | |- |
+without
+  | (| (| (| (| (| (?y = numeric_const("0") |)
+                || (?z = numeric_const("0") |))
+                || (?x = numeric_const("0") |))
+                || (builtin_plus(builtin_plus(?x,?y), ?z) = builtin_plus(?x,?y) |))
+                || (builtin_plus(builtin_plus(?x,?y), ?z) = builtin_plus(?x,?z) |))
+                || (builtin_plus(builtin_plus(?x,?y), ?z) = builtin_plus(?y,?z) |))
+                || (builtin_plus(?x, builtin_plus(?y, ?z)) = ?n                 |)
+if
+  | builtin_plus(?x, builtin_plus(?y, ?z)) = ?n | |- |
+
+rule plus_assoc_right:
+  || |- builtin_plus(builtin_plus(?x, ?y), ?z) = ?n |
+without
+  | (| (| (| (| (| (?y = numeric_const("0") |)
+                || (?z = numeric_const("0") |))
+                || (?x = numeric_const("0") |))
+                || (builtin_plus(builtin_plus(?x,?y), ?z) = builtin_plus(?x,?y) |))
+                || (builtin_plus(builtin_plus(?x,?y), ?z) = builtin_plus(?x,?z) |))
+                || (builtin_plus(builtin_plus(?x,?y), ?z) = builtin_plus(?y,?z) |))
+                || (builtin_plus(?x, builtin_plus(?y, ?z)) = ?n                 |)
+if
+  || |- builtin_plus(?x, builtin_plus(?y, ?z)) = ?n |
+
+/*rewrite plus_assoc_local:
+  builtin_plus(builtin_plus(?x,?y), ?z) = builtin_plus(?x, builtin_plus(?y,?z))
+without
+  | (| (| (| (| (?y = numeric_const("0") |)
+             || (?z = numeric_const("0") |))
+             || (?x = numeric_const("0") |))
+             || (builtin_plus(builtin_plus(?x,?y), ?z) = builtin_plus(?x,?y) |))
+             || (builtin_plus(builtin_plus(?x,?y), ?z) = builtin_plus(?x,?z) |))
+             || (builtin_plus(builtin_plus(?x,?y), ?z) = builtin_plus(?y,?z) |)*/
+
+rewrite minus_0_second:
+  builtin_minus(numeric_const(?x), numeric_const("0")) = numeric_const(?x)
+
+rewrite minus_eq:
+  builtin_minus(numeric_const(?x), numeric_const(?x)) = numeric_const("0")
+
+rewrite minus_plus_first:
+  builtin_minus(builtin_plus(?x, ?y), ?x) = ?y
+
+rewrite minus_plus_second:
+  builtin_minus(builtin_plus(?x, ?y), ?y) = ?x
+
+/*rewrite minus_plus:
+  builtin_minus(builtin_plus(?x, ?y), ?z) = builtin_plus(?x, builtin_minus(?y, ?z))
+without
+  | (?x = ?z |) || (?y = ?z)*/
+
+/** LT, LE, GT, GE **/
+
+rule gt_lt_left:
+  | GT(?a, ?b) | |- |
+if
+  | LT(?b, ?a) | |- |
+
+rule gt_lt_right:
+  || |- GT(?a, ?b) |
+if
+  || |- LT(?b, ?a) |
+
+rule ge_le_left:
+  | GE(?a, ?b) | |- |
+if
+  | LE(?b, ?a) | |- |
+
+rule ge_le_right:
+  || |- GE(?a, ?b) |
+if
+  || |- LE(?b, ?a) |
+
+rule le_reflexivity_left:
+  | LE(?a, ?a) | |- |
+if
+  || |- |
+
+rule le_antisymmetry_right:
+  | LE(?a, ?b) * LE(?b, ?a) | |- |
+if
+  | ?a = ?b | |- |
+
+rule le_reflexivity_right:
+  || |- LE(?a, ?a) |
+if
+  || |- |
+
+rule le_antisymmetry_right:
+  || |- LE(?a, ?b) * LE(?b, ?a) |
+if
+  || |- ?a = ?b |
+
+rule le_one_zero_left:
+  | LE(numeric_const("1"), numeric_const("0")) | |- |
+if
+
+rule le_one_zero_left_rem:
+  || LE(numeric_const("1"), numeric_const("0")) |- |
+if
+
+/*rewrite lt_plus_first_left:
+  LT(builtin_plus(?a, ?b), builtin_plus(?a, ?c)) = LT(?b, ?c)*/
+
+rule le_plus_plus_first_left:
+  | LE(builtin_plus(?a, ?b), builtin_plus(?a, ?c)) | |- |
+if
+  | LE(?b, ?c) | |- |
+
+rule le_plus_plus_first_left_rem:
+  || LE(builtin_plus(?a, ?b), builtin_plus(?a, ?c)) |- |
+if
+  || LE(?b, ?c) |- |
+
+rule le_plus_first_eq1_left:
+  | LE(builtin_plus(?a, ?b), ?a) | |- |
+if
+  | LE(?b, numeric_const("0")) | |- |
+
+rule le_plus_first_eq1_left_rem:
+  || LE(builtin_plus(?a, ?b), ?a) |- |
+if
+  || LE(?b, numeric_const("0")) |- |
+
+/*rewrite lt_plus_second_left:
+  LT(builtin_plus(?a, ?c), builtin_plus(?b, ?c)) = LT(?a, ?b)*/
+
+rule le_plus_plus_second_left:
+  | LE(builtin_plus(?a, ?c), builtin_plus(?b, ?c)) | |- |
+if
+  | LE(?a, ?b)| |- |
+
+rule le_plus_plus_second_left_rem:
+  || LE(builtin_plus(?a, ?c), builtin_plus(?b, ?c)) |- |
+if
+  || LE(?a, ?b) |- |
+
+/*****************************************/
+
+/*rewrite lt_plus_first_left:
+  LT(builtin_plus(?a, ?b), builtin_plus(?a, ?c)) = LT(?b, ?c)*/
+
+rule lt_lt_not_antisymmetric:
+  | LT(?a, ?b) * LT(?b, ?a) | |- |
+if
+
+rule lt_le_not_antisymmetric:
+  | LT(?a, ?b) * LE(?b, ?a) | |- |
+if
+
+rule lt_le_not_antisymmetric2_rem:
+  | LT(?a, ?b) | LE(?b, ?a) |- |
+if
+
+rule lt_le_not_antisymmetric2_rem:
+  | LE(?a, ?b) | LT(?b, ?a) |- |
+if
+
+rule lt_not_reflexive_left:
+  | LT(?a, ?a) | |- |
+if
+
+rule lt_not_reflexive_left2_rem:
+  || LT(?a, ?a) |- |
+if
+
+rule lt_not_reflexive_right:
+  || |- LT(?a, ?a) |
+if
+  || |- | False
+
+rule lt_plus_plus_first_left:
+  | LT(builtin_plus(?a, ?b), builtin_plus(?a, ?c)) | |- |
+if
+  | LT(?b, ?c) | |- |
+
+rule lt_plus_plus_first_left_rem:
+  || LT(builtin_plus(?a, ?b), builtin_plus(?a, ?c)) |- |
+if
+  || LT(?b, ?c) |- |
+
+rule lt_plus_first_eq1_left:
+  | LT(builtin_plus(?a, ?b), ?a) | |- |
+if
+  | LT(?b, numeric_const("0")) | |- |
+
+rule lt_plus_first_eq1_left_rem:
+  || LT(builtin_plus(?a, ?b), ?a) |- |
+if
+  || LT(?b, numeric_const("0")) |- |
+
+/*rewrite lt_plus_second_left:
+  LT(builtin_plus(?a, ?c), builtin_plus(?b, ?c)) = LT(?a, ?b)*/
+
+rule lt_plus_plus_second_left:
+  | LT(builtin_plus(?a, ?c), builtin_plus(?b, ?c)) | |- |
+if
+  | LT(?a, ?b)| |- |
+
+rule lt_plus_plus_second_left_rem:
+  || LT(builtin_plus(?a, ?c), builtin_plus(?b, ?c)) |- |
+if
+  || LT(?a, ?b) |- |
+
+/*rule lt_transitivity_left:
+  | LT(?a, ?b) | |- |
+if
+  | ?b = builtin_plus(numeric_const("1"), _c) * LE(?a, _c) | |- |
+
+rule le_disj_left:
+  | LE(?a, ?b) | |- |
+without
+  ?b = builtin_plus(numeric_const("1"), ?c)
+if
+  || (?a = ?b |) || (LT(?a, ?b) |) |- |
+
+rule le_disj_right:
+  || |- LE(?a, ?b) |
+if
+  || |- | (?a = ?b |) || (LT(?a, ?b) |)*/
+
+/** Rules for right-shifts. **/
+rewrite shiftr_zero_one:
+  builtin_shiftr(numeric_const("0"), numeric_const("1")) = numeric_const("0")
+
+rewrite shiftr_one_one:
+  builtin_shiftr(numeric_const("1"), numeric_const("1")) = numeric_const("0")
+
+/** "Inherit" the protected field modCount from AbstractList. **/
+/* FIXME Ugly, ugly hack! */
+
+rule inherit_modcount1:
+  || field(?x, "<java.util.AbstractList: int modCount>", ?c1)
+    |- | field(?x, "<java.util.LinkedList: int modCount>", ?c2)
+if
+  || field(?x, "<java.util.LinkedList: int modCount>", ?c1)
+    |- | field(?x, "<java.util.LinkedList: int modCount>", ?c1)
+
+rule inherit_modcount2:
+  || field(?x, "<java.util.LinkedList: int modCount>", ?c1)
+    |- | field(?x, "<java.util.AbstractList: int modCount>", ?c2)
+if
+  || field(?x, "<java.util.AbstractList: int modCount>", ?c1)
+    |- | field(?x, "<java.util.AbstractList: int modCount>", ?c1)
+
+/** Expensive! Removing side condition would lead to non-termination. Can only be applied once even though it is true for any sublist. **/
+rule dseg_disj_left:
+  || dseg(?i, ?ip, ?jn, ?j, ?alpha) |- |
+without
+  | (?alpha = empty() |) || (?alpha = cons(?b, ?beta) |)
+if
+  || (?alpha = empty() | dseg(?i, ?ip, ?jn, ?j, ?alpha)) ||
+     ( | dseg_ne(?i, ?ip, ?jn, ?j, ?alpha)) |- |
+
+/*rule dseg_disj_right:
+  || |- | dseg(?i, ?ip, ?jn, ?j, ?alpha)
+without
+  | (?alpha = empty() |) || (?alpha = cons(?b, ?beta) |)
+if
+  || |- | (?alpha = empty() | dseg(?i, ?ip, ?jn, ?j, ?alpha)) ||
+          ( | dseg_ne(?i, ?ip, ?jn, ?j, ?alpha))*/
+
+rule dseg_ne_cons_right:
+  || |- | dseg(?i, ?ip, ?jn, ?j, cons(?a, ?alpha))
+if
+  || |- | dseg_ne(?i, ?ip, ?jn, ?j, cons(?a, ?alpha))
+
+rule dseg_ne_app_cons_first_right:
+  || |- | dseg(?i, ?ip, ?jn, ?j, app(cons(?a, ?alpha), ?beta))
+if
+  || |- | dseg_ne(?i, ?ip, ?jn, ?j, app(cons(?a, ?alpha), ?beta))
+
+rule dseg_ne_app_cons_second_right:
+  || |- | dseg(?i, ?ip, ?jn, ?j, app(?alpha, cons(?b, ?beta)))
+if
+  || |- | dseg_ne(?i, ?ip, ?jn, ?j, app(?alpha, cons(?b, ?beta)))
+
+/** List not containing a specific element **/
+  /* Left */
+rule list_without_empty_left:
+  | list_without(empty(), ?b) | |- |
+if
+  || |- |
+
+rule list_without_cons_left:
+  | list_without(cons(?a, ?alpha), ?b) | |- |
+if
+  | ?a != ?b * list_without(?alpha, ?b) | |- |
+
+rule list_without_app_left:
+  | list_without(app(?alpha, ?beta), ?b) | |- |
+if
+  | list_without(?alpha, ?b) * list_without(?beta, ?b) | |- |
+
+  /* Right */
+rule list_without_empty_right:
+  || |- list_without(empty(), ?b) |
+if
+  || |- |
+
+rule list_without_cons_right:
+  || |- list_without(cons(?a, ?alpha), ?b) |
+if
+  || |- ?a != ?b * list_without(?alpha, ?b) |
+
+rule list_without_app_right:
+  || |- list_without(app(?alpha, ?beta), ?b) |
+if
+  || |- list_without(?alpha, ?b) * list_without(?beta, ?b) |
