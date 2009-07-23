@@ -400,7 +400,7 @@ let rec rewrites_sequent_inner rwm (ts,seq) rewrite_track ep abs =
     let subst = rewrite_ts ts rwm rewrite_track rs f in 
     try 
       let ts_seq = (ts,subst_sequent subst seq) in 
-      if !(Debug.debug_ref) then Format.fprintf !dump "Rewritten to@\n %a@\n" (string_ts_seq (rao_create())) ts_seq;
+      if true || !(Debug.debug_ref) then Format.fprintf !dump "Rewritten to@\n %a@\n" (string_ts_seq (rao_create())) ts_seq;
 (*      if abs then (
 	Rterm.kill_term_set ts !rewrite_track; 
         if Rterm.ts_debug then Format.printf "Tidied after rewrites@\n %a" string_ts_db ts
@@ -567,7 +567,7 @@ let apply_plain_prove_2 plain_rules ep ((ts,(f,s,c)) : term_structure * (spatial
 	let rs = rv_trans_set (rv_form (pl1,s,c) (rv_spat_list f Rset.empty)) in 
 	let p_assume = composite_list_is_plain interp rs hash ts c in 
 	let p_assume = match p_assume with None -> [] | Some x -> x in  
-	if !(Debug.debug_ref) then Format.fprintf !dump "Ask external prover to complete proof.@\n";
+	if true || !(Debug.debug_ref) then Format.fprintf !dump "Ask external prover to complete proof.@\n";
         let p1 = p1 @ p_assume in
         let p2 = p2 @ p_goal in
 	let evs = ev_form p1 vs_empty in
@@ -657,14 +657,14 @@ let apply_rule_or_right seq =
   let rec aror_inner cl cl2 =
   match cl with 
     (Or(c1,c2))::cl -> 
-        if !Debug.debug_ref  then Format.fprintf !dump "Case split on or right!\n";
+        if true || !(Debug.debug_ref)  then Format.fprintf !dump "Case split on or right!\n";
 	let seq2 = (f,f3,(pl,sl,c2::cl2@cl)) in 
 	let rvs = Rlogic.rv_sequent  seq2 in 
 	let ts2,subs = clone ts rvs in 
 	let seq2 = subst_sequent subs seq2 in 
       [[ts,(f,f3,(pl,sl,c1::cl2@cl))];[ts2,seq2]]
   | c::cl ->  
-      if !Debug.debug_ref  then Format.fprintf !dump "Not an or!\n";
+      if true || !(Debug.debug_ref)  then Format.fprintf !dump "Not an or!\n";
       aror_inner cl (c::cl2)
   | [] -> raise No_match
   in aror_inner cl []
@@ -690,7 +690,7 @@ let rec sequents_subtract seqs =
 
 let ask_the_audience ep ts p1 rs = 
   (*raise No_match*)
-  if !(Debug.debug_ref) then Format.fprintf !dump "Query external prover@\n";
+  if true || !(Debug.debug_ref) then Format.fprintf !dump "Query external prover@\n";
   let flag = ref false in 
   let eqs = ref [] in 
   let hash = (rao_create ()) in
@@ -747,8 +747,8 @@ let rec sequents_backtrack  f (seqss : ts_sequent list list) xs
     [] -> raise (Failed_eg xs)
   | seqs::seqss -> 
       try f seqs 
-      with Failed ->  (if !Debug.debug_ref then Format.fprintf !dump "Backtracking!\n"); sequents_backtrack f seqss xs
-      | Failed_eg x -> (if !Debug.debug_ref then Format.fprintf !dump "Backtracking!\n"); sequents_backtrack f seqss (x @ xs)
+      with Failed ->  (if true || !(Debug.debug_ref) then Format.fprintf !dump "Backtracking!\n"); sequents_backtrack f seqss xs
+      | Failed_eg x -> (if true || !(Debug.debug_ref) then Format.fprintf !dump "Backtracking!\n"); sequents_backtrack f seqss (x @ xs)
 
 (* Wand on left rule *)
 (* TODO
@@ -806,8 +806,8 @@ let rec apply_rule_list logic (sequents : ts_sequent list) find_frame abs : ts_s
   let plain_rules = [] in 
   let rules,(*emps,plain_rules,*)rwm,ep = logic in 
   let n = 0 in
-  if !debug_ref then
-    (List.iter (fun seq -> Format.fprintf !dump "Goal %a@\n@\n" (string_ts_seq (rao_create ())) seq) sequents;
+  if true || !(Debug.debug_ref) then
+    (List.iter (fun seq -> Format.fprintf !dump "Goal@ %a@\n@\n" (string_ts_seq (rao_create ())) seq) sequents;
      Format.fprintf !dump "Start time :%f @\n" (Sys.time ()));
   let rec apply_rule_list_inner sequents n : ts_sequent list = 
   (* Collapse Form in combined construct *)
@@ -822,7 +822,7 @@ let rec apply_rule_list logic (sequents : ts_sequent list) find_frame abs : ts_s
 (*  let sequents = List.map simp_seq_with_record sequents in *)
   (* substitute away equalities *)
 (*  let sequents = map_option (fun seq -> try Some (subs_eqs_seq seq) with Success -> None) sequents in*)
-    let sequents : ts_sequent list = map_option (fun seq -> try Some (eqs_elim seq) with Success -> (if !debug_ref then Format.fprintf !dump "Success : %a\n" (string_ts_seq (rao_create ())) seq; None)) sequents in 
+    let sequents : ts_sequent list = map_option (fun seq -> try Some (eqs_elim seq) with Success -> (if true || !(Debug.debug_ref) then Format.fprintf !dump "Success : %a\n" (string_ts_seq (rao_create ())) seq; None)) sequents in 
 (*  List.iter (fun seq -> Printf.printf "%s> %s\n" (String.make n '-') (string_ts_seq seq)) sequents;*)
   let sequents : ts_sequent list = List.map exists_elim_simple sequents in 
   (* perform rewrite rules *)
@@ -834,7 +834,7 @@ let rec apply_rule_list logic (sequents : ts_sequent list) find_frame abs : ts_s
   let sequents : ts_sequent list = sequents_use_neqs sequents in 
   (* perform rewrite rules *)
   let sequents = List.map (rewrites_sequent rwm ep abs) sequents in 
-  let sequents : ts_sequent list = map_option (fun seq -> try Some (eqs_elim seq) with Success -> (if !debug_ref then Format.fprintf !dump "Success : %a\n" (string_ts_seq (rao_create ())) seq; None)) sequents in 
+  let sequents : ts_sequent list = map_option (fun seq -> try Some (eqs_elim seq) with Success -> (if true || !(Debug.debug_ref) then Format.fprintf !dump "Success : %a\n" (string_ts_seq (rao_create ())) seq; None)) sequents in 
 (*  List.iter (fun seq -> Printf.printf "%s> %s\n" (String.make n '-') (string_ts_seq seq)) sequents;*)
   (* Apply rules lots *)
     List.flatten 
@@ -842,7 +842,7 @@ let rec apply_rule_list logic (sequents : ts_sequent list) find_frame abs : ts_s
 	 (fun seq -> 
 	   try 
 	     (* check for base sequents *)
-	     if !debug_ref then Format.fprintf !dump "%s>@[%a@]@\n@." (String.make n '-') (string_ts_seq (rao_create ())) seq;
+	     if true || !(Debug.debug_ref) then Format.fprintf !dump "%s>@[%a@]@\n@." (String.make n '-') (string_ts_seq (rao_create ())) seq;
 	     match seq with 
 	     | ts,(f,(p1,s1,c1),(p2,[],[Wand(Form(p21,s21,c21),Form(p22,s22,c22))])) (* very simple wand case *)
 		   -> apply_rule_list_inner [ts,(f,(p21@p1,s21@s1,c21@c1),(p22@p2,s22,c22))] (n+1)
@@ -894,7 +894,7 @@ let rec apply_rule_list logic (sequents : ts_sequent list) find_frame abs : ts_s
 		     (*in let rec f seqs =  back tracking is done by this function 
 					    match seqs with 
 					    | [] ->
-		       if !debug_ref then Printf.printf "Failed to prove:\n%s > %s\n\n" (String.make n '-') (string_seq seq);
+		       if true || !(Debug.debug_ref) then Printf.printf "Failed to prove:\n%s > %s\n\n" (String.make n '-') (string_seq seq);
 		       [seq]
 		   | seq::seqs -> 
 		       try 
@@ -908,14 +908,14 @@ let rec apply_rule_list logic (sequents : ts_sequent list) find_frame abs : ts_s
 		 (* try and find plain contradiction *)
 		 match seq with  (* no more rules apply: see if we have a plain contradiction *)  
 		 | ts,(f,(p1,s1,c1),(p2,s2,c2)) -> 
-		     if !debug_ref then Format.fprintf !dump "Find plain contradiction:\n";
+		     if true || !(Debug.debug_ref) then Format.fprintf !dump "Find plain contradiction:\n";
 		     try apply_plain_prove_contra plain_rules ep (ts,(f,s1,c1)) p1 (* Prove plain thing *)
 		     with Failed -> raise (Failed_eg [seq])
 		 | _ -> raise Failed)
 	 ) sequents 
       )
   in let res = apply_rule_list_inner sequents n in 
-  if !debug_ref then Format.fprintf !dump "End time :%f \n" (Sys.time ()); res
+  if true || !(Debug.debug_ref) then Format.fprintf !dump "End time :%f \n" (Sys.time ()); res
 
 
 

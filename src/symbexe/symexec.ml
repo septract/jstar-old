@@ -226,7 +226,7 @@ let exec_lookup_assign (v:Jparsetree.variable) (e:Jparsetree.reference) (sheap,i
 	mk_pointsto (name2args n) (signature2args si) pointed_to_var
     | _ -> assert false  (* TODO other types of reference *) in   
   let frames = check_implication_frame_pform (!curr_logic) sheap find_pointsto in
-  Prover.pprint_proof stdout;
+  if !(Debug.debug_ref) then Prover.pprint_proof stdout;
   match frames with 
     [] ->      
       let idd = add_error_node "ERROR" in 
@@ -260,7 +260,7 @@ let exec_mutation_assign  (v:Jparsetree.reference) (e:Jparsetree.immediate) (she
 	mk_pointsto (name2args n) (signature2args si) (immediate2args e) 
     | _ -> assert false  (* TODO other types of reference *) in    
   let frames = check_implication_frame_pform (!curr_logic) sheap find_pointsto in
-  Prover.pprint_proof stdout;
+  if !(Debug.debug_ref) then Prover.pprint_proof stdout;
   match frames with 
     [] ->
       let idd = add_error_node "Error" in 
@@ -587,7 +587,7 @@ let rec execute_stmt n (sheap : formset_entry) : unit =
       (
        try 
 	let heap,id = List.find (fun (heap,id) -> (check_implication_frame !curr_logic sheap_noid heap)!=[]) heaps in
-	Prover.pprint_proof stdout;
+	if !(Debug.debug_ref) then Prover.pprint_proof stdout;
 	if !Support_symex.sym_debug then Printf.printf "\n\nPost okay %s \n" (Pprinter.name2str m.name);
 
 (*	let idd = add_good_node ("EXIT: "^(Pprinter.name2str m.name)) in *)
@@ -636,7 +636,7 @@ let rec execute_stmt n (sheap : formset_entry) : unit =
 	  try
 	    if symb_debug() then Format.printf "@\nPre-abstraction:@\n    %a@."  (string_ts_form (Rterm.rao_create ())) sheap_noid;
 	    let sheaps_abs = Prover.abs !curr_abs_rules sheap_noid in 
-	    Prover.pprint_proof stdout;
+	    if !(Debug.debug_ref) then Prover.pprint_proof stdout;
 	    if symb_debug() then Format.printf "@\nPost-abstractionc count:@\n    %d@."  (List.length sheaps_abs);
 	    List.iter Rlogic.kill_all_exists_names sheaps_abs;
 	    if symb_debug() then List.iter (fun sheap -> Format.printf "@\nPost-abstraction:@\n    %a@."  (string_ts_form (Rterm.rao_create ())) sheap) sheaps_abs;
@@ -654,7 +654,7 @@ let rec execute_stmt n (sheap : formset_entry) : unit =
 		(fun (sheap2,id2) -> List.for_all
 		    (fun (form,id) -> 
 		      if check_implication !curr_logic (form_clone sheap2) form  then 
-			(Prover.pprint_proof stdout;
+			(if !(Debug.debug_ref) then Prover.pprint_proof stdout;
 			(add_edge id2 id ("Contains@"^Pprinter.statement2str stm.skind) ;false) )
 		      else true)
 		    formset;
