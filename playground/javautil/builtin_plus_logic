@@ -1,0 +1,36 @@
+/******************
+ *  Some simple properties of addition
+ ******************/
+
+rule zero_neq_one_left:
+  | "0" = "1" | |- |
+if
+
+rule zero_neq_one_right:
+  || |- "0" = "1" |
+if
+  || |- | False
+
+rule builtin_plus_inj_first_right:
+| | |- builtin_plus(?t,?g) = builtin_plus(?t,?h) |
+without
+  ?g = ?h * ?t = numeric_const("0")
+if
+| | |- ?g = ?h |
+
+/*rule builtin_plus_inj_second_right:
+| | |- builtin_plus(?g,?t) = builtin_plus(?h,?t) |
+without
+  ?g = ?h * ?t = numeric_const("0")
+if
+| | |- ?g = ?h |*/
+
+
+/*rewrite builtin_plus_assoc :
+        builtin_plus(builtin_plus(?x,?y),?z) = builtin_plus(?x,builtin_plus(?y,?z))*/
+
+
+rule bp :
+  | | |- builtin_plus(?x,?x) = builtin_plus(?y,?y) | 
+if
+  | | |- ?x=?y | 
