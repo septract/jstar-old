@@ -131,7 +131,7 @@ type id = int
 
 let fresh_node = let node_counter = ref 0 in fun () ->  let x = !node_counter in node_counter := x+1; x
 
-let fresh_file = let file_id = ref 0 in fun () -> let x = !file_id in file_id := x+1;  Sys.getcwd() ^  "proof_file_"^(string_of_int x)^".txt"
+let fresh_file = let file_id = ref 0 in fun () -> let x = !file_id in file_id := x+1;  Sys.getcwd() ^  "/proof_file_"^(string_of_int x)^".txt"
 
 type ntype = 
     Plain | Good | Error | Abs
@@ -879,7 +879,7 @@ let pp_dotty_transition_system () =
     Printf.fprintf dotty_outf "\n state%i -> state%i [label=\"%s\"%s]" s d l
 	    (match o with 
 	      None -> ""
-	    | Some f -> Printf.sprintf ", URL=\"file://localhost%s\", fontcolor=blue" f))
+	    | Some f -> Printf.sprintf ", URL=\"file://%s\", fontcolor=blue" f))
     !graphe;
   Printf.fprintf dotty_outf "\n\n\n}";
   close_out dotty_outf
