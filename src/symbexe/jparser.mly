@@ -749,8 +749,7 @@ rule:
 
 rule_file:
    | EOF  { [] }
-   | rule rule_file  {$1 :: $2}
-
+   | rule rule_file  {$1 :: $2}sy
 question_file: 
    | EOF  { [] }
    | question file  {$1 :: $2}

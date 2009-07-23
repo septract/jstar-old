@@ -132,7 +132,7 @@ type id = int
 let fresh_node = let node_counter = ref 0 in fun () ->  let x = !node_counter in node_counter := x+1; x
 
 type ntype = 
-    Plain | Good | Error
+    Plain | Good | Error | Abs
 
 type node = string * id * ntype
 
@@ -146,8 +146,13 @@ let add_node (label : string) (ty : ntype) : id =
   graphn := (label, id, ty)::!graphn; id 
 
 let add_error_node label = add_node label Error
+let add_abs_node label = add_node label Abs
 let add_good_node label = add_node label Good
 let add_node label = add_node label Plain
+
+let add_abs_heap_node (heap : Rlogic.ts_form) = 
+  (Format.fprintf (Format.str_formatter) "%a" (string_ts_form (Rterm.rao_create ())) heap);
+  add_abs_node (Format.flush_str_formatter ())
 
 let add_heap_node (heap : Rlogic.ts_form) = 
   (Format.fprintf (Format.str_formatter) "%a" (string_ts_form (Rterm.rao_create ())) heap);
@@ -168,6 +173,13 @@ let add_id_form h =
     (h,id)
 
 let add_id_formset sheaps =  List.map add_id_form sheaps
+
+
+let add_id_abs_form h =
+    let id=add_abs_heap_node h in
+    (h,id)
+
+let add_id_abs_formset sheaps =  List.map add_id_abs_form sheaps
 
 
 
@@ -623,7 +635,7 @@ let rec execute_stmt n (sheap : formset_entry) : unit =
                print_formset "in " (remove_id_formset formset)
 	     );
 
-	    let sheaps_with_id = add_id_formset sheaps_abs in
+	    let sheaps_with_id = add_id_abs_formset sheaps_abs in
 	    List.iter (fun sheap2 -> add_edge (snd sheap) (snd sheap2) ("Abstract@"^Pprinter.statement2str stm.skind)) sheaps_with_id;
 	    let sheaps_with_id = List.filter 
 		(fun (sheap2,id2) -> List.for_all
@@ -845,7 +857,8 @@ let pp_dotty_transition_system () =
     match ty with 
       Plain ->  Printf.fprintf dotty_outf "\n state%i[label=\"%s\",labeljust=l]\n" id label
     | Good ->  Printf.fprintf dotty_outf "\n state%i[label=\"%s\",labeljust=l, color=green, style=filled]\n" id label
-    | Error ->  Printf.fprintf dotty_outf "\n state%i[label=\"%s\",labeljust=l, color=red, style=filled]\n" id label)
+    | Error ->  Printf.fprintf dotty_outf "\n state%i[label=\"%s\",labeljust=l, color=red, style=filled]\n" id label
+    | Abs ->  Printf.fprintf dotty_outf "\n state%i[label=\"%s\",labeljust=l, color=yellow, style=filled]\n" id label)
     !graphn;
   List.iter (fun (l,s,d) ->
     let l = escape_for_dot_label l in 

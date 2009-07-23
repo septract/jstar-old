@@ -1389,6 +1389,7 @@ let rewrite_ts (ts : term_structure) (rm : 'a rewrite_map) dtref rs (query : var
 			  (* end Hack *)
 			  if not (query (interp,extra)) then raise No_match; 
 			  let tid : term =  (List.find (fun (y : term)-> ft_eq (!y).term ft) (!repid).terms) in
+			  if TIDset.mem tid !dtref then raise No_match;
 			  let r,i,t = add_term_id ts interp a in 
 			  if !(Debug.debug_ref) && not(rep_eq r repid) then Format.printf "Using rule: %s gives %a equal to %a.\n" rule (string_rep_term (rao_create ())) r  (string_rep_term (rao_create ())) repid;
 			  if rep_eq r repid then 

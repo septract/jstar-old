@@ -396,19 +396,21 @@ let rec rewrites_sequent_inner rwm (ts,seq) rewrite_track ep abs =
     try 
       let ts_seq = (ts,subst_sequent subst seq) in 
       if !(Debug.debug_ref) then Format.printf "Rewritten to@\n %a@\n" (string_ts_seq (rao_create())) ts_seq;
-      if abs then (
-	Rterm.kill_term_set ts !rewrite_track;    
-	if Rterm.ts_debug then Format.printf "Tidied after rewrites@\n %a" string_ts_db ts
-	    ) ;
+(*      if abs then (
+	Rterm.kill_term_set ts !rewrite_track; 
+        if Rterm.ts_debug then Format.printf "Tidied after rewrites@\n %a" string_ts_db ts
+	    ) ;  *)
       rewrites_sequent_inner rwm ts_seq rewrite_track ep abs
     with Success -> 
       (ts,true_sequent)
   with No_match -> 
     if Rterm.ts_debug then Format.printf "Finished rewrites@\n %a" string_ts_db ts;
-    if abs then (
+(*    if abs then (
       Rterm.kill_term_set ts !rewrite_track;    
       if Rterm.ts_debug then Format.printf "Tidied after rewrites@\n %a" string_ts_db ts
-	  ) ;
+	  ) ;*)
+    Rterm.kill_term_set ts !rewrite_track;    
+    if Rterm.ts_debug then Format.printf "Tidied after rewrites@\n %a" string_ts_db ts;
     (ts,seq)
 
 
