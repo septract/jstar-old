@@ -25,7 +25,7 @@ SYMBEXE_SOURCES = config.ml jparsetree.ml pprinter.mli pprinter.ml jlogic.ml spe
 TOPLEVEL_SOURCES = $(SYMBEXE_SOURCES)
 
 DEFAULT_ARGS = SOURCES="$(TOPLEVEL_SOURCES)" \
-       LIBS="str utils sepprover" \
+       LIBS="str unix utils sepprover" \
        OCAMLLDFLAGS="-g -I $(LIB)" \
        OCAMLFLAGS="-g -I ../prover -I ../utils" \
        TRASH=""

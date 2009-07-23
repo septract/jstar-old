@@ -1159,6 +1159,19 @@ let clone (ts : term_structure) (rs : rset_t) : term_structure * representative_
 *)
 
 (* let add_term_to_rep ts ft r = *)
+
+(*IF-OCAML*)
+module TIDset = 
+  Set.Make(struct 
+    type t = term
+    let compare = fun t1 t2 -> compare (!t1).nn (!t2).nn
+  end)
+(*ENDIF-OCAML*)
+
+(*F#
+let TIDset : Set.Provider<term> 
+   = Set.Make(fun t1 t2 -> compare (!t1).nn (!t2).nn) 
+F#*)    
   
 
 
@@ -1210,7 +1223,7 @@ let rec ts_to_eqs (ts : term_structure) (context : term_structure) (rs : rset_t)
  calls continuation if it matches
  if continuation throws No_match tries a different match 
  otherwise throws No_match. *)
-let rec unifies (ts : term_structure) (p : representative args) (r : representative) (interp : var_subst) (cont : var_subst -> 'a) : 'a  = 
+let rec unifies (ts : term_structure) (p : representative args) (r : representative)  (forbidden_tids : TIDset.t) (interp : var_subst) (cont : var_subst -> 'a) : 'a  = 
     match p with 
     | Arg_var (Vars.EVar _) -> 
 	if is_existential ts r then () else raise No_match; (* must be an existential variables *)
@@ -1238,13 +1251,14 @@ let rec unifies (ts : term_structure) (p : representative args) (r : representat
 	let termids = (!r).terms in 
 	let terms = map_option 
 	    (fun tid -> 
+	      if TIDset.mem tid forbidden_tids then None else 
 	      let t = (!tid).term in
 	      match t with FTFunct(n,rl) when n=name -> Some rl | _ -> None) termids in 
 	let rec f rls =
 	  match rls with 
 	    [] -> raise No_match
 	  | rl::rls -> 
-	      try unifies_list ts al rl interp cont 
+	      try unifies_list ts al rl forbidden_tids interp cont 
 	      with No_match -> f rls  
 	in f terms
     | Arg_cons (name, al) ->
@@ -1257,7 +1271,7 @@ let rec unifies (ts : term_structure) (p : representative args) (r : representat
 	  match rls with 
 	    [] -> raise No_match
 	  | rl::rls -> 
-	      try unifies_list ts al rl interp cont 
+	      try unifies_list ts al rl forbidden_tids interp cont 
 	      with No_match -> f rls  
 	in f terms
     | Arg_record fldlist ->
@@ -1273,15 +1287,21 @@ let rec unifies (ts : term_structure) (p : representative args) (r : representat
 	  match rls with 
 	    [] -> raise No_match
 	  | rl::rls -> 
-	      try unifies_list ts al rl interp cont 
+	      try unifies_list ts al rl forbidden_tids interp cont 
 	      with No_match -> f rls  
 	in f terms
-and unifies_list ts al rl interp cont =
+and unifies_list ts al rl (forbidden_tids : TIDset.t) interp cont =
   match al,rl with
     [],[] -> cont interp 
   | _,[] -> raise No_match
   | [],_ -> raise No_match 
-  | a::al,r::rl -> unifies ts a r interp (fun interp -> unifies_list ts al rl interp cont)
+  | a::al,r::rl -> unifies ts a r forbidden_tids interp (fun interp -> unifies_list ts al rl forbidden_tids interp cont)
+
+let unifies_list_ntids = unifies_list
+
+let unifies ts a r i c = unifies ts a r TIDset.empty i c
+
+let unifies_list ts al rl i c = unifies_list ts al rl TIDset.empty i c 
 
 let rec unifies_eq_inner ts rl a1 a2 interp cont =
   match rl with 
@@ -1289,7 +1309,7 @@ let rec unifies_eq_inner ts rl a1 a2 interp cont =
   | r::rl -> if ts_debug then Format.printf "Trying representative@ %a@ for@ %a =@ %a.@\n" string_rep_term_db r string_args a1 string_args a2;
     (try 
       if ts_debug then Format.printf "Trying to match %a in %a.@\n" string_args a1  string_rep_term_db r;
-      unifies ts a1 r interp 
+      unifies ts a1 r interp
         ( fun interp-> 
 	  if ts_debug then Format.printf "Trying to match %a in %a.@\n" string_args a2  string_rep_term_db r;
           unifies ts a2 r interp 
@@ -1337,18 +1357,6 @@ let rm_empty = RewriteMap.empty
 let rm_add = RewriteMap.add
 let rm_find = RewriteMap.find
 
-(*IF-OCAML*)
-module TIDset = 
-  Set.Make(struct 
-    type t = term
-    let compare = fun t1 t2 -> compare (!t1).nn (!t2).nn
-  end)
-(*ENDIF-OCAML*)
-
-(*F#
-let TIDset : Set.Provider<term> 
-   = Set.Make(fun t1 t2 -> compare (!t1).nn (!t2).nn) 
-F#*)    
 
 exception Done
 
@@ -1372,7 +1380,7 @@ let rewrite_ts (ts : term_structure) (rm : 'a rewrite_map) dtref rs (query : var
 		fun (al,a,extra,rule) ->
 		  try
 		    if ts_debug then Format.printf "Trying rule:%s@\n" rule;
-		    unifies_list ts al rl empty_vs
+		    unifies_list_ntids ts al rl !dtref empty_vs
 		      (fun interp 
 			-> 
 			  (* Hack for exists so they are not in context by default *)

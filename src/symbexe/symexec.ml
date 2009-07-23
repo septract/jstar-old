@@ -145,6 +145,38 @@ let graphn = ref []
 
 let graphn_url = ref []
 
+
+
+let escape_for_dot_label s =
+  Str.global_replace (Str.regexp "\\\\n") "\\l" (String.escaped s)
+
+let pp_dotty_transition_system () =
+  let foname="execution.dot" in
+  let dotty_outf=open_out foname in
+  if symb_debug() then Printf.printf "\n Writing transition system file execution.dot  \n";
+  Printf.fprintf dotty_outf "digraph main { \nnode [shape=box,  labeljust=l];\n";
+  List.iter (fun (label,id,ty) ->
+    let label=escape_for_dot_label label in 
+    let url = try ", URL=\"file://" ^ (List.assoc id !graphn_url) ^"\"" with Not_found -> "" in
+    match ty with 
+      Plain ->  Printf.fprintf dotty_outf "\n state%i[label=\"%s\",labeljust=l%s]\n" id label url
+    | Good ->  Printf.fprintf dotty_outf "\n state%i[label=\"%s\",labeljust=l, color=green, style=filled%s]\n" id label url
+    | Error ->  Printf.fprintf dotty_outf "\n state%i[label=\"%s\",labeljust=l, color=red, style=filled%s]\n" id label url
+    | Abs ->  Printf.fprintf dotty_outf "\n state%i[label=\"%s\",labeljust=l, color=yellow, style=filled%s]\n" id label url)
+    !graphn;
+  List.iter (fun (l,s,d, o) ->
+    let l = escape_for_dot_label l in 
+    Printf.fprintf dotty_outf "\n state%i -> state%i [label=\"%s\"%s]" s d l
+	    (match o with 
+	      None -> ""
+	    | Some f -> Printf.sprintf ", URL=\"file://%s\", fontcolor=blue" f))
+    !graphe;
+  Printf.fprintf dotty_outf "\n\n\n}";
+  close_out dotty_outf
+
+
+
+
 let add_node (label : string) (ty : ntype) : id = 
   let id = fresh_node () in 
   graphn := (label, id, ty)::!graphn; id 
@@ -167,7 +199,8 @@ let add_error_heap_node (heap : Rlogic.ts_form) =
   add_error_node (Format.flush_str_formatter ())
 
 
-let add_edge src dest label = graphe := (label, src, dest, None)::!graphe
+let add_edge src dest label = 
+  graphe := (label, src, dest, None)::!graphe
 
 let add_edge_with_proof src dest label = 
   let f = fresh_file() in
@@ -205,6 +238,8 @@ let add_id_abs_form h =
     (h,id)
 
 let add_id_abs_formset sheaps =  List.map add_id_abs_form sheaps
+
+
 
 
 
@@ -691,14 +726,28 @@ let rec execute_stmt n (sheap : formset_entry) : unit =
       | Identity_stmt (n,id,ty) -> 
 	  let h=exec_identity_stmt  n id ty (fst sheap) in
 	  let h=add_id_form h in
-	  add_edge_with_proof (snd sheap) (snd h) (Pprinter.statement2str stm.skind);
+	  add_edge (snd sheap) (snd h) (Pprinter.statement2str stm.skind);
 	  exec_one h 
       | Identity_no_type_stmt(n,id) -> assert false (*exec_identity_no_type_stmt sheap*)
       | Assign_stmt(v,e) -> 
 	  let hs=(exec_assign_stmt  v e sheap n) in
 	  let hs=add_id_formset hs in
 	  List.iter (fun h ->
-		       add_edge_with_proof (snd sheap) (snd h) (Pprinter.statement2str stm.skind)) hs;
+	    match e with 
+	    | New_simple_exp _
+	    | Immediate_exp _
+	    | Binop_exp (_,_,_)
+	    | Unop_exp (_,_)
+	    | New_array_exp (_,_)
+	    | New_multiarray_exp (_,_)
+	    | Cast_exp (_,_)
+	    | Instanceof_exp (_,_)
+	      -> add_edge (snd sheap) (snd h) (Pprinter.statement2str stm.skind)
+	    | Invoke_exp _
+	    | Reference_exp _
+	      -> add_edge_with_proof (snd sheap) (snd h) (Pprinter.statement2str stm.skind)
+		    
+		    ) hs;
 	  execs_one hs
       | If_stmt(e,l) ->
 	  let sheap2 = (form_clone (fst sheap), snd sheap) in 
@@ -881,30 +930,3 @@ let compute_fixed_point (f : Jparsetree.jimple_file)
   done 
 (*  if !Config.dotty_print then print_file_dotty "conf_node" (icfg_nodes2list mdl);*)
 (*  List.iter (fun m -> check_post sspecs_prog m lo cname) mdl*)
-
-let escape_for_dot_label s =
-  Str.global_replace (Str.regexp "\\\\n") "\\l" (String.escaped s)
-
-let pp_dotty_transition_system () =
-  let foname="execution.dot" in
-  let dotty_outf=open_out foname in
-  if symb_debug() then Printf.printf "\n Writing transition system file execution.dot  \n";
-  Printf.fprintf dotty_outf "digraph main { \nnode [shape=box,  labeljust=l];\n";
-  List.iter (fun (label,id,ty) ->
-    let label=escape_for_dot_label label in 
-    let url = try ", URL=\"file://" ^ (List.assoc id !graphn_url) ^"\"" with Not_found -> "" in
-    match ty with 
-      Plain ->  Printf.fprintf dotty_outf "\n state%i[label=\"%s\",labeljust=l%s]\n" id label url
-    | Good ->  Printf.fprintf dotty_outf "\n state%i[label=\"%s\",labeljust=l, color=green, style=filled%s]\n" id label url
-    | Error ->  Printf.fprintf dotty_outf "\n state%i[label=\"%s\",labeljust=l, color=red, style=filled%s]\n" id label url
-    | Abs ->  Printf.fprintf dotty_outf "\n state%i[label=\"%s\",labeljust=l, color=yellow, style=filled%s]\n" id label url)
-    !graphn;
-  List.iter (fun (l,s,d, o) ->
-    let l = escape_for_dot_label l in 
-    Printf.fprintf dotty_outf "\n state%i -> state%i [label=\"%s\"%s]" s d l
-	    (match o with 
-	      None -> ""
-	    | Some f -> Printf.sprintf ", URL=\"file://%s\", fontcolor=blue" f))
-    !graphe;
-  Printf.fprintf dotty_outf "\n\n\n}";
-  close_out dotty_outf
