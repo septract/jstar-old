@@ -230,7 +230,7 @@ let exec_lookup_assign (v:Jparsetree.variable) (e:Jparsetree.reference) (sheap,i
   match frames with 
     [] ->      
       let idd = add_error_node "ERROR" in 
-      add_edge id idd 
+      add_edge_with_proof id idd 
 	(Format.fprintf (Format.str_formatter) "%s:@\n %a" (Pprinter.statement2str (node_get_stmt node).skind) Prover.pprint_counter_example (); Format.flush_str_formatter ());
       warning(); 
       Printf.printf "\n\nERROR: While executing node %d:\n   %s\n"  (node_get_id node) (Pprinter.statement2str (node_get_stmt node).skind);
@@ -264,7 +264,7 @@ let exec_mutation_assign  (v:Jparsetree.reference) (e:Jparsetree.immediate) (she
   match frames with 
     [] ->
       let idd = add_error_node "Error" in 
-      add_edge id idd
+      add_edge_with_proof id idd
 	(Format.fprintf (Format.str_formatter) "%s:@\n %a" (Pprinter.statement2str (node_get_stmt node).skind) Prover.pprint_counter_example (); Format.flush_str_formatter ());
       warning(); 
       Printf.printf "\n\nERROR: While executing node %d:\n   %s\n"  
@@ -378,7 +378,7 @@ let call_jsr (sheap,id) spec n il si node =
     match res with 
       None ->   
 	let idd = add_error_node "ERROR" in
-	add_edge id idd 	
+	add_edge_with_proof id idd 	
 	  (Format.fprintf 
 	     (Format.str_formatter) "%s:@\n %a" 
 	     (Pprinter.statement2str (node_get_stmt node).skind) 
@@ -574,7 +574,7 @@ let rec execute_stmt n (sheap : formset_entry) : unit =
   if symb_debug() then Format.printf "@\nwith heap:@\n    %a@\n@\n@."  (string_ts_form (Rterm.rao_create ())) sheap_noid;
   if (Prover.check_inconsistency !curr_logic (form_clone sheap_noid)) then 
     (if symb_debug() then Printf.printf "\n\nInconsistent heap. Skip it!\n";
-     let idd = add_good_node "Inconsistent"  in add_edge (snd sheap) idd "";
+     let idd = add_good_node "Inconsistent"  in add_edge_with_proof (snd sheap) idd "";
      ())
   else (
   if symb_debug() then Printf.printf "\nStarting execution of node %i \n" (node_get_id n);
@@ -591,7 +591,7 @@ let rec execute_stmt n (sheap : formset_entry) : unit =
 	if !Support_symex.sym_debug then Printf.printf "\n\nPost okay %s \n" (Pprinter.name2str m.name);
 
 (*	let idd = add_good_node ("EXIT: "^(Pprinter.name2str m.name)) in *)
-	add_edge (snd sheap) id "";
+	add_edge_with_proof (snd sheap) id "exit";
 (*	add_edge id idd "";*)
        with Not_found -> 
 	 warning();
@@ -600,7 +600,7 @@ let rec execute_stmt n (sheap : formset_entry) : unit =
 	 reset();
 	List.iter (fun heap -> 
 	  let idd = add_error_heap_node (fst heap) in 
-	  add_edge (snd sheap) idd 
+	  add_edge_with_proof (snd sheap) idd 
 	  (Format.fprintf 
 	     (Format.str_formatter) "ERROR EXIT: %s:@\n %a" 
 	     (Pprinter.name2str m.name) 
@@ -667,14 +667,14 @@ let rec execute_stmt n (sheap : formset_entry) : unit =
       | Identity_stmt (n,id,ty) -> 
 	  let h=exec_identity_stmt  n id ty (fst sheap) in
 	  let h=add_id_form h in
-	  add_edge (snd sheap) (snd h) (Pprinter.statement2str stm.skind);
+	  add_edge_with_proof (snd sheap) (snd h) (Pprinter.statement2str stm.skind);
 	  exec_one h 
       | Identity_no_type_stmt(n,id) -> assert false (*exec_identity_no_type_stmt sheap*)
       | Assign_stmt(v,e) -> 
 	  let hs=(exec_assign_stmt  v e sheap n) in
 	  let hs=add_id_formset hs in
 	  List.iter (fun h ->
-		       add_edge (snd sheap) (snd h) (Pprinter.statement2str stm.skind)) hs;
+		       add_edge_with_proof (snd sheap) (snd h) (Pprinter.statement2str stm.skind)) hs;
 	  execs_one hs
       | If_stmt(e,l) ->
 	  let sheap2 = (form_clone (fst sheap), snd sheap) in 
@@ -712,7 +712,7 @@ let rec execute_stmt n (sheap : formset_entry) : unit =
 	  let hs=(exec_invoke_stmt ie sheap n) in
 	  let hs=add_id_formset hs in
 	  List.iter (fun h -> 
-		       add_edge (snd sheap) (snd h) (Pprinter.statement2str stm.skind) ) hs;
+		       add_edge_with_proof (snd sheap) (snd h) (Pprinter.statement2str stm.skind) ) hs;
 	  execs_one hs
       (* TODO These ones *)
       | Throw_stmt _ | Breakpoint_stmt | Entermonitor_stmt _ | Exitmonitor_stmt _ 
