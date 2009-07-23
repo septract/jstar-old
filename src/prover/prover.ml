@@ -31,6 +31,9 @@ let pprint_proof chan =
   let s = Buffer.contents buffer_dump in 
   output_string chan s
 
+let string_of_proof () =
+  Buffer.contents buffer_dump
+
 exception Failed_eg of ts_sequent list
 
 (* frame, P,S |- P',S' *)
@@ -915,7 +918,7 @@ let rec apply_rule_list logic (sequents : ts_sequent list) find_frame abs : ts_s
 	 ) sequents 
       )
   in let res = apply_rule_list_inner sequents n in 
-  if true || !(Debug.debug_ref) then Format.fprintf !dump "End time :%f \n" (Sys.time ()); res
+  if true || !(Debug.debug_ref) then Format.fprintf !dump "End time :%f @\n@?" (Sys.time ()); res
 
 
 

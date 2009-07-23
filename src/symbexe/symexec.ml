@@ -143,6 +143,8 @@ type edge = string * id * id * string option
 let graphe = ref []
 let graphn = ref []
 
+let graphn_url = ref []
+
 let add_node (label : string) (ty : ntype) : id = 
   let id = fresh_node () in 
   graphn := (label, id, ty)::!graphn; id 
@@ -173,6 +175,20 @@ let add_edge_with_proof src dest label =
   Prover.pprint_proof out;
   close_out out;
   graphe := (label, src, dest, Some f)::!graphe
+
+(*let add_edge_with_string_proof src dest label proof = 
+  let f = fresh_file() in
+  let out = open_out f in
+  output_string out proof;
+  close_out out;
+  graphe := (label, src, dest, Some f)::!graphe*)
+
+let add_url_to_node src proof = 
+  let f = fresh_file() in
+  let out = open_out f in
+  output_string out proof;
+  close_out out;
+  graphn_url := (src, f)::!graphn_url
 
 
 type transition = formset_entry * string * formset_entry
@@ -651,14 +667,22 @@ let rec execute_stmt n (sheap : formset_entry) : unit =
 	    let sheaps_with_id = add_id_abs_formset sheaps_abs in
 	    List.iter (fun sheap2 -> add_edge_with_proof (snd sheap) (snd sheap2) ("Abstract@"^Pprinter.statement2str stm.skind)) sheaps_with_id;
 	    let sheaps_with_id = List.filter 
-		(fun (sheap2,id2) -> List.for_all
-		    (fun (form,id) -> 
-		      if check_implication !curr_logic (form_clone sheap2) form  then 
-			(if !(Debug.debug_ref) then Prover.pprint_proof stdout;
-			(add_edge id2 id ("Contains@"^Pprinter.statement2str stm.skind) ;false) )
-		      else true)
-		    formset;
-		) sheaps_with_id in
+		(fun (sheap2,id2) -> 
+		  (let s = ref "" in 
+		  if  
+		    (List.for_all
+		       (fun (form,id) -> 
+			 if check_implication !curr_logic (form_clone sheap2) form  then 
+			   (if !(Debug.debug_ref) then Prover.pprint_proof stdout;
+			    (add_edge_with_proof id2 id ("Contains@"^Pprinter.statement2str stm.skind) ;false) )
+			 else (s := !s ^"\n---------------------------------------------------------\n" ^ (string_of_proof ()); true))
+		       formset)
+		  then ( 
+		    if String.length !s != 0 then (add_url_to_node id2 !s); true
+		   ) else false
+		  )
+		)
+		sheaps_with_id in
 (*	    List.iter (fun h ->
 			 add_edge (snd sheap) (snd h) (Pprinter.statement2str stm.skind)) sheaps_with_id;*)
 	    formset_table_replace id (sheaps_with_id @ formset);
@@ -868,11 +892,12 @@ let pp_dotty_transition_system () =
   Printf.fprintf dotty_outf "digraph main { \nnode [shape=box,  labeljust=l];\n";
   List.iter (fun (label,id,ty) ->
     let label=escape_for_dot_label label in 
+    let url = try ", URL=\"file://" ^ (List.assoc id !graphn_url) ^"\"" with Not_found -> "" in
     match ty with 
-      Plain ->  Printf.fprintf dotty_outf "\n state%i[label=\"%s\",labeljust=l]\n" id label
-    | Good ->  Printf.fprintf dotty_outf "\n state%i[label=\"%s\",labeljust=l, color=green, style=filled]\n" id label
-    | Error ->  Printf.fprintf dotty_outf "\n state%i[label=\"%s\",labeljust=l, color=red, style=filled]\n" id label
-    | Abs ->  Printf.fprintf dotty_outf "\n state%i[label=\"%s\",labeljust=l, color=yellow, style=filled]\n" id label)
+      Plain ->  Printf.fprintf dotty_outf "\n state%i[label=\"%s\",labeljust=l%s]\n" id label url
+    | Good ->  Printf.fprintf dotty_outf "\n state%i[label=\"%s\",labeljust=l, color=green, style=filled%s]\n" id label url
+    | Error ->  Printf.fprintf dotty_outf "\n state%i[label=\"%s\",labeljust=l, color=red, style=filled%s]\n" id label url
+    | Abs ->  Printf.fprintf dotty_outf "\n state%i[label=\"%s\",labeljust=l, color=yellow, style=filled%s]\n" id label url)
     !graphn;
   List.iter (fun (l,s,d, o) ->
     let l = escape_for_dot_label l in 
