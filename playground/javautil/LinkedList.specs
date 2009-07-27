@@ -181,7 +181,7 @@ class java.util.LinkedList {
     }
 
   java.util.LinkedList$Entry entry(int):
-    {LinkedList$(@this:, {handle=_h; head=_n; tail=_p; list=_l})
+    /*{LinkedList$(@this:, {handle=_h; head=_n; tail=_p; list=_l})
       * LT(@parameter0:, numeric_const(0))}
     {LinkedList$(@this:, {handle=_h; head=_n; tail=_p; list=_l})
       * $ret_var = nil()}
@@ -190,7 +190,7 @@ class java.util.LinkedList {
       * LE(length(_l), @parameter0:)}
     {LinkedList$(@this:, {handle=_h; head=_n; tail=_p; list=_l})
       * $ret_var = nil()}
-  andalso
+  andalso*/
     {LinkedListInternal$(@this:, {handle=_h; head=_n; tail=_p; list=_l})
       * _l = app(_l1, cons(_a, _l2))
       * length(_l1) = @parameter0:

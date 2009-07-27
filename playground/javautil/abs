@@ -1,19 +1,4 @@
-rule length_cons_eq_1_abs:
-  | length(?a, ?alpha) = builtin_plus(numeric_const("1"), length(?beta)) * ?alpha = ?beta | |- |
-if
-  || |- |
-
-rule length_cons_eq_2_abs:
-  | length(?a, ?alpha) = builtin_plus(numeric_const("1"), length(?beta)) * ?alpha = ?beta | |- |
-if
-  || |- |
-
-rule length_cons_neq_abs:
-  | length(?a, ?alpha) = builtin_plus(numeric_const("1"), length(?beta)) | |- |
-without
-  ?alpha = ?beta
-if
-  | length(alpha) = length(?beta) | |- |
+/** Roll up nodes and list segments. **/
 
 rule node_rollup_abs:
   || field(?i, "<java.util.LinkedList$Entry: java.util.LinkedList$Entry previous>", ?ip) *
@@ -53,40 +38,20 @@ where
 if
   || dseg_ne(?i, ?ip, ?kn, ?k, app(?alpha, ?beta)) |- |
 
-/*rule dseg_collapse_disj_abs:
-  || (?alpha = empty() | dseg(?i, ?ip, ?jn, ?j, ?alpha))
-     || (| dseg_ne(?i, ?ip, ?jn, ?j, ?alpha)) |- |
-if
-  || dseg(?i, ?ip, ?jn, ?j, ?alpha) |- |*/
-
-/*************** Junk Rules *******************/
-
-rule garbage_garbage :
-  || Garbage * Garbage |- |
-if
-  || Garbage |- |
-
-/*rule dseg_garbage_abs:
-  || dseg_ne(_i,?ip, ?jn, _j, ?l) |- |
-where
-  _i, _j notincontext
-if
-  | | Garbage |- |*/
-
-
+/** Remove unreachable nodes and list segments on the LHS. **/
 rule node_garbage_abs:
   || node(_i, ?ip, ?in, ?e) |- |
 where
   _i notincontext
 if
-  || Garbage |- |
+  || |- |
 
 rule dseg_singleton_garbage_abs:
   || dseg_ne(_i, ?ip, ?in, _i, ?l) |- |
 where
   _i notincontext
 if
-  || Garbage |- |
+  || |- |
 
 /*rule dseg_disj_cons_abs:
   || (cons(?a, ?alpha) = empty() | dseg(?i, ?ip, ?jn, ?j, cons(?a, ?alpha)))
@@ -102,31 +67,52 @@ where
 if
   || Garbage |- |*/
 
-/************ Length Rules ************/
-/*rule length_empty_abs:
-  | numeric_const("0") = length(empty()) | |- |
-if
-  || |- |
-
-/*rule length_cons_abs:
-  | length(cons(?a, ?alpha)) = builtin_plus(numeric_const("1"), length(?alpha)) | |- |
-if
-  || |- |*/
-
+/** Length Rules **/
 rewrite id_concrete:
   id(?name) = ?name
 
-rewrite length:
+/*rewrite length:
   length(_x) = id(?y)
 without
-  length(_x) = id(?z)
+  length(_x) = id(?z)*/
 
-rewrite length_forget :
+/*rewrite length_forget :
   builtin_plus(numeric_const("1"), length(?alpha)) = id(?x)
 without
-  builtin_plus(numeric_const("1"), length(?alpha)) = id(?y)
+  builtin_plus(numeric_const("1"), length(?alpha)) = id(?y)*/
 
-rewrite builtin_plus_one_forget :
+rewrite plus_one_one_hack:
+  builtin_plus(numeric_const("1"), builtin_plus(numeric_const("1"), ?alpha))
+  = builtin_plus(id(?x), ?alpha)
+without
+  builtin_plus(numeric_const("1"), builtin_plus(numeric_const("1"), ?alpha))
+  = builtin_plus(id(?y), ?alpha)
+
+rewrite plus_one_one_hack2:
+  builtin_plus(_z, builtin_plus(numeric_const("1"), ?alpha))
+  = builtin_plus(id(?x), ?alpha)
+without
+  builtin_plus(_z, builtin_plus(numeric_const("1"), ?alpha))
+  = builtin_plus(id(?y), ?alpha)
+
+/*rewrite length_empty_abs:
+  length(empty()) = numeric_const("0")*/
+
+rewrite length_app_abs:
+  builtin_plus(length(?alpha), length(?beta)) = length(app(?alpha, ?beta))
+without
+  | (?beta = empty() |) || (?alpha = empty() |)
+
+/*rewrite length_cons_empty:
+  length(cons(?a, empty())) = numeric_const("1")*/
+
+/*rewrite length_cons_abs:
+  builtin_plus(numeric_const("1"), length(?alpha)) = length(cons(?a, ?alpha))
+if
+  cons(?a, ?alpha) = ?b*/
+
+
+/*rewrite builtin_plus_one_forget :
   builtin_plus(numeric_const("1"),numeric_const("1")) = id(?x)
 without
   builtin_plus(numeric_const("1"),numeric_const("1")) = id(?y)
@@ -134,7 +120,7 @@ without
 rewrite builtin_plus_forget :
   builtin_plus(_x, ?y) = id(?z)
 without
-  builtin_plus(_x, ?y) = id(?w)
+  builtin_plus(_x, ?y) = id(?w)*/
 
 
 /*
@@ -192,11 +178,6 @@ without
 
 rewrite hack5 :
   id(?w) = ?w
-
-
-
-rewrite length_empty:
-  length(empty()) = numeric_const("0")
 
 rewrite app_nil:
   app(empty(), ?x) = ?x

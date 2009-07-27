@@ -18,12 +18,12 @@ without
 if
 | | |- ?g = ?h |
 
-/*rule builtin_plus_inj_second_right:
+rule builtin_plus_inj_second_right:
 | | |- builtin_plus(?g,?t) = builtin_plus(?h,?t) |
 without
   ?g = ?h * ?t = numeric_const("0")
 if
-| | |- ?g = ?h |*/
+| | |- ?g = ?h |
 
 
 /*rewrite builtin_plus_assoc :
