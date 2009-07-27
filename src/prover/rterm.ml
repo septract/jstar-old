@@ -305,6 +305,22 @@ type term_structure =
     { termhash : thash_t;
       mutable repset : rset_t }
 
+(*IF-OCAML*)
+module TIDset = 
+  Set.Make(struct 
+    type t = term
+    let compare = fun t1 t2 -> compare (!t1).nn (!t2).nn
+  end)
+(*ENDIF-OCAML*)
+
+(*F#
+let TIDset : Set.Provider<term> 
+   = Set.Make(fun t1 t2 -> compare (!t1).nn (!t2).nn) 
+F#*)    
+  
+
+
+
 let lift f x =
   match x with 
     Some x -> Some (f x)
@@ -404,6 +420,7 @@ let string_ft hash ppf ft  =
     FTConstr (name,rl) ->  
       Format.fprintf ppf "%s(%a)" name (Debug.list_format "," (string_rep hash)) rl  
   | FTFunct (name,rl) -> 
+      Printf.printf "Printing: %s\n" name;
       (match name,rl with
 	"builtin_plus", [r1;r2] -> Format.fprintf ppf "(%a + %a)" (string_rep hash) r1 (string_rep hash) r2
       | _ -> Format.fprintf ppf "%s(%a)" name (Debug.list_format "," (string_rep hash)) rl  )
@@ -441,13 +458,13 @@ let rv_ft ft rs : rset_t =
 let rv_fts fts (rs :rset_t)  : rset_t = 
   List.fold_left (fun rs ft -> rv_ft ft rs) rs fts 
 
-let rec rv_transitive_set (r : representative) (rs : rset_t) : rset_t =
+let rec rv_transitive_set_fb fb (r : representative) (rs : rset_t) : rset_t =
   let rec rv_inner r rs = 
     if Rset.mem r rs then rs else
     try 
       let rs = Rset.add r rs in 
       let term_refs = (!r).terms in 
-      let rs = List.fold_left (fun rs tref -> rv_ft_trans (!tref).term rs) rs term_refs in
+      let rs = List.fold_left (fun rs tref -> if TIDset.mem tref fb then rs else rv_ft_trans (!tref).term rs) rs term_refs in
       rs 
     with Not_found -> rs
   and rv_ft_trans ft rs : rset_t =
@@ -463,6 +480,10 @@ let rec rv_transitive_set (r : representative) (rs : rset_t) : rset_t =
     | FTPVar v -> rs
   in rv_inner r rs
 
+let rec rv_transitive_set (r : representative) (rs : rset_t) : rset_t =
+  rv_transitive_set_fb TIDset.empty r rs 
+
+
 let rv_transitive r = 
   try 
     rv_transitive_set r Rset.empty
@@ -473,14 +494,18 @@ let rv_trans_set rs : rset_t =
     Rset.fold (fun r rs -> rv_transitive_set r rs) rs Rset.empty
   with Not_found -> unsupported () 
 
-let accessible_rs ts =
+let accessible_rs_fb forbidden ts =
   Thash.fold 
     (fun term rep rs -> 
       if (!rep).deleted then rs else  
       match term with 
-	FTPVar(Vars.PVar(i,v)) -> (*if i=0 then *) rv_transitive_set rep rs (*else rs*)
-      | _ -> if List.length ((!rep).terms) > 1 then rv_transitive_set rep rs else rs
+	FTPVar(Vars.PVar(i,v)) -> (*if i=0 then *) rv_transitive_set_fb  forbidden rep rs (*else rs*)
+      | _ -> if List.length ((!rep).terms) > 1 then rv_transitive_set_fb forbidden rep rs else rs
     ) ts.termhash Rset.empty (*ts.repset*)
+
+
+let accessible_rs ts =
+  accessible_rs_fb TIDset.empty ts
 
 
 (******************************* 
@@ -1166,20 +1191,6 @@ let clone (ts : term_structure) (rs : rset_t) : term_structure * representative_
 
 (* let add_term_to_rep ts ft r = *)
 
-(*IF-OCAML*)
-module TIDset = 
-  Set.Make(struct 
-    type t = term
-    let compare = fun t1 t2 -> compare (!t1).nn (!t2).nn
-  end)
-(*ENDIF-OCAML*)
-
-(*F#
-let TIDset : Set.Provider<term> 
-   = Set.Make(fun t1 t2 -> compare (!t1).nn (!t2).nn) 
-F#*)    
-  
-
 
 (* Remove the program variable from the term structure *)
 let rec kill_var (ts : term_structure) (v : Vars.var) = 
@@ -1405,7 +1416,10 @@ let rewrite_ts (ts : term_structure) (rm : 'a rewrite_map) dtref rs (query : var
 			  let tid : term =  (List.find (fun (y : term)-> ft_eq (!y).term ft) (!repid).terms) in
 			  if TIDset.mem tid !dtref then raise No_match;
 			  let r,i,t = add_term_id ts interp a in 
-			  if (true || !(Debug.debug_ref)) && not(rep_eq r repid) then Format.fprintf !dump "Using rule:@ %s@ gives@ %a@ equal to %a.@\n" rule (string_rep_term (rao_create ())) r  (string_rep_term (rao_create ())) repid;
+			  if (true || !(Debug.debug_ref)) && not(rep_eq r repid) then 
+			    Format.fprintf !dump "Using rule:@ %s@ gives@ %a@ equal to %a.@\n" rule 
+			      (string_rep_term (rao_create ())) r  
+			      (string_rep_term (rao_create ())) repid;
 			  if rep_eq r repid then 
 			    (match t with 
 			      Some (Inr ti) -> (* Term has been added *)

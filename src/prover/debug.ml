@@ -17,8 +17,12 @@ let dump = ref (Format.formatter_of_buffer buffer_dump)
 
 
 (*IF-OCAML*)
-exception Unsupported
+exception Unsupported 
 let unsupported () = raise Unsupported
+
+exception Unsupported2 of string 
+let unsupported_s s = raise (Unsupported2 s)
+
 (*ENDIF-OCAML*)
 
 (*F#

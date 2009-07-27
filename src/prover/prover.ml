@@ -398,7 +398,7 @@ let rec rewrites_sequent_inner rwm (ts,seq) rewrite_track ep abs =
     let f (interp,(withoutc,wherec,withc)) = 
        (withoutc = []  || not (contains ts withoutc (fl@@@fr) (Some ep) interp))
     && (withc = [] || contains ts withc (fl@@@fr) (Some ep) interp) 
-    && (wherec = [])
+    && (wherec = [] || List.for_all (fun whc -> check_cxt whc (Rterm.accessible_rs_fb !rewrite_track ts, interp) ts) wherec )
     in 
     let subst = rewrite_ts ts rwm rewrite_track rs f in 
     try 

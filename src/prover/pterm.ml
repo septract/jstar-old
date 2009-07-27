@@ -129,7 +129,7 @@ let empty : 'a varmap = Plain (vm_empty)
 let freshening_subs subs : 'a varmap =
     match subs with 
       Plain subs -> Freshen (subs, vh_create 30 )
-    | _ -> unsupported ()
+    | _ -> unsupported_s "freshening_subs applied to wrong argument type."
 
 
 
@@ -153,17 +153,18 @@ let rec subst_args subs arg : 'a args=
   | Arg_op (name,args) -> Arg_op(name,List.map (subst_args subs) args)
   | Arg_cons (name,args) -> Arg_cons(name,List.map (subst_args subs) args)
   | Arg_record fldlist -> Arg_record (List.map (fun (f,v) -> f,subst_args subs v) fldlist)	
-  | Arg_hole a -> unsupported ()
+  | Arg_hole a -> unsupported_s "subst_args: Subst on term with hole."
 
 let rec string_args ppf arg = 
   match arg with 
   | Arg_var v -> Format.fprintf ppf "%s" (string_var v)
   | Arg_string s -> Format.fprintf ppf "\"%s\""  s 
+  | Arg_op ("builtin_plus",[a1;a2]) -> Format.fprintf ppf "(%a+%a)" string_args a1 string_args a2
   | Arg_op (name,args) -> Format.fprintf ppf "%s(%a)" name string_args_list args 
   | Arg_cons (name,args) -> Format.fprintf ppf "%s(%a)" name string_args_list args 
   | Arg_record fldlist -> 
       Format.fprintf ppf "@[{%a}@]" string_args_fldlist fldlist
-  | Arg_hole a -> unsupported ()
+  | Arg_hole a -> unsupported_s "string_args: applied to term with hole."
 and string_args_list ppf argsl = 
   match argsl with 
     [] -> Format.fprintf ppf ""
@@ -182,6 +183,7 @@ let rec string_args_hole f ppf arg =
   | Arg_var v -> Format.fprintf ppf "%s" (string_var v)
 (*  | Arg_string s -> "\"" ^ s ^ "\""*)
   | Arg_string s -> Format.fprintf ppf "%s" s 
+  | Arg_op ("builtin_plus",[a1;a2]) -> Format.fprintf ppf "@[(%a@ +@ %a)@]" (string_args_hole f) a1 (string_args_hole f) a2
   | Arg_op (name,args) -> Format.fprintf ppf "@[%s(%a)@]" name (string_args_list_hole f) args 
   | Arg_cons (name,args) -> Format.fprintf ppf "@[%s(%a)@]" name (string_args_list_hole f) args 
   | Arg_record fldlist -> 
