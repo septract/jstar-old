@@ -56,7 +56,8 @@ let main () =
 	| false,true -> Format.printf "Test failed! Could not prove @\n %a@\n ===> @\n%a@\n " 
 	      Plogic.string_form heap1 
 	      Plogic.string_form heap2
-	)
+	);
+	if !(Debug.debug_ref) then Prover.pprint_proof stdout
 	  
     | Prover.TFrame (heap1, heap2, result)  -> ()
 (*	Printf.printf "Find frame for\n %s\n ===> \n %s\n" (Plogic.string_form heap1) (Plogic.string_form heap2);
@@ -76,7 +77,8 @@ let main () =
 	      Plogic.string_form heap1
 	| false,true -> Format.printf "Test failed! Prover could not prove@ %a@ inconsistent.\n" 
 	      Plogic.string_form heap1
-	)
+	);
+	if !(Debug.debug_ref) then Prover.pprint_proof stdout
     | Prover.TEqual (heap,arg1,arg2,result) -> ()
 (*	if Prover.check_equal logic heap arg1 arg2 
 	then Printf.printf("Equal!\n\n") else Printf.printf("Not equal!\n\n")*)
