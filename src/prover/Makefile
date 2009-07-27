@@ -58,6 +58,11 @@ LIBRARY = SOURCES="$(LIBRARYSOURCE)" \
        OCAMLFLAGS="-g -I ../utils" \
        RESULT="$(LIB)/sepprover.cmxa" \
        TRASH=""
+BLIBRARY = SOURCES="$(LIBRARYSOURCE)" \
+       OCAMLLDFLAGS="-g -a" \
+       OCAMLFLAGS="-g -I ../utils" \
+       RESULT="$(LIB)/sepprover.cma" \
+       TRASH=""
 
 default: toplevel testharness sepprover.cmxa
 
@@ -74,6 +79,9 @@ toplevel:
 
 sepprover.cmxa: 
 	$(MAKE) -f $(OCAMLMAKEFILE) $(LIBRARY) native-code
+
+sepprover.cma: 
+	$(MAKE) -f $(OCAMLMAKEFILE) $(BLIBRARY) byte-code
 
 .PHONY: testharness.byte
 testharness.byte:

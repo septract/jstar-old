@@ -251,9 +251,9 @@ and match_form ts (pattern : representative pform) (target : form) (use_ep) (int
 let rec contains ts (pattern : representative pform)  (target : form) use_ep interp : bool 
     =  
   try 
-    if Rterm.ts_debug then Format.printf "Contains:@ %a@\n" Plogic.string_form pattern; 
-    match_form ts pattern target use_ep interp false (fun _ -> if Rterm.ts_debug then Format.printf "Match@\n"; true)
-  with No_match -> if Rterm.ts_debug then Format.printf "No Match@\n" ;false 
+    if Rterm.ts_debug then Format.fprintf !dump "Contains:@ %a@\n" Plogic.string_form pattern; 
+    match_form ts pattern target use_ep interp false (fun _ -> if Rterm.ts_debug then Format.fprintf !dump "Match@\n"; true)
+  with No_match -> if Rterm.ts_debug then Format.fprintf !dump "No Match@\n" ;false 
 
 
 

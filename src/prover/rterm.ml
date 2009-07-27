@@ -178,10 +178,10 @@ let ft_eq ft1 ft2 =
 	  List.for_all2 rep_eq rl rl2 
 	with Invalid_argument _ -> 
 	  if ts_debug then 
-	    (Format.printf  "Failed comp: %a %a\n"  string_ft_db ft1    string_ft_db ft2); 
+	    (Format.fprintf !dump   "Failed comp: %a %a\n"  string_ft_db ft1    string_ft_db ft2); 
 	  false) 
       else 
-	(if ts_debug then Format.printf  "Failed comp: %a @ %a\n" string_ft_db ft1 string_ft_db ft2; 
+	(if ts_debug then Format.fprintf !dump   "Failed comp: %a @ %a\n" string_ft_db ft1 string_ft_db ft2; 
 	 false)
   | FTString(s), FTString(s2) -> s=s2
   | FTPVar(v), FTPVar(v2) -> v=v2 
@@ -191,7 +191,7 @@ let current = ref 0
 
 let next_rep() : representative = 
   let x = !current in current := x+1;
-  if ts_debug then Format.printf "Created new rep: r_%d@\n" x;
+  if ts_debug then Format.fprintf !dump  "Created new rep: r_%d@\n" x;
   ref { terms = [] ; uses = []; n=x; name="r" ; deleted = false} 
 
 let rep_hash r1 = (!r1).n 
@@ -243,7 +243,7 @@ let rmap_map f map =
   Rhash.iter (fun r r' -> Rhash.replace map r (f r')) map_copy; map  
 let rmap_mem r map = Rmap.mem r map
 let rmap_add r1 r2 map = Rmap.add r1 r2 map
-let rmap_printf map = Rmap.iter (fun r1 r2 -> Format.printf "Maps %s to %s\n" (string_rep r1) (string_rep r2)) map
+let rmap_printf map = Rmap.iter (fun r1 r2 -> Format.fprintf !dump  "Maps %s to %s\n" (string_rep r1) (string_rep r2)) map
 *)
 
 (*Removed the following as it breaks in F# due to the semantics of iterator:
@@ -263,7 +263,7 @@ F#*)
 
 let rmap_mem r map = Rhash.mem map r  
 let rmap_add r1 r2 map = Rhash.add map r1 r2; map 
-let rmap_printf map = Rhash.iter (fun r1 r2 -> Format.printf "Maps %a to %a@n" string_rep_db r1 string_rep_db r2) map
+let rmap_printf map = Rhash.iter (fun r1 r2 -> Format.fprintf !dump  "Maps %a to %a@n" string_rep_db r1 string_rep_db r2) map
 
 
 
@@ -328,7 +328,11 @@ let rec rep_to_args r hash : (( representative args * (term option)) ) =
   try Rhash_args_opt.find hash r 
   with Not_found -> 
     Rhash_args_opt.add hash r (Arg_hole r, None);
-    let term_ref = try Some (List.find (fun x -> true) (!r).terms) with Not_found -> None  in 
+    let term_ref = 
+      try Some (List.find (fun x -> match !x.term with FTPVar _ | FTFunct(_,[]) -> true | _ -> false) (!r).terms) 
+      with Not_found -> 
+	try  Some (List.find (fun x -> true ) (!r).terms)  
+	with Not_found -> None  in 
     (*List.tryfind (fun t -> match term_to_args (!t).term hash with Some _ -> true | _ -> false) ((!r).terms) in*)
     match term_ref with
       Some term_ref -> 
@@ -400,7 +404,9 @@ let string_ft hash ppf ft  =
     FTConstr (name,rl) ->  
       Format.fprintf ppf "%s(%a)" name (Debug.list_format "," (string_rep hash)) rl  
   | FTFunct (name,rl) -> 
-      Format.fprintf ppf "%s(%a)" name (Debug.list_format "," (string_rep hash)) rl  
+      (match name,rl with
+	"builtin_plus", [r1;r2] -> Format.fprintf ppf "(%a + %a)" (string_rep hash) r1 (string_rep hash) r2
+      | _ -> Format.fprintf ppf "%s(%a)" name (Debug.list_format "," (string_rep hash)) rl  )
   | FTRecord fld_list -> 
       Format.fprintf ppf "@[{%a}@]" (Debug.list_format ";" (fun ppf (f,a) -> Format.fprintf ppf "%s=%a" f (string_rep hash) a)) fld_list  
   | FTString s -> Format.fprintf ppf "\"%s\"" s 
@@ -410,7 +416,7 @@ let string_ft hash ppf ft  =
 let print_termhash ts = 
   Thash.iter (
   fun term rep ->
-    Format.printf "@ @ @[%a,%a@]@\n" string_ft_db term string_rep_db rep;
+    Format.fprintf !dump  "@ @ @[%a,%a@]@\n" string_ft_db term string_rep_db rep;
  ) ts.termhash
 
 
@@ -592,7 +598,7 @@ let pterm_ft interp rs hash ft : representative args =
   termstructure to pform 
  *******************************************************)
  let pform_rep_term interp rs hash r = 
-  if ts_debug then Format.printf "Equals for %a\n" string_rep_db r;
+  if ts_debug then Format.fprintf !dump  "Equals for %a\n" string_rep_db r;
   let args,r1 = rep_to_args r hash in
   let args = hole_replace (rep_hole interp rs) args in  
   let rterms = match r1 with Some r1 -> List.filter (fun t -> t != r1) (!r).terms | None -> (!r).terms in 
@@ -601,7 +607,7 @@ let pterm_ft interp rs hash ft : representative args =
   | _ -> 
 	List.map 
 	  (fun t -> 
-        if ts_debug then Format.printf "   =%a\n" string_ft_db (!t).term;
+        if ts_debug then Format.fprintf !dump  "   =%a\n" string_ft_db (!t).term;
 	      Plogic.P_EQ (args,(pterm_ft interp rs hash ((!t).term)))
 	   ) rterms
 
@@ -702,7 +708,7 @@ let add_flat_term (ts : term_structure) (ft : flattened_term)
     let rid = Thash.find ts.termhash ft in 
     rid, Inl ft
   with Not_found ->
-    if ts_debug then Format.printf "Adding term %a.\n" string_ft_db ft;
+    if ts_debug then Format.fprintf !dump  "Adding term %a.\n" string_ft_db ft;
     let rep_id = next_rep() in
     ts.repset <- Rset.add rep_id ts.repset;
     let term_id = new_term rep_id ft in
@@ -710,7 +716,7 @@ let add_flat_term (ts : term_structure) (ft : flattened_term)
     assert(not(Thash.mem ts.termhash ft));
     Thash.add ts.termhash ft rep_id;
     List.iter (fun r -> (!r).uses <- (term_id::((!r).uses))) sub_uses;      
-    if ts_debug then Format.printf "Added term: %a\n" string_ts_db ts;
+    if ts_debug then Format.fprintf !dump  "Added term: %a\n" string_ts_db ts;
     rep_id, Inr term_id
 
 let map_lift f l s=
@@ -808,7 +814,7 @@ let apply_subst  (subst : representative_subst) r1 =
       with Not_found -> 
 	try Rhash.find hash r1 
 	with Not_found -> let r2 = next_rep () in ts.repset <- Rset.add r2 ts.repset; Rhash.add hash r1 r2; r2)
-  in if ts_debug then Format.printf "Subst %a for %a.\n" string_rep_db r1  string_rep_db res; res
+  in if ts_debug then Format.fprintf !dump  "Subst %a for %a.\n" string_rep_db r1  string_rep_db res; res
 
 let apply_subst_ft (subst : representative_subst) ft = 
   match ft with 
@@ -819,11 +825,11 @@ let apply_subst_ft (subst : representative_subst) ft =
       let rl = List.map (apply_subst subst) rl in 
       FTFunct(name, rl),rl
   | FTRecord fld_list -> 
-      if ts_debug then Format.printf "Before subst %a\n" string_ft_db ft;
+      if ts_debug then Format.fprintf !dump  "Before subst %a\n" string_ft_db ft;
       let fl,rl = List.split fld_list in 
       let rl = List.map (apply_subst subst) rl in 
       let ft = FTRecord (List.combine fl rl) in 
-      if ts_debug then Format.printf "After subst %a\n" string_ft_db ft;
+      if ts_debug then Format.fprintf !dump  "After subst %a\n" string_ft_db ft;
       ft,rl 
   | FTString _ 
   | FTPVar _ -> ft, [] 
@@ -831,7 +837,7 @@ let apply_subst_ft (subst : representative_subst) ft =
 
 (* INTERNAL *)
 let rep_subst r1 r2 =
-  fun r -> if rep_eq r1 r then (if ts_debug then Format.printf "Replace %a with %a\n" string_rep_db r  string_rep_db r2; r2) else r 
+  fun r -> if rep_eq r1 r then (if ts_debug then Format.fprintf !dump  "Replace %a with %a\n" string_rep_db r  string_rep_db r2; r2) else r 
     
 let rep_pair_list_subst r1 r2 rl =
   map_option 
@@ -841,7 +847,7 @@ let rep_pair_list_subst r1 r2 rl =
       if rep_eq ra rb then None else Some (ra,rb)) rl
 
 let extend_subst (subst : representative_subst) r1 r2 = 
-  if ts_debug then Format.printf "Extend subst with %a |-> %a\n" string_rep_db r1 string_rep_db r2;
+  if ts_debug then Format.fprintf !dump  "Extend subst with %a |-> %a\n" string_rep_db r1 string_rep_db r2;
   match subst with 
     Plain map -> if rmap_mem r1 map then unsupported () else Plain 
       (rmap_add r1 r2 (rmap_map (rep_subst r1 r2) map))
@@ -868,7 +874,7 @@ let term_update ts term_id r1 r2 =
   if (!r2).deleted then unsupported ();
   if not (Rset.mem r1 (rv_ft t Rset.empty)) then Inl term_id
   else(
-  if ts_debug then Format.printf "Update %a to %a in %a\n" string_rep_db r1   string_rep_db r2   string_ft_db t;
+  if ts_debug then Format.fprintf !dump  "Update %a to %a in %a\n" string_rep_db r1   string_rep_db r2   string_ft_db t;
   let new_t =  
     match t with 
       FTConstr (name,rl) ->  FTConstr(name, List.map (rep_subst r1 r2) rl)  
@@ -881,12 +887,12 @@ let term_update ts term_id r1 r2 =
     | FTPVar var -> unsupported ()    
   in
   (try if ts_debug then print_termhash ts; Thash.remove ts.termhash t with Not_found -> unsupported ()) ;
-  if ts_debug then (Format.printf "Updated %a to %a in %a of %a\n" string_rep_db r1  string_rep_db r2   string_ft_db new_t   string_rep_db rc; print_termhash ts);
+  if ts_debug then (Format.fprintf !dump  "Updated %a to %a in %a of %a\n" string_rep_db r1  string_rep_db r2   string_ft_db new_t   string_rep_db rc; print_termhash ts);
   (* remove current term from map *)
   try 
     (let r_new = Thash.find ts.termhash new_t in 
     if ts_debug then 
-      Format.printf "Found %a in %a so remove old term %a from %a" string_ft_db new_t   string_rep_db r_new   string_ft_db t   string_rep_db rc;
+      Format.fprintf !dump  "Found %a in %a so remove old term %a from %a" string_ft_db new_t   string_rep_db r_new   string_ft_db t   string_rep_db rc;
     (* Do not need to insert new term, it already exists, 
        the returned pair will collapse the relevant things recursively *)
     try
@@ -899,12 +905,12 @@ let term_update ts term_id r1 r2 =
 	)
 	subterms;
       (* Remove term from my representative *)
-      if ts_debug then Format.printf "Pre update %a.\n" string_ts_db ts;
+      if ts_debug then Format.fprintf !dump  "Pre update %a.\n" string_ts_db ts;
       let tl = (!rc).terms in 
       (!rc).terms <- List.filter (fun tid-> not (tid == term_id)) tl;
-      if ts_debug then Format.printf "Mid update after filtering %a to remove %a from\n %a.\n" string_rep_db rc   string_ft_db t   string_ts_db ts;
+      if ts_debug then Format.fprintf !dump  "Mid update after filtering %a to remove %a from\n %a.\n" string_rep_db rc   string_ft_db t   string_ts_db ts;
  (*     TIDhash.remove ts.termids2terms term_id;*)
-      if ts_debug then Format.printf "Need to make %a equal to %a.\n" string_rep_db rc   string_rep_db r_new;
+      if ts_debug then Format.fprintf !dump  "Need to make %a equal to %a.\n" string_rep_db rc   string_rep_db r_new;
       Inr (r_new,rc)
     with Not_found -> unsupported ())
   with Not_found -> 
@@ -923,7 +929,7 @@ let well_formed_rep rep =
   if (!rep).deleted then unsupported ();
   let rs = List.map (fun x-> (!x)) (!rep).uses in 
   if List.exists (fun x-> (!(x.rep)).deleted) rs then
-    (List.iter (fun r -> Format.printf "%a used in %a of %a" string_rep_db rep   string_ft_db r.term   string_rep_db (r.rep)) rs; unsupported ());
+    (List.iter (fun r -> Format.fprintf !dump  "%a used in %a of %a" string_rep_db rep   string_ft_db r.term   string_rep_db (r.rep)) rs; unsupported ());
   if List.for_all (fun x-> Rset.mem rep (rv_ft (x.term) Rset.empty)) rs then () else unsupported () 
   
 
@@ -932,14 +938,14 @@ let well_formed_rep rep =
 let rec make_equal (ts : term_structure) (eqs : (representative * representative) list) (subst : representative_subst) =
   match eqs with 
     [] -> 
-      if ts_debug then (Format.printf "Finished equalising \n %a \n\n" string_ts_db ts; print_termhash ts);
+      if ts_debug then (Format.fprintf !dump  "Finished equalising \n %a \n\n" string_ts_db ts; print_termhash ts);
       subst
   | (r1,r2)::eqs ->
       let r1 = apply_subst subst r1 in 
       let r2 = apply_subst subst r2 in 
       if ts_debug then 
 	(
-	Format.printf "Make %a and %a equal  (current eqs=%a) in\n%a\n\n" 
+	Format.fprintf !dump  "Make %a and %a equal  (current eqs=%a) in\n%a\n\n" 
 	  string_rep_term_db r1 
 	  string_rep_term_db r2 
 	  (Debug.list_format "," (fun ppf (x,y) -> Format.fprintf ppf "%a=%a" string_rep_db x   string_rep_db y)) eqs 
@@ -980,36 +986,36 @@ let rec make_equal (ts : term_structure) (eqs : (representative * representative
       (* TODO: Constructor stuff? *)
       (!r1).terms <- tl1; 
       if ts_debug then 
-	Format.printf "Moving terms %a from %a to %a.\n" 
+	Format.fprintf !dump  "Moving terms %a from %a to %a.\n" 
 	  (Debug.list_format "," (fun ppf t2 -> string_ft_db ppf(!t2).term)) tl2
 	  string_rep_db r2 
 	  string_rep_db r1;
       List.iter 
 	(fun t2 ->
-	if ts_debug then Format.printf "Moving %a from %a to %a\n" string_ft_db (!t2).term   string_rep_db r2   string_rep_db r1;
+	if ts_debug then Format.fprintf !dump  "Moving %a from %a to %a\n" string_ft_db (!t2).term   string_rep_db r2   string_rep_db r1;
 	try 
 	  assert
 	    (
 	     let r = rep_eq (apply_subst subst (Thash.find ts.termhash ((!t2).term))) r2 in 
 	     if not r then (
-	       Format.printf "Current maps subst(%a)=%a, expected %a\n"
+	       Format.fprintf !dump  "Current maps subst(%a)=%a, expected %a\n"
 		 string_rep_db (Thash.find ts.termhash ((!t2).term))
 		 string_rep_db (apply_subst subst (Thash.find ts.termhash ((!t2).term)))
 		 string_rep_db r2;
 	       Thash.iter (
 	       fun term rep ->
-		 Format.printf "  %a,%a\n"  string_ft_db term   string_rep_db rep;
+		 Format.fprintf !dump  "  %a,%a\n"  string_ft_db term   string_rep_db rep;
 	      ) ts.termhash
 	      );
 	      r
 	    ); 
 	  Thash.remove ts.termhash ((!t2).term);
-	  if ts_debug then Format.printf "Removed from hash!\n";
+	  if ts_debug then Format.fprintf !dump  "Removed from hash!\n";
 	  assert(not(Thash.mem ts.termhash (!t2).term));
 	  Thash.add ts.termhash ((!t2).term) r1; 
 	  (!t2).rep <- r1
 	with Not_found -> 
-	  Format.printf "Failed to find %a\nIt contains \n"  string_ft_db ((!t2).term); 
+	  Format.fprintf !dump  "Failed to find %a\nIt contains \n"  string_ft_db ((!t2).term); 
 	  print_termhash ts;
 	  unsupported () 		
 	) tl2;
@@ -1018,7 +1024,7 @@ let rec make_equal (ts : term_structure) (eqs : (representative * representative
       (!r2).uses <- [];
       (!r2).terms <- [];
       (!r2).deleted <- true;
-      if ts_debug then Format.printf "Rep %a used in %a\n" string_rep_db r2  string_tlist uses;
+      if ts_debug then Format.fprintf !dump  "Rep %a used in %a\n" string_rep_db r2  string_tlist uses;
       (* Find all occurances of old representative and change to remaining representative
 	 producing equalities and the uses that remain *)
       let uses,new_eqs = map_sum (fun t -> try term_update ts t r2 r1 with Not_found -> unsupported ()) uses  in 
@@ -1033,7 +1039,7 @@ let rec make_equal (ts : term_structure) (eqs : (representative * representative
 let rec add_equal_i (ts : term_structure) (r1 : representative) (r2 : representative) subst=
   try 
     make_equal ts [r1,r2]  subst 
-  with Not_found -> Format.printf "Failed ts: %a\n" string_ts_db ts; unsupported ()
+  with Not_found -> Format.fprintf !dump  "Failed ts: %a\n" string_ts_db ts; unsupported ()
 
 let rec add_equal (ts : term_structure) (r1 : representative) (r2 : representative) =
   add_equal_i ts r1 r2 (empty_subst())
@@ -1042,7 +1048,7 @@ let rec try_equal_i (ts : term_structure) (r1 : representative) (r2 : representa
     (rs_context : rset_t) subst = 
   (* *)
   if ts_debug then
-    Format.printf "Trying to unify %a with %a\n" string_rep_db r1  string_rep_db r2;
+    Format.fprintf !dump  "Trying to unify %a with %a\n" string_rep_db r1  string_rep_db r2;
   (* perform occurs check. *)
   let rs_context = rv_trans_set rs_context in 
   if (is_existential ts r1 && not (Rset.mem r1 rs_context) )
@@ -1092,7 +1098,7 @@ F#*)
 
 (* Copies an existing term structure,  they are not functional so necessary *)
 let clone (ts : term_structure) (rs : rset_t) : term_structure * representative_subst =
-  if ts_debug then Format.printf "Starting clone\n %a  \nThash: %a\n" string_ts_db ts printf_thash ts;
+  if ts_debug then Format.fprintf !dump  "Starting clone\n %a  \nThash: %a\n" string_ts_db ts printf_thash ts;
   let newts = blank() in
   let rs = Rset.union (rv_trans_set rs) (accessible_rs ts) in 
   (*  Add new exists reps to the context one for each current representative, and build substitution *)
@@ -1110,13 +1116,13 @@ let clone (ts : term_structure) (rs : rset_t) : term_structure * representative_
   let tsubst = Rset.fold 
     (fun rep tsubst->
       (* For each term, add it to termstructure *)
-      if ts_debug then Format.printf "Cloning terms for representative %a\n" string_rep_db rep;
+      if ts_debug then Format.fprintf !dump  "Cloning terms for representative %a\n" string_rep_db rep;
       let terms = (!rep).terms in 
       let newrep = apply_subst  subst rep in 
       let newterms,tsubst = List.fold_right
 	  (fun term_id (terms,tsubst) -> 
 	    let newterm,_ = apply_subst_ft subst (!term_id).term in
-	    if ts_debug then Format.printf "Cloning %a with %a\n." string_ft_db (!term_id).term   string_ft_db newterm;
+	    if ts_debug then Format.fprintf !dump  "Cloning %a with %a\n." string_ft_db (!term_id).term   string_ft_db newterm;
 	    let newtref = new_term newrep newterm in
 	    let tsubst = Tmap.add term_id newtref tsubst in 
 	    assert(not(Thash.mem newts.termhash newterm));
@@ -1134,13 +1140,13 @@ let clone (ts : term_structure) (rs : rset_t) : term_structure * representative_
 	    try 
 	      Some (Tmap.find t tsubst)
 	    with Not_found -> 
-	      if ts_debug then Format.printf "Not used %a\n" string_ft_db (!t).term;
+	      if ts_debug then Format.fprintf !dump  "Not used %a\n" string_ft_db (!t).term;
 	      None) 
 	  (!rep).uses
     ) rs;
   newts.repset <- setmap (apply_subst subst) ts.repset;
-  if ts_debug then Format.printf "Finished clone\n";
-  if ts_debug then Format.printf "%a" printf_thash newts;
+  if ts_debug then Format.fprintf !dump  "Finished clone\n";
+  if ts_debug then Format.fprintf !dump  "%a" printf_thash newts;
   newts,subst
 
     
@@ -1178,16 +1184,16 @@ F#*)
 (* Remove the program variable from the term structure *)
 let rec kill_var (ts : term_structure) (v : Vars.var) = 
   try 
-    if ts_debug then Format.printf "Kill %s\n" (Vars.string_var v);
+    if ts_debug then Format.fprintf !dump  "Kill %s\n" (Vars.string_var v);
     let r = find_term ts (Arg_var v) in 
-    if ts_debug then Format.printf "Rep currently looks like: %a\n" string_rep_term_db r;
+    if ts_debug then Format.fprintf !dump  "Rep currently looks like: %a\n" string_rep_term_db r;
     let tl = (!r).terms in
     let tl = List.filter (fun tid -> match ((!tid).term) with FTPVar v' -> v != v' | _ -> true) tl in 
     (!r).terms <- tl;
-    if ts_debug then Format.printf "After update looks like: %a\n" string_rep_term_db r;
+    if ts_debug then Format.fprintf !dump  "After update looks like: %a\n" string_rep_term_db r;
     Thash.remove ts.termhash (FTPVar v)
   with Not_found -> 
-    if ts_debug then Format.printf "Failed to find : %s\n" (Vars.string_var v)
+    if ts_debug then Format.fprintf !dump  "Failed to find : %s\n" (Vars.string_var v)
 
 (* Takes a term structure, and a context in which it will be tried to satisfied 
    and returns a list of equalities between representatives, and a substitution 
@@ -1306,12 +1312,12 @@ let unifies_list ts al rl i c = unifies_list ts al rl TIDset.empty i c
 let rec unifies_eq_inner ts rl a1 a2 interp cont =
   match rl with 
     [] -> raise No_match
-  | r::rl -> if ts_debug then Format.printf "Trying representative@ %a@ for@ %a =@ %a.@\n" string_rep_term_db r string_args a1 string_args a2;
+  | r::rl -> if ts_debug then Format.fprintf !dump  "Trying representative@ %a@ for@ %a =@ %a.@\n" string_rep_term_db r string_args a1 string_args a2;
     (try 
-      if ts_debug then Format.printf "Trying to match %a in %a.@\n" string_args a1  string_rep_term_db r;
+      if ts_debug then Format.fprintf !dump  "Trying to match %a in %a.@\n" string_args a1  string_rep_term_db r;
       unifies ts a1 r interp
         ( fun interp-> 
-	  if ts_debug then Format.printf "Trying to match %a in %a.@\n" string_args a2  string_rep_term_db r;
+	  if ts_debug then Format.fprintf !dump  "Trying to match %a in %a.@\n" string_args a2  string_rep_term_db r;
           unifies ts a2 r interp 
             ( fun interp ->
               try 
@@ -1363,14 +1369,14 @@ exception Done
 let rewrite_ts (ts : term_structure) (rm : 'a rewrite_map) dtref rs (query : var_subst * 'a -> bool) = 
   let x = ref true in
   let subst = ref (empty_subst () )in
-  if ts_debug then Format.printf "Trying to rewrite stuff!\n";
-  if ts_debug then Format.printf "Trying to rewrite stuff!\n";
+  if ts_debug then Format.fprintf !dump  "Trying to rewrite stuff!\n";
+  if ts_debug then Format.fprintf !dump  "Trying to rewrite stuff!\n";
   try 
     Thash.iter 
     (
      fun ft repid ->
        if (!repid).deleted then unsupported () else (
-       if ts_debug then Format.printf "Trying to rewrite: %a of %a@\n" string_ft_db ft   string_rep_db repid;
+       if ts_debug then Format.fprintf !dump  "Trying to rewrite: %a of %a@\n" string_ft_db ft   string_rep_db repid;
        match ft with 
 	 FTFunct(name, rl) ->
 	   (try 
@@ -1379,7 +1385,7 @@ let rewrite_ts (ts : term_structure) (rm : 'a rewrite_map) dtref rs (query : var
 	       (
 		fun (al,a,extra,rule) ->
 		  try
-		    if ts_debug then Format.printf "Trying rule:%s@\n" rule;
+		    if ts_debug then Format.fprintf !dump  "Trying rule:%s@\n" rule;
 		    unifies_list_ntids ts al rl !dtref empty_vs
 		      (fun interp 
 			-> 
@@ -1390,7 +1396,7 @@ let rewrite_ts (ts : term_structure) (rm : 'a rewrite_map) dtref rs (query : var
 				    Arg_var (Vars.EVar _) 
 				    -> 
 				      let b = Rset.mem r rs in
-				      if ts_debug && b then Format.printf "Not a free exists.@\n"; b 
+				      if ts_debug && b then Format.fprintf !dump  "Not a free exists.@\n"; b 
 				  | _ -> false) 
 				rl al) 
 			  then raise No_match; 
@@ -1405,28 +1411,28 @@ let rewrite_ts (ts : term_structure) (rm : 'a rewrite_map) dtref rs (query : var
 			      Some (Inr ti) -> (* Term has been added *)
 				if TIDset.mem ti !dtref then () else 
 				( dtref:=TIDset.add tid !dtref;
-				 if ts_debug then Format.printf "Add removal flag to:%a@\n"  string_term tid)
+				 if ts_debug then Format.fprintf !dump  "Add removal flag to:%a@\n"  string_term tid)
 			    | Some (Inl ft) -> (* Lookup term id, as it preexisted *)
 				let ti : term =  (List.find (fun (y : term)-> ft_eq (!y).term ft) (!r).terms) in 
 				if TIDset.mem ti !dtref then () else 
 				( dtref:=TIDset.add tid !dtref ;
-				 if ts_debug then Format.printf "Add removal flag to:%a@\n"  string_term tid)
+				 if ts_debug then Format.fprintf !dump  "Add removal flag to:%a@\n"  string_term tid)
 			    | _ -> 
 				(* This means we have a anyvar on the right, I think, so should remove term *)
 				dtref:=TIDset.add tid !dtref ;
-				if ts_debug then Format.printf "Add removal flag to:%a@\n"  string_term tid
+				if ts_debug then Format.fprintf !dump  "Add removal flag to:%a@\n"  string_term tid
 			    )
 			  else
-			  (if ts_debug then Format.printf "Make eq: %a %a\n" string_rep_term_db r    string_rep_term_db repid;
+			  (if ts_debug then Format.fprintf !dump  "Make eq: %a %a\n" string_rep_term_db r    string_rep_term_db repid;
 			   (* if r does not use tid, then it should be removed later TODO make transitive check*)
 			   if Rset.exists (fun r ->  (List.exists ((==) tid) (!r).terms)) (rv_transitive r) then () else (
-			   if ts_debug then Format.printf "Add removal flag to:%a@\n"  string_term tid;  
+			   if ts_debug then Format.fprintf !dump  "Add removal flag to:%a@\n"  string_term tid;  
 			       dtref := TIDset.add tid !dtref);			         
 			   (* Make terms equal *)
 			   subst := make_equal ts [r,repid] !subst;
 			   x := true;
-			   if ts_debug then Format.printf "Rewritten ts: %a@\n" string_ts_db ts;
-			   if ts_debug then Format.printf "Done rule:%s@\n" rule; raise Done); 
+			   if ts_debug then Format.fprintf !dump  "Rewritten ts: %a@\n" string_ts_db ts;
+			   if ts_debug then Format.fprintf !dump  "Done rule:%s@\n" rule; raise Done); 
 			  well_formed_rep repid; 
 			  well_formed_rep r;
 		      )
@@ -1439,7 +1445,7 @@ let rewrite_ts (ts : term_structure) (rm : 'a rewrite_map) dtref rs (query : var
     ) ts.termhash;
     raise No_match
   with Done ->
-    (if ts_debug then (Format.printf "Finished rewrites!@\n"; print_termhash ts);
+    (if ts_debug then (Format.fprintf !dump  "Finished rewrites!@\n"; print_termhash ts);
     !subst)
 
 
@@ -1457,7 +1463,7 @@ let kill_term_set ts tidset =
    TIDset.iter 
    (
     fun tid -> 
-      if ts_debug then Format.printf "Removing term:%a@\n"  string_term tid;
+      if ts_debug then Format.fprintf !dump  "Removing term:%a@\n"  string_term tid;
       let rid = (!tid).rep in 
       let terms = List.filter (fun t -> not (t == tid)) (!rid).terms in   
       (!rid).terms <- terms;

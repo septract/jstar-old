@@ -199,15 +199,20 @@ let add_error_heap_node (heap : Rlogic.ts_form) =
   add_error_node (Format.flush_str_formatter ())
 
 
+let x = ref 0
+
 let add_edge src dest label = 
-  graphe := (label, src, dest, None)::!graphe
+  graphe := (label, src, dest, None)::!graphe;
+  if !x = 5 then (x:=0; pp_dotty_transition_system ()) else x :=!x+1
 
 let add_edge_with_proof src dest label = 
   let f = fresh_file() in
   let out = open_out f in
   Prover.pprint_proof out;
   close_out out;
-  graphe := (label, src, dest, Some f)::!graphe
+  graphe := (label, src, dest, Some f)::!graphe;
+  if !x = 5 then (x:=0; pp_dotty_transition_system ()) else x :=!x+1
+
 
 (*let add_edge_with_string_proof src dest label proof = 
   let f = fresh_file() in
@@ -625,7 +630,7 @@ let rec execute_stmt n (sheap : formset_entry) : unit =
   if symb_debug() then Format.printf "@\nwith heap:@\n    %a@\n@\n@."  (string_ts_form (Rterm.rao_create ())) sheap_noid;
   if (Prover.check_inconsistency !curr_logic (form_clone sheap_noid)) then 
     (if symb_debug() then Printf.printf "\n\nInconsistent heap. Skip it!\n";
-     let idd = add_good_node "Inconsistent"  in add_edge_with_proof (snd sheap) idd "";
+     let idd = add_good_node "Inconsistent"  in add_edge_with_proof (snd sheap) idd "proof";
      ())
   else (
   if symb_debug() then Printf.printf "\nStarting execution of node %i \n" (node_get_id n);

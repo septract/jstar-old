@@ -27,8 +27,17 @@ LIBRARY = SOURCES="$(SOURCES)" \
        RESULT="$(LIB)/utils.cmxa" \
        TRASH=""
 
+LIBRARY = SOURCES="$(SOURCES)" \
+       OCAMLLDFLAGS="-g -a" \
+       OCAMLFLAGS="-g" \
+       RESULT="$(LIB)/utils.cma" \
+       TRASH=""
+
 utils.cmxa: 
 	$(MAKE) -f $(OCAMLMAKEFILE) $(LIBRARY) native-code
+
+utils.cma: 
+	$(MAKE) -f $(OCAMLMAKEFILE) $(LIBRARY) byte-code
 
 
 clean:
