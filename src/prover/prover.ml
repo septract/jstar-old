@@ -248,12 +248,12 @@ and match_form ts (pattern : representative pform) (target : form) (use_ep) (int
  
 
 (* assumes pattern is already ground.  Probably should fix this*)
-let rec contains ts (pattern : representative pform)  (target : form) use_ep interp : bool 
+let rec contains ts (pattern : representative pform)  (target : form) use_ep interp : (var_subst option)
     =  
   try 
     if Rterm.ts_debug then Format.fprintf !dump "Contains:@ %a@\n" Plogic.string_form pattern; 
-    match_form ts pattern target use_ep interp false (fun _ -> if Rterm.ts_debug then Format.fprintf !dump "Match@\n"; true)
-  with No_match -> if Rterm.ts_debug then Format.fprintf !dump "No Match@\n" ;false 
+    match_form ts pattern target use_ep interp false (fun (interp,_) -> if Rterm.ts_debug then Format.fprintf !dump "Match@\n"; (Some interp))
+  with No_match -> if Rterm.ts_debug then Format.fprintf !dump "No Match@\n" ; None
 
 
 
@@ -320,7 +320,7 @@ let apply_rule (rule : sequent_rule) (seq : ts_sequent)  ep : ts_sequent list li
 			  (* check if there is a without clause, and if it is matched
 			     If it is matched, then throw no_match as we don't want to apply*)
 			  if without != []  && 
-			    (contains ts without ((f2f ff)@@@ afl) (Some ep) interp) 
+			    (contains ts without ((f2f ff)@@@ afl) (Some ep) interp != None) 
 			  then (raise No_match );
 			  (* check where clauses are satisfied *)
 			  if List.for_all (fun where -> check where (f2f ff@@@fl,interp) ts) wherelist 
@@ -396,9 +396,20 @@ let rec rewrites_sequent_inner rwm (ts,seq) rewrite_track ep abs =
     let rs = rv_sequent seq in 
     let (fsl,fl,fr) = seq in 
     let f (interp,(withoutc,wherec,withc)) = 
-       (withoutc = []  || not (contains ts withoutc (fl@@@fr) (Some ep) interp))
-    && (withc = [] || contains ts withc (fl@@@fr) (Some ep) interp) 
-    && (wherec = [] || List.for_all (fun whc -> check_cxt whc (Rterm.accessible_rs_fb !rewrite_track ts, interp) ts) wherec )
+       let si = 
+	 if withc = [] then 
+	   Some interp 
+	 else contains ts withc (fl@@@fr) (Some ep) interp in 
+       match si with
+	 None -> None 
+       | Some interp -> 
+	   if (withoutc = [] || (contains ts withoutc (fl@@@fr) (Some ep) interp) = None)
+	     && (wherec = [] || List.for_all (fun whc -> check_cxt whc (Rterm.accessible_rs_fb !rewrite_track ts, interp) ts) wherec) then Some interp else None
+(*Old code that didn't perform unification on if/with clause. 
+
+       (withc = [] || contains ts withc (fl@@@fr) (Some ep) interp) 
+    && (withoutc = []  || not (contains ts withoutc (fl@@@fr) (Some ep) interp))
+    && (wherec = [] || List.for_all (fun whc -> check_cxt whc (Rterm.accessible_rs_fb !rewrite_track ts, interp) ts) wherec )*)
     in 
     let subst = rewrite_ts ts rwm rewrite_track rs f in 
     try 

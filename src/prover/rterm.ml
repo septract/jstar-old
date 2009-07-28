@@ -1377,7 +1377,7 @@ let rm_find = RewriteMap.find
 
 exception Done
 
-let rewrite_ts (ts : term_structure) (rm : 'a rewrite_map) dtref rs (query : var_subst * 'a -> bool) = 
+let rewrite_ts (ts : term_structure) (rm : 'a rewrite_map) dtref rs (query : var_subst * 'a -> var_subst option) = 
   let x = ref true in
   let subst = ref (empty_subst () )in
   if ts_debug then Format.fprintf !dump  "Trying to rewrite stuff!\n";
@@ -1412,7 +1412,7 @@ let rewrite_ts (ts : term_structure) (rm : 'a rewrite_map) dtref rs (query : var
 				rl al) 
 			  then raise No_match; 
 			  (* end Hack *)
-			  if not (query (interp,extra)) then raise No_match; 
+			  let interp = match query (interp,extra) with None ->  raise No_match | Some interp -> interp in 
 			  let tid : term =  (List.find (fun (y : term)-> ft_eq (!y).term ft) (!repid).terms) in
 			  if TIDset.mem tid !dtref then raise No_match;
 			  let r,i,t = add_term_id ts interp a in 
