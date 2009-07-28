@@ -50,6 +50,7 @@ let parse_error s =
 %token COLON
 %token SEMICOLON
 %token VDASH
+%token LEADSTO
 %token STAR
 %token QUESTIONMARK
 %token <string> STRING
@@ -62,6 +63,7 @@ let parse_error s =
 %token IMPLICATION
 %token FRAME
 %token ABS
+%token ABSRULE
 %token INCONSISTENCY
 %token RULE
 %token PURERULE
@@ -243,6 +245,11 @@ rule:
    | IMPORT STRING SEMICOLON { Import($2) }
    |  RULE identifier_op COLON sequent without where IF sequent_list_or_list { SeqRule($4,$8,$2,$5,$6) }
    |  REWRITERULE identifier_op COLON identifier LEFTPAREN argument_list RIGHTPAREN EQUAL argument ifclause without where { RewriteRule($4,$6,$9,$11,$12,$10,$2) }
+   |  ABSRULE identifier_op COLON formula LEADSTO formula where  { let seq=([],$4,[]) in
+							       let wo=[] in 
+							       let seq2=([],$6,[]) in
+							       let seq_list=[[seq2]] in
+							       SeqRule(seq,seq_list,$2,wo,$7) }
 
 rule_file:
    | EOF  { [] }

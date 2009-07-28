@@ -47,6 +47,7 @@ let keyword_al = [
   ("=",EQUAL);
   ("!=",NOTEQUAL);
   ("|-",VDASH);
+  ("~~>",LEADSTO); 
   ("False",FALSE);
   ("True",TRUE);
   ("Implication",IMPLICATION);
@@ -54,6 +55,7 @@ let keyword_al = [
   ("Garbage",GARBAGE);
   ("Inconsistency",INCONSISTENCY);
   ("rule",RULE);
+  ("abstraction",ABSRULE);
   ("emprule",EMPRULE);
   ("purerule",PURERULE);
   ("if",IF);
@@ -136,6 +138,8 @@ rule token = parse
    | "Inconsistency" {INCONSISTENCY}
    | "Abstract" {ABS}
    | "|-" { VDASH }
+   | "abstraction" {ABSRULE}
+   | "~~>" {LEADSTO}
    | identifier  { let s = Lexing.lexeme lexbuf in
           try List.assoc s keyword_al
           with Not_found -> IDENTIFIER s}
