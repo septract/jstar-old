@@ -13,10 +13,10 @@ if
 | | |- ?g = ?h | 
 
 
-/*
+
 rewrite builtin_plus_assoc :
         builtin_plus(builtin_plus(?x,?y),?z) = builtin_plus(?x,builtin_plus(?y,?z))
-*/
+
 
 rule bp :
   | | |- builtin_plus(?x,?x) = builtin_plus(?y,?y) | 

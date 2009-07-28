@@ -65,14 +65,14 @@ let string_psr sr =
 let mk_seq_rule (mat_seq,premises,name) = 
   mat_seq,premises,name,[],[]
 
-type rewrite_rule = string * representative args list * representative args * (representative pform) * (where list) * (representative pform) (* if *) * string
+type rewrite_rule = string * representative args list * representative args * (representative pform) * (where list) * (representative pform) (* if *) * string * bool
 
 type rules = 
   | SeqRule of sequent_rule
   | RewriteRule of rewrite_rule
   | Import of string
 
-type rewrite_entry =  (representative args list * representative args * (representative pform) * (where list) * (representative pform) * string ) list
+type rewrite_entry =  (representative args list * representative args * (representative pform) * (where list) * (representative pform) * string * bool) list
 
 (* rules for simplifying septraction need defining as well *)
 
@@ -276,7 +276,7 @@ let check_cxt where (context_evs,interp) ts =
 (*      not (vs_exists (fun var -> vs_mem (arg_var_to_evar (subst_var interp var)) context_evs) varset)*)
   | NotInTerm (varterm,args) -> 
       let varset = var_term_to_set varterm in
-      let r,interp2 = add_term ts interp args in 
+      let r,interp2 = add_term ts interp args false in 
  (*     assert(interp2 = interp);  (* Shouldn't change the interpretation *) TODO Can't just structural equality*)
       let args_evs = rv_transitive r in
       not (vs_exists (fun var -> Rset.mem (find_vs ts var interp) args_evs) varset)
@@ -343,7 +343,7 @@ let apply_rule (rule : sequent_rule) (seq : ts_sequent)  ep : ts_sequent list li
 				let premise = subst_psequent (subst_freshen_vars newvars)  premise in 
 				try let premise : sequent = psequent_convert ts (freshening_vs interp) premise in
 				let sequent = Rlogic.sequent_join premise (ff, fl, fr) in
-				let ts,subst =(clone ts (Rlogic.rv_sequent sequent)) in 
+				let ts,subst =(clone ts (Rlogic.rv_sequent sequent) false) in 
 				let sequent = subst_sequent subst sequent in  
 				Some (ts,sequent) 
 				with Success -> None
@@ -637,7 +637,7 @@ let apply_rule_or_left seq =
       (Or(f1,f2))::cl -> 
 	let seq2 = (f, (pl,sl,f2::cl@cl2), f3) in 
 	let rvs = Rlogic.rv_sequent  seq2 in 
-	let ts2,subs = clone ts rvs in 
+	let ts2,subs = clone ts rvs false in 
 	let seq2 = subst_sequent subs seq2 in 
 	[ts,(f, (pl,sl,f1::cl@cl2), f3); ts2,seq2]
     | c :: cl -> or_inner cl (c::cl2)
@@ -674,7 +674,7 @@ let apply_rule_or_right seq =
         if true || !(Debug.debug_ref)  then Format.fprintf !dump "Case split on or right!\n";
 	let seq2 = (f,f3,(pl,sl,c2::cl2@cl)) in 
 	let rvs = Rlogic.rv_sequent  seq2 in 
-	let ts2,subs = clone ts rvs in 
+	let ts2,subs = clone ts rvs false in 
 	let seq2 = subst_sequent subs seq2 in 
       [[ts,(f,f3,(pl,sl,c1::cl2@cl))];[ts2,seq2]]
   | c::cl ->  

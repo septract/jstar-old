@@ -158,7 +158,7 @@ module SepProver = struct
 
     let update_var_to : var -> term -> rform -> unit = fun (Var x) (Term y) (RForm z) -> Rlogic.update_var_to x y z;()
 
-    let form_clone : rform -> rform = fun (RForm rform) -> RForm (Rlogic.form_clone rform)
+    let form_clone : rform -> rform = fun (RForm rform) -> RForm (Rlogic.form_clone rform false)
 
 
 
@@ -189,7 +189,7 @@ module SepProver = struct
     let empty_logic = Logic (Prover.empty_logic)
 
     let add_rewrite_rule (rr : rewrite_rule) (Logic (sl,rm,ep) : logic) : logic = 
-      Logic (sl,Rterm.rm_add rr.op ((unterm_list rr.arguments,unterm rr.new_term,([],[],[]),rr.rule_name)::(try Rterm.rm_find rr.op rm with Not_found -> [])) rm,ep)
+      Logic (sl,Rterm.rm_add rr.op ((unterm_list rr.arguments,unterm rr.new_term,([],[],[]),rr.rule_name,false)::(try Rterm.rm_find rr.op rm with Not_found -> [])) rm,ep)
       
 
     let add_sequent_rule (sr : sequent_rule) (Logic (sl,rm,ep) : logic) : logic =

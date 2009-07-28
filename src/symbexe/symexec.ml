@@ -628,7 +628,7 @@ let rec execute_stmt n (sheap : formset_entry) : unit =
   let stm=node_get_stmt n in
   if symb_debug() then Format.printf "@\nExecuting statement:@ %s" (Pprinter.statement2str stm.skind); 
   if symb_debug() then Format.printf "@\nwith heap:@\n    %a@\n@\n@."  (string_ts_form (Rterm.rao_create ())) sheap_noid;
-  if (Prover.check_inconsistency !curr_logic (form_clone sheap_noid)) then 
+  if (Prover.check_inconsistency !curr_logic (form_clone sheap_noid false)) then 
     (if symb_debug() then Printf.printf "\n\nInconsistent heap. Skip it!\n";
      let idd = add_good_node "Inconsistent"  in add_edge_with_proof (snd sheap) idd "proof";
      ())
@@ -674,7 +674,7 @@ let rec execute_stmt n (sheap : formset_entry) : unit =
   let execs n sheaps = List.iter (exec n) sheaps in 
 (*  let minfo=node_get_method_cfg_info n in *)
   let succs=node_get_succs n in
-  let id_clone h = (form_clone (fst h), snd h) in 
+  let id_clone h = (form_clone (fst h) false, snd h) in 
   let execs_one sheaps = 
     match succs with 
       [s] -> execs s sheaps 
@@ -691,6 +691,7 @@ let rec execute_stmt n (sheap : formset_entry) : unit =
 	  (let id = node_get_id n in 
 	  try
 	    if symb_debug() then Format.printf "@\nPre-abstraction:@\n    %a@."  (string_ts_form (Rterm.rao_create ())) sheap_noid;
+	    let sheap_pre_abs = form_clone sheap_noid false in 
 	    let sheaps_abs = Prover.abs !curr_abs_rules sheap_noid in 
 	    if !(Debug.debug_ref) then Prover.pprint_proof stdout;
 	    if symb_debug() then Format.printf "@\nPost-abstractionc count:@\n    %d@."  (List.length sheaps_abs);
@@ -712,7 +713,7 @@ let rec execute_stmt n (sheap : formset_entry) : unit =
 		  if  
 		    (List.for_all
 		       (fun (form,id) -> 
-			 if check_implication !curr_logic (form_clone sheap2) form  then 
+			 if check_implication !curr_logic (form_clone sheap2 false) form  then 
 			   (if !(Debug.debug_ref) then Prover.pprint_proof stdout;
 			    (add_edge_with_proof id2 id ("Contains@"^Pprinter.statement2str stm.skind) ;false) )
 			 else (s := !s ^"\n---------------------------------------------------------\n" ^ (string_of_proof ()); true))
@@ -755,7 +756,7 @@ let rec execute_stmt n (sheap : formset_entry) : unit =
 		    ) hs;
 	  execs_one hs
       | If_stmt(e,l) ->
-	  let sheap2 = (form_clone (fst sheap), snd sheap) in 
+	  let sheap2 = (form_clone (fst sheap) false, snd sheap) in 
 	  (match succs with
 	  | [s1;s2] ->  
 	      (match s1.nd_stmt.skind with

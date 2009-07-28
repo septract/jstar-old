@@ -336,7 +336,7 @@ let rule_list_to_logic rl =
       | PureRule(r) -> (sl,el,r::pl,rm)
       | RewriteRule(r) -> 
 	  (match r with 
-	    (fn,a,b,c,d,e,f) -> (sl,el,pl,RewriteMap.add fn ((a,b,(c,d,e),f)::(try RewriteMap.find fn rm with Not_found -> [])) rm))
+	    (fn,a,b,c,d,e,f,g) -> (sl,el,pl,RewriteMap.add fn ((a,b,(c,d,e),f,g)::(try RewriteMap.find fn rm with Not_found -> [])) rm))
   in rule_list_to_logic_inner rl 
 
 type question =
@@ -379,18 +379,18 @@ let string_ts_seq hash ppf (ts,s) =
 let rec pform_at_convert ts (interp : var_subst) (p : representative pform_at) ((pl,sl,cl) : form) : form * var_subst=
  match p with 
  |  P_EQ (a1,a2) -> 
-     let r1,interp = add_term ts interp a1 in 
-     let r2,interp = add_term ts interp a2 in 
+     let r1,interp = add_term ts interp a1 false in 
+     let r2,interp = add_term ts interp a2 false in 
      (EQ(r1, r2)::pl,sl,cl),interp
  |  P_NEQ(a1,a2) -> 
-     let r1,interp = add_term ts interp a1 in 
-     let r2,interp = add_term ts interp a2 in 
+     let r1,interp = add_term ts interp a1 false in 
+     let r2,interp = add_term ts interp a2 false in 
      (NEQ(r1, r2)::pl,sl,cl), interp
  |  P_PPred(name, al) -> 
-     let rl,interp = add_terms ts interp al in 
+     let rl,interp = add_terms ts interp al false in 
      (PPred(name, rl)::pl,sl,cl), interp
   | P_SPred(name, al) -> 
-      let rl,interp = add_terms ts interp al in 
+      let rl,interp = add_terms ts interp al false in 
       (pl,SPred(name, rl)::sl,cl),interp
   | P_Wand (f1,f2) -> 
       let f1,interp = pform_convert ts interp f1 in 
@@ -443,19 +443,19 @@ let kill_all_exists_names (form : ts_form) : unit =
 
 let update_var_to v e (form : ts_form) : ts_form = 
   let ts,f = form in 
-  let r2,subs = add_term ts Rterm.empty_vs e in 
+  let r2,subs = add_term ts Rterm.empty_vs e false in 
   Rterm.kill_var ts v;
-  let r1,subs = add_term ts Rterm.empty_vs (Arg_var v) in 
+  let r1,subs = add_term ts Rterm.empty_vs (Arg_var v) false in 
 (*  assert(subs=Rterm.empty);*)
 (*  assert(subs=Rterm.empty);*)
   let subs = add_equal ts r2 r1 in
   (ts,subst_form subs f)
   (* Check no updates necessary *)
 
-let form_clone ((ts,form) : ts_form)  
+let form_clone ((ts,form) : ts_form)  abs
     =
 (*  if ts_debug then Printf.printf "Cloning: \n%s\n" (string_ts_form (ts,form));  *)
-  let ts,subs = clone ts (rv_form form Rset.empty) in 
+  let ts,subs = clone ts (rv_form form Rset.empty) abs in 
   try 
     let res = (ts,subst_form subs form) in
 (*    if ts_debug then Printf.printf "Results in: \n%s\n" (string_ts_form res); *)

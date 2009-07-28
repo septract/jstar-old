@@ -96,7 +96,8 @@ and rep_record =
 and term = term_record ref 
 and term_record =
    {
-     mutable term : flattened_term;
+    mutable redundant : bool;
+    mutable term : flattened_term;
     mutable rep : representative;
     nn : int;
    }
@@ -109,8 +110,8 @@ let next_tcount () =
   tcount := !tcount+1;
   !tcount
 
-let new_term rep ft : term =
-  ref {rep=rep;term=ft;nn=next_tcount()}  
+let new_term rep ft redun : term =
+  ref {rep=rep;term=ft;nn=next_tcount(); redundant=redun}  
 
 (***********************************************
  *  Ugly printer
@@ -728,7 +729,8 @@ let freshening_vs subs : var_subst =
 
 
 let add_flat_term (ts : term_structure) (ft : flattened_term) 
-(sub_uses : representative list) : representative * (term, flattened_term) sum =
+    (sub_uses : representative list) (redun : bool)
+    : representative * (term, flattened_term) sum =
   try 
     let rid = Thash.find ts.termhash ft in 
     rid, Inl ft
@@ -736,7 +738,7 @@ let add_flat_term (ts : term_structure) (ft : flattened_term)
     if ts_debug then Format.fprintf !dump  "Adding term %a.\n" string_ft_db ft;
     let rep_id = next_rep() in
     ts.repset <- Rset.add rep_id ts.repset;
-    let term_id = new_term rep_id ft in
+    let term_id = new_term rep_id ft redun in
     (!rep_id).terms <- [term_id];
     assert(not(Thash.mem ts.termhash ft));
     Thash.add ts.termhash ft rep_id;
@@ -754,7 +756,7 @@ let map_lift f l s=
 (* Returns new term structure and representative, 
    with the representative bound to a flattened version of t *) 
 let rec add_term_id (ts : term_structure) (interp : var_subst) 
-   (t : representative args) : representative * var_subst * (term,flattened_term) sum option  = 
+   (t : representative args) (redun : bool) : representative * var_subst * (term,flattened_term) sum option  = 
   let f ((rid,tid),interp) = rid,interp, Some tid in 
   match t with 
   | Arg_var v ->
@@ -764,22 +766,22 @@ let rec add_term_id (ts : term_structure) (interp : var_subst)
       with Not_found -> 
 	(match v with 
 	  Vars.PVar _ 
-	| Vars.EVar _ -> let rid,tid = add_flat_term ts (FTPVar v) [] in 
+	| Vars.EVar _ -> let rid,tid = add_flat_term ts (FTPVar v) [] redun in 
 	                 rid,interp,Some tid
         | Vars.AnyVar _  -> let rid = add_existential ts in (rid, add_vs v rid interp, None) 
 	| _ -> unsupported ()
       ))	    
-  | Arg_string s ->  f( add_flat_term ts (FTString s) [], interp)
-  | Arg_op (name, al) -> let rl,interp = add_terms ts interp al in f(add_flat_term ts (FTFunct(name, rl)) rl,interp)
-  | Arg_cons (name, al) -> let rl,interp = add_terms ts interp al in f(add_flat_term ts (FTConstr(name, rl)) rl,interp)
+  | Arg_string s ->  f( add_flat_term ts (FTString s) [] redun, interp)
+  | Arg_op (name, al) -> let rl,interp = add_terms ts interp al redun in f(add_flat_term ts (FTFunct(name, rl)) rl redun,interp)
+  | Arg_cons (name, al) -> let rl,interp = add_terms ts interp al redun in f(add_flat_term ts (FTConstr(name, rl)) rl redun,interp)
   | Arg_record fld_list -> 
       let fl,al = List.split fld_list in 
-      let rl,interp = add_terms ts interp al in 
+      let rl,interp = add_terms ts interp al redun in 
       let fld_list = List.combine fl rl in 
-      f(add_flat_term ts (FTRecord fld_list) rl, interp)
-and add_term ts interp t = let rid,interp,tid = add_term_id ts interp t in (rid,interp)
-and add_terms (ts : term_structure) (interp : var_subst) (tl : (representative args) list) : representative list * var_subst =  
-  map_lift (add_term ts) tl interp
+      f(add_flat_term ts (FTRecord fld_list) rl redun, interp)
+and add_term ts interp t redun = let rid,interp,tid = add_term_id ts interp t redun in (rid,interp)
+and add_terms (ts : term_structure) (interp : var_subst) (tl : (representative args) list) (redun : bool) : representative list * var_subst =  
+  map_lift (fun x y -> add_term ts x y redun) tl interp
 (*
 List.fold_left
     (fun (rl,interp) t -> 
@@ -1122,7 +1124,7 @@ let Tmap = Map.Make(t_compare)
 F#*)
 
 (* Copies an existing term structure,  they are not functional so necessary *)
-let clone (ts : term_structure) (rs : rset_t) : term_structure * representative_subst =
+let clone (ts : term_structure) (rs : rset_t) abs : term_structure * representative_subst =
   if ts_debug then Format.fprintf !dump  "Starting clone\n %a  \nThash: %a\n" string_ts_db ts printf_thash ts;
   let newts = blank() in
   let rs = Rset.union (rv_trans_set rs) (accessible_rs ts) in 
@@ -1146,13 +1148,16 @@ let clone (ts : term_structure) (rs : rset_t) : term_structure * representative_
       let newrep = apply_subst  subst rep in 
       let newterms,tsubst = List.fold_right
 	  (fun term_id (terms,tsubst) -> 
-	    let newterm,_ = apply_subst_ft subst (!term_id).term in
-	    if ts_debug then Format.fprintf !dump  "Cloning %a with %a\n." string_ft_db (!term_id).term   string_ft_db newterm;
-	    let newtref = new_term newrep newterm in
-	    let tsubst = Tmap.add term_id newtref tsubst in 
-	    assert(not(Thash.mem newts.termhash newterm));
-	    Thash.add  newts.termhash newterm newrep;
-	    (newtref::terms,tsubst)
+	    if abs && !term_id.redundant then (terms,tsubst)
+	    else (
+	      let newterm,_ = apply_subst_ft subst (!term_id).term in
+	      if ts_debug then Format.fprintf !dump  "Cloning %a with %a\n." string_ft_db (!term_id).term   string_ft_db newterm;
+	      let newtref = new_term newrep newterm (!term_id).redundant in
+	      let tsubst = Tmap.add term_id newtref tsubst in 
+	      assert(not(Thash.mem newts.termhash newterm));
+	      Thash.add  newts.termhash newterm newrep;
+	      (newtref::terms,tsubst)
+		)
 	  ) terms ([],tsubst) in
       (!newrep).terms <- newterms; tsubst
     ) rs Tmap.empty in 
@@ -1227,7 +1232,7 @@ let rec ts_to_eqs (ts : term_structure) (context : term_structure) (rs : rset_t)
 	   (fun equals termid ->
 	     let term = (!termid).term in
 	     let new_term,rl = apply_subst_ft subst term in 
-	     let rep,tid = add_flat_term context new_term rl in 
+	     let rep,tid = add_flat_term context new_term rl (!termid).redundant in 
 	     (rep,new_rep)::equals
 	   )  equals (!rep).terms 
       ) rs [] in
@@ -1353,7 +1358,7 @@ let unifies_eq ts rs a1 a2 interp cont =
 
 
 
-type 'a rewrite_entry =  ((representative args) list * (representative args) * 'a * string) list
+type 'a rewrite_entry =  ((representative args) list * (representative args) * 'a * string * bool) list
 
 (* substitution *)
 (*IF-OCAML*)
@@ -1394,7 +1399,7 @@ let rewrite_ts (ts : term_structure) (rm : 'a rewrite_map) dtref rs (query : var
 	     let rws = rm_find name rm in
 	     List.iter 
 	       (
-		fun (al,a,extra,rule) ->
+		fun (al,a,extra,rule,redundant) ->
 		  try
 		    if ts_debug then Format.fprintf !dump  "Trying rule:%s@\n" rule;
 		    unifies_list_ntids ts al rl !dtref empty_vs
@@ -1415,7 +1420,7 @@ let rewrite_ts (ts : term_structure) (rm : 'a rewrite_map) dtref rs (query : var
 			  let interp = match query (interp,extra) with None ->  raise No_match | Some interp -> interp in 
 			  let tid : term =  (List.find (fun (y : term)-> ft_eq (!y).term ft) (!repid).terms) in
 			  if TIDset.mem tid !dtref then raise No_match;
-			  let r,i,t = add_term_id ts interp a in 
+			  let r,i,t = add_term_id ts interp a (redundant || !tid.redundant) in 
 			  if (true || !(Debug.debug_ref)) && not(rep_eq r repid) then 
 			    Format.fprintf !dump "Using rule:@ %s@ gives@ %a@ equal to %a.@\n" rule 
 			      (string_rep_term (rao_create ())) r  
@@ -1423,7 +1428,7 @@ let rewrite_ts (ts : term_structure) (rm : 'a rewrite_map) dtref rs (query : var
 			  if rep_eq r repid then 
 			    (match t with 
 			      Some (Inr ti) -> (* Term has been added *)
-				if TIDset.mem ti !dtref then () else 
+				if TIDset.mem ti !dtref && not redundant then () else 
 				( dtref:=TIDset.add tid !dtref;
 				 if ts_debug then Format.fprintf !dump  "Add removal flag to:%a@\n"  string_term tid)
 			    | Some (Inl ft) -> (* Lookup term id, as it preexisted *)
