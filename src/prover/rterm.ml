@@ -919,6 +919,8 @@ let term_update ts term_id r1 r2 =
   (* remove current term from map *)
   try 
     (let r_new = Thash.find ts.termhash new_t in 
+    let new_tid = List.find (fun x -> ft_eq !x.term new_t) !r_new.terms in
+    if !new_tid.redundant != !term_id.redundant then !new_tid.redundant <- false;
     if ts_debug then 
       Format.fprintf !dump  "Found %a in %a so remove old term %a from %a" string_ft_db new_t   string_rep_db r_new   string_ft_db t   string_rep_db rc;
     (* Do not need to insert new term, it already exists, 
@@ -1149,7 +1151,7 @@ let clone (ts : term_structure) (rs : rset_t) abs : term_structure * representat
       let newrep = apply_subst  subst rep in 
       let newterms,tsubst = List.fold_right
 	  (fun term_id (terms,tsubst) -> 
-	    if abs && !term_id.redundant then (terms,tsubst)
+	    if abs && !term_id.redundant then (if ts_debug then Format.printf "Term is redundant: %a@\n" string_ft_db (!term_id).term;(terms,tsubst))
 	    else (
 	      let newterm,_ = apply_subst_ft subst (!term_id).term in
 	      if ts_debug then Format.fprintf !dump  "Cloning %a with %a\n." string_ft_db (!term_id).term   string_ft_db newterm;

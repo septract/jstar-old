@@ -46,3 +46,11 @@ Implication:
  a("1") = b(a("2")) | |- a("1") = a("2") | 
 ? True
 
+
+Implication:
+ | |- app(_x,nil()) = y | 
+? True
+
+Implication:
+ | |- _x = y | 
+? True
