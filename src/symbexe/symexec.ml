@@ -691,8 +691,8 @@ let rec execute_stmt n (sheap : formset_entry) : unit =
 	  (let id = node_get_id n in 
 	  try
 	    if symb_debug() then Format.printf "@\nPre-abstraction:@\n    %a@."  (string_ts_form (Rterm.rao_create ())) sheap_noid;
-	    let sheap_pre_abs = form_clone sheap_noid false in 
-	    let sheaps_abs = Prover.abs !curr_abs_rules sheap_noid in 
+	    let sheap_pre_abs = form_clone sheap_noid true in 
+	    let sheaps_abs = Prover.abs !curr_abs_rules sheap_pre_abs in 
 	    if !(Debug.debug_ref) then Prover.pprint_proof stdout;
 	    if symb_debug() then Format.printf "@\nPost-abstractionc count:@\n    %d@."  (List.length sheaps_abs);
 	    List.iter Rlogic.kill_all_exists_names sheaps_abs;
