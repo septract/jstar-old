@@ -25,12 +25,42 @@ without
 if
 | | |- ?g = ?h |
 
+rule builtin_plus_inj_first_left :
+| builtin_plus(?t,?g) = builtin_plus(?t,?h) | |- |
+without
+  ?g = ?h 
+if
+| ?g = ?h | |- | 
 
-/*rewrite builtin_plus_assoc :
-        builtin_plus(builtin_plus(?x,?y),?z) = builtin_plus(?x,builtin_plus(?y,?z))*/
+
+/*
+rewrite builtin_plus_assoc :
+        builtin_plus(builtin_plus(?x,?y),?z) = builtin_plus(?x,builtin_plus(?y,?z))
+*/
+
+rewrite builtin_nmcons :
+        builtin_plus(?x,builtin_plus(numeric_const(?y),?z)) = builtin_plus(numeric_const(?y),builtin_plus(?x,?z)) 
+without 
+	?x=numeric_const(?q)
+
+rewrite builtin_nmcons2 :
+        builtin_plus(?z,numeric_const(?y)) = builtin_plus(numeric_const(?y),?z)
+without 
+	?z=numeric_const(?q)
 
 
 rule bp :
   | | |- builtin_plus(?x,?x) = builtin_plus(?y,?y) | 
 if
   | | |- ?x=?y | 
+
+
+rule LT_plus_1 :
+  | LE(builtin_plus(numeric_const("1"), ?x),?y) | |- |
+if
+  | LT(?x,?y) | |- |
+
+rule LT_LE_simp :
+  | LE(?x,?y) * LT(?x,?y) | |- |
+if
+  | LT(?x,?y) | |- | 
