@@ -1433,12 +1433,12 @@ let rewrite_ts (ts : term_structure) (rm : 'a rewrite_map) dtref rs (query : var
 				 if ts_debug then Format.fprintf !dump  "Add removal flag to:%a@\n"  string_term tid)
 			    | Some (Inl ft) -> (* Lookup term id, as it preexisted *)
 				let ti : term =  (List.find (fun (y : term)-> ft_eq (!y).term ft) (!r).terms) in 
-				if TIDset.mem ti !dtref then () else 
+				if TIDset.mem ti !dtref && not redundant then () else 
 				( dtref:=TIDset.add tid !dtref ;
 				 if ts_debug then Format.fprintf !dump  "Add removal flag to:%a@\n"  string_term tid)
 			    | _ -> 
 				(* This means we have a anyvar on the right, I think, so should remove term *)
-				dtref:=TIDset.add tid !dtref ;
+				(if not redundant then () else dtref:=TIDset.add tid !dtref) ;
 				if ts_debug then Format.fprintf !dump  "Add removal flag to:%a@\n"  string_term tid
 			    )
 			  else
