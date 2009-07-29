@@ -673,7 +673,8 @@ let is_existential (ts: term_structure) (r : representative) : bool =
 	FTPVar (Vars.EVar (_,_)) -> true
       | _ -> false 
     )
-    (!r).terms
+    (!r).terms 
+  
 (*  try 
     match (!r).terms with 
       [] -> true
