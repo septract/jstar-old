@@ -1428,17 +1428,17 @@ let rewrite_ts (ts : term_structure) (rm : 'a rewrite_map) dtref rs (query : var
 			  if rep_eq r repid then 
 			    (match t with 
 			      Some (Inr ti) -> (* Term has been added *)
-				if TIDset.mem ti !dtref && not redundant then () else 
+				if TIDset.mem ti !dtref || redundant then () else 
 				( dtref:=TIDset.add tid !dtref;
 				 if ts_debug then Format.fprintf !dump  "Add removal flag to:%a@\n"  string_term tid)
 			    | Some (Inl ft) -> (* Lookup term id, as it preexisted *)
 				let ti : term =  (List.find (fun (y : term)-> ft_eq (!y).term ft) (!r).terms) in 
-				if TIDset.mem ti !dtref && not redundant then () else 
+				if TIDset.mem ti !dtref || redundant then () else 
 				( dtref:=TIDset.add tid !dtref ;
 				 if ts_debug then Format.fprintf !dump  "Add removal flag to:%a@\n"  string_term tid)
 			    | _ -> 
 				(* This means we have a anyvar on the right, I think, so should remove term *)
-				(if not redundant then () else dtref:=TIDset.add tid !dtref) ;
+				(if redundant then () else dtref:=TIDset.add tid !dtref) ;
 				if ts_debug then Format.fprintf !dump  "Add removal flag to:%a@\n"  string_term tid
 			    )
 			  else
@@ -1446,7 +1446,7 @@ let rewrite_ts (ts : term_structure) (rm : 'a rewrite_map) dtref rs (query : var
 			   (* if r does not use tid, then it should be removed later TODO make transitive check*)
 			   if Rset.exists (fun r ->  (List.exists ((==) tid) (!r).terms)) (rv_transitive r) then () else (
 			   if ts_debug then Format.fprintf !dump  "Add removal flag to:%a@\n"  string_term tid;  
-			   if redundant then dtref := TIDset.add tid !dtref);			         
+			   if not redundant then dtref := TIDset.add tid !dtref);			         
 			   (* Make terms equal *)
 			   subst := make_equal ts [r,repid] !subst;
 			   x := true;
