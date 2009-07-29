@@ -154,6 +154,7 @@ let main () =
 	   (*Symexec.compute_fixed_point program apfmap logic abs_rules static_method_specs dynamic_method_specs*)
 	 Symexec.pp_dotty_transition_system () 
        with Assert_failure (e,l,c) -> Printf.printf "Error!!! Assert failure %s line %d character %d\n" e l c
-       |  Sys.Break ->   Symexec.pp_dotty_transition_system ();
+       |  Sys.Break ->   
+	   Symexec.pp_dotty_transition_system ();
 	   Prover.pprint_proof stdout
 let _ = main ()

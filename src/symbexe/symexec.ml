@@ -152,6 +152,7 @@ let escape_for_dot_label s =
 
 let pp_dotty_transition_system () =
   let foname="execution.dot" in
+  let foname="execution.dot~" in
   let dotty_outf=open_out foname in
   if symb_debug() then Printf.printf "\n Writing transition system file execution.dot  \n";
   Printf.fprintf dotty_outf "digraph main { \nnode [shape=box,  labeljust=l];\n";
@@ -172,7 +173,8 @@ let pp_dotty_transition_system () =
 	    | Some f -> Printf.sprintf ", URL=\"file://%s\", fontcolor=blue" f))
     !graphe;
   Printf.fprintf dotty_outf "\n\n\n}";
-  close_out dotty_outf
+  close_out dotty_outf;
+  Sys.rename foname "execution.dot"
 
 
 
