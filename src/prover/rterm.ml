@@ -1446,7 +1446,7 @@ let rewrite_ts (ts : term_structure) (rm : 'a rewrite_map) dtref rs (query : var
 			   (* if r does not use tid, then it should be removed later TODO make transitive check*)
 			   if Rset.exists (fun r ->  (List.exists ((==) tid) (!r).terms)) (rv_transitive r) then () else (
 			   if ts_debug then Format.fprintf !dump  "Add removal flag to:%a@\n"  string_term tid;  
-			       dtref := TIDset.add tid !dtref);			         
+			   if redundant then dtref := TIDset.add tid !dtref);			         
 			   (* Make terms equal *)
 			   subst := make_equal ts [r,repid] !subst;
 			   x := true;
