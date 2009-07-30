@@ -1,0 +1,11 @@
+Implication:
+ l = app(elist(cons(_x, s(_y))), l1) | |- l = app(match(), l1) |
+? True
+
+Implication:
+ l = elist(cons(_x, s(_y))) | |- l = match() |
+? True
+
+Implication:
+  l = s(_x) | |- l = match() |
+? True
