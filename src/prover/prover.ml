@@ -264,6 +264,7 @@ let arg_var_to_evar avar =
 
 
 let check_cxt where (context_evs,interp) ts = 
+  if ts_debug then Format.fprintf !dump "Checking context! %a\n" string_rep_list_db (Rset.elements context_evs);
   let var_term_to_set varterm =
     match varterm with 
       Var vl -> vl
@@ -283,11 +284,6 @@ let check_cxt where (context_evs,interp) ts =
  
 
 let check where (form,interp) ts = 
-(*  if !(Debug.debug_ref) then Printf.printf "Checking abstraction sidecondition.";*)
-(*      let context_evs = rv_spat_list spat vs_empty in 
-      let context_evs = rv_plain_list  (* HACK : Don't use exists in inequalities *)
-	  (List.filter (fun p -> match p with NEQ _ -> false | _ -> true) plain) 
-	  context_evs in *)
       let pl,sl,cl = form in 
       let context_evs = Rset.empty in
       let context_evs = rv_spat_list sl context_evs in
@@ -404,7 +400,7 @@ let rec rewrites_sequent_inner rwm (ts,seq) rewrite_track ep abs =
 	 None -> None 
        | Some interp -> 
 	   if (withoutc = [] || (contains ts withoutc (fl@@@fr) (Some ep) interp) = None)
-	     && (wherec = [] || List.for_all (fun whc -> check_cxt whc (Rterm.accessible_rs_fb !rewrite_track ts, interp) ts) wherec) then Some interp else None
+	     && (wherec = [] || List.for_all (fun whc -> check whc ((fl),interp) ts) wherec) then Some interp else None
 (*Old code that didn't perform unification on if/with clause. 
 
        (withc = [] || contains ts withc (fl@@@fr) (Some ep) interp) 

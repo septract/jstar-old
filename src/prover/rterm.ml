@@ -346,7 +346,7 @@ let rec rep_to_args r hash : (( representative args * (term option)) ) =
   with Not_found -> 
     Rhash_args_opt.add hash r (Arg_hole r, None);
     let term_ref = 
-      try Some (List.find (fun x -> match !x.term with FTPVar _ | FTFunct(_,[]) -> true | _ -> false) (!r).terms) 
+      try Some (List.find (fun x -> match !x.term with FTPVar _ | FTFunct(_,[]) | FTString _ -> true | _ -> false) (!r).terms) 
       with Not_found -> 
 	try  Some (List.find (fun x -> true ) (!r).terms)  
 	with Not_found -> None  in 
@@ -412,10 +412,12 @@ let string_rep hash ppf (r : representative) =
  
 (* let string_rep (r : representative) : string  = fst(string_rep_2 r) *)
 
+
 let rec string_rlist hash ppf vl = 
   Debug.list_format "," (string_rep hash) ppf vl
 
  
+(*
 let string_ft hash ppf ft  = 
   match ft with 
     FTConstr (name,rl) ->  
@@ -429,7 +431,7 @@ let string_ft hash ppf ft  =
       Format.fprintf ppf "@[{%a}@]" (Debug.list_format ";" (fun ppf (f,a) -> Format.fprintf ppf "%s=%a" f (string_rep hash) a)) fld_list  
   | FTString s -> Format.fprintf ppf "\"%s\"" s 
   | FTPVar v -> Format.fprintf ppf "%s" (Vars.string_var v)
-
+*)
 
 let print_termhash ts = 
   Thash.iter (
@@ -524,8 +526,8 @@ let string_term_args hash ppf (terms,args) =
 
 let rep_to_terms_args hash r = 
     match rep_to_args r hash with 
-      args,None -> (!r).terms,args  
-    | args,Some term -> List.filter (fun t -> t != term) (!r).terms, args
+      args,None -> (!r).terms,args
+    | args,Some term -> (*List.filter (fun t -> t != term) *)(!r).terms, Arg_hole(r)
 
 let string_rep_term hash ppf r = 
   let terms,args = rep_to_terms_args hash r in 
@@ -542,7 +544,7 @@ let rset_to_list rs = Rset.fold (fun r rl -> r::rl) rs []
 let string_ts_inner rs hash ppf ts = 
   let rl = rset_to_list rs in 
   let tal = List.map (rep_to_terms_args hash) rl in 
-  let tal = List.filter (fun (t,a) -> List.length t>0) tal in 
+  let tal = List.filter (fun (t,a) -> List.length t>1) tal in 
   Debug.list_format "*" (string_term_args hash) ppf tal
 
 
