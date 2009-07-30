@@ -138,12 +138,12 @@ without
 
 
 
-rewrite builtin_plus_forget :
+/*rewrite builtin_plus_forget :
   builtin_plus(_z,numeric_const("1")) = id(?x)
 without
   builtin_plus(_z,numeric_const("1")) = id(?y)
 where 
-  _z notincontext
+  _z notincontext*/
 
 /*
 rewrite id_concrete :
@@ -242,3 +242,8 @@ rule dseg_ineq:
   | ?a != ?i | dseg_ne(?i, ?in, ?jp, ?j, ?l) * field(?a, ?t, ?e) |- |
 if
   || dseg_ne(?i, ?in, ?jp, ?j, ?l) * field(?a, ?t, ?e) |- |
+
+rule lt_strongest_plus_one:
+  | LT(builtin_plus(numeric_const("1"), ?x), ?y) * LT(?x, ?y) | |- |
+if
+  | LT(builtin_plus(numeric_const("1"), ?x), ?y) | |- |

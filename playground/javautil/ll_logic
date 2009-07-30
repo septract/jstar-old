@@ -502,13 +502,18 @@ rewrite plus_0_first:
 
 rewrite plus_assoc:
   builtin_plus(builtin_plus(?x,?y), ?z) = builtin_plus(?x, builtin_plus(?y,?z))
-without
+/*without
   | (| (| (| (| (?y = numeric_const("0") |)
              || (?z = numeric_const("0") |))
              || (?x = numeric_const("0") |))
              || (builtin_plus(builtin_plus(?x,?y), ?z) = builtin_plus(?x,?y) |))
              || (builtin_plus(builtin_plus(?x,?y), ?z) = builtin_plus(?x,?z) |))
-             || (builtin_plus(builtin_plus(?x,?y), ?z) = builtin_plus(?y,?z) |)
+             || (builtin_plus(builtin_plus(?x,?y), ?z) = builtin_plus(?y,?z) |)*/
+
+rule plus_nested_eq_right:
+  || |- builtin_plus(?a, builtin_plus(?x, ?b)) = builtin_plus(?x, ?c) |
+if
+  || |- builtin_plus(?a, ?b) = ?c |
 
 /*rewrite plus_commutativity_existential:
   builtin_plus(_x, ?y) = builtin_plus(?y, _x)
@@ -657,10 +662,20 @@ rule le_disj_right:
 if
   || |- | (?a = ?b |) || (LT(?a, ?b) |)*/
 
-rule le_lt_eq:
+rule le_lt_eq_left:
   | LE(?a, ?b) * LT(?b, builtin_plus(?a, numeric_const("1"))) | |- |
 if
   | ?a = ?b | |- |
+
+rule le_length_app_left:
+  | LE(length(?alpha), length(app(?alpha, ?beta))) | |- |
+if
+  || |- |
+
+rule lt_length_app_left:
+  | LT(length(?alpha), length(app(?alpha, ?beta))) | |- |
+if
+  | LT(length(empty()), length(?beta)) | |- |
 
 /** Rules for right-shifts. **/
 rewrite shiftr_zero_one:
