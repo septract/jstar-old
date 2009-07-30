@@ -359,6 +359,9 @@ rewrite length_app_cons_second*:*/
 rewrite length_app_general*:
   length(app(?alpha, ?beta)) = builtin_plus(length(?alpha), length(?beta))
 
+rewrite length_cons_empty:
+  length(cons(?a, empty())) = numeric_const("1")
+
 rewrite length_cons*:
   length(cons(?a, ?alpha)) = builtin_plus(length(?alpha), numeric_const("1"))
 
@@ -432,6 +435,15 @@ rule lt_zero_one_right:
   || |- LT(numeric_const("0"), numeric_const("1")) |
 if
   || |- |
+
+rule lt_one_zero_left:
+  | LT(numeric_const("1"), numeric_const("0")) | |- |
+if
+
+rule lt_one_zero_right:
+  || |- LT(numeric_const("0"), numeric_const("1")) |
+if
+  || |- | False
 
 rule le_zero_length_left:
   | LE(numeric_const("0"), length(?alpha)) | |- |
@@ -546,6 +558,8 @@ without
   | (?x = ?z |) || (?y = ?z)*/
 
 /** LT, LE, GT, GE **/
+
+
 
 rule gt_lt_left:
   | GT(?a, ?b) | |- |

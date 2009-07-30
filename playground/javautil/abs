@@ -287,9 +287,9 @@ rewrite app_cons_empty:
   app(cons(?a, empty()), ?alpha) = cons(?a, ?alpha)
 
 rule dseg_ineq:
-  | ?a != ?i | dseg_ne(?i, ?in, ?jp, ?j, ?l) * field(?a, ?t, ?e) |- |
+  | ?a != ?i | dseg_ne(?i, ?ip, ?jn, ?j, ?l) * field(?a, ?t, ?e) |- |
 if
-  || dseg_ne(?i, ?in, ?jp, ?j, ?l) * field(?a, ?t, ?e) |- |
+  || dseg_ne(?i, ?ip, ?jn, ?j, ?l) * field(?a, ?t, ?e) |- |
 
 rule lt_ex:
   | LT(_x, ?y) | |- |
