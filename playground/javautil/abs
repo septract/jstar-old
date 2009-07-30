@@ -38,6 +38,11 @@ where
 if
   || dseg_ne(?i, ?ip, ?kn, ?k, app(?alpha, ?beta)) |- |
 
+rule dseg_app_cons_empty_rollup:
+  || dseg_ne(?i, ?ip, ?in, ?i, cons(?a, empty())) * dseg_ne(?in, ?i, ?inn, ?in, cons(?b, empty())) |- |
+if
+  || dseg_ne(?i, ?ip, ?inn, ?in, cons(?a, cons(?b, empty()))) |- |
+
 /** Remove unreachable nodes and list segments on the LHS. **/
 rule node_garbage_abs:
   || node(_i, ?ip, ?in, ?e) |- |
@@ -123,6 +128,19 @@ rewrite plus_one_one_hack3:
   builtin_plus(_z1, builtin_plus(_z2, ?alpha))
   = builtin_plus(id(?x), ?alpha)
 
+rewrite plus_ex_ex_hack:
+  builtin_plus(_z1, _z2) = id(?fresh)
+
+rewrite plus_one_ex_hack1:
+  builtin_plus(numeric_const("1"), _z) = id(?fresh)
+where
+  _z notincontext
+
+rewrite plus_one_ex_hack2:
+  builtin_plus(_z, numeric_const("1")) = id(?fresh)
+where
+  _z notincontext
+
 /**************/
 
 
@@ -188,15 +206,45 @@ rewrite hack4 :
 rewrite hack4 :
   cons(_z,app(_x,?y)) = app(elist(s(_z),_x), ?y)
 
-rewrite hack5 :
+rewrite app_ex_ex_list:
+  app(_x, app(_y, ?alpha)) = app(elist(app(_x, _y)), ?alpha)
+
+/*rewrite hack5 :
   elist(?x) = id(?w)
 without
-  elist(?x) = id(?q)
+  elist(?x) = id(?q)*/
 
 /*rewrite elist_ex_ex:
   elist(_x, _y) = id(?fresh)
+where
+  _x, _y notincontext*/
+
+rewrite elist_cons_ex_s:
+  elist(cons(_x, s(_y))) = id(?fresh)
+where
+  _x, _y notincontext
+
+rewrite elist_app_ex_ex:
+  elist(app(_x, _y)) = id(?fresh)
+where
+  _x, _y notincontext
 
 rewrite elist_app_ex_slist:
+  elist(app(_x, s(_y))) = id(?fresh)
+where
+  _x, _y notincontext
+
+rewrite elist_app_slist_ex:
+  elist(app(s(_x), _y)) = id(?fresh)
+where
+  _x, _y notincontext
+
+rewrite elist_app_slist_slist:
+  elist(app(s(_x), s(_y))) = id(?fresh)
+where
+  _x, _y notincontext
+
+/*rewrite elist_app_ex_slist:
   elist(app(_x, s(_y))) = id(?fresh)
 
 rewrite elist_app_slist_ex:
@@ -242,6 +290,20 @@ rule dseg_ineq:
   | ?a != ?i | dseg_ne(?i, ?in, ?jp, ?j, ?l) * field(?a, ?t, ?e) |- |
 if
   || dseg_ne(?i, ?in, ?jp, ?j, ?l) * field(?a, ?t, ?e) |- |
+
+rule lt_ex:
+  | LT(_x, ?y) | |- |
+  where
+  _x notincontext
+if
+  || |- |
+
+rule lt_ex:
+  | LT(builtin_plus(numeric_const("1"), _x), ?y) | |- |
+where
+  _x notincontext
+if
+  || |- |
 
 rule lt_strongest_plus_one:
   | LT(builtin_plus(numeric_const("1"), ?x), ?y) * LT(?x, ?y) | |- |

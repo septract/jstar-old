@@ -502,13 +502,13 @@ rewrite plus_0_first:
 
 rewrite plus_assoc:
   builtin_plus(builtin_plus(?x,?y), ?z) = builtin_plus(?x, builtin_plus(?y,?z))
-/*without
+without
   | (| (| (| (| (?y = numeric_const("0") |)
              || (?z = numeric_const("0") |))
              || (?x = numeric_const("0") |))
              || (builtin_plus(builtin_plus(?x,?y), ?z) = builtin_plus(?x,?y) |))
              || (builtin_plus(builtin_plus(?x,?y), ?z) = builtin_plus(?x,?z) |))
-             || (builtin_plus(builtin_plus(?x,?y), ?z) = builtin_plus(?y,?z) |)*/
+             || (builtin_plus(builtin_plus(?x,?y), ?z) = builtin_plus(?y,?z) |)
 
 rule plus_nested_eq_right:
   || |- builtin_plus(?a, builtin_plus(?x, ?b)) = builtin_plus(?x, ?c) |
