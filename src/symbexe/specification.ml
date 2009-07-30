@@ -68,8 +68,8 @@ type spec =
 
 let spec_conjunction spec1 spec2 =
   let var = Arg_var(Vars.freshe()) in
-  let zero = Arg_string("0") in
-  let one = Arg_string("1") in
+  let zero = Arg_string("**first**") in
+  let one = Arg_string("**second**") in
   let eq = mkEQ(var,zero) in 
   let neq = mkEQ(var,one) in       
   match spec1,spec2 with 

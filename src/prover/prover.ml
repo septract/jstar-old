@@ -776,9 +776,10 @@ let eqs_elim (ts_seq : ts_sequent) : ts_sequent =
   let eqs,pl = List.partition (fun p -> match p with EQ(_,_) -> true | _ -> false) pl in 
   if !debug_ref && eqs != [] then Format.fprintf !dump "Elim eqs : %a@\n" (string_plain_list (rao_create ())) eqs;
   let eqs = List.map (fun p -> match p with EQ(x,y) -> (x,y) | _ -> unsupported ()) eqs in
-  let subst = make_equal ts eqs (empty_subst ()) in 
-  (ts, subst_sequent subst (f,(pl,sl,cl),f2))
-
+  try 
+    let subst = make_equal ts eqs (empty_subst ()) in 
+    (ts, subst_sequent subst (f,(pl,sl,cl),f2))
+  with Contradiction -> raise Success 
 
 let exists_elim_simple (ts_seq : ts_sequent) : ts_sequent =
   let (ts,(f,f1,f2)) = ts_seq in 

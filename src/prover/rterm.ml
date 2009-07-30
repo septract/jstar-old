@@ -997,12 +997,19 @@ let rec make_equal (ts : term_structure) (eqs : (representative * representative
       (* Collapse the two representative sets *)
       let tl1 = (!r1).terms in
       let tl2 = (!r2).terms in
+      let ftl1 = List.map (fun t -> (!t.term)) tl1 in 
+      let ftl2 = List.map (fun t -> (!t.term)) tl2 in 
+      (* Strings compare *)
+      let str1 = List.filter (fun t -> match t with FTString(_) -> true | _ -> false) ftl1 in 
+      let str2 = List.filter (fun t -> match t with FTString(_) -> true | _ -> false) ftl2 in 
+      (match str1,str2 with
+	[],_ | _,[] -> ()
+      | [FTString(x)],[FTString(y)] -> if x=y then () else raise Contradiction(* Contradicition *));
       (*  Find records contained in either *)
-      let rec1 = List.filter (fun t -> match (!t).term with FTRecord(_) -> true | _ -> false) tl1 in 
-      let rec2 = List.filter (fun t -> match (!t).term with FTRecord(_) -> true | _ -> false) tl2 in 
+      let rec1 = List.filter (fun t -> match t with FTRecord(_) -> true | _ -> false) ftl1 in 
+      let rec2 = List.filter (fun t -> match t with FTRecord(_) -> true | _ -> false) ftl2 in 
       let eqs = match rec1,rec2 with
-	[t1],[t2] -> 
-	  let FTRecord fld1, FTRecord fld2 = (!t1).term,(!t2).term in 
+	[FTRecord fld1],[FTRecord fld2] -> 
 	  let fl1,rl1=List.split fld1 in
 	  let fl2,rl2=List.split fld2 in 
 	  if fl1=fl2 then 
