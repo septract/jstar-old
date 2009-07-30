@@ -497,6 +497,11 @@ let rv_trans_set rs : rset_t =
     Rset.fold (fun r rs -> rv_transitive_set r rs) rs Rset.empty
   with Not_found -> unsupported () 
 
+let rv_trans_set_fb fb rs rs_base : rset_t =
+  try 
+    Rset.fold (fun r rs -> rv_transitive_set_fb fb r rs) rs rs_base
+  with Not_found -> unsupported () 
+
 let accessible_rs_fb forbidden ts =
   Thash.fold 
     (fun term rep rs -> 
@@ -1396,7 +1401,7 @@ let rm_find = RewriteMap.find
 
 exception Done
 
-let rewrite_ts (ts : term_structure) (rm : 'a rewrite_map) dtref rs (query : var_subst * 'a -> var_subst option) = 
+let rewrite_ts (ts : term_structure) (rm : 'a rewrite_map) dtref rs (query : var_subst * 'a * term-> var_subst option) = 
   let x = ref true in
   let subst = ref (empty_subst () )in
   if ts_debug then Format.fprintf !dump  "Trying to rewrite stuff!\n";
@@ -1431,8 +1436,8 @@ let rewrite_ts (ts : term_structure) (rm : 'a rewrite_map) dtref rs (query : var
 				rl al) 
 			  then raise No_match; 
 			  (* end Hack *)
-			  let interp = match query (interp,extra) with None ->  raise No_match | Some interp -> interp in 
 			  let tid : term =  (List.find (fun (y : term)-> ft_eq (!y).term ft) (!repid).terms) in
+			  let interp = match query (interp,extra,tid) with None ->  raise No_match | Some interp -> interp in 
 			  if TIDset.mem tid !dtref then raise No_match;
 			  let r,i,t = add_term_id ts interp a (redundant || !tid.redundant) in 
 			  if (true || !(Debug.debug_ref)) && not(rep_eq r repid) then 

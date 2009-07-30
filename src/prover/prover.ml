@@ -264,7 +264,8 @@ let arg_var_to_evar avar =
 
 
 let check_cxt where (context_evs,interp) ts = 
-  if ts_debug then Format.fprintf !dump "Checking context! %a\n" string_rep_list_db (Rset.elements context_evs);
+  if ts_debug then 
+    Format.fprintf !dump "Checking context! %a@\n" string_rep_list_db (Rset.elements context_evs);
   let var_term_to_set varterm =
     match varterm with 
       Var vl -> vl
@@ -273,7 +274,18 @@ let check_cxt where (context_evs,interp) ts =
   match where with
     NotInContext varterm ->
       let varset = var_term_to_set varterm in
-      not (vs_exists (fun var -> Rset.mem (find_vs ts var interp) context_evs) varset)
+      let b = not (vs_exists 
+	     (fun var -> 
+	       let r = (find_vs ts var interp) in 
+	       if ts_debug then 
+		 Format.fprintf !dump "For %a@\n" string_rep_db r;
+	       Rset.mem r context_evs
+	     ) 
+	     varset
+	  ) in 
+      if ts_debug then 
+	(if b then Format.fprintf !dump "Not found!@\n" else Format.fprintf !dump "Found! @\n");
+      b
 (*      not (vs_exists (fun var -> vs_mem (arg_var_to_evar (subst_var interp var)) context_evs) varset)*)
   | NotInTerm (varterm,args) -> 
       let varset = var_term_to_set varterm in
@@ -386,12 +398,12 @@ let rec subs_eqs_seq seq =
 (* Changed code to erase terms on both abstraction and non abstraction rewrites. *)
 
 
-let rec rewrites_sequent_inner rwm (ts,seq) rewrite_track ep abs =
+let rec rewrites_sequent_inner rwm (ts,seq) rewrite_track ep abs=
   try 
     let ep = ep in  (* give ep the correct assumption *)
     let rs = rv_sequent seq in 
     let (fsl,fl,fr) = seq in 
-    let f (interp,(withoutc,wherec,withc)) = 
+    let f (interp,(withoutc,wherec,withc),tid) = 
        let si = 
 	 if withc = [] then 
 	   Some interp 
@@ -399,8 +411,18 @@ let rec rewrites_sequent_inner rwm (ts,seq) rewrite_track ep abs =
        match si with
 	 None -> None 
        | Some interp -> 
-	   if (withoutc = [] || (contains ts withoutc (fl@@@fr) (Some ep) interp) = None)
-	     && (wherec = [] || List.for_all (fun whc -> check whc ((fl),interp) ts) wherec) then Some interp else None
+	   if 
+	     (withoutc = [] 
+	       || (contains ts withoutc (fl@@@fr) (Some ep) interp) = None)
+	       && 
+	     (wherec = [] 
+	       || List.for_all 
+		   (fun whc -> 
+(* let rv_trans_set_fb fb rs rs_base : rset_t = *)
+		     let fbtids = TIDset.add tid !rewrite_track in 
+		     let contextevs = Rterm.accessible_rs_fb fbtids ts in 
+		     let contextevs = rv_trans_set_fb fbtids ((rv_form fl) (rv_spat_list fsl Rset.empty))  contextevs in 
+		     check_cxt whc (contextevs, interp) ts) wherec) then Some interp else None
 (*Old code that didn't perform unification on if/with clause. 
 
        (withc = [] || contains ts withc (fl@@@fr) (Some ep) interp) 

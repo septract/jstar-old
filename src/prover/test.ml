@@ -50,10 +50,10 @@ let main () =
 	(*Printf.printf "Check implication\n %s\n ===> \n %s\n" (Plogic.string_form heap1) (Plogic.string_form heap2);*)
 	(match (Prover.check_implication logic (Rlogic.convert heap1) (Rlogic.convert heap2)), result with 
 	  true,true | false,false -> ()
-	| true,false -> Format.printf "Test failed! Unsound as proved @\n %a@\n ===> @\n%a@\n " 
+	| true,false -> Format.printf "Test failed! Unsound as proved @\n@ %a@\n@ ===> @\n%a@\n " 
 	      Plogic.string_form heap1 
 	      Plogic.string_form heap2
-	| false,true -> Format.printf "Test failed! Could not prove @\n %a@\n ===> @\n%a@\n " 
+	| false,true -> Format.printf "Test@ failed!@ Could@ not@ prove@ @\n@ %a@\n ===> @\n%a@\n " 
 	      Plogic.string_form heap1 
 	      Plogic.string_form heap2
 	);
