@@ -718,7 +718,7 @@ let rec execute_stmt n (sheap : formset_entry) : unit =
 			 if check_implication !curr_logic (form_clone sheap2 false) form  then 
 			   (if !(Debug.debug_ref) then Prover.pprint_proof stdout;
 			    (add_edge_with_proof id2 id ("Contains@"^Pprinter.statement2str stm.skind) ;false) )
-			 else (s := !s ^"\n---------------------------------------------------------\n" ^ (string_of_proof ()); true))
+			 else (if !(Debug.debug_ref) then Prover.pprint_proof stdout; s := !s ^"\n---------------------------------------------------------\n" ^ (string_of_proof ()); true))
 		       formset)
 		  then ( 
 		    if String.length !s != 0 then (add_url_to_node id2 !s); true
