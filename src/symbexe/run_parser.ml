@@ -135,8 +135,9 @@ let main () =
        (Printf.printf "\nCreating empty specs template for class  %s... \n" !program_file_name;
 	Mkspecs.print_specs_template program
        )
-     else 
-       Sys.catch_break true;   
+     else (
+       at_exit (fun () -> Prover.pprint_proof stdout); 
+       at_exit (Symexec.pp_dotty_transition_system);
        try 
 	 let logic = 
 	     Load_logic.load_logic  (System.getenv_dirlist "JSTAR_LOGIC_LIBRARY") !logic_file_name
@@ -154,7 +155,7 @@ let main () =
 	   (*Symexec.compute_fixed_point program apfmap logic abs_rules static_method_specs dynamic_method_specs*)
 	 Symexec.pp_dotty_transition_system () 
        with Assert_failure (e,l,c) -> Printf.printf "Error!!! Assert failure %s line %d character %d\n" e l c
-       |  Sys.Break ->   
-	   Symexec.pp_dotty_transition_system ();
-	   Prover.pprint_proof stdout
+      )
+     
+       
 let _ = main ()

@@ -399,6 +399,7 @@ let rec subs_eqs_seq seq =
 
 
 let rec rewrites_sequent_inner rwm (ts,seq) rewrite_track ep abs=
+  Format.fprintf !dump "@\n@\n====================Start rewrites======================" ;
   try 
     let ep = ep in  (* give ep the correct assumption *)
     let rs = rv_sequent seq in 
@@ -448,6 +449,7 @@ let rec rewrites_sequent_inner rwm (ts,seq) rewrite_track ep abs=
 	  ) ;*)
     Rterm.kill_term_set ts !rewrite_track;    
     if Rterm.ts_debug then Format.fprintf !dump "Tidied after rewrites@\n %a" string_ts_db ts;
+    Format.fprintf !dump "=================Finished rewrites====================@\n@\n" ;
     (ts,seq)
 
 
