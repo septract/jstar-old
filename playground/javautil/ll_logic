@@ -2,6 +2,30 @@ import "field_logic";
 import "listdatatype_logic";
 import "builtin_plus_logic";
 
+/*rule dseg_app_expand:
+  || dseg_ne(?i, ?ip, ?jn, ?j, app(?alpha, ?beta)) |- | dseg_ne(?kn, ?k, ?jn, ?j, ?beta)
+if
+  || dseg(?i, ?ip, mn, m, ?alpha) * dseg(mn, m, ?jn, ?j, ?beta) |- | dseg_ne(?kn, ?k, ?jn, ?j, ?beta)*/
+
+rule dseg_singleton_left:
+  || dseg_ne(?i, ?ip, ?jn, ?j, cons(?a, empty())) |- |
+without
+  ?i = ?j
+if
+  | ?i = ?j | dseg_ne(?i, ?ip, ?jn, ?j, cons(?a, empty())) |- |
+
+rule lt_lt:
+  | LT(?a, ?b) | |- LT(?a, ?b) |
+if
+  | LT(?a, ?b) | |- |
+
+rule lt_ex:
+  || |- LT(?x, _y) |
+where
+  _y notincontext
+if
+  || |- |
+
 /** Numeric equality **/
 rule numeric_const_eq:
   | numeric_const(?x) = numeric_const(?y) | |- |
@@ -359,7 +383,7 @@ rewrite length_app_cons_second*:*/
 rewrite length_app_general*:
   length(app(?alpha, ?beta)) = builtin_plus(length(?alpha), length(?beta))
 
-rewrite length_cons_empty:
+rewrite length_cons_empty*:
   length(cons(?a, empty())) = numeric_const("1")
 
 rewrite length_cons*:
