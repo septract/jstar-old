@@ -136,7 +136,7 @@ let main () =
 	Mkspecs.print_specs_template program
        )
      else (
-       at_exit (fun () -> Prover.pprint_proof stdout); 
+       at_exit (fun () -> if !(Debug.debug_ref) then  Prover.pprint_proof stdout); 
        at_exit (Symexec.pp_dotty_transition_system);
        try 
 	 let logic = 

@@ -6,6 +6,6 @@ default:
 
 clean: 
 	cd utils; make clean
-	cd syntax; make
+	cd syntax; make clean
 	cd prover; make clean
 	cd symbexe; make clean

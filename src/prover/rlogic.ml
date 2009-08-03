@@ -378,54 +378,54 @@ let string_ts_seq hash ppf (ts,s) =
 
 (*   CONVERSION from plogic to rlogic representation *)
 
-let rec pform_at_convert ts (interp : var_subst) (p : representative pform_at) ((pl,sl,cl) : form) : form * var_subst=
+let rec pform_at_convert ts (interp : var_subst) (rhs : bool) (p : representative pform_at) ((pl,sl,cl) : form) : form * var_subst=
  match p with 
  |  P_EQ (a1,a2) -> 
-     let r1,interp = add_term ts interp a1 false in 
-     let r2,interp = add_term ts interp a2 false in 
+     let r1,interp = add_term ts interp a1 false rhs in 
+     let r2,interp = add_term ts interp a2 false rhs in 
      (EQ(r1, r2)::pl,sl,cl),interp
  |  P_NEQ(a1,a2) -> 
-     let r1,interp = add_term ts interp a1 false in 
-     let r2,interp = add_term ts interp a2 false in 
+     let r1,interp = add_term ts interp a1 false rhs in 
+     let r2,interp = add_term ts interp a2 false rhs in 
      (NEQ(r1, r2)::pl,sl,cl), interp
  |  P_PPred(name, al) -> 
-     let rl,interp = add_terms ts interp al false in 
+     let rl,interp = add_terms ts interp al false rhs in 
      (PPred(name, rl)::pl,sl,cl), interp
   | P_SPred(name, al) -> 
-      let rl,interp = add_terms ts interp al false in 
+      let rl,interp = add_terms ts interp al false rhs in 
       (pl,SPred(name, rl)::sl,cl),interp
   | P_Wand (f1,f2) -> 
-      let f1,interp = pform_convert ts interp f1 in 
-      let f2,interp = pform_convert ts interp f2 in 
+      let f1,interp = pform_convert ts interp f1 rhs in 
+      let f2,interp = pform_convert ts interp f2 rhs in 
       (pl,sl,Wand(Form(f1),Form(f2))::cl),interp
   | P_Or (f1,f2) -> 
-      let f1,interp = pform_convert ts interp f1 in 
-      let f2,interp = pform_convert ts interp f2 in 
+      let f1,interp = pform_convert ts interp f1 rhs in 
+      let f2,interp = pform_convert ts interp f2 rhs in 
       (pl,sl,Or(Form(f1),Form(f2))::cl), interp
   | P_Septract (f1,f2) -> 
-      let f1,interp = pform_convert ts interp f1 in 
-      let f2,interp = pform_convert ts interp f2 in 
+      let f1,interp = pform_convert ts interp f1 rhs in 
+      let f2,interp = pform_convert ts interp f2 rhs in 
       (pl,sl,Septract(Form(f1), Form(f2))::cl), interp
   | P_Garbage -> (pl,sl,Garbage::cl), interp 
   | P_False  ->  ([],[],[False]), interp
-and pform_convert ts (interp : var_subst) (pf : representative pform) : form * var_subst=
-  List.fold_left (fun (pf,interp) pa -> pform_at_convert ts interp pa pf) (([],[],[]),interp) pf
+and pform_convert ts (interp : var_subst) (pf : representative pform) (rhs : bool) : form * var_subst=
+  List.fold_left (fun (pf,interp) pa -> pform_at_convert ts interp rhs pa pf) (([],[],[]),interp) pf
 
 
 let convert (f : representative pform) : ts_form =
   let ts = Rterm.blank () in 
-  let f,interp = (pform_convert ts (Rterm.empty_vs) f) in 
+  let f,interp = (pform_convert ts (Rterm.empty_vs) f false) in 
   ts, f
 
 let conj_convert (pf : representative pform) ((ts,f) : ts_form) : ts_form =
-  let f,interp = List.fold_left (fun (pf,interp) pa -> pform_at_convert ts interp pa pf) 
+  let f,interp = List.fold_left (fun (pf,interp) pa -> pform_at_convert ts interp false pa pf) 
       (f,Rterm.empty_vs) pf in 
   ts, f
 
 let psequent_convert ts interp ((fr,f1,f2) : representative psequent) : sequent =
-  let fr,interp = pform_convert ts interp fr in
-  let f1,interp = pform_convert ts interp f1 in 
-  let f2,interp = pform_convert ts interp f2 in 
+  let fr,interp = pform_convert ts interp fr false in
+  let f1,interp = pform_convert ts interp f1 false in 
+  let f2,interp = pform_convert ts interp f2 true in 
   match fr with 
     ([],fr,[]) -> (fr,f1,f2)
   | _ -> unsupported ()
@@ -445,9 +445,9 @@ let kill_all_exists_names (form : ts_form) : unit =
 
 let update_var_to v e (form : ts_form) : ts_form = 
   let ts,f = form in 
-  let r2,subs = add_term ts Rterm.empty_vs e false in 
+  let r2,subs = add_term ts Rterm.empty_vs e false false in 
   Rterm.kill_var ts v;
-  let r1,subs = add_term ts Rterm.empty_vs (Arg_var v) false in 
+  let r1,subs = add_term ts Rterm.empty_vs (Arg_var v) false false in 
 (*  assert(subs=Rterm.empty);*)
 (*  assert(subs=Rterm.empty);*)
   let subs = add_equal ts r2 r1 in

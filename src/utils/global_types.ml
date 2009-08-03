@@ -29,6 +29,7 @@ and term = term_record ref
 and term_record =
    {
     mutable redundant : bool;
+    mutable righthand : bool;
     mutable term : flattened_term;
     mutable rep : representative;
     nn : int;

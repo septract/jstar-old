@@ -9,3 +9,28 @@ Implication:
 Implication:
   app(x,y) = empty() | |- x=empty() |
 ? True
+
+Implication: 
+  | |- len(cons(_x,empty())) = builtin_plus(numeric_const("1"),numeric_const("0")) * _x = "a" |
+? True
+
+Implication: 
+  | |- len(cons(_x,empty())) = builtin_plus(numeric_const("1"),numeric_const("0")) * _x = "a" * _x ="b" |
+? False
+
+
+Implication: 
+  builtin_plus(numeric_const("1"),numeric_const("0")) = x | |- len(cons(_x,empty())) = builtin_plus(numeric_const("1"),numeric_const("0")) * _x = "a" |
+? True
+
+Implication: 
+  builtin_plus(numeric_const("1"),numeric_const("0")) = x | |- len(cons(_x,empty())) = builtin_plus(numeric_const("1"),numeric_const("0")) * _x = "a" * _x = "b" |
+? False
+
+Implication: 
+  builtin_plus(numeric_const("1"),numeric_const("0")) = x | |- hd(cons(_x,empty())) = builtin_plus(numeric_const("1"),numeric_const("0")) |
+? True
+
+Implication: 
+  builtin_plus(numeric_const("1"),numeric_const("0")) = x | |- hd(cons(_x,empty())) = builtin_plus(numeric_const("1"),numeric_const("0")) * _x = "b" |
+? False

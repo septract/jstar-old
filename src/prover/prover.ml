@@ -178,7 +178,7 @@ let rec unify_form_at ts (pa : representative pform_at) (f : form) (use_ep) (int
 	    (match use_ep with 
 	      Some ep -> 
 		if not (Rlogic.closes interp [pa]) then raise No_match;
-		let result = external_proof ep ts pl rs (pform_convert ts interp [pa]) in 
+		let result = external_proof ep ts pl rs (pform_convert ts interp [pa] false) in 
 		if result then cont (interp,f) else raise No_match
 	    | None -> raise No_match  (* This is unreachable *))
 	  )
@@ -204,7 +204,7 @@ let rec unify_form_at ts (pa : representative pform_at) (f : form) (use_ep) (int
 	(match use_ep with 
 	  Some ep -> 
 	    if not (Rlogic.closes interp [pa]) then raise No_match;
-	    let result = external_proof ep ts pl rs (pform_convert ts interp [pa]) in 
+	    let result = external_proof ep ts pl rs (pform_convert ts interp [pa] false) in 
 	    if result then cont (interp,f) else raise No_match
 	| None -> raise No_match
 	)
@@ -224,7 +224,7 @@ let rec unify_form_at ts (pa : representative pform_at) (f : form) (use_ep) (int
 	  (match use_ep with 
 	      Some ep -> 
 		if not (Rlogic.closes interp [pa]) then raise No_match;
-		let result = external_proof ep ts pl rs (pform_convert ts interp [pa]) in 
+		let result = external_proof ep ts pl rs (pform_convert ts interp [pa] false ) in 
 		if result then cont (interp,f) else raise No_match
 	    | None -> raise No_match
 	  )	
@@ -296,7 +296,7 @@ let check_cxt where (context_evs,interp) ts =
 (*      not (vs_exists (fun var -> vs_mem (arg_var_to_evar (subst_var interp var)) context_evs) varset)*)
   | NotInTerm (varterm,args) -> 
       let varset = var_term_to_set varterm in
-      let r,interp2 = add_term ts interp args false in 
+      let r,interp2 = add_term ts interp args false false in 
  (*     assert(interp2 = interp);  (* Shouldn't change the interpretation *) TODO Can't just structural equality*)
       let args_evs = rv_transitive r in
       not (vs_exists (fun var -> Rset.mem (find_vs ts var interp) args_evs) varset)
@@ -1021,7 +1021,7 @@ let check_implication_frame logic (ts1,heap1) (ts2,heap2)  =
   check_implication_frame_inner logic ts1 heap1 (pl,sl,cl)
 
 let check_implication_frame_pform logic (ts1,heap1) pheap  =
-  let heap2,subst = pform_convert ts1 Rterm.empty_vs pheap in
+  let heap2,subst = pform_convert ts1 Rterm.empty_vs pheap true in
   check_implication_frame_inner logic ts1 heap1 heap2
 
 
