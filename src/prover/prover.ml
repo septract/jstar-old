@@ -405,7 +405,7 @@ let rec subs_eqs_seq seq =
 (* Changed code to erase terms on both abstraction and non abstraction rewrites. *)
 
 
-let rec rewrites_sequent_inner rwm (ts,seq) rewrite_track ep abs=
+let rec rewrites_sequent_inner rwm (ts,seq) rewrite_track ep abs redun =
   Format.fprintf !dump "@\n@\n====================Start rewrites======================" ;
   try 
     let ep = ep in  (* give ep the correct assumption *)
@@ -437,7 +437,7 @@ let rec rewrites_sequent_inner rwm (ts,seq) rewrite_track ep abs=
     && (withoutc = []  || not (contains ts withoutc (fl@@@fr) (Some ep) interp))
     && (wherec = [] || List.for_all (fun whc -> check_cxt whc (Rterm.accessible_rs_fb !rewrite_track ts, interp) ts) wherec )*)
     in 
-    let subst = rewrite_ts ts rwm rewrite_track rs f in 
+    let subst = rewrite_ts ts rwm rewrite_track rs f redun in 
     try 
       let ts_seq = (ts,subst_sequent subst seq) in 
       if true || !(Debug.debug_ref) then Format.fprintf !dump "Rewritten to@\n %a@\n" (string_ts_seq (rao_create())) ts_seq;
@@ -445,7 +445,7 @@ let rec rewrites_sequent_inner rwm (ts,seq) rewrite_track ep abs=
 	Rterm.kill_term_set ts !rewrite_track; 
         if Rterm.ts_debug then Format.printf "Tidied after rewrites@\n %a" string_ts_db ts
 	    ) ;  *)
-      rewrites_sequent_inner rwm ts_seq rewrite_track ep abs
+      rewrites_sequent_inner rwm ts_seq rewrite_track ep abs redun 
     with Success -> 
       (ts,true_sequent)
   with No_match -> 
@@ -460,9 +460,9 @@ let rec rewrites_sequent_inner rwm (ts,seq) rewrite_track ep abs=
     (ts,seq)
 
 
-let rewrites_sequent rwm ep abs (ts,seq) =
+let rewrites_sequent rwm ep abs redun (ts,seq) =
   let rewrite_track = ref Rterm.TIDset.empty in 
-  rewrites_sequent_inner rwm (ts,seq) rewrite_track ep abs
+  rewrites_sequent_inner rwm (ts,seq) rewrite_track ep abs redun
 
 
 
@@ -868,14 +868,14 @@ let rec apply_rule_list logic (sequents : ts_sequent list) find_frame abs : ts_s
 (*  List.iter (fun seq -> Printf.printf "%s> %s\n" (String.make n '-') (string_ts_seq seq)) sequents;*)
   let sequents : ts_sequent list = List.map exists_elim_simple sequents in 
   (* perform rewrite rules *)
-  let sequents = List.map (rewrites_sequent rwm ep abs) sequents in
+  let sequents = List.map (rewrites_sequent rwm ep abs false) sequents in
   let sequents = map_option apply_contradiction sequents in 
   (*  Apply subtarction *)
   let sequents : ts_sequent list = sequents_subtract sequents in
   (* Use neqs *)
   let sequents : ts_sequent list = sequents_use_neqs sequents in 
   (* perform rewrite rules *)
-  let sequents = List.map (rewrites_sequent rwm ep abs) sequents in 
+  let sequents = List.map (rewrites_sequent rwm ep abs false) sequents in 
   let sequents : ts_sequent list = List.map exists_elim_simple sequents in 
   let sequents : ts_sequent list = map_option (fun seq -> try Some (eqs_elim seq) with Success -> (if true || !(Debug.debug_ref) then Format.fprintf !dump "Success : %a\n" (string_ts_seq (rao_create ())) seq; None)) sequents in 
 (*  List.iter (fun seq -> Printf.printf "%s> %s\n" (String.make n '-') (string_ts_seq seq)) sequents;*)
@@ -893,6 +893,12 @@ let rec apply_rule_list logic (sequents : ts_sequent list) find_frame abs : ts_s
 		 let seqss = apply_rule_list_once rules seq ep
 		 in sequents_backtrack (fun seqs->apply_rule_list_inner seqs (n+1)) seqss []
 	   with No_match -> 
+	     (* Do expensive rewrites and try again *)
+	     let seq = rewrites_sequent rwm ep abs true seq in 
+	     try 
+	       let seqss = apply_rule_list_once rules seq ep
+	       in sequents_backtrack (fun seqs->apply_rule_list_inner seqs (n+1)) seqss []
+	     with No_match -> 
 	       try 
 		 match seq with  (* no more rules apply: see if we have done the proof *)  
 		 | ts,(f,(p1,s1,c1),(p2,[],[])) -> 
@@ -919,6 +925,7 @@ let rec apply_rule_list logic (sequents : ts_sequent list) find_frame abs : ts_s
 			 with Failed -> raise No_match
 	             )     
 		 | ts,(f,(p1,s1,c1),f2) ->
+		     
 		     (* ask the audience *)
 	       (try 
 	         let sub = ask_the_audience ep ts p1 (rv_sequent (f,(p1,s1,c1),f2)) in 

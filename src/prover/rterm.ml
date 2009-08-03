@@ -1405,12 +1405,13 @@ let rm_find = RewriteMap.find
 
 exception Done
 
-let rewrite_ts (ts : term_structure) (rm : 'a rewrite_map) dtref rs (query : var_subst * 'a * term-> var_subst option) = 
+let rewrite_ts (ts : term_structure) (rm : 'a rewrite_map) dtref rs (query : var_subst * 'a * term-> var_subst option) redun = 
   let x = ref true in
   let subst = ref (empty_subst () )in
   if ts_debug then Format.fprintf !dump  "Trying to rewrite stuff!\n";
   if ts_debug then Format.fprintf !dump  "Trying to rewrite stuff!\n";
-  try 
+  let tryrewrite redun = 
+    try 
     Thash.iter 
     (
      fun ft repid ->
@@ -1419,10 +1420,13 @@ let rewrite_ts (ts : term_structure) (rm : 'a rewrite_map) dtref rs (query : var
        match ft with 
 	 FTFunct(name, rl) ->
 	   (try 
+	     let tid : term =  (List.find (fun (y : term)-> ft_eq (!y).term ft) (!repid).terms) in
 	     let rws = rm_find name rm in
 	     List.iter 
 	       (
 		fun (al,a,extra,rule,redundant) ->
+		  (* should we use redundant rules; outer call says no, then yes, makes simplification happen first *)
+		  if (redun || !tid.righthand || not redundant) then 
 		  try
 		    if ts_debug then Format.fprintf !dump  "Trying rule:%s@\n" rule;
 		    unifies_list_ntids ts al rl !dtref empty_vs
@@ -1440,7 +1444,6 @@ let rewrite_ts (ts : term_structure) (rm : 'a rewrite_map) dtref rs (query : var
 				rl al) 
 			  then raise No_match; 
 			  (* end Hack *)
-			  let tid : term =  (List.find (fun (y : term)-> ft_eq (!y).term ft) (!repid).terms) in
 			  let interp = match query (interp,extra,tid) with None ->  raise No_match | Some interp -> interp in 
 			  if TIDset.mem tid !dtref then raise No_match;
 			  let r,i,t = add_term_id ts interp a (redundant || !tid.redundant) !tid.righthand in 
@@ -1456,23 +1459,25 @@ let rewrite_ts (ts : term_structure) (rm : 'a rewrite_map) dtref rs (query : var
 			      Some (Inr ti) -> (* Term has been added *)
 				if TIDset.mem ti !dtref || (redundant && not !tid.righthand) then () else 
 				( dtref:=TIDset.add tid !dtref;
-				 if ts_debug then Format.fprintf !dump  "Add removal flag to:%a@\n"  string_term tid)
+				 if ts_debug then Format.fprintf !dump  "Add removal flag to:%a@\n"  string_term tid;
+				 raise Done)
 			    | Some (Inl ft) -> (* Lookup term id, as it preexisted *)
 				let ti : term =  (List.find (fun (y : term)-> ft_eq (!y).term ft) (!r).terms) in 
 				if TIDset.mem ti !dtref || (redundant && not !tid.righthand) then () else 
 				( dtref:=TIDset.add tid !dtref ;
-				 if ts_debug then Format.fprintf !dump  "Add removal flag to:%a@\n"  string_term tid)
+				 if ts_debug then Format.fprintf !dump  "Add removal flag to:%a@\n"  string_term tid;
+				 raise Done)
 			    | _ -> 
 				(* This means we have a anyvar on the right, I think, so should remove term *)
-				(if (redundant && not !tid.righthand) then () else dtref:=TIDset.add tid !dtref) ;
-				if ts_debug then Format.fprintf !dump  "Add removal flag to:%a@\n"  string_term tid
+				(if (redundant && not !tid.righthand) then () else (dtref:=TIDset.add tid !dtref ;
+				if ts_debug then Format.fprintf !dump  "Add removal flag to:%a@\n"  string_term tid; raise Done))
 			    )
 			  else
 			  (if ts_debug then Format.fprintf !dump  "Make eq: %a %a\n" string_rep_term_db r    string_rep_term_db repid;
 			   (* if r does not use tid, then it should be removed later TODO make transitive check*)
 			   if Rset.exists (fun r ->  (List.exists ((==) tid) (!r).terms)) (rv_transitive r) then () else (
 			   if ts_debug then Format.fprintf !dump  "Add removal flag to:%a@\n"  string_term tid;  
-			   if not (redundant && not !tid.righthand) then dtref := TIDset.add tid !dtref);			         
+			   if (not redundant) || !tid.righthand then dtref := TIDset.add tid !dtref);		
 			   (* Make terms equal *)
 			   subst := make_equal ts [r,repid] !subst;
 			   x := true;
@@ -1492,6 +1497,8 @@ let rewrite_ts (ts : term_structure) (rm : 'a rewrite_map) dtref rs (query : var
   with Done ->
     (if ts_debug then (Format.fprintf !dump  "Finished rewrites!@\n"; print_termhash ts);
     !subst)
+  in 
+  tryrewrite redun
 
 
 let kill_all_exists_names ts =

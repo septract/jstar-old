@@ -371,7 +371,7 @@ if
 if
   | ?alpha = ?beta * ?e1 = ?e2 | |- |*/
 
-rewrite length_empty*:
+rewrite length_empty:
   length(empty()) = numeric_const("0")
 
 
@@ -383,7 +383,7 @@ rewrite length_app_cons_second*:*/
 rewrite length_app_general*:
   length(app(?alpha, ?beta)) = builtin_plus(length(?alpha), length(?beta))
 
-rewrite length_cons_empty*:
+rewrite length_cons_empty:
   length(cons(?a, empty())) = numeric_const("1")
 
 rewrite length_cons*:
@@ -539,17 +539,29 @@ rewrite plus_0_first:
 rewrite plus_assoc:
   builtin_plus(builtin_plus(?x,?y), ?z) = builtin_plus(?x, builtin_plus(?y,?z))
 without
-  | (| (| (| (| (?y = numeric_const("0") |)
+  | (| (| (| (| (| (?y = numeric_const("0") |)
              || (?z = numeric_const("0") |))
              || (?x = numeric_const("0") |))
              || (builtin_plus(builtin_plus(?x,?y), ?z) = builtin_plus(?x,?y) |))
              || (builtin_plus(builtin_plus(?x,?y), ?z) = builtin_plus(?x,?z) |))
-             || (builtin_plus(builtin_plus(?x,?y), ?z) = builtin_plus(?y,?z) |)
+             || (builtin_plus(builtin_plus(?x,?y), ?z) = builtin_plus(?y,?z) |))
+	     || (?x=builtin_plus(?q1,?q2) | )
 
 rule plus_nested_eq_right:
   || |- builtin_plus(?a, builtin_plus(?x, ?b)) = builtin_plus(?x, ?c) |
 if
   || |- builtin_plus(?a, ?b) = ?c |
+
+rewrite length_empty :
+     length(?x) = numeric_const("0")
+if 
+  builtin_plus(length(?x), ?y) = ?y
+
+rewrite length_empty :
+     length(?x) = numeric_const("0")
+if 
+  builtin_plus(?y, length(?x)) = ?y
+
 
 /*rewrite plus_commutativity_existential:
   builtin_plus(_x, ?y) = builtin_plus(?y, _x)

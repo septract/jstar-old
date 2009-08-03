@@ -1,3 +1,4 @@
+/*
 Implication:
   hd(tl(cons(a,cons(x,empty())))) = a  | |-  hd(app(empty(),cons(x,y))) = a |
 ? True
@@ -9,9 +10,15 @@ Implication:
 Implication:
   app(x,y) = empty() | |- x=empty() |
 ? True
+*/
 
 Implication: 
   | |- len(cons(_x,empty())) = builtin_plus(numeric_const("1"),numeric_const("0")) * _x = "a" |
+? True
+
+/*
+Implication: 
+  | |- len(cons(_x,empty())) = builtin_plus(numeric_const("1"),numeric_const("0")) |
 ? True
 
 Implication: 
@@ -34,3 +41,4 @@ Implication:
 Implication: 
   builtin_plus(numeric_const("1"),numeric_const("0")) = x | |- hd(cons(_x,empty())) = builtin_plus(numeric_const("1"),numeric_const("0")) * _x = "b" |
 ? False
+*/
