@@ -745,6 +745,7 @@ let add_flat_term (ts : term_structure) (ft : flattened_term)
     let rid = Thash.find ts.termhash ft in 
     let tid = List.find (fun tid -> ft_eq !tid.term ft) !rid.terms in 
     !tid.redundant <-  !tid.redundant && redun;
+    !tid.righthand <-  !tid.righthand && rhs ;
     rid, Inl ft
   with Not_found ->
     if ts_debug then Format.fprintf !dump  "Adding term %a.\n" string_ft_db ft;
