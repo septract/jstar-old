@@ -55,7 +55,7 @@ jstar: .prover
 clean:
 	$(MAKE) -f $(OCAMLMAKEFILE) $(MAIN) clean
 	$(MAKE) -f $(OCAMLMAKEFILE) $(MAINOPT) clean
-	rm -f *.annot doc/*.html doc/*.css doc/test.odoc jparser.output
+	rm -f *.annot doc/*.html doc/*.css doc/test.odoc jparser.output  *.cmi *.cmx *.o jparser.ml jlexer.ml jparser.mli jlexer.mli
 
 .depend:
 	$(OCAMLDEP) $(INCLUDES) *.mli *.ml > .depend
