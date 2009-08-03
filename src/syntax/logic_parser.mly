@@ -12,8 +12,7 @@
 open Vars
 open Pterm
 open Plogic
-open Rlogic
-open Prover
+open Global_types
 open Lexing
 open Parsing 
 
@@ -91,13 +90,13 @@ let parse_error s =
 /* entry points */
 
 %start file
-%type <Prover.question list> file
+%type <Global_types.question list> file
 
 %start rule_file
-%type <Prover.rules list> rule_file
+%type <Global_types.rules list> rule_file
 
 %start test_file
-%type <Prover.test list> test_file
+%type <Global_types.test list> test_file
 
 
 %% /* rules */

@@ -46,7 +46,7 @@ let main () =
     List.iter (
     fun test ->
       match test with 
-    | Prover.TImplication (heap1,heap2,result) ->
+    | Global_types.TImplication (heap1,heap2,result) ->
 	(*Printf.printf "Check implication\n %s\n ===> \n %s\n" (Plogic.string_form heap1) (Plogic.string_form heap2);*)
 	(match (Prover.check_implication logic (Rlogic.convert heap1) (Rlogic.convert heap2)), result with 
 	  true,true | false,false -> ()
@@ -59,17 +59,17 @@ let main () =
 	);
 	if !(Debug.debug_ref) then Prover.pprint_proof stdout
 	  
-    | Prover.TFrame (heap1, heap2, result)  -> ()
+    | Global_types.TFrame (heap1, heap2, result)  -> ()
 (*	Printf.printf "Find frame for\n %s\n ===> \n %s\n" (Plogic.string_form heap1) (Plogic.string_form heap2);
 	let x = Prover.check_implication_frame logic 
 	    (Rlogic.convert heap1) (Rlogic.convert heap2) in 
 	(match x with [] -> Printf.printf "Can't find frame!" | _ -> List.iter (fun form -> Printf.printf "Frame:\n %s\n" (Rlogic.string_ts_form (Rterm.rao_create ()) form)) x);
 	Printf.printf "\n"*)
-    | Prover.TAbs (heap1,result)  -> ()
+    | Global_types.TAbs (heap1,result)  -> ()
 	(* let x = Prover.abs logic (Rlogic.convert heap1) in 
 (*e	List.iter (fun form -> Printf.printf "Abstracts to %s\n" (Logic.string_form form)) x;*)
 	Printf.printf "\n "*)
-    | Prover.TInconsistency (heap1,result) ->
+    | Global_types.TInconsistency (heap1,result) ->
 	(match Prover.check_inconsistency logic (Rlogic.convert heap1), result with 
 	  true, true 
 	| false,false -> ()
@@ -79,7 +79,7 @@ let main () =
 	      Plogic.string_form heap1
 	);
 	if !(Debug.debug_ref) then Prover.pprint_proof stdout
-    | Prover.TEqual (heap,arg1,arg2,result) -> ()
+    | Global_types.TEqual (heap,arg1,arg2,result) -> ()
 (*	if Prover.check_equal logic heap arg1 arg2 
 	then Printf.printf("Equal!\n\n") else Printf.printf("Not equal!\n\n")*)
   )

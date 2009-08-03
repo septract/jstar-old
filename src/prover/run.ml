@@ -42,29 +42,29 @@ let main () =
     List.iter (
     fun question ->
       match question with 
-    | Prover.Implication (heap1,heap2) ->
+    | Global_types.Implication (heap1,heap2) ->
 	Format.printf "Check implication\n %a\n ===> \n %a\n" Plogic.string_form heap1   Plogic.string_form heap2;
 	if (Prover.check_implication logic (Rlogic.convert heap1) (Rlogic.convert heap2))
 	then Printf.printf("Holds!\n\n") else Printf.printf("Does not hold!\n\n");
 	if !(Debug.debug_ref) then Prover.pprint_proof stdout
-    | Prover.Frame (heap1, heap2)  -> 
+    | Global_types.Frame (heap1, heap2)  -> 
 	Format.printf "Find frame for\n %a\n ===> \n %a\n" Plogic.string_form heap1   Plogic.string_form heap2;
 	let x = Prover.check_implication_frame logic 
 	    (Rlogic.convert heap1) (Rlogic.convert heap2) in 
 	(match x with [] -> Printf.printf "Can't find frame!" | _ -> List.iter (fun form -> Format.printf "Frame:\n %a\n" (Rlogic.string_ts_form (Rterm.rao_create ())) form) x);
 	Printf.printf "\n";
 	if !(Debug.debug_ref) then Prover.pprint_proof stdout
-    | Prover.Abs (heap1)  ->
+    | Global_types.Abs (heap1)  ->
 	Format.printf "Abstract@\n  @[%a@]@\nresults in@\n  " Plogic.string_form heap1;
 	let x = Prover.abs logic (Rlogic.convert heap1) in 
 	List.iter (fun form -> Format.printf "%a\n" (Rlogic.string_ts_form (Rterm.rao_create ())) form) x;
 	Printf.printf "\n";
 	if !(Debug.debug_ref) then Prover.pprint_proof stdout
-    | Prover.Inconsistency (heap1) ->
+    | Global_types.Inconsistency (heap1) ->
 	if Prover.check_inconsistency logic (Rlogic.convert heap1) 
 	then Printf.printf("Inconsistent!\n\n") else Printf.printf("Consistent!\n\n");
 	if !(Debug.debug_ref) then Prover.pprint_proof stdout
-    | Prover.Equal (heap,arg1,arg2) -> ()
+    | Global_types.Equal (heap,arg1,arg2) -> ()
 (*	if Prover.check_equal logic heap arg1 arg2 
 	then Printf.printf("Equal!\n\n") else Printf.printf("Not equal!\n\n")*)
   )

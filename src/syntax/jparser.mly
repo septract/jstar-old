@@ -6,11 +6,11 @@ exception Give_up
 open Jparsetree
 
 open Vars
-open Pterm
-open Plogic
+open Pterm 
+open Plogic 
 open Lexing
 open Parsing 
-open Specification
+open Global_types
 open Pprinter
 
 let newPVar x = concretep_str x
@@ -228,7 +228,7 @@ let field_signature2str fs =
 %type <Jparsetree.jimple_file> file
 
 %start spec_file
-%type <Specification.spec_file> spec_file
+%type <Global_types.spec_file> spec_file
 
 /*
 %start file
@@ -699,7 +699,7 @@ jargument:
    | STRING_CONSTANT {Arg_string($1)} 
    | field_signature {Arg_string(field_signature2str $1)}
    | L_BRACE fldlist R_BRACE {mkArgRecord $2}
-   | L_PAREN jargument binop_val_no_multor jargument R_PAREN { Arg_op(Support_symex.bop_to_prover_arg $3, [$2;$4]) }
+   | L_PAREN jargument binop_val_no_multor jargument R_PAREN { Arg_op(Support_syntax.bop_to_prover_arg $3, [$2;$4]) }
 ;
 
 jargument_list_ne:
@@ -718,11 +718,11 @@ formula:
        {if List.length $3 =1 then [P_SPred($1,$3 @ [mkArgRecord []])] else [P_SPred($1,$3)] }
    | full_identifier L_PAREN jargument_list R_PAREN {if List.length $3 =1 then [P_SPred($1,$3 @ [mkArgRecord []])] else [P_SPred($1,$3)] }
    | formula MULT formula { pconjunction $1 $3 }
-   | formula OR formula { if Support_symex.symb_debug() || true then parse_warning "deprecated use of |"  ; pconjunction $1 $3 }
+   | formula OR formula { if Config.symb_debug() || true then parse_warning "deprecated use of |"  ; pconjunction $1 $3 }
    | formula OROR formula { mkOr ($1,$3) }
    | jargument COLON identifier { [P_PPred("type", [$1;Arg_string($3)])] }
-   | jargument binop_cmp jargument { Support_symex.bop_to_prover_pred $2 $1 $3 }
-   | jargument EQUALS jargument { Support_symex.bop_to_prover_pred (Cmpeq) $1 $3 }
+   | jargument binop_cmp jargument { Support_syntax.bop_to_prover_pred $2 $1 $3 }
+   | jargument EQUALS jargument { Support_syntax.bop_to_prover_pred (Cmpeq) $1 $3 }
    | L_PAREN formula R_PAREN { $2 }
 /*
 formula_nb: 
@@ -735,8 +735,8 @@ formula_nb:
    | formula_nb MULT formula_nb { pconjunction $1 $3 }
    | formula OROR formula { mkOr ($1,$3) }
    | jargument COLON identifier { [P_PPred("type", [$1;Arg_string($3)])] }
-   | jargument binop_cmp jargument { Support_symex.bop_to_prover_pred $2 $1 $3 }
-   | jargument EQUALS jargument { Support_symex.bop_to_prover_pred (Cmpeq) $1 $3 }
+   | jargument binop_cmp jargument { Support_syntax.bop_to_prover_pred $2 $1 $3 }
+   | jargument EQUALS jargument { Support_syntax.bop_to_prover_pred (Cmpeq) $1 $3 }
    | L_PAREN formula R_PAREN { $2 }
 */
 

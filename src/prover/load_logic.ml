@@ -1,7 +1,7 @@
 (* File to read a logic file and its imports. *)
 open Prover
 open System
-
+open Global_types
 
 let load_logic dirs filename = 
   (* Converts a list of rules and imports into a logic *)

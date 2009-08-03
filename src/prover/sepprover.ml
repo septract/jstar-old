@@ -3,6 +3,7 @@ namespace Microsoft.Research.Vcc2
 F#*)
 
 open Debug
+open Global_types
 
 module SepProver = struct
 
@@ -30,7 +31,7 @@ module SepProver = struct
     (* Used in rules for pattern matching *)
     let unify_var (n : string) : var = Var (Vars.fresha_str n)
 
-    type term = Term of Rterm.representative Pterm.args
+    type term = Term of representative Pterm.args
 
     let unterm = (fun (Term a) -> a) 
     let unterm_list = List.map unterm 
@@ -44,7 +45,7 @@ module SepProver = struct
     (*************************************
        Syntactic representation of formula
     **************************************)
-    type form  = Form of Rterm.representative Plogic.pform
+    type form  = Form of representative Plogic.pform
 
     let unform = fun (Form x) -> x 
 
@@ -111,7 +112,7 @@ module SepProver = struct
      ***************************************)
 
     (* Substitution on terms *)
-    type var_subst = VSub of Rterm.representative Pterm.varmap
+    type var_subst = VSub of representative Pterm.varmap
 
     (* Creates the empty variable substitution *)
     let empty_subst : var_subst = VSub (Pterm.empty)
@@ -237,7 +238,7 @@ module SepProver = struct
         | _ -> Printf.printf "Don't know how to convert this term to external use."; unsupported ()
       in Hashtbl.add interp a v; v
       
-    let rec conv interp (pl : Rterm.representative Plogic.pform) : out_form = 
+    let rec conv interp (pl : representative Plogic.pform) : out_form = 
       let conv_t = conv_t interp in 
       match pl with
         [] -> TT 
@@ -250,15 +251,15 @@ module SepProver = struct
 
     let add_external_prover : logic -> (out_form -> out_form -> bool) -> logic =
       fun (Logic (x,y,(ep1,ep2))) z -> Logic (x,y,
-					      ((fun (p1 : Rterm.representative Plogic.pform) 
-						  (p2 : Rterm.representative Plogic.pform) 
+					      ((fun (p1 : representative Plogic.pform) 
+						  (p2 : representative Plogic.pform) 
 						-> let interp = Hashtbl.create 30 in z (conv interp p1) (conv interp p2))
 						,ep2))
  
     let add_external_congruence : logic -> (out_form -> out_term list -> out_term list list) -> logic
 	=
       fun (Logic (x,y,(ep1,ep2))) z -> Logic (x,y,
-					      (ep1,(fun (p1 : Rterm.representative Plogic.pform) 
+					      (ep1,(fun (p1 : representative Plogic.pform) 
 						  ts
 						-> 
 						  let interp = Hashtbl.create 30 in

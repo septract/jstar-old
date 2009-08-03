@@ -11,6 +11,7 @@ open Rterm
 open Rlogic
 open Plogic
 open Jlogic
+open Global_types
 open Jparsetree
 open Cfg
 open Prover
@@ -154,7 +155,7 @@ let pp_dotty_transition_system () =
   let foname="execution.dot" in
   let foname="execution.dot~" in
   let dotty_outf=open_out foname in
-  if symb_debug() then Printf.printf "\n Writing transition system file execution.dot  \n";
+  if Config.symb_debug() then Printf.printf "\n Writing transition system file execution.dot  \n";
   Printf.fprintf dotty_outf "digraph main { \nnode [shape=box,  labeljust=l];\n";
   List.iter (fun (label,id,ty) ->
     let label=escape_for_dot_label label in 
@@ -255,27 +256,27 @@ let add_id_abs_formset sheaps =  List.map add_id_abs_form sheaps
 
 (* execute  v=e *)
 let exec_simple_assign (v:Jparsetree.variable) (e:Jparsetree.immediate) (sheap: Rlogic.ts_form) = 
-  if symb_debug() then Printf.printf "\nExecuting simple assignment statement\n ";
+  if Config.symb_debug() then Printf.printf "\nExecuting simple assignment statement\n ";
   let sheap = update_var_to (variable2var v) (immediate2args e) sheap in 
   [sheap]
 
 
 (* execute  v=bop x y : TODO THIS *)
 let exec_binop_assign (v:Jparsetree.variable) (e: Jparsetree.expression) (sheap: Rlogic.ts_form) = 
-  if symb_debug() then Printf.printf "\nExecuting binop assignment statement\n ";
+  if Config.symb_debug() then Printf.printf "\nExecuting binop assignment statement\n ";
   let sheap = update_var_to (variable2var v) (expression2args e) sheap in
   [sheap]
 
 
 (* execute  "r0 := @this: LinkedList" *)
 let exec_identity_stmt  n id ty (sheap: Rlogic.ts_form) = 
-  if symb_debug() then Printf.printf "\nExecuting identity statement\n ";
+  if Config.symb_debug() then Printf.printf "\nExecuting identity statement\n ";
   let sheap = update_var_to (variable2var (Var_name n)) (identifier2args id) sheap in 
   sheap
 
 (* execute v=[e] *)
 let exec_lookup_assign (v:Jparsetree.variable) (e:Jparsetree.reference) (sheap,id) node = 
-  if symb_debug() then Printf.printf "\nExecuting lookup statement\n ";
+  if Config.symb_debug() then Printf.printf "\nExecuting lookup statement\n ";
   let e_var = freshe() in
   let pointed_to_var = Arg_var (e_var) in
   let find_pointsto = 
@@ -336,10 +337,10 @@ let exec_mutation_assign  (v:Jparsetree.reference) (e:Jparsetree.immediate) (she
   List.map
     (fun res -> 
       (* put back the new points to *)
-      if symb_debug() then Format.printf "@\nBefore update@\n   %a@\n" (string_ts_form (Rterm.rao_create ())) res;
+      if Config.symb_debug() then Format.printf "@\nBefore update@\n   %a@\n" (string_ts_form (Rterm.rao_create ())) res;
       let x = conj_convert new_pointsto res in
       kill_var e_var res;
-      if symb_debug() then Format.printf "@\nAfter update@\n   %a@\n" (string_ts_form (Rterm.rao_create ())) x;
+      if Config.symb_debug() then Format.printf "@\nAfter update@\n   %a@\n" (string_ts_form (Rterm.rao_create ())) x;
       x
     )
     frames
@@ -455,7 +456,7 @@ let call_jsr (sheap,id) spec n il si node =
   
 (* execute method calls *)
 let exec_invoke_stmt  (iexp: Jparsetree.invoke_expr) sheap  node = 
-  if symb_debug() then Printf.printf "\nExecuting invoke statement\n ";
+  if Config.symb_debug() then Printf.printf "\nExecuting invoke statement\n ";
   match iexp with
   | Invoke_nostatic_exp (Virtual_invoke,n,si,il) 
   | Invoke_nostatic_exp (Interface_invoke,n,si,il) ->  (* ddino: we deal with interface invoke as for virtual invoke. Not sure it's correct!!!*)
@@ -628,17 +629,17 @@ let rec execute_stmt n (sheap : formset_entry) : unit =
   let sheap_noid=fst sheap in
   Rlogic.kill_all_exists_names sheap_noid;
   let stm=node_get_stmt n in
-  if symb_debug() then Format.printf "@\nExecuting statement:@ %s" (Pprinter.statement2str stm.skind); 
-  if symb_debug() then Format.printf "@\nwith heap:@\n    %a@\n@\n@."  (string_ts_form (Rterm.rao_create ())) sheap_noid;
+  if Config.symb_debug() then Format.printf "@\nExecuting statement:@ %s" (Pprinter.statement2str stm.skind); 
+  if Config.symb_debug() then Format.printf "@\nwith heap:@\n    %a@\n@\n@."  (string_ts_form (Rterm.rao_create ())) sheap_noid;
   if (Prover.check_inconsistency !curr_logic (form_clone sheap_noid false)) then 
-    (if symb_debug() then Printf.printf "\n\nInconsistent heap. Skip it!\n";
+    (if Config.symb_debug() then Printf.printf "\n\nInconsistent heap. Skip it!\n";
      let idd = add_good_node "Inconsistent"  in add_edge_with_proof (snd sheap) idd "proof";
      ())
   else (
-  if symb_debug() then Printf.printf "\nStarting execution of node %i \n" (node_get_id n);
+  if Config.symb_debug() then Printf.printf "\nStarting execution of node %i \n" (node_get_id n);
   match n.nd_kind with 
   | Exit_node -> 
-      if symb_debug() then Printf.printf "Exit node %i\n" (node_get_id n);
+      if Config.symb_debug() then Printf.printf "Exit node %i\n" (node_get_id n);
     (* Check implies post-condtion *)
       let m = match n.nd_method with Some x -> x.pd_md | _ -> assert false in 
       let heaps= formset_table_find (node_get_id n) in
@@ -646,7 +647,7 @@ let rec execute_stmt n (sheap : formset_entry) : unit =
        try 
 	let heap,id = List.find (fun (heap,id) -> (check_implication_frame !curr_logic sheap_noid heap)!=[]) heaps in
 	if !(Debug.debug_ref) then Prover.pprint_proof stdout;
-	if !Support_symex.sym_debug then Printf.printf "\n\nPost okay %s \n" (Pprinter.name2str m.name);
+	if Config.symb_debug() then Printf.printf "\n\nPost okay %s \n" (Pprinter.name2str m.name);
 
 (*	let idd = add_good_node ("EXIT: "^(Pprinter.name2str m.name)) in *)
 	add_edge_with_proof (snd sheap) id "exit";
@@ -671,7 +672,7 @@ let rec execute_stmt n (sheap : formset_entry) : unit =
   let exec n sheaps = 
     let sheaps_noid=fst sheaps in
     Rlogic.kill_all_exists_names sheaps_noid;
-    if symb_debug() then Format.printf "Output to %i with heap@\n   %a@\n" (node_get_id n) (string_ts_form (Rterm.rao_create ())) sheaps_noid;
+    if Config.symb_debug() then Format.printf "Output to %i with heap@\n   %a@\n" (node_get_id n) (string_ts_form (Rterm.rao_create ())) sheaps_noid;
     execute_stmt n sheaps in 
   let execs n sheaps = List.iter (exec n) sheaps in 
 (*  let minfo=node_get_method_cfg_info n in *)
@@ -685,23 +686,23 @@ let rec execute_stmt n (sheap : formset_entry) : unit =
     match succs with 
       [s] -> exec s sheaps 
     | _ -> assert false in
-  if symb_debug() then Format.printf "@\nExecuting statement:@ %s%!" (Pprinter.statement2str stm.skind); 
-  if symb_debug() then Format.printf "@\nwith heap:@\n    %a@\n@\n%!"  (string_ts_form (Rterm.rao_create ())) sheap_noid;
+  if Config.symb_debug() then Format.printf "@\nExecuting statement:@ %s%!" (Pprinter.statement2str stm.skind); 
+  if Config.symb_debug() then Format.printf "@\nwith heap:@\n    %a@\n@\n%!"  (string_ts_form (Rterm.rao_create ())) sheap_noid;
     (match stm.skind with 
       | Label_stmt l -> 
 	  (*  Update the labels formset, if sheap already implied then fine, otherwise or it in. *)
 	  (let id = node_get_id n in 
 	  try
-	    if symb_debug() then Format.printf "@\nPre-abstraction:@\n    %a@."  (string_ts_form (Rterm.rao_create ())) sheap_noid;
+	    if Config.symb_debug() then Format.printf "@\nPre-abstraction:@\n    %a@."  (string_ts_form (Rterm.rao_create ())) sheap_noid;
 	    let sheap_pre_abs = form_clone sheap_noid true in 
 	    let sheaps_abs = Prover.abs !curr_abs_rules sheap_pre_abs in 
 	    if !(Debug.debug_ref) then Prover.pprint_proof stdout;
-	    if symb_debug() then Format.printf "@\nPost-abstractionc count:@\n    %d@."  (List.length sheaps_abs);
+	    if Config.symb_debug() then Format.printf "@\nPost-abstractionc count:@\n    %d@."  (List.length sheaps_abs);
 	    List.iter Rlogic.kill_all_exists_names sheaps_abs;
-	    if symb_debug() then List.iter (fun sheap -> Format.printf "@\nPost-abstraction:@\n    %a@."  (string_ts_form (Rterm.rao_create ())) sheap) sheaps_abs;
+	    if Config.symb_debug() then List.iter (fun sheap -> Format.printf "@\nPost-abstraction:@\n    %a@."  (string_ts_form (Rterm.rao_create ())) sheap) sheaps_abs;
 
 	    let formset = (formset_table_find id) in 
-	    if symb_debug() then (
+	    if Config.symb_debug() then (
                Format.printf "Testing inclusion of :@    %a" 
 		  (Debug.list_format "@\n" (string_ts_form (Rterm.rao_create ()))) sheaps_abs;
                print_formset "in " (remove_id_formset formset)
@@ -730,7 +731,7 @@ let rec execute_stmt n (sheap : formset_entry) : unit =
 			 add_edge (snd sheap) (snd h) (Pprinter.statement2str stm.skind)) sheaps_with_id;*)
 	    formset_table_replace id (sheaps_with_id @ formset);
 	    execs_one (List.map id_clone sheaps_with_id)
-	  with Contained -> if symb_debug() then Printf.printf "Formula contained.\n")
+	  with Contained -> if Config.symb_debug() then Printf.printf "Formula contained.\n")
       | Identity_stmt (n,id,ty) -> 
 	  let h=exec_identity_stmt  n id ty (fst sheap) in
 	  let h=add_id_form h in
@@ -853,8 +854,8 @@ let initialize_node_formsets mdl fields cname=
     let meth_final_formset_noid = [convert spec.post] in 
     let meth_final_formset = add_id_formset meth_final_formset_noid in
     List.iter (fun (_,id) -> add_edge id id_exit "") meth_final_formset; 
-    if symb_debug () then print_formset ("\n"^(Pprinter.name2str m.name)^" init_form=") [meth_initial_form_noid] ;
-    if symb_debug () then print_formset ("\n"^(Pprinter.name2str m.name)^" final_form=") meth_final_formset_noid ;
+    if Config.symb_debug () then print_formset ("\n"^(Pprinter.name2str m.name)^" init_form=") [meth_initial_form_noid] ;
+    if Config.symb_debug () then print_formset ("\n"^(Pprinter.name2str m.name)^" final_form=") meth_final_formset_noid ;
     let minfo=Cfg.mcfginfo_tbl_find (key_method m) in
     let start_node=method_cfg_info_get_start_node minfo in
     let end_node=method_cfg_info_get_exit_node minfo in
@@ -887,9 +888,9 @@ let rec icfg_nodes2list mdl =
 
 
 let print_list_of_nodes s l=  
-  if symb_debug() then Format.printf "\n\n %s = [" s;
-  List.iter (fun n -> if symb_debug() then Format.printf " %i " (node_get_id n) ) l;
-  if symb_debug() then Format.printf " ]\n\n"
+  if Config.symb_debug() then Format.printf "\n\n %s = [" s;
+  List.iter (fun n -> if Config.symb_debug() then Format.printf " %i " (node_get_id n) ) l;
+  if Config.symb_debug() then Format.printf " ]\n\n"
 
 
 
@@ -906,7 +907,7 @@ let print_list_of_nodes s l=
 is used to deal with if statement. It is the expression of the if statement is the predecessor
 of the node is a if_stmt otherwise is None. In the beginning is always None for each node *)
 let compute_fixed_point (f : Jparsetree.jimple_file) 
-(apfmap : logic Specification.ClassMap.t) (lo : logic) (abs_rules : logic)
+(apfmap : logic Global_types.ClassMap.t) (lo : logic) (abs_rules : logic)
 (sspecs: Specification.methodSpecs) (dspecs: Specification.methodSpecs)  =
 (*  HACK HACK HACK:  
    This is so that the exist vars are dealt with correctly between verification of body, and use for calls. *)
@@ -919,7 +920,7 @@ let compute_fixed_point (f : Jparsetree.jimple_file)
 (* remove methods that are declared abstraction *)
   let mdl = List.filter (fun y -> List.for_all (fun x-> Abstract<>x) (y.modifiers)) mdl in  
   let fields=Methdec.get_list_fields f in
-  let lo = try let x=Specification.ClassMap.find cname apfmap in x with Not_found -> lo in
+  let lo = try let x=Global_types.ClassMap.find cname apfmap in x with Not_found -> lo in
   curr_logic:= lo;
   curr_abs_rules:=abs_rules;
   compute_icfg mdl;
@@ -929,12 +930,12 @@ let compute_fixed_point (f : Jparsetree.jimple_file)
    This is so that the exist vars are dealt with correctly between verification of body, and use for calls. *)
   curr_static_methodSpecs:=sspecs;
 (* HACK over *)
-  worklist := List.filter (fun n -> (if symb_debug() then print_node n); match n.nd_kind with Start_node -> (if symb_debug() then Printf.printf "Start node %i\n" (node_get_id n));true | _ -> false) (icfg_nodes2list mdl);
+  worklist := List.filter (fun n -> (if Config.symb_debug() then print_node n); match n.nd_kind with Start_node -> (if Config.symb_debug() then Printf.printf "Start node %i\n" (node_get_id n));true | _ -> false) (icfg_nodes2list mdl);
   while (!worklist<>[]) do 
     let v=List.hd !worklist in
     worklist := List.tl !worklist;
     List.iter (fun f -> execute_stmt v f) (formset_table_find (node_get_id v));
-    if symb_debug() then Printf.printf "\nEnd execution of node %i \n" (node_get_id v)
+    if Config.symb_debug() then Printf.printf "\nEnd execution of node %i \n" (node_get_id v)
   done 
 (*  if !Config.dotty_print then print_file_dotty "conf_node" (icfg_nodes2list mdl);*)
 (*  List.iter (fun m -> check_post sspecs_prog m lo cname) mdl*)

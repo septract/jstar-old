@@ -10,6 +10,7 @@
 open Vars
 open Pterm
 open Rterm
+open Global_types
 open Rlogic
 open Plogic
 open Debug 
@@ -43,7 +44,9 @@ let filter_eq_eq pl =
   ret
 
 (* if sequent matches, then replace with each thing  in the sequent list *)
+(*
 type sequent_rule = representative psequent * (representative psequent list list) * string * (representative pform) * (where list)
+*)
 
 (*
 let string_pseq (g,l,r) = 
@@ -65,12 +68,15 @@ let string_psr sr =
 let mk_seq_rule (mat_seq,premises,name) = 
   mat_seq,premises,name,[],[]
 
+(*
 type rewrite_rule = string * representative args list * representative args * (representative pform) * (where list) * (representative pform) (* if *) * string * bool
+
 
 type rules = 
   | SeqRule of sequent_rule
   | RewriteRule of rewrite_rule
   | Import of string
+*)
 
 type rewrite_entry =  (representative args list * representative args * (representative pform) * (where list) * (representative pform) * string * bool) list
 
@@ -92,6 +98,7 @@ type logic = sequent_rule list * Rlogic.rewrite_map * external_prover
 
 let empty_logic : logic = [],Rterm.rm_empty, default_pure_prover
 
+(*
 type question =
   |  Implication of representative pform * representative pform 
   |  Inconsistency of representative pform
@@ -106,7 +113,7 @@ type test =
   |  TFrame of representative pform * representative pform * representative pform 
   |  TEqual of representative pform * representative args * representative args * bool
   |  TAbs of representative pform * representative pform
-
+*)
 
 let external_proof ep ts pl_assume rs p_goal = 
   let hash = (rao_create ()) in

@@ -11,10 +11,8 @@ open Vars
 open Pterm
 open Plogic
 open Rlogic
-
-let sym_debug = ref true
-
-let symb_debug() = !sym_debug 
+open Config
+open Support_syntax
 
 let warning () =
   Printf.printf "%c[%d;%dm"  (Char.chr 0x1B ) 1 31
@@ -125,7 +123,7 @@ let reference2args r = (* not sure we need this. Maybe we need reference2PPred*)
   |Field_local_ref(n,si) -> assert false
   |Field_sig_ref(si) -> assert false
 
-
+(*
 let bop_to_prover_arg = function
 	Jparsetree.And -> "builtin_and"
       | Jparsetree.Or -> "builtin_or"
@@ -147,6 +145,7 @@ let bop_to_prover_arg = function
       | Minus -> "builtin_minus"
       | Mult -> "builtin_mult"
       | Div -> "builtin_div"
+*)
 
 (* for the moment only few cases are done of this. Need to be extended *)
 let expression2args e = 
@@ -202,6 +201,7 @@ let negate e =
   | Binop_exp (Cmple,i1,i2) -> Binop_exp (Cmpgt,i1,i2)  
   | _ -> assert false (* ddino: many other cases should be filled in *)
 
+(*
 let bop_to_prover_pred bop i1 i2 = 
   [match bop with 
   | Cmpeq -> P_EQ (i1, i2)
@@ -212,6 +212,7 @@ let bop_to_prover_pred bop i1 i2 =
   | Cmple -> P_PPred("LE",[i1; i2])
   | _ -> Printf.printf "\n\n Operation %s not supported. Abort!" (Pprinter.binop2str bop);
       assert false (* ddino: many other cases should be filled in *)]
+*)
 
 let expression2pure e =
   match e with

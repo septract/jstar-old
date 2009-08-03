@@ -18,16 +18,15 @@ export LIB
 
 INCLUDES = 
 
-SYMBEXE_SOURCES = config.ml jparsetree.ml pprinter.mli pprinter.ml jlogic.ml specification.ml support_symex.ml jparser.mly jlexer.mll methdec.ml cfg.ml abs.ml         symexec.ml classverification.ml mkspecs.ml run_parser.ml
+SYMBEXE_SOURCES = jlogic.ml specification.ml support_symex.ml methdec.ml cfg.ml abs.ml symexec.ml classverification.ml mkspecs.ml run_parser.ml
 
-#dotty.ml
 
 TOPLEVEL_SOURCES = $(SYMBEXE_SOURCES)
 
 DEFAULT_ARGS = SOURCES="$(TOPLEVEL_SOURCES)" \
-       LIBS="str unix utils sepprover" \
+       LIBS="str unix utils parser sepprover" \
        OCAMLLDFLAGS="-g -I $(LIB)" \
-       OCAMLFLAGS="-g -I ../prover -I ../utils" \
+       OCAMLFLAGS="-g -I ../prover -I ../utils -I ../syntax" \
        TRASH=""
 
 MAIN = $(DEFAULT_ARGS) RESULT=$(BIN)/jstar.byte

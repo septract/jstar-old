@@ -29,7 +29,7 @@ let set_verbose () =
   Config.verbose := true 
 
 let set_quiet () =
-  Support_symex.sym_debug := false
+  Config.sym_debug := false
 
 let set_specs_template_mode () = 
   Config.specs_template_mode := true 
@@ -63,10 +63,10 @@ let parse_one_class cname =
 
 
 let parse_program () =
-  if !Support_symex.sym_debug then Printf.printf "Parsing program file  %s...\n" !program_file_name;
+  if Config.symb_debug() then Printf.printf "Parsing program file  %s...\n" !program_file_name;
   let s = System.string_of_file !program_file_name  in
   let program =Jparser.file Jlexer.token (Lexing.from_string s)
-  in if !Support_symex.sym_debug then Printf.printf "Program Parsing... done!\n";
+  in if Config.symb_debug() then Printf.printf "Program Parsing... done!\n";
   (* Replace specialinvokes of <init> after news with virtual invokes of <init>*)
   let program = program in 
   let rec spec_to_virt x = match x with 
@@ -89,10 +89,10 @@ let parse_program () =
 		| x -> x) f )
 
 let parse_program () =
-  if !Support_symex.sym_debug then Printf.printf "Parsing program file  %s...\n" !program_file_name;
+  if Config.symb_debug() then Printf.printf "Parsing program file  %s...\n" !program_file_name;
   let s = System.string_of_file !program_file_name  in
   let program =Jparser.file Jlexer.token (Lexing.from_string s)
-  in if !Support_symex.sym_debug then Printf.printf "Program Parsing... done!\n";
+  in if Config.symb_debug() then Printf.printf "Program Parsing... done!\n";
   (* Replace specialinvokes of <init> after news with virtual invokes of <init>*)
   let program = program in 
   let rec spec_to_virt x maps = match x with 
@@ -146,11 +146,11 @@ let main () =
 	 let abs_rules = Load_logic.load_logic  (System.getenv_dirlist "JSTAR_LOGIC_LIBRARY") !absrules_file_name in
 	 
 	 let spec_list = System.parse_file Jparser.spec_file Jlexer.token !spec_file_name "Specs" 
-	     !Support_symex.sym_debug in 
+	     !Config.sym_debug in 
 	 let apfmap,logic = Specification.spec_file_to_classapfmap logic spec_list in
 	 let (static_method_specs,dynamic_method_specs) = Specification.spec_file_to_method_specs spec_list apfmap in
 	 
-	 if !Support_symex.sym_debug then Printf.printf "\n\n Starting symbolic execution...";
+	 if Config.symb_debug() then Printf.printf "\n\n Starting symbolic execution...";
 	 Classverification.verify_class program static_method_specs dynamic_method_specs apfmap logic abs_rules ;
 	   (*Symexec.compute_fixed_point program apfmap logic abs_rules static_method_specs dynamic_method_specs*)
 	 Symexec.pp_dotty_transition_system () 

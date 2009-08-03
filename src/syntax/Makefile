@@ -18,25 +18,24 @@ export LIB
 
 INCLUDES = 
 
-SOURCES = system.ml vars.ml debug.ml pterm.ml plogic.ml jparsetree.ml global_types.ml pprinter.ml
-#dotty.ml
+SOURCES = config.ml support_syntax.ml logic_parser.mly logic_lexer.mll jparser.mly jlexer.mll
 
 LIBRARY = SOURCES="$(SOURCES)" \
        OCAMLLDFLAGS="-g -a" \
-       OCAMLFLAGS="-g" \
-       RESULT="$(LIB)/utils.cmxa" \
+       OCAMLFLAGS="-g  -I ../utils" \
+       RESULT="$(LIB)/parser.cmxa" \
        TRASH=""
 
 BLIBRARY = SOURCES="$(SOURCES)" \
        OCAMLLDFLAGS="-g -a" \
-       OCAMLFLAGS="-g" \
-       RESULT="$(LIB)/utils.cma" \
+       OCAMLFLAGS="-g -I ../utils" \
+       RESULT="$(LIB)/parser.cma" \
        TRASH=""
 
-utils.cmxa: 
+parser.cmxa: 
 	$(MAKE) -f $(OCAMLMAKEFILE) $(LIBRARY) native-code
 
-utils.cma: 
+parser.cma: 
 	$(MAKE) -f $(OCAMLMAKEFILE) $(BLIBRARY) byte-code
 
 

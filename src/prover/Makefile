@@ -24,19 +24,21 @@ endif
 export LIB
 
 
-CORESOURCE = debug.ml vars.ml pterm.ml plogic.ml rterm.ml rlogic.ml prover.ml sepprover.ml
+CORESOURCE =  rterm.ml rlogic.ml prover.ml sepprover.ml
 #external_interface.mli 
 #external_interface.ml  
 
-PROVERSOURCE = $(CORESOURCE) logic_parser.mly logic_lexer.mll load_logic.ml run.ml 
+PROVERSOURCE = $(CORESOURCE) load_logic.ml run.ml 
 
-TESTPROVERSOURCE = $(CORESOURCE) logic_parser.mly logic_lexer.mll load_logic.ml test.ml
+#TESTPROVERSOURCE = $(CORESOURCE) logic_parser.mly logic_lexer.mll load_logic.ml test.ml
+TESTPROVERSOURCE = $(CORESOURCE)  load_logic.ml test.ml
 
-LIBRARYSOURCE = $(CORESOURCE) logic_parser.mly logic_lexer.mll load_logic.ml
+#LIBRARYSOURCE = $(CORESOURCE) logic_parser.mly logic_lexer.mll load_logic.ml
+LIBRARYSOURCE = $(CORESOURCE)  load_logic.ml
 
-DEFAULT_ARGS = LIBS="str utils" \
+DEFAULT_ARGS = LIBS="str utils parser" \
        OCAMLLDFLAGS="-g -I $(LIB)" \
-       OCAMLFLAGS="-g -I ../utils" \
+       OCAMLFLAGS="-g -I ../utils -I ../syntax" \
        TRASH=""
 
 MAIN = $(DEFAULT_ARGS) SOURCES="$(PROVERSOURCE)" \
@@ -55,12 +57,12 @@ TMAINOPT = $(DEFAULT_ARGS) SOURCES="$(TESTPROVERSOURCE)" \
 
 LIBRARY = SOURCES="$(LIBRARYSOURCE)" \
        OCAMLLDFLAGS="-g -a" \
-       OCAMLFLAGS="-g -I ../utils" \
+       OCAMLFLAGS="-g -I ../utils -I ../syntax" \
        RESULT="$(LIB)/sepprover.cmxa" \
        TRASH=""
 BLIBRARY = SOURCES="$(LIBRARYSOURCE)" \
        OCAMLLDFLAGS="-g -a" \
-       OCAMLFLAGS="-g -I ../utils" \
+       OCAMLFLAGS="-g -I ../utils -I ../syntax" \
        RESULT="$(LIB)/sepprover.cma" \
        TRASH=""
 

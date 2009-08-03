@@ -8,6 +8,7 @@ open Debug
 open Vars
 open Pterm
 open Rterm
+open Global_types
 open Plogic
 
 type plain =
@@ -236,6 +237,7 @@ type sequent = spatial list * form * form
 
 type ts_sequent = term_structure * sequent
 
+(*
 type varterm = 
     Var of varset
   | EV of representative args
@@ -243,7 +245,7 @@ type varterm =
 type where = 
   | NotInContext of varterm
   | NotInTerm of varterm * representative args
-
+*)
 
 
 (*type varterm = 

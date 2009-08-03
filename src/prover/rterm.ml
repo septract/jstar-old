@@ -14,6 +14,7 @@
 open Debug
 open Pterm
 open Plogic
+open Global_types
 open Printf 
 exception Contradiction
 exception No_match
@@ -77,6 +78,7 @@ let map_sum f l
  ***************************************************)
 
 (* terms that only refer to representatives for subterms. *)
+(*
 type flattened_term = 
     FTConstr of string * representative list
   | FTFunct of string * representative list
@@ -101,7 +103,8 @@ and term_record =
     mutable rep : representative;
     nn : int;
    }
-    
+*)  
+  
 (*************
  *  Term constructor
  ************)

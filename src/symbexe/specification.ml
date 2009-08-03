@@ -14,23 +14,24 @@ open Vars
 open Rterm
 open Pterm
 open Plogic
+open Global_types
 open Jlogic
 open Jparsetree
 open Prover
 
 exception Class_defines_external_spec
 
-
+(*
 module ClassMap =   
   Map.Make(struct
     type t = class_name
     let compare = compare
   end)
-
+*)
 
 type java_exception = class_name
 
-type excep_post = representative Plogic.pform ClassMap.t 
+(*type excep_post = representative Plogic.pform ClassMap.t  *)
 
 type ts_excep_post = Rlogic.ts_form ClassMap.t 
 
@@ -61,10 +62,11 @@ let disjunction_excep excep_post1 excep_post2 =
       excep_post2
   in !newClassMap
 
-type spec = 
+(*type spec = 
     { pre : representative Plogic.pform;
       post : representative Plogic.pform;
       excep : excep_post }
+*)
 
 let spec_conjunction spec1 spec2 =
   let var = Arg_var(Vars.freshe()) in
@@ -79,7 +81,8 @@ let spec_conjunction spec1 spec2 =
        post= Plogic.mkOr ((Plogic.pconjunction post1 eq),(Plogic.pconjunction post2 neq));
        excep = disjunction_excep (conjunction_excep excep1 eq) (conjunction_excep excep2 neq)
      }
-      
+
+(*      
 type methodspec =
       Dynamic of method_signature_short * (spec list)
   |   Static of method_signature_short * (spec list)
@@ -87,13 +90,15 @@ type methodspec =
 type methodspecs =
     methodspec list
 
+
 type apf_define = (string * var * representative fldlist * representative Plogic.pform * bool)
 
 type apf_defines = apf_define list
 
 type class_spec = (class_name * apf_defines * methodspecs)
 
-type spec_file = class_spec list
+type spec_file = class_spec list 
+*)
 
 
 let apf name receiver params = [P_SPred(name,[Arg_var receiver; mkArgRecord params])]
@@ -206,7 +211,7 @@ let class_spec_to_ms cs (smmap,dmmap) =
 	      (a,b,c) -> 
 		(smmap,addMSpecs (cn,a,b,c) (spec_list_to_spec spec) dmmap)
 	    )
-	| Static (ms,spec) -> 
+	| Global_types.Static (ms,spec) -> 
 	    (match ms with 
 	      (a,b,c) -> 
 		(addMSpecs (cn,a,b,c) (spec_list_to_spec spec) smmap,dmmap)

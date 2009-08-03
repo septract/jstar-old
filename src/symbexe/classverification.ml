@@ -6,6 +6,7 @@
  All rights reserved. 
 *******************************************************************)
 
+open Global_types
 open Specification
 open Support_symex
 
@@ -56,7 +57,7 @@ let verify_class
 	with Not_found -> Printf.printf "\n\n Using static spec for %s" (Pprinter.name2str mname) ; my_sta_spec 
       in
       if refinement_this logic my_sta_spec my_dyn_spec (class_name) then 	
-	(good();if symb_debug() then Printf.printf "\n\nDynamic spec is consistent with static for %s!\n" (Pprinter.name2str mname); reset())
+	(good();if Config.symb_debug() then Printf.printf "\n\nDynamic spec is consistent with static for %s!\n" (Pprinter.name2str mname); reset())
       else 
 	(warning();Printf.printf "\n\nDynamic spec is not consistent with static for %s!\n" (Pprinter.name2str mname);reset()(*; 
          assert false*));
@@ -67,7 +68,7 @@ let verify_class
 	  (try 
 	    let par_dyn_spec = MethodMap.find (clpar,rtype,mname,params) dynamic_method_specs in	 
 	    if refinement logic my_dyn_spec par_dyn_spec  then 
-	      (good();if symb_debug() then Printf.printf "\n\nBehavioural subtyping succeeds for %s in %s!\n"
+	      (good();if Config.symb_debug() then Printf.printf "\n\nBehavioural subtyping succeeds for %s in %s!\n"
 		(Pprinter.name2str mname) 
 		(Pprinter.class_name2str class_name); reset())
 	    else 
@@ -82,7 +83,7 @@ let verify_class
 	    (try 
 	    let par_dyn_spec = MethodMap.find (interpar,rtype,mname,params) dynamic_method_specs in	 
 	    if refinement logic my_dyn_spec par_dyn_spec  then 
-	      (if symb_debug() then Printf.printf "\n\nBehavioural subtyping succeeds for %s in %s!\n" 
+	      (if Config.symb_debug() then Printf.printf "\n\nBehavioural subtyping succeeds for %s in %s!\n" 
 		(Pprinter.name2str mname) 
 		(Pprinter.class_name2str class_name))
 	    else 
