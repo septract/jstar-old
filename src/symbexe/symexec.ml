@@ -85,13 +85,148 @@ let make_field_signature  cname ty n =
   Field_signature(cname,ty,n) 
 
 
+(* ================  transition system ==================  *)
+
+type id = int
+
+
+
+let fresh_node = let node_counter = ref 0 in fun () ->  let x = !node_counter in node_counter := x+1; x
+
+let fresh_file = let file_id = ref 0 in fun () -> let x = !file_id in file_id := x+1;  Sys.getcwd() ^  "/proof_file_"^(string_of_int x)^".txt"
+
+type ntype = 
+    Plain | Good | Error | Abs | UnExplored
+
+type node = {mutable content : string; id : id; mutable ntype : ntype; mutable url : string}
+
+type edge = string * id * id * string option
+
+let graphe = ref []
+let graphn = ref []
+
+
+
+
+let escape_for_dot_label s =
+  Str.global_replace (Str.regexp "\\\\n") "\\l" (String.escaped s)
+
+let pp_dotty_transition_system () =
+  let foname="execution.dot" in
+  let foname="execution.dot~" in
+  let dotty_outf=open_out foname in
+  if Config.symb_debug() then Printf.printf "\n Writing transition system file execution.dot  \n";
+  Printf.fprintf dotty_outf "digraph main { \nnode [shape=box,  labeljust=l];\n";
+  List.iter (fun {content=label;id=id;ntype=ty;url=url} ->
+    let label=escape_for_dot_label label in
+    let url = if url = "" then "" else ", URL=\"file://" ^ url ^"\"" in
+    match ty with 
+      Plain ->  Printf.fprintf dotty_outf "\n state%i[label=\"%s\",labeljust=l%s]\n" id label url
+    | Good ->  Printf.fprintf dotty_outf "\n state%i[label=\"%s\",labeljust=l, color=green, style=filled%s]\n" id label url
+    | Error ->  Printf.fprintf dotty_outf "\n state%i[label=\"%s\",labeljust=l, color=red, style=filled%s]\n" id label url
+    | UnExplored ->  Printf.fprintf dotty_outf "\n state%i[label=\"%s\",labeljust=l, color=orange, style=filled%s]\n" id label url
+    | Abs ->  Printf.fprintf dotty_outf "\n state%i[label=\"%s\",labeljust=l, color=yellow, style=filled%s]\n" id label url)
+    !graphn;
+  List.iter (fun (l,s,d, o) ->
+    let l = escape_for_dot_label l in 
+    Printf.fprintf dotty_outf "\n state%i -> state%i [label=\"%s\"%s]" s d l
+	    (match o with 
+	      None -> ""
+	    | Some f -> Printf.sprintf ", URL=\"file://%s\", fontcolor=blue" f))
+    !graphe;
+  Printf.fprintf dotty_outf "\n\n\n}";
+  close_out dotty_outf;
+  Sys.rename foname "execution.dot"
+
+
+
+
+let add_node (label : string) (ty : ntype)  = 
+  let id = fresh_node () in 
+  let node = {content=label; id=id;ntype=ty;url=""} in 
+  graphn := node::!graphn; node 
+
+let add_error_node label = add_node label Error
+let add_abs_node label = add_node label Abs
+let add_good_node label = add_node label Good
+let add_node_unexplored label = add_node label UnExplored
+let add_node label = add_node label UnExplored
+
+
+let explore_node src = if src.ntype = UnExplored then src.ntype <- Plain
+
+let add_abs_heap_node (heap : Rlogic.ts_form) = 
+  (Format.fprintf (Format.str_formatter) "%a" (string_ts_form (Rterm.rao_create ())) heap);
+  add_abs_node (Format.flush_str_formatter ())
+
+let add_heap_node (heap : Rlogic.ts_form) = 
+  (Format.fprintf (Format.str_formatter) "%a" (string_ts_form (Rterm.rao_create ())) heap);
+  add_node (Format.flush_str_formatter ())
+
+let add_error_heap_node (heap : Rlogic.ts_form) = 
+  (Format.fprintf (Format.str_formatter) "%a" (string_ts_form (Rterm.rao_create ())) heap);
+  add_error_node (Format.flush_str_formatter ())
+
+
+let x = ref 0
+
+let add_edge src dest label = 
+  graphe := (label, src.id, dest.id, None)::!graphe;
+  explore_node src;
+  if !x = 5 then (x:=0; pp_dotty_transition_system ()) else x :=!x+1
+
+let add_edge_with_proof src dest label = 
+  let f = fresh_file() in
+  let out = open_out f in
+  Prover.pprint_proof out;
+  close_out out;
+  explore_node src;
+  graphe := (label, src.id, dest.id, Some f)::!graphe;
+  if !x = 5 then (x:=0; pp_dotty_transition_system ()) else x :=!x+1
+
+
+(*let add_edge_with_string_proof src dest label proof = 
+  let f = fresh_file() in
+  let out = open_out f in
+  output_string out proof;
+  close_out out;
+  graphe := (label, src, dest, Some f)::!graphe*)
+
+let add_url_to_node src proof = 
+  let f = fresh_file() in
+  let out = open_out f in
+  output_string out proof;
+  close_out out;
+  src.url <- f
+
+
+let add_id_form h =
+    let id=add_heap_node h in
+    (h,id)
+
+let add_id_formset sheaps =  List.map add_id_form sheaps
+
+
+let add_id_abs_form h =
+    let id=add_abs_heap_node h in
+    (h,id)
+
+let add_id_abs_formset sheaps =  List.map add_id_abs_form sheaps
+
+
+
+
+
+(* ================   ==================  *)
+
+
 (* ================  work list algorithm ==================  *)
 
 (* this type has support for  creating a transition system 
    (formula, id)
    id is a unique identifier of the formula
  *)
-type formset_entry = Rlogic.ts_form * int 
+type formset_entry = Rlogic.ts_form * node
 
 (* eventually this should be a more efficient data structure than list*)
 type formset = formset_entry list 
@@ -124,134 +259,6 @@ let remove_id_formset formset =
 
 	      
 
-(* ================  transition system ==================  *)
-
-type id = int
-
-
-
-let fresh_node = let node_counter = ref 0 in fun () ->  let x = !node_counter in node_counter := x+1; x
-
-let fresh_file = let file_id = ref 0 in fun () -> let x = !file_id in file_id := x+1;  Sys.getcwd() ^  "/proof_file_"^(string_of_int x)^".txt"
-
-type ntype = 
-    Plain | Good | Error | Abs
-
-type node = string * id * ntype
-
-type edge = string * id * id * string option
-
-let graphe = ref []
-let graphn = ref []
-
-let graphn_url = ref []
-
-
-
-let escape_for_dot_label s =
-  Str.global_replace (Str.regexp "\\\\n") "\\l" (String.escaped s)
-
-let pp_dotty_transition_system () =
-  let foname="execution.dot" in
-  let foname="execution.dot~" in
-  let dotty_outf=open_out foname in
-  if Config.symb_debug() then Printf.printf "\n Writing transition system file execution.dot  \n";
-  Printf.fprintf dotty_outf "digraph main { \nnode [shape=box,  labeljust=l];\n";
-  List.iter (fun (label,id,ty) ->
-    let label=escape_for_dot_label label in 
-    let url = try ", URL=\"file://" ^ (List.assoc id !graphn_url) ^"\"" with Not_found -> "" in
-    match ty with 
-      Plain ->  Printf.fprintf dotty_outf "\n state%i[label=\"%s\",labeljust=l%s]\n" id label url
-    | Good ->  Printf.fprintf dotty_outf "\n state%i[label=\"%s\",labeljust=l, color=green, style=filled%s]\n" id label url
-    | Error ->  Printf.fprintf dotty_outf "\n state%i[label=\"%s\",labeljust=l, color=red, style=filled%s]\n" id label url
-    | Abs ->  Printf.fprintf dotty_outf "\n state%i[label=\"%s\",labeljust=l, color=yellow, style=filled%s]\n" id label url)
-    !graphn;
-  List.iter (fun (l,s,d, o) ->
-    let l = escape_for_dot_label l in 
-    Printf.fprintf dotty_outf "\n state%i -> state%i [label=\"%s\"%s]" s d l
-	    (match o with 
-	      None -> ""
-	    | Some f -> Printf.sprintf ", URL=\"file://%s\", fontcolor=blue" f))
-    !graphe;
-  Printf.fprintf dotty_outf "\n\n\n}";
-  close_out dotty_outf;
-  Sys.rename foname "execution.dot"
-
-
-
-
-let add_node (label : string) (ty : ntype) : id = 
-  let id = fresh_node () in 
-  graphn := (label, id, ty)::!graphn; id 
-
-let add_error_node label = add_node label Error
-let add_abs_node label = add_node label Abs
-let add_good_node label = add_node label Good
-let add_node label = add_node label Plain
-
-let add_abs_heap_node (heap : Rlogic.ts_form) = 
-  (Format.fprintf (Format.str_formatter) "%a" (string_ts_form (Rterm.rao_create ())) heap);
-  add_abs_node (Format.flush_str_formatter ())
-
-let add_heap_node (heap : Rlogic.ts_form) = 
-  (Format.fprintf (Format.str_formatter) "%a" (string_ts_form (Rterm.rao_create ())) heap);
-  add_node (Format.flush_str_formatter ())
-
-let add_error_heap_node (heap : Rlogic.ts_form) = 
-  (Format.fprintf (Format.str_formatter) "%a" (string_ts_form (Rterm.rao_create ())) heap);
-  add_error_node (Format.flush_str_formatter ())
-
-
-let x = ref 0
-
-let add_edge src dest label = 
-  graphe := (label, src, dest, None)::!graphe;
-  if !x = 5 then (x:=0; pp_dotty_transition_system ()) else x :=!x+1
-
-let add_edge_with_proof src dest label = 
-  let f = fresh_file() in
-  let out = open_out f in
-  Prover.pprint_proof out;
-  close_out out;
-  graphe := (label, src, dest, Some f)::!graphe;
-  if !x = 5 then (x:=0; pp_dotty_transition_system ()) else x :=!x+1
-
-
-(*let add_edge_with_string_proof src dest label proof = 
-  let f = fresh_file() in
-  let out = open_out f in
-  output_string out proof;
-  close_out out;
-  graphe := (label, src, dest, Some f)::!graphe*)
-
-let add_url_to_node src proof = 
-  let f = fresh_file() in
-  let out = open_out f in
-  output_string out proof;
-  close_out out;
-  graphn_url := (src, f)::!graphn_url
-
-
-type transition = formset_entry * string * formset_entry
-
-let add_id_form h =
-    let id=add_heap_node h in
-    (h,id)
-
-let add_id_formset sheaps =  List.map add_id_form sheaps
-
-
-let add_id_abs_form h =
-    let id=add_abs_heap_node h in
-    (h,id)
-
-let add_id_abs_formset sheaps =  List.map add_id_abs_form sheaps
-
-
-
-
-
-(* ================   ==================  *)
 
 
 (* execute  v=e *)
@@ -707,9 +714,9 @@ let rec execute_stmt n (sheap : formset_entry) : unit =
 		  (Debug.list_format "@\n" (string_ts_form (Rterm.rao_create ()))) sheaps_abs;
                print_formset "in " (remove_id_formset formset)
 	     );
-
+	    explore_node (snd sheap);
 	    let sheaps_with_id = add_id_abs_formset sheaps_abs in
-	    List.iter (fun sheap2 -> add_edge_with_proof (snd sheap) (snd sheap2) ("Abstract@"^Pprinter.statement2str stm.skind)) sheaps_with_id;
+	    List.iter (fun sheap2 ->  add_edge_with_proof (snd sheap) (snd sheap2) ("Abstract@"^Pprinter.statement2str stm.skind)) sheaps_with_id;
 	    let sheaps_with_id = List.filter 
 		(fun (sheap2,id2) -> 
 		  (let s = ref "" in 
@@ -767,19 +774,19 @@ let rec execute_stmt n (sheap : formset_entry) : unit =
 		  let cc_h=(conj_convert (expression2pure e) (fst sheap)) in
 		  let cc_h_id = add_id_form cc_h in 
 		  add_edge (snd sheap) (snd cc_h_id) (Pprinter.expression2str e);
-		  exec s1 cc_h_id;
 		  let cc_h2=(conj_convert (expression2pure (negate e)) (fst sheap2)) in
 		  let cc_h2_id = add_id_form cc_h2 in 
 		  add_edge (snd sheap) (snd cc_h2_id) (Pprinter.expression2str (negate e));
+		  exec s1 cc_h_id;
 		  exec s2 (cc_h2_id)
 	      | _ -> 
 		  let cc_h=(conj_convert (expression2pure (negate e)) (fst sheap)) in
 		  let cc_h_id = add_id_form cc_h in 
 		  add_edge (snd sheap) (snd cc_h_id) (Pprinter.expression2str (negate e));
-		  exec s1 cc_h_id;
 		  let cc_h2=(conj_convert (expression2pure e) (fst sheap2)) in
 		  let cc_h2_id = add_id_form cc_h2 in 
 		  add_edge (snd sheap) (snd cc_h2_id) (Pprinter.expression2str e);
+		  exec s1 cc_h_id;
 		  exec s2 (cc_h2_id)
 	      )
 	  | _ -> assert false )
