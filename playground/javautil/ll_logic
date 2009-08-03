@@ -536,7 +536,7 @@ rewrite plus_0_second:
 rewrite plus_0_first:
   builtin_plus(numeric_const("0"), ?x) = ?x
 
-rewrite plus_assoc:
+rewrite plus_assoc * :
   builtin_plus(builtin_plus(?x,?y), ?z) = builtin_plus(?x, builtin_plus(?y,?z))
 without
   | (| (| (| (| (| (?y = numeric_const("0") |)
@@ -552,6 +552,7 @@ rule plus_nested_eq_right:
 if
   || |- builtin_plus(?a, ?b) = ?c |
 
+/*
 rewrite length_empty :
      length(?x) = numeric_const("0")
 if 
@@ -561,7 +562,7 @@ rewrite length_empty :
      length(?x) = numeric_const("0")
 if 
   builtin_plus(?y, length(?x)) = ?y
-
+*/
 
 /*rewrite plus_commutativity_existential:
   builtin_plus(_x, ?y) = builtin_plus(?y, _x)

@@ -182,7 +182,7 @@ class java.util.LinkedList {
 
   java.util.LinkedList$Entry entry(int):
     /*{LinkedList$(@this:, {handle=_h; head=_n; tail=_p; list=_l})
-      * LT(@parameter0:, numeric_const(0))}
+      * !LT(@parameter0:, numeric_const(0))}
     {LinkedList$(@this:, {handle=_h; head=_n; tail=_p; list=_l})
       * $ret_var = nil()}
   andalso
@@ -192,7 +192,7 @@ class java.util.LinkedList {
       * $ret_var = nil()}
   andalso*/
     {LinkedListInternal$(@this:, {handle=_h; head=_n; tail=_p; list=_l})
-      * LT((numeric_const(0) + numeric_const(0)), @parameter0:)
+      * !LT((numeric_const(0) + numeric_const(0)), @parameter0:)
       * _l = app(_l1, cons(_a, _l2))
       * length(_l1) = @parameter0:
       * dseg(_n, _h, _k, _j, _l1)
