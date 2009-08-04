@@ -181,33 +181,42 @@ without
 
 
 rewrite hack1 :
-  cons(_z,cons(_x,?y)) = app(elist(cons(_z,s(_x))), ?y)
+  cons(_z,cons(_x,?y)) = app(elist(s(_z),s(_x)), ?y)
 
 /* Try this later
 rewrite hack1 :
   cons(_x,?y) = app(elist(s(_x)), ?y)
 */
 
+/*
 rewrite hack2_e :
   app(elist(?z),cons(_x,?y)) = app(elist(app(?z,s(_x))), ?y)
+*/
 
+/*
 rewrite hack3_e :
   app(elist(?z),app(elist(?x),?y)) = app(elist(app(?z,?x)), ?y)
+*/
 
 rewrite hack2 :
-  app(_z,cons(_x,?y)) = app(elist(app(_z,s(_x))), ?y)
+  app(_z,cons(_x,?y)) = app(elist(_z,s(_x)), ?y)
 
+
+/*
 rewrite hack3 :
   app(_z,app(elist(?x),?y)) = app(elist(app(_z,?x)), ?y)
+*/
 
 rewrite hack4 :
-  cons(_z,app(elist(?x),?y)) = app(elist(s(_z),?x), ?y)
+  cons(_z,app(_x,?y)) = app(elist(s(_z),?x), ?y)
 
+/*
 rewrite hack4 :
   cons(_z,app(_x,?y)) = app(elist(s(_z),_x), ?y)
+*/
 
 rewrite app_ex_ex_list:
-  app(_x, app(_y, ?alpha)) = app(elist(app(_x, _y)), ?alpha)
+  app(_x, app(_y, ?alpha)) = app(elist(_x, _y), ?alpha)
 
 /*rewrite hack5 :
   elist(?x) = id(?w)
@@ -219,11 +228,35 @@ without
 where
   _x, _y notincontext*/
 
-rewrite elist_cons_ex_s:
-  elist(cons(_x, s(_y))) = id(?fresh)
+rewrite elist_ex_1:
+  elist(_x, _y) = id(?fresh)
+without
+  elist(_x, _y) = id(?fresh2)
 where
   _x, _y notincontext
 
+rewrite elist_ex_2:
+  elist(s(_x), _y) = id(?fresh)
+without
+  elist(s(_x), _y) = id(?fresh2)
+where
+  _x, _y notincontext
+
+rewrite elist_ex_3:
+  elist(s(_x), s(_y)) = id(?fresh)
+without
+  elist(_x, s(_y)) = id(?fresh2)
+where
+  _x, _y notincontext
+
+rewrite elist_ex_3:
+  elist(s(_x), s(_y)) = id(?fresh)
+without 
+  elist(s(_x), s(_y)) = id(?fresh2)
+where
+  _x, _y notincontext
+
+/*
 rewrite elist_app_ex_ex:
   elist(app(_x, _y)) = id(?fresh)
 where
@@ -243,6 +276,7 @@ rewrite elist_app_slist_slist:
   elist(app(s(_x), s(_y))) = id(?fresh)
 where
   _x, _y notincontext
+*/
 
 /*rewrite elist_app_ex_slist:
   elist(app(_x, s(_y))) = id(?fresh)

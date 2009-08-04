@@ -823,14 +823,18 @@ if
 /** Remove elist, s, num **/
 
 rewrite app_elist_cons_s:
-  app(elist(cons(?z,s(?x))), ?y) = cons(?z,cons(?x,?y))
+  elist(?z,?x) = app(?z,?x)
+
+/*
 
 rewrite app_elist_s:
-  app(elist(s(?z),?x), ?y) = cons(?z, app(elist(?x), ?y))
+  elist(s(?z),?x) = cons(?z, ?x)
 
 rewrite app_elist_app_s:
-  app(elist(app(?z, s(?x))), ?y) = app(elist(?z),cons(?x,?y))
+ elist(app(?z, s(?x))) = app(?z,cons(?x,empty()))
+*/
 
+/*
 rewrite app_elist_app:
   app(elist(app(?z, ?x)), ?y) = app(elist(?z),app(elist(?x),?y))
 without
@@ -838,15 +842,69 @@ without
 
 rewrite elist:
   elist(?l) = ?l
+*/
 
-/*rewrite s:
-  s(?n) = cons(?n, empty())*/
+rewrite s:
+  s(?n) = cons(?n, empty())
 
-rewrite app_s:
-  app(s(?x), ?y) = cons(?x, ?y)
+/*rewrite app_s:
+  app(s(?x), ?y) = cons(?x, ?y)*/
 
+/*
 rewrite cons_s:
   cons(?x, s(?y)) = cons(?x, cons(?y, empty()))
+*/
+
+rule length_guess :
+ | | |- length(?x) = length(_y) |
+where 
+  _y notincontext
+if
+ | | |- ?x = _y |
+
+
+
+rule app_guess :
+ | | |- app(?x,?z) = app(_y,?w) |
+where 
+  _y notincontext;
+  _y notin ?z;
+  _y notin ?w;
+  _y notin ?x
+if
+ | | |- ?x = _y * ?z = ?w|
+
+rule app_guess :
+ | | |- app(?x,?z) = app(?w,_y) |
+where 
+  _y notincontext;
+  _y notin ?z;
+  _y notin ?w;
+  _y notin ?x
+if
+ | | |- ?z = _y * ?x = ?w |
+
+rule cons_guess :
+ | | |- cons(?x,?z) = cons(_y,?w) |
+where 
+  _y notincontext;
+  _y notin ?z;
+  _y notin ?w;
+  _y notin ?x
+if
+ | | |- ?x = _y * ?z = ?w|
+
+rule cons_guess :
+ | | |- cons(?x,?z) = cons(?w,_y) |
+where 
+  _y notincontext;
+  _y notin ?z;
+  _y notin ?w;
+  _y notin ?x
+if
+ | | |- ?z = _y * ?x = ?w |
+
+
 
 rewrite num:
   num(?x) = ?x
