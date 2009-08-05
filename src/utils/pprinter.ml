@@ -125,6 +125,12 @@ let rec list2str f l sep=
   | [s] -> f s
   | s::tail -> (f s) ^sep^ (list2str f tail sep )
 
+let list_option2list lso =
+  match lso with
+  | None    -> []
+  | Some ls -> ls
+  
+
 let nonvoid_type2str =function
   | Base (b,al) ->  j_base_type2str b ^ (list2str array_brackets2str al "")  
   | Quoted (qn,al) ->  quoted_name2str qn ^ (list2str array_brackets2str al "")  
@@ -160,6 +166,9 @@ let signature2str = function
       ^"("^  (list2str parameter2str pl ", " )^")>"
   | Method_signature (c,t,n,None) -> "<"^class_name2str c ^": "^ j_type2str t ^" "^ name2str n^"()>" 
   | Field_signature (c,t,n) ->  mkStrOfFieldSignature c t n
+
+let methdec2signature_str dec =
+  class_name2str dec.class_name ^ "(" ^ (list2str parameter2str (list_option2list dec.params) ", ") ^ ")"
 
 let reference2str = function
   |Array_ref (id,im) ->  identifier2str id ^ fixed_array_descriptor2str im
