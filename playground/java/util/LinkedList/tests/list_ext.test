@@ -1,0 +1,33 @@
+/*******************************
+ * Tests for "list_logic_ext". *
+ *******************************/
+
+/* app_cons */
+
+Implication:
+  app(cons(a, alpha), beta) = ?i | |- app(cons(a, app(alpha, beta))) = ?i |
+? True
+
+Implication:
+  app(cons(a, alpha), beta) = app(alpha, beta) | |- |
+? False
+
+Implication:
+  app(cons(a, alpha), beta) = alpha | |- |
+? False
+
+Implication:
+  app(cons(a, alpha), beta) = beta | |- |
+? False
+
+Implication:
+  app(alpha, cons(b, beta)) = app(alpha, beta) | |- |
+? False
+
+Implication:
+  app(alpha, cons(b, beta)) = alpha | |- |
+? False
+
+Implication:
+  app(alpha, cons(b, beta)) = beta | |- |
+? False

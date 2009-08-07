@@ -1,0 +1,103 @@
+/**
+ * Extends list logic.
+ **/
+
+/*
+  Identity: (a::alpha) @ beta = a::(alpha @ beta).
+  The rewrite rule pushes applications to deeper nesting levels.
+*/
+rewrite app_cons:
+  app(cons(?a, ?alpha), ?beta) = cons(?a, app(?alpha, ?beta))
+
+/*
+  If we have alpha @ (b::beta) = alpha, the we have a contradiction (since
+  b::beta is non-empty)and we are done.
+*/
+rule app_cons_contradiction_left1:
+  | app(?alpha, cons(?b, ?beta)) = ?alpha | |- |
+if
+
+/*
+  If we have alpha @ (b::beta) = beta, the we have a contradiction (since
+  alpha @ (b::[]) is non-empty)and we are done.
+*/
+rule app_cons_contradiction_left2:
+  | app(?alpha, cons(?b, ?beta)) = ?beta | |- |
+if
+
+/*
+  If we have to prove that alpha @ (b::beta) = alpha, then the conclusion is
+  false and we therefore have to search for a contradication.
+*/
+rule app_cons_contradiction_right1:
+  || |- app(?alpha, cons(?b, ?beta)) = ?beta |
+if
+  || |- | False
+
+/*
+  If we have to show that alpha @ beta = gamma @ beta, then it is sufficient to
+  prove that alpha = beta.
+*/
+rule app_eq_second_right:
+  || |- app(?alpha, ?beta) = app(?gamma, ?beta) |
+if
+  || |- ?alpha = ?gamma |
+
+/*
+  Iff we know that alpha @ beta = gamma @ beta, then alpha = gamma.
+*/
+rule app_eq_second_left:
+  | app(?alpha, ?beta) = app(?gamma, ?beta) | |- |
+without
+  ?alpha = ?gamma
+if
+  | ?alpha = ?gamma | |- |
+
+/*
+  Identity: (alpha @ beta) @ gamma = alpha @ (beta @ gamma).
+  Move applications to the right. Side conditions prevent the application of then
+  rule in the trivial when one one the sub lists is empty. In the trivial case,
+  the terms should be simplified by the rules app_nil_1 and app_nil_2.
+*/
+rewrite app_assoc:
+  app(app(?alpha, ?beta), ?gamma) = app(?alpha, app(?beta, ?gamma))
+without
+  |( |( |( | (| (?alpha = empty() |)
+             || (?beta  = empty() |))
+             || (?gamma = empty() |))
+             || (app(app(?alpha, ?beta), ?gamma) = app(?alpha, ?beta)  |))
+             || (app(app(?alpha, ?beta), ?gamma) = app(?alpha, ?gamma) |))
+             || (app(app(?alpha, ?beta), ?gamma) = app(?beta,  ?gamma) |)
+
+/*
+  If a::[] = beta @ (b::[]), then both LHS and RHS of the equation must be
+  singleton lists. Thus, the equality holds iff a = b and b = [].
+*/
+rule cons_eq_app_cons_left:
+  | cons(?a, empty()) = app(?beta, cons(?b, empty())) | |- |
+if
+  | ?a = ?b * ?beta = empty() | |- |
+
+/*
+  Iff alpha @ (a::[]) = beta @ (b::[]), then the last elements of the two lists
+  must coincide (i.e. a = b) and similarly alpha = beta. Side condition makes
+  sure that this rule is not applied more than once to the same term.
+*/
+rule app_cons_eq_app_cons_left:
+  | app(?alpha, cons(?a, empty())) = app(?beta, cons(?b, empty())) | |- |
+without
+  ?a = ?b
+if
+  | ?alpha = ?beta * ?a = ?b | |- |
+
+/*
+  Same as above but different side condition.
+*/
+rule app_cons_eq_app_cons_left:
+  | app(?alpha, cons(?a, empty())) = app(?beta, cons(?b, empty())) | |- |
+without
+  ?alpha = ?beta
+if
+  | ?alpha = ?beta * ?a = ?b | |- |
+
+
