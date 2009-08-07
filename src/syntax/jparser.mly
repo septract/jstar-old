@@ -41,12 +41,13 @@ let field_signature2str fs =
   | _ -> assert false
 
 
-
 %} /* declarations */
 
 /* ============================================================= */
 /* tokens */
 
+%token ABSRULE
+%token LEADSTO
 %token ABSTRACT
 %token FINAL 
 %token NATIVE 
@@ -194,8 +195,8 @@ let field_signature2str fs =
 %left QUOTED_NAME
 %left FULL_IDENTIFIER
 
-%left OROR
 %left OR
+%left OROR
 %left MULT
 %left AND
 %left XOR 
@@ -230,12 +231,12 @@ let field_signature2str fs =
 %start spec_file
 %type <Global_types.spec_file> spec_file
 
+%start rule_file
+%type <Global_types.rules list> rule_file
+
 /*
 %start file
 %type <Prover.question list> question_file
-
-%start rule_file
-%type <Prover.rules list> rule_file
 
 %start test_file
 %type <Prover.test list> test_file
@@ -384,19 +385,20 @@ identifier:
    | ANDALSO    { "andalso" }*/
   | FALSE   { "False" }
   | TRUE   { "True" }
+  | GARBAGE   { "Garbage" }
   | IMPLICATION   { "Implication" }
   | FRAME   { "Frame" }
-  | GARBAGE   { "Garbage" }
   | INCONSISTENCY   { "Inconsistency" }
-  | RULE   { "rule" }
+/*  | RULE   { "rule" }
   | EMPRULE   { "emprule" }
   | PURERULE   { "purerule" }
   | WITHOUT   { "without" }  
   | NOTIN   { "notin" }  
   | NOTINCONTEXT   { "notincontext" }  
   | EV   { "EV" }  
-  | WHERE   { "where" }
-  | ORTEXT   { "or" }
+  | WHERE   { "where" }*/
+/*  | ORTEXT   { "or" }*/
+/*  | ABSRULE   { "abstraction" }*/
 ;
 at_identifier:
    | AT_IDENTIFIER { $1 }
@@ -660,6 +662,16 @@ lvariable:
    | identifier { newVar($1) }
    | QUESTIONMARK identifier { newAnyVar($2) }
 ;
+
+lvariable_list_ne:
+   |  lvariable    { [$1] }
+   |  lvariable COMMA lvariable_list_ne  { $1 :: $3 }
+
+lvariable_list:
+   |  {[]}
+   | lvariable_list_ne { $1 }
+;
+
 fldlist: 
    | identifier EQUALS jargument { [($1,$3)] }
    | /*empty*/ { [] }
@@ -712,13 +724,15 @@ jargument_list:
   
 formula: 
    |  { [] }
+   | FALSE { mkFalse}
+   | GARBAGE { mkGarbage}
    | jargument DOT field_signature MAPSTO  jargument { [P_SPred("field", [$1; Arg_string(field_signature2str $3); $5] )] }
    | BANG identifier L_PAREN jargument_list R_PAREN { [P_PPred($2, $4)] } 
    | identifier L_PAREN jargument_list R_PAREN 
        {if List.length $3 =1 then [P_SPred($1,$3 @ [mkArgRecord []])] else [P_SPred($1,$3)] }
    | full_identifier L_PAREN jargument_list R_PAREN {if List.length $3 =1 then [P_SPred($1,$3 @ [mkArgRecord []])] else [P_SPred($1,$3)] }
    | formula MULT formula { pconjunction $1 $3 }
-   | formula OR formula { if Config.symb_debug() || true then parse_warning "deprecated use of |"  ; pconjunction $1 $3 }
+   | formula OR formula { if Config.symb_debug() then parse_warning "deprecated use of |"  ; pconjunction (purify $1) $3 }
    | formula OROR formula { mkOr ($1,$3) }
    | jargument COLON identifier { [P_PPred("type", [$1;Arg_string($3)])] }
    | jargument binop_cmp jargument { Support_syntax.bop_to_prover_pred $2 $1 $3 }
@@ -740,16 +754,83 @@ formula_nb:
    | L_PAREN formula R_PAREN { $2 }
 */
 
+spatial_at: 
+   | jargument DOT field_signature MAPSTO  jargument { P_SPred("field", [$1; Arg_string(field_signature2str $3); $5] ) }
+   | identifier L_PAREN jargument_list R_PAREN 
+       {if List.length $3 =1 then P_SPred($1,$3 @ [mkArgRecord []]) else P_SPred($1,$3) }
+   | full_identifier L_PAREN jargument_list R_PAREN {if List.length $3 =1 then P_SPred($1,$3 @ [mkArgRecord []]) else P_SPred($1,$3) }
 
-/*
+spatial_list_ne: 
+   | spatial_at MULT spatial_list_ne  { $1 :: $3 }
+   | spatial_at    { [ $1 ] }
+
+spatial_list: 
+   | spatial_list_ne { $1 }
+   |    { [] }
+
+sequent:
+   | spatial_list OR formula VDASH formula { ($1,$3,$5) }
+/* used as the collapse form is || is a reserved token */
+   | spatial_list OROR formula VDASH formula {  if Config.symb_debug() then parse_warning "deprecated use of |" ; ($1,$3,$5) }
+
+sequent_list:
+   |  /* empty */ { [] }
+   | TRUE { [] }
+   | sequent {[$1]}
+   | sequent SEMICOLON sequent_list { $1::$3 }
+
+sequent_list_or_list:
+   |  sequent_list {[$1]}
+   |  sequent_list ORTEXT sequent_list_or_list { $1::$3 }
+
+identifier_op:
+   | /* empty */ {""}
+   | identifier  {$1}
+
+without:
+/*   | WITHOUT plain_list { $2 }*/
+   | WITHOUT formula { $2 }
+   | /* empty */ { [] }
+
+varterm:
+   | lvariable_list { Var(vs_from_list $1) }
+   | EV jargument { EV($2) }
+
+clause: 
+   | varterm NOTINCONTEXT { NotInContext($1) }
+   | varterm NOTIN jargument { NotInTerm($1,$3) }
+
+clause_list:
+   | clause  { [$1] }
+   | clause SEMICOLON clause_list {$1 :: $3}
+
+where:
+   | WHERE clause_list { $2 }
+   | /* empty */ { [] }
+
+ifclause:
+/*   | IF plain_list { $2 }*/
+   | /* empty plain term */ { [] } 
+   | IF formula {$2}
+
+
 rule:
    | IMPORT STRING_CONSTANT SEMICOLON { Import($2) }
    |  RULE identifier_op COLON sequent without where IF sequent_list_or_list { SeqRule($4,$8,$2,$5,$6) }
-   |  REWRITERULE identifier_op COLON identifier LEFTPAREN argument_list RIGHTPAREN EQUAL argument ifclause without where { RewriteRule($4,$6,$9,$11,$12,$10,$2) }
+   |  REWRITERULE identifier_op COLON identifier L_PAREN jargument_list R_PAREN EQUALS jargument ifclause without where { RewriteRule($4,$6,$9,$11,$12,$10,$2,false) }
+   |  REWRITERULE identifier_op MULT COLON identifier L_PAREN jargument_list R_PAREN EQUALS jargument ifclause without where { RewriteRule($5,$7,$10,$12,$13,$11,$2,true) }
+   |  ABSRULE identifier_op COLON formula LEADSTO formula where  { let seq=([],$4,[]) in
+							       let wo=[] in 
+							       let seq2=([],$6,[]) in
+							       let seq_list=[[seq2]] in
+							       SeqRule(seq,seq_list,$2,wo,$7) }
+
 
 rule_file:
    | EOF  { [] }
-   | rule rule_file  {$1 :: $2}sy
+   | rule rule_file  {$1 :: $2}
+
+/*
 question_file: 
    | EOF  { [] }
    | question file  {$1 :: $2}

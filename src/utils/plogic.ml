@@ -182,3 +182,14 @@ let fv_psequent (pff,pfl,pfr) =
 
 let subst_psequent subst (pff,pfl,pfr) = 
   (subst_pform subst pff, subst_pform subst pfl, subst_pform subst pfr)
+
+
+
+let purify pal = 
+  List.map (
+    fun x -> 
+      match x with 
+	P_EQ(_,_) | P_NEQ(_,_) -> x 
+      |	P_SPred(n,al) -> P_PPred(n,al)
+      |	_ -> unsupported ()
+	    ) pal

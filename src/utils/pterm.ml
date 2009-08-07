@@ -52,7 +52,7 @@ let vs_fold = VarSet.fold
 let vs_iter = VarSet.iter
 let vs_diff = VarSet.diff
 let vs_exists = VarSet.exists
-
+let vs_from_list vl = List.fold_right (fun vs v -> vs_add vs v) vl vs_empty
 
 
 (*IF-OCAML*)

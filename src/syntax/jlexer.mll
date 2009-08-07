@@ -105,6 +105,7 @@ let keyword_al = [
    ( "andalso" , ANDALSO );
    ( "export" , EXPORT );
    ( "define" , DEFINE );
+  ("import",IMPORT);
   ("False",FALSE);
   ("True",TRUE);
   ("Implication",IMPLICATION);
@@ -112,6 +113,7 @@ let keyword_al = [
   ("Garbage",GARBAGE);
   ("Inconsistency",INCONSISTENCY);
   ("rule",RULE);
+  ("rewrite",REWRITERULE);
   ("emprule",EMPRULE);
   ("purerule",PURERULE);
   ("if",IF);
@@ -121,6 +123,7 @@ let keyword_al = [
   ("EV",EV);  
   ("where",WHERE);
   ("or",ORTEXT);
+  ("abstraction",ABSRULE);
 ]
 
 
@@ -245,6 +248,7 @@ rule token = parse
    | "?" { QUESTIONMARK }
    | "!" { BANG }
    | "|-" { VDASH }
+   | "~~>" {LEADSTO}
    | eof { EOF }
 
    | at_identifier  { let s = Lexing.lexeme lexbuf in

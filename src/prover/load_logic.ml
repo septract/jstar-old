@@ -12,7 +12,9 @@ let load_logic dirs filename =
 	[] -> sl,rm
       | r :: rl -> let (sl,rm) = rule_list_to_logic_inner rl (sl,rm) in 
 	match r with
-	| Import(file) -> load_logic_inner (rel_dir::dirs) file (sl,rm)
+	| Import(file) -> 
+	    if !(Debug.debug_ref) then Printf.printf "Importing : %s\n" file;
+	    load_logic_inner (rel_dir::dirs) file (sl,rm)
 	| SeqRule(r) -> (r::sl,rm)
 	| RewriteRule(r) -> 
 	    (match r with 
@@ -29,7 +31,7 @@ let load_logic dirs filename =
     in   
     let l = string_of_file filename in 
     if !(Debug.debug_ref) then Printf.printf "Start parsing logic in %s...\n" filename;
-    let rule_list  = Logic_parser.rule_file Logic_lexer.token (Lexing.from_string l) in 
+    let rule_list  = Jparser.rule_file Jlexer.token (Lexing.from_string l) in 
     let logic = rule_list_to_logic filename rule_list (sl,rm) in 
     if !(Debug.debug_ref) then Printf.printf "Parsed %s!\n" filename;
     logic in 

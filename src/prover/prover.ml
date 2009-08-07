@@ -799,13 +799,13 @@ let rec sequents_backtrack  f (seqss : ts_sequent list list) xs
 *)
 
 let eqs_elim (ts_seq : ts_sequent) : ts_sequent =
-  let (ts,(f,(pl,sl,cl),f2)) = ts_seq in 
+  let (ts,(f,(pl,sl,cl),(pl2,sl2,cl2))) = ts_seq in 
   let eqs,pl = List.partition (fun p -> match p with EQ(_,_) -> true | _ -> false) pl in 
   if !debug_ref && eqs != [] then Format.fprintf !dump "Elim eqs : %a@\n" (string_plain_list (rao_create ())) eqs;
   let eqs = List.map (fun p -> match p with EQ(x,y) -> (x,y) | _ -> unsupported ()) eqs in
   try 
     let subst = make_equal ts eqs (empty_subst ()) in 
-    (ts, subst_sequent subst (f,(pl,sl,cl),f2))
+    (ts, subst_sequent subst (f,(pl,sl,cl),(List.filter (function EQ(x,y) -> not (rep_eq x y) | _ -> true) pl2,sl2,cl2)))
   with Contradiction -> raise Success 
 
 let exists_elim_simple (ts_seq : ts_sequent) : ts_sequent =
