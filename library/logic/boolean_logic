@@ -14,26 +14,26 @@ rewrite true : true() = numeric_const("1")
  *  Injectivity of numeric_const
  **********/
 rule numeric_eq_left :
-     | numeric_const(?x) = numeric_const(?y) | |- | 
+     | numeric_const(?x) = numeric_const(?y) |- 
 without
   ?x=?y
 if
-| ?x =?y | |- |
+| ?x =?y |- 
 
 rule numeric_eq_right :
-     | | |- numeric_const(?x) = numeric_const(?y) |
+     | |- numeric_const(?x) = numeric_const(?y) 
 if
-     | | |- ?x=?y|
+     | |- ?x=?y
 
 rule numeric_neq_left :
-     | numeric_const(?x) != numeric_const(?y) | |- | 
+     | numeric_const(?x) != numeric_const(?y) |- 
 if
-| ?x !=?y | |- |
+| ?x !=?y |- 
 
 rule numeric_neq_right :
-     | | |- numeric_const(?x) != numeric_const(?y) |
+     | |- numeric_const(?x) != numeric_const(?y)
 if
-     | | |- ?x!=?y|
+     | |- ?x!=?y
 
 
 
@@ -42,23 +42,23 @@ if
  **********************/
 
 rule string_eq_1_0 :
-     | "1" = "0" | |- |
+     | "1" = "0" |-
 if
 
 rule string_eq_1_0 :
-     | | |- "1" = "0" | 
+     | |- "1" = "0"  
 if
-    | | |- | False
+    | |- False
 
 
 rule string_neq_1_0 :
-     | "1" != "0" | |- |
+     | "1" != "0" |-
 if
-     | | |- |
+     | |-
 
 rule string_neq_1_0 :
-     | | |- "1" != "0" | 
+     | |- "1" != "0" 
 if
-    | | |-  |
+    | |- 
 
 

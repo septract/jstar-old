@@ -1,9 +1,9 @@
 rule test :
-| LT(?t,?w) | |- | ls(Pred(?t),?x,?y,?z)
+| !LT(?t,?w) |- ls(Pred(?t),?x,?y,?z)
 without 
-LT(Pred(?t),?w)
+ !LT(Pred(?t),?w)
 if
-| LT(?t,?w) * LT(Pred(?t),?w) | |- | ls(Pred(?t),?x,?y,?z)
+| !LT(?t,?w) * !LT(Pred(?t),?w) |- ls(Pred(?t),?x,?y,?z)
 
 /*****************************
  *  Rule for length
@@ -16,15 +16,15 @@ if
 */
 
 rule ls_len2 :
-| LT(?i,?n) | ls(?n,?x,?y,?v) |- | 
+| LT(?i,?n) | ls(?n,?x,?y,?v) |- 
 if
-| LT(?i,?n) * _k= MINUS(?n,?i) *  ?v=app(app(v1,v),v2)| ls(Pred(?i),?x,x2,v1) * NodeLL(x2,y2,v) * ls(_k,y2,?y,v2) |- | 
+| LT(?i,?n) * _k= MINUS(?n,?i) *  ?v=app(app(v1,v),v2)| ls(Pred(?i),?x,x2,v1) * NodeLL(x2,y2,v) * ls(_k,y2,?y,v2) |- 
 
 
 rule ls_pe : 
-| | |- | lspe(nil(),nil())
+| |- lspe(nil(),nil())
 if
-| | |- | 
+| |- 
 
 
 /*************************************
@@ -33,20 +33,20 @@ if
 
 
 rule ls_val_exists :
-| | ls(?x,?y,?v) |- | ls(?x,?y,?v2)
+| ls(?x,?y,?v) |- ls(?x,?y,?v2)
 if
-ls(?x,?y,?v) | | |- ?v2=?v| 
+ls(?x,?y,?v) | |- ?v2=?v
 
 
 rule ls_ls_ls :
-ls(?z,?w,?b) | | ls(?x,?y,?v) |- | ls(?x,?z,?v1)
+ls(?z,?w,?b) | ls(?x,?y,?v) |- ls(?x,?z,?v1)
 if
-| ?v1=app(?v,_v2) | ls(?x,?y,?v) |- | ls(?x,?y,?v) * ls(?y,?z,_v2);
+| ?v1=app(?v,_v2) * ls(?x,?y,?v) |- ls(?x,?y,?v) * ls(?y,?z,_v2);
 
 rule ls_ls_nil :
-| | ls(?x,?y,?v) |- | ls(?x,nil(),?v1)
+| ls(?x,?y,?v) |- ls(?x,nil(),?v1)
 if
-| ?v1=app(?v,_v2) | ls(?x,?y,?v) |- | ls(?x,?y,?v) * ls(?y,nil(),_v2);
+| ?v1=app(?v,_v2) * ls(?x,?y,?v) |- ls(?x,?y,?v) * ls(?y,nil(),_v2);
 
 
 
@@ -54,9 +54,9 @@ if
  * Rules for Node exists params 
  *******/
 rule node_val_exists :
-| | NodeLL(?x,?y,?v) |- | NodeLL(?x,?y2,?v2)
+| NodeLL(?x,?y,?v) |- NodeLL(?x,?y2,?v2)
 if
-NodeLL(?x,?y,?v) | | |- ?v2=?v * ?y2=?y | 
+NodeLL(?x,?y,?v) | |- ?v2=?v * ?y2=?y 
 
 
 
@@ -66,24 +66,24 @@ NodeLL(?x,?y,?v) | | |- ?v2=?v * ?y2=?y |
  *************************************/
 
 rule field_remove1a:
-| |  NodeLL(?x,?e1,?v) |- | field(?x,"<NodeLL: NodeLL next>",?e2) 
+|  NodeLL(?x,?e1,?v) |- field(?x,"<NodeLL: NodeLL next>",?e2) 
 if
- field(?x,"<NodeLL: NodeLL next>",?e1) | | field(?x,"<NodeLL: java.lang.String content>",?v) 
-     |-  ?e1=?e2 | 
+ field(?x,"<NodeLL: NodeLL next>",?e1) | field(?x,"<NodeLL: java.lang.String content>",?v) 
+     |-  ?e1=?e2 
 
 
 rule field_remove1b:
-| |  NodeLL(?x,?e1,?w) |- | field(?x,"<NodeLL: java.lang.String content>",?e2) 
+| NodeLL(?x,?e1,?w) |- field(?x,"<NodeLL: java.lang.String content>",?e2) 
 if
- field(?x,"<NodeLL: java.lang.String content>",?w) | |  field(?x,"<NodeLL: NodeLL next>",?e1)
-     |-  ?w=?e2 |
+ field(?x,"<NodeLL: java.lang.String content>",?w) | field(?x,"<NodeLL: NodeLL next>",?e1)
+     |-  ?w=?e2 
 
 
 
 rule field_remove2:
-| | field(?x,"<NodeLL: NodeLL next>",?e1) * field(?x,"<NodeLL: java.lang.String content>",?y) |- | 
+| field(?x,"<NodeLL: NodeLL next>",?e1) * field(?x,"<NodeLL: java.lang.String content>",?y) |- 
 if
-| | NodeLL(?x,?e1,?y) |- |  
+| NodeLL(?x,?e1,?y) |- 
 
 
 /*************************************
@@ -92,40 +92,40 @@ if
 
 
 rule field_remove1:
-| | field(?x,?f,?y) |- | field(?x,?f,?t) 
+| field(?x,?f,?y) |- field(?x,?f,?t) 
 if
-field(?x,?f,?y) | ?y=?t| |- |  
+field(?x,?f,?y) | ?y=?t |- 
 
 
 /*************************************
  * rules for contradictions 
  *************************************/
 rule field_field_contradiction1 :
-field(?x,?f,?y) * field(?x,?f,?z) | | |- | 
+field(?x,?f,?y) * field(?x,?f,?z) | |- 
 if
 
 rule ls_field_contradiction1 :
-ls(?n,?x,?t,?v) * field(?x,"<NodeLL: NodeLL next>",?z) | | |- | 
+ls(?n,?x,?t,?v) * field(?x,"<NodeLL: NodeLL next>",?z) | |- 
 if
 
 rule ls_field_contradiction2 :
-ls(?n,?x,?t,?v) * field(?x,"<NodeLL: java.lang.String content>",?z) | | |- | 
+ls(?n,?x,?t,?v) * field(?x,"<NodeLL: java.lang.String content>",?z) | |- 
 if
 
 rule ls_node_contradiction :
-ls(?n,?x,?t,?v) * NodeLL(?x,?z,?v1) | | |- | 
+ls(?n,?x,?t,?v) * NodeLL(?x,?z,?v1) | |- 
 if
 
 
 
 rule ls_contradiction3 :
-ls(nil(),?x,?z) | | |- |
+ls(nil(),?x,?z) | |-
 if
 
 rule ls_contradiction4 :
-| | |- | ls(nil(),?x,?z) 
+| |- ls(nil(),?x,?z) 
 if
-| | |- x!=x |
+| |- x!=x 
 
 
 
@@ -289,9 +289,9 @@ without
 rewrite app_app_assoc :
   app(app(?x,?y),?z) = app(?x,app(?y,?z))
 without
-  | (| (?y=empty()|)
-    || (?z=empty()|))
-    || (?x=empty()|)
+    ?y=empty()
+    || ?z=empty()
+    || ?x=empty()
 
 rule cons_eq_empty_contrad :
   | cons(?x,?y) = empty() | |- |
