@@ -10,6 +10,7 @@ Error messages:
 Grammar:
 
 - Jimple parser cannot deal with nested comments.
+- The parser rule "jargument" should also accept pure predicates (starting with "!").
 
 Syntax:
 
