@@ -10,7 +10,6 @@ Error messages:
 Grammar:
 
 - Jimple parser cannot deal with nested comments.
-- The parser rule "jargument" should also accept pure predicates (starting with "!").
 
 Syntax:
 
@@ -25,6 +24,7 @@ Syntax:
 - Java's boolean values true and false are represented as 1 and 0, respectively, in jimple. Thus, in specification true and false are numeric_const(1) and numeric_const(0). Readability could be increased by allowing "true" and "false" instead.
 - Allow negative integer constants (eg. "numeric_const(-1)") in specs.
 - Support infix notation in rewrite rules.
+- Currently the signature of field in "?e.?t |-> ?v" is not allowed to be a variable.
 
 Functionality
 
@@ -35,6 +35,7 @@ Functionality
 - When compiling classes that contain inner classes the javac compiler separates outer class and inner classes into individual classes and inserts helper methods into the outer class that give the inner classes access to fields and methods of the outer class. To verify inner classes it is therefore necessary to write specifications for these helper methods. However, since these methods are in essence just thin wrappers, the additional specifications just duplicate already existing ones.
 - Add command line option to the jstar program that takes a list of names of the methods that the user wants to verify (or wants to see traces of).
 - jStar does not fully support inheritance of fields. Example: AbstractList has a (protected) field modCount. Since LinkedList is a sub class of AbstractList, within the LinkedList class field(?i, <LinkedList: int modCount>, ?e1) and field(?i, <AbstractList: int modCount>, ?e2) denote the same field.
+- Make a clear distinction between positive and negative numbers to simplify writing rules that rely on the sign of a number.
 
 Output
 
