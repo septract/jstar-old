@@ -230,6 +230,9 @@ rule token = parse
    | "|->" { MAPSTO }
    | "^" { XOR }
    | "%" { MOD }
+   | "cmp" { CMP }
+   | "cmpl" { CMPL }
+   | "cmpg" { CMPG }
    | "==" { CMPEQ }
    | "!=" { CMPNE }
    | ">" { CMPGT }
