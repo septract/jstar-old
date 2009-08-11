@@ -60,7 +60,12 @@ In this way we abstract from the differen numerical values as well as different 
 let constant2args c =
   match c with 
   | Null_const -> Arg_op("nil",[]) 
-  | Int_const (s,n) -> Arg_op("numeric_const",[Arg_string(Printf.sprintf "%d" n)]) 
+  | Int_const (s,n) -> 
+      (
+      match s with 
+      |	Positive -> Arg_op("numeric_const",[Arg_string(Printf.sprintf "%d" n)])
+      |	Negative -> Arg_op("negative",[Arg_op("numeric_const",[Arg_string(Printf.sprintf "%d" n)])]) 
+	    )
   | Int_const_long _ -> Arg_op("numeric_const",[]) 
   | Float_const _ -> Arg_op("numeric_const",[]) 
   | String_const _ -> Arg_op("string_const",[]) 
