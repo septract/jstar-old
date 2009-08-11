@@ -177,9 +177,10 @@ let rec unify_form_at ts (pa : representative pform_at) (f : form) (use_ep) (int
 	  with No_match ->  (* Try to prove guard equality with external prover *) 
 	    (match use_ep with 
 	      Some ep -> 
-		if not (Rlogic.closes interp [pa]) then raise No_match;
+(*		Printf.printf "Trying ep";*)
+(**TODO		if not (Rlogic.closes interp [pa]) then raise No_match;
 		let result = external_proof ep ts pl rs (pform_convert ts interp [pa] false) in 
-		if result then cont (interp,f) else raise No_match
+		if result then cont (interp,f) else *)raise No_match
 	    | None -> raise No_match  (* This is unreachable *))
 	  )
   )

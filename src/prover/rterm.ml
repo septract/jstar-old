@@ -1421,6 +1421,7 @@ let rewrite_ts (ts : term_structure) (rm : 'a rewrite_map) dtref rs (query : var
 	 FTFunct(name, rl) ->
 	   (try 
 	     let tid : term =  (List.find (fun (y : term)-> ft_eq (!y).term ft) (!repid).terms) in
+	     if TIDset.mem tid !dtref then raise No_match;
 	     let rws = rm_find name rm in
 	     List.iter 
 	       (
@@ -1445,7 +1446,6 @@ let rewrite_ts (ts : term_structure) (rm : 'a rewrite_map) dtref rs (query : var
 			  then raise No_match; 
 			  (* end Hack *)
 			  let interp = match query (interp,extra,tid) with None ->  raise No_match | Some interp -> interp in 
-			  if TIDset.mem tid !dtref then raise No_match;
 			  let r,i,t = add_term_id ts interp a (redundant || !tid.redundant) !tid.righthand in 
 			  if (true || !(Debug.debug_ref)) && not(rep_eq r repid) then 
 			    (Format.fprintf !dump "Using rule:@ %s@ gives@ %a@ equal to %a.@\n" rule 
