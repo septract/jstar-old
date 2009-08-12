@@ -33,6 +33,8 @@ let main () =
   let usage_msg="Usage: -f <test_file_name> -l <logic_file_name>" in 
   Arg.parse arg_list (fun s ->()) usage_msg;
 
+  Debug.dump := Format.std_formatter;
+
   if !program_file_name="" then 
     Printf.printf "Test file name not specified. Can't continue....\n %s \n" usage_msg
   else if !logic_file_name="" then
