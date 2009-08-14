@@ -1,0 +1,27 @@
+rule ge_le_left:
+  | (?a >= ?b) |-
+if
+  | (?b <= ?a) |-
+
+rule le_reflexivity_left:
+  | (?a <= ?a) |-
+if
+  | |-
+
+rule le_reflexivity_right:
+  | |- (?a <= ?a)
+if
+  | |-
+
+rule le_disj_left:
+  | (?a <= ?b) |-
+without
+  ?b = (numeric_const("1") + ?c)
+if
+  | ?a = ?b || (?a < ?b) |-
+
+rule lt_le:
+  | (x < y) |- (x <= y)
+if
+  | (x < y) |-
+

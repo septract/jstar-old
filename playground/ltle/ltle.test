@@ -1,0 +1,3 @@
+Implication:
+ GE(a, b) | |- LE(b, a) |
+? True
