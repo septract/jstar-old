@@ -676,11 +676,32 @@ lvariable_list:
    | lvariable_list_ne { $1 }
 ;
 
+lvariable_npv:
+   | at_identifier { newPVar($1) }
+   | identifier { newVar($1) }
+;
+
+lvariable_list_ne_npv:
+   |  lvariable_npv    { [$1] }
+   |  lvariable_npv COMMA lvariable_list_ne_npv  { $1 :: $3 }
+
+lvariable_list_npv:
+   |  {[]}
+   | lvariable_list_ne_npv { $1 }
+;
+
 fldlist: 
    | identifier EQUALS jargument { [($1,$3)] }
    | /*empty*/ { [] }
    | identifier EQUALS jargument SEMICOLON fldlist  { ($1,$3) :: $5 }
 ;
+
+fldlist_npv: 
+   | identifier EQUALS jargument_npv { [($1,$3)] }
+   | /*empty*/ { [] }
+   | identifier EQUALS jargument_npv SEMICOLON fldlist_npv  { ($1,$3) :: $5 }
+;
+
 paramlist_question_mark:
    | COMMA L_BRACE paramlist R_BRACE { Some $3 }
    | COMMA paramlist { Some $2 }
@@ -706,6 +727,28 @@ pure_list:
 ;
 */
 
+/* Code for matching where not allowing question mark variables:
+   no pattern vars*/
+jargument_npv:
+   | lvariable_npv {Arg_var ($1)}
+   | identifier L_PAREN jargument_list_npv R_PAREN {Arg_op($1,$3) }        
+   | INTEGER_CONSTANT {Arg_string(string_of_int $1)} 
+   | MINUS INTEGER_CONSTANT {Arg_string("-" ^(string_of_int $2))}
+   | STRING_CONSTANT {Arg_string($1)} 
+   | field_signature {Arg_string(field_signature2str $1)}
+   | L_BRACE fldlist_npv R_BRACE {mkArgRecord $2}
+   | L_PAREN jargument_npv binop_val_no_multor jargument_npv R_PAREN { Arg_op(Support_syntax.bop_to_prover_arg $3, [$2;$4]) }
+;
+
+jargument_list_ne_npv:
+   | jargument_npv {$1::[]}
+   | jargument_npv COMMA jargument_list_ne_npv { $1::$3 }
+jargument_list_npv:
+   | /*empty*/  {[]}
+   | jargument_list_ne_npv {$1}
+;
+
+
 
 jargument:
    | lvariable {Arg_var ($1)}
@@ -725,6 +768,8 @@ jargument_list:
    | /*empty*/  {[]}
    | jargument_list_ne {$1}
 ;
+
+
   
 formula: 
    |  { [] }
@@ -742,21 +787,25 @@ formula:
    | jargument binop_cmp jargument { Support_syntax.bop_to_prover_pred $2 $1 $3 }
    | jargument EQUALS jargument { Support_syntax.bop_to_prover_pred (Cmpeq) $1 $3 }
    | L_PAREN formula R_PAREN { $2 }
-/*
-formula_nb: 
+
+formula_npv: 
    |  { [] }
-   | jargument DOT field_signature MAPSTO  jargument { [P_SPred("field", [$1; Arg_string(field_signature2str $3); $5] )] }
-   | BANG identifier L_PAREN jargument_list R_PAREN { [P_PPred($2, $4)] } 
-   | identifier L_PAREN jargument_list R_PAREN 
+   | FALSE { mkFalse}
+   | GARBAGE { mkGarbage}
+   | jargument_npv DOT field_signature MAPSTO  jargument_npv { [P_SPred("field", [$1; Arg_string(field_signature2str $3); $5] )] }
+   | BANG identifier L_PAREN jargument_list_npv R_PAREN { [P_PPred($2, $4)] } 
+   | identifier L_PAREN jargument_list_npv R_PAREN 
        {if List.length $3 =1 then [P_SPred($1,$3 @ [mkArgRecord []])] else [P_SPred($1,$3)] }
-   | full_identifier L_PAREN argument_list R_PAREN {if List.length $3 =1 then [P_SPred($1,$3 @ [mkArgRecord []])] else [P_SPred($1,$3)] }
-   | formula_nb MULT formula_nb { pconjunction $1 $3 }
-   | formula OROR formula { mkOr ($1,$3) }
-   | jargument COLON identifier { [P_PPred("type", [$1;Arg_string($3)])] }
-   | jargument binop_cmp jargument { Support_syntax.bop_to_prover_pred $2 $1 $3 }
-   | jargument EQUALS jargument { Support_syntax.bop_to_prover_pred (Cmpeq) $1 $3 }
-   | L_PAREN formula R_PAREN { $2 }
-*/
+   | full_identifier L_PAREN jargument_list_npv R_PAREN {if List.length $3 =1 then [P_SPred($1,$3 @ [mkArgRecord []])] else [P_SPred($1,$3)] }
+   | formula_npv MULT formula_npv { pconjunction $1 $3 }
+   | formula_npv OR formula_npv { if Config.symb_debug() then parse_warning "deprecated use of |"  ; pconjunction (purify $1) $3 }
+   | formula_npv OROR formula_npv { mkOr ($1,$3) }
+   | jargument_npv COLON identifier { [P_PPred("type", [$1;Arg_string($3)])] }
+   | jargument_npv binop_cmp jargument_npv { Support_syntax.bop_to_prover_pred $2 $1 $3 }
+   | jargument_npv EQUALS jargument_npv { Support_syntax.bop_to_prover_pred (Cmpeq) $1 $3 }
+   | L_PAREN formula_npv R_PAREN { $2 }
+
+
 
 spatial_at: 
    | jargument DOT field_signature MAPSTO  jargument { P_SPred("field", [$1; Arg_string(field_signature2str $3); $5] ) }
@@ -845,16 +894,16 @@ boolean:
 
 
 question:
-   | IMPLICATION COLON formula VDASH formula {Implication($3,$5)}
-   | INCONSISTENCY COLON formula {Inconsistency($3)}
-   | FRAME COLON formula VDASH formula {Frame($3,$5)}
-   | ABS COLON formula {Abs($3)} 
+   | IMPLICATION COLON formula_npv VDASH formula_npv {Implication($3,$5)}
+   | INCONSISTENCY COLON formula_npv {Inconsistency($3)}
+   | FRAME COLON formula_npv VDASH formula_npv {Frame($3,$5)}
+   | ABS COLON formula_npv {Abs($3)} 
 
 test:
-   | IMPLICATION COLON formula VDASH formula QUESTIONMARK boolean {TImplication($3,$5,$7)}
-   | INCONSISTENCY COLON formula QUESTIONMARK boolean {TInconsistency($3,$5)}
-   | FRAME COLON formula VDASH formula QUESTIONMARK formula {TFrame($3,$5,$7)}
-   | ABS COLON formula QUESTIONMARK formula {TAbs($3,$5)} 
+   | IMPLICATION COLON formula_npv VDASH formula_npv QUESTIONMARK boolean {TImplication($3,$5,$7)}
+   | INCONSISTENCY COLON formula_npv QUESTIONMARK boolean {TInconsistency($3,$5)}
+   | FRAME COLON formula_npv VDASH formula_npv QUESTIONMARK formula_npv {TFrame($3,$5,$7)}
+   | ABS COLON formula_npv QUESTIONMARK formula_npv {TAbs($3,$5)} 
 
 
 
