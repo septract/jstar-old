@@ -36,6 +36,8 @@ Functionality
 - Add command line option to the jstar program that takes a list of names of the methods that the user wants to verify (or wants to see traces of).
 - jStar does not fully support inheritance of fields. Example: AbstractList has a (protected) field modCount. Since LinkedList is a sub class of AbstractList, within the LinkedList class field(?i, <LinkedList: int modCount>, ?e1) and field(?i, <AbstractList: int modCount>, ?e2) denote the same field.
 - Make a clear distinction between positive and negative numbers to simplify writing rules that rely on the sign of a number.
+- If a method specification cannot be found, print a warning but do not terminate.
+- Introduce commutativity (or/and associativity) flag for predicates with the effect that terms that are equal under commutativity (or/and associativity) are treated as such when searching for matching rules.
 
 Output
 
@@ -49,3 +51,7 @@ Output
 
 Semantics
 - Is there a semantic difference between "or" and "||" (in the premise) in logic rules?
+
+Prover
+- Give higher priorities to the rules (apf_body_right_*) responsible for expanding definition (like "export AbstractList(x, {modcount = m}) = ...") on the RHS.
+- Contruct the transitive closure of the term that we have to prove (eg. RHS).
