@@ -37,7 +37,7 @@ let main () =
   else 
     let logic = load_logic (System.getenv_dirlist "JSTAR_LOGIC_LIBRARY") !logic_file_name in
 (*    let s = System.string_of_file !program_file_name  in*)
-    let question_list = System.parse_file Logic_parser.file Logic_lexer.token !program_file_name "Questions" true in
+    let question_list = System.parse_file Jparser.question_file Jlexer.token !program_file_name "Questions" true in
 
     List.iter (
     fun question ->

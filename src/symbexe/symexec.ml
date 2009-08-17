@@ -98,15 +98,23 @@ let fresh_file = let file_id = ref 0 in fun () -> let x = !file_id in file_id :=
 type ntype = 
     Plain | Good | Error | Abs | UnExplored
 
-type node = {mutable content : string; id : id; mutable ntype : ntype; mutable url : string}
-
-type edge = string * id * id * string option
+type node = {mutable content : string; id : id; mutable ntype : ntype; mutable url : string; mutable edges : edge list; cfg : Cfg.node option}
+and  edge = string * string * node * node * string option
 
 let graphe = ref []
-let graphn = ref []
+
+module Idmap = 
+  Map.Make(struct 
+    type t = int option
+    let compare = compare
+  end)
+
+let graphn = ref  Idmap.empty
+let startnodes = ref []
 
 
 
+let make_start_node node = startnodes := node::!startnodes
 
 let escape_for_dot_label s =
   Str.global_replace (Str.regexp "\\\\n") "\\l" (String.escaped s)
@@ -116,20 +124,37 @@ let pp_dotty_transition_system () =
   let foname="execution.dot~" in
   let dotty_outf=open_out foname in
   if Config.symb_debug() then Printf.printf "\n Writing transition system file execution.dot  \n";
-  Printf.fprintf dotty_outf "digraph main { \nnode [shape=box,  labeljust=l];\n";
-  List.iter (fun {content=label;id=id;ntype=ty;url=url} ->
-    let label=escape_for_dot_label label in
-    let url = if url = "" then "" else ", URL=\"file://" ^ url ^"\"" in
-    match ty with 
-      Plain ->  Printf.fprintf dotty_outf "\n state%i[label=\"%s\",labeljust=l%s]\n" id label url
-    | Good ->  Printf.fprintf dotty_outf "\n state%i[label=\"%s\",labeljust=l, color=green, style=filled%s]\n" id label url
-    | Error ->  Printf.fprintf dotty_outf "\n state%i[label=\"%s\",labeljust=l, color=red, style=filled%s]\n" id label url
-    | UnExplored ->  Printf.fprintf dotty_outf "\n state%i[label=\"%s\",labeljust=l, color=orange, style=filled%s]\n" id label url
-    | Abs ->  Printf.fprintf dotty_outf "\n state%i[label=\"%s\",labeljust=l, color=yellow, style=filled%s]\n" id label url)
+  Printf.fprintf dotty_outf "digraph main { \nnode [shape=box,  labeljust=l];\n\n";
+  Idmap.iter 
+    (fun cfg nodes ->
+      ((match cfg with Some cfg -> Printf.fprintf dotty_outf "subgraph cluster_cfg%i {\n"  cfg | _ -> ());
+      List.iter (fun {content=label;id=id;ntype=ty;url=url;cfg=cfg} ->
+	let label=escape_for_dot_label label in
+	let url = if url = "" then "" else ", URL=\"file://" ^ url ^"\"" in
+	match ty with 
+	  Plain -> ()
+	| Good ->  ()
+	| Error ->  ()
+	| UnExplored -> ()
+	| Abs ->  Printf.fprintf dotty_outf "\n state%i[label=\"%s\",labeljust=l, color=yellow, style=filled%s]\n" id label url)
+	nodes;
+      match cfg with Some _ -> Printf.fprintf dotty_outf "\n}\n" | _ -> ());
+      List.iter (fun {content=label;id=id;ntype=ty;url=url;cfg=cfg} ->
+	let label=escape_for_dot_label label in
+	let url = if url = "" then "" else ", URL=\"file://" ^ url ^"\"" in
+	match ty with 
+	  Plain ->  Printf.fprintf dotty_outf "\n state%i[label=\"%s\",labeljust=l%s]\n" id label url
+	| Good ->  Printf.fprintf dotty_outf "\n state%i[label=\"%s\",labeljust=l, color=green, style=filled%s]\n" id label url
+	| Error ->  Printf.fprintf dotty_outf "\n state%i[label=\"%s\",labeljust=l, color=red, style=filled%s]\n" id label url
+	| UnExplored ->  Printf.fprintf dotty_outf "\n state%i[label=\"%s\",labeljust=l, color=orange, style=filled%s]\n" id label url
+	| Abs -> () )
+	nodes;
+    )
     !graphn;
-  List.iter (fun (l,s,d, o) ->
-    let l = escape_for_dot_label l in 
-    Printf.fprintf dotty_outf "\n state%i -> state%i [label=\"%s\"%s]" s d l
+  List.iter (fun (l,c,s,d, o) ->
+    let l = escape_for_dot_label l in
+    let c = escape_for_dot_label c in
+    Printf.fprintf dotty_outf "\n state%i -> state%i [label=\"%s\", tooltip\"%s\"%s]" s.id d.id l c
 	    (match o with 
 	      None -> ""
 	    | Some f -> Printf.sprintf ", URL=\"file://%s\", fontcolor=blue" f))
@@ -141,27 +166,32 @@ let pp_dotty_transition_system () =
 
 
 
-let add_node (label : string) (ty : ntype)  = 
+let add_node (label : string) (ty : ntype) (cfg : Cfg.node option) = 
   let id = fresh_node () in 
-  let node = {content=label; id=id;ntype=ty;url=""} in 
-  graphn := node::!graphn; node 
+  let node = {content=label; id=id;ntype=ty;url=""; edges=[]; cfg = cfg} in 
+  let cfgid = 
+    match cfg with 
+      None -> None 
+    | Some cfg -> Some (node_get_id cfg) in 
+  graphn := Idmap.add cfgid (node::(try Idmap.find cfgid !graphn with Not_found -> [])) !graphn;
+  node
 
-let add_error_node label = add_node label Error
-let add_abs_node label = add_node label Abs
-let add_good_node label = add_node label Good
-let add_node_unexplored label = add_node label UnExplored
-let add_node label = add_node label UnExplored
+let add_error_node label = add_node label Error None
+let add_abs_node label cfg = add_node label Abs (Some cfg)
+let add_good_node label = add_node label Good None
+let add_node_unexplored label cfg = add_node label UnExplored (Some cfg)
+let add_node label cfg = add_node label UnExplored (Some cfg)
 
 
 let explore_node src = if src.ntype = UnExplored then src.ntype <- Plain
 
-let add_abs_heap_node (heap : Rlogic.ts_form) = 
+let add_abs_heap_node (heap : Rlogic.ts_form) cfg= 
   (Format.fprintf (Format.str_formatter) "%a" (string_ts_form (Rterm.rao_create ())) heap);
-  add_abs_node (Format.flush_str_formatter ())
+  add_abs_node (Format.flush_str_formatter ()) cfg
 
-let add_heap_node (heap : Rlogic.ts_form) = 
+let add_heap_node (heap : Rlogic.ts_form) cfg = 
   (Format.fprintf (Format.str_formatter) "%a" (string_ts_form (Rterm.rao_create ())) heap);
-  add_node (Format.flush_str_formatter ())
+  add_node (Format.flush_str_formatter ()) cfg
 
 let add_error_heap_node (heap : Rlogic.ts_form) = 
   (Format.fprintf (Format.str_formatter) "%a" (string_ts_form (Rterm.rao_create ())) heap);
@@ -171,7 +201,9 @@ let add_error_heap_node (heap : Rlogic.ts_form) =
 let x = ref 0
 
 let add_edge src dest label = 
-  graphe := (label, src.id, dest.id, None)::!graphe;
+  let edge = (label, "", src, dest, None) in
+  graphe := edge::!graphe;
+  src.edges <- edge::src.edges;
   explore_node src;
   if !x = 5 then (x:=0; pp_dotty_transition_system ()) else x :=!x+1
 
@@ -181,7 +213,9 @@ let add_edge_with_proof src dest label =
   Prover.pprint_proof out;
   close_out out;
   explore_node src;
-  graphe := (label, src.id, dest.id, Some f)::!graphe;
+  let edge = (label, "", src, dest, Some f) in 
+  graphe := edge::!graphe;
+  src.edges <- edge::src.edges;
   if !x = 5 then (x:=0; pp_dotty_transition_system ()) else x :=!x+1
 
 
@@ -200,18 +234,18 @@ let add_url_to_node src proof =
   src.url <- f
 
 
-let add_id_form h =
-    let id=add_heap_node h in
+let add_id_form h cfg =
+    let id=add_heap_node h cfg in
     (h,id)
 
-let add_id_formset sheaps =  List.map add_id_form sheaps
+let add_id_formset sheaps cfg =  List.map (fun h -> add_id_form h cfg) sheaps
 
 
-let add_id_abs_form h =
-    let id=add_abs_heap_node h in
+let add_id_abs_form cfg h =
+    let id=add_abs_heap_node h cfg in
     (h,id)
 
-let add_id_abs_formset sheaps =  List.map add_id_abs_form sheaps
+let add_id_abs_formset sheaps cfg =  List.map (add_id_abs_form cfg) sheaps
 
 
 
@@ -676,11 +710,11 @@ let rec execute_stmt n (sheap : formset_entry) : unit =
 	(*print_formset "\n\n Failed Heap:\n" [sheap]    *)
       )
   | _ -> 
-  let exec n sheaps = 
-    let sheaps_noid=fst sheaps in
-    Rlogic.kill_all_exists_names sheaps_noid;
-    if Config.symb_debug() then Format.printf "Output to %i with heap@\n   %a@\n" (node_get_id n) (string_ts_form (Rterm.rao_create ())) sheaps_noid;
-    execute_stmt n sheaps in 
+  let exec n sheap = 
+    let sheap_noid=fst sheap in
+    Rlogic.kill_all_exists_names sheap_noid;
+    if Config.symb_debug() then Format.printf "Output to %i with heap@\n   %a@\n" (node_get_id n) (string_ts_form (Rterm.rao_create ())) sheap_noid;
+    execute_stmt n sheap in 
   let execs n sheaps = List.iter (exec n) sheaps in 
 (*  let minfo=node_get_method_cfg_info n in *)
   let succs=node_get_succs n in
@@ -715,7 +749,7 @@ let rec execute_stmt n (sheap : formset_entry) : unit =
                print_formset "in " (remove_id_formset formset)
 	     );
 	    explore_node (snd sheap);
-	    let sheaps_with_id = add_id_abs_formset sheaps_abs in
+	    let sheaps_with_id = add_id_abs_formset sheaps_abs n in
 	    List.iter (fun sheap2 ->  add_edge_with_proof (snd sheap) (snd sheap2) ("Abstract@"^Pprinter.statement2str stm.skind)) sheaps_with_id;
 	    let sheaps_with_id = List.filter 
 		(fun (sheap2,id2) -> 
@@ -739,15 +773,15 @@ let rec execute_stmt n (sheap : formset_entry) : unit =
 	    formset_table_replace id (sheaps_with_id @ formset);
 	    execs_one (List.map id_clone sheaps_with_id)
 	  with Contained -> if Config.symb_debug() then Printf.printf "Formula contained.\n")
-      | Identity_stmt (n,id,ty) -> 
-	  let h=exec_identity_stmt  n id ty (fst sheap) in
-	  let h=add_id_form h in
+      | Identity_stmt (nn,id,ty) -> 
+	  let h=exec_identity_stmt  nn id ty (fst sheap) in
+	  let h=add_id_form h n in
 	  add_edge (snd sheap) (snd h) (Pprinter.statement2str stm.skind);
 	  exec_one h 
       | Identity_no_type_stmt(n,id) -> assert false (*exec_identity_no_type_stmt sheap*)
       | Assign_stmt(v,e) -> 
 	  let hs=(exec_assign_stmt  v e sheap n) in
-	  let hs=add_id_formset hs in
+	  let hs=add_id_formset hs n in
 	  List.iter (fun h ->
 	    match e with 
 	    | New_simple_exp _
@@ -772,19 +806,19 @@ let rec execute_stmt n (sheap : formset_entry) : unit =
 	      (match s1.nd_stmt.skind with
 	      | Label_stmt l' when l'=l -> 
 		  let cc_h=(conj_convert (expression2pure e) (fst sheap)) in
-		  let cc_h_id = add_id_form cc_h in 
+		  let cc_h_id = add_id_form cc_h n in 
 		  add_edge (snd sheap) (snd cc_h_id) (Pprinter.expression2str e);
 		  let cc_h2=(conj_convert (expression2pure (negate e)) (fst sheap2)) in
-		  let cc_h2_id = add_id_form cc_h2 in 
+		  let cc_h2_id = add_id_form cc_h2 n in 
 		  add_edge (snd sheap) (snd cc_h2_id) (Pprinter.expression2str (negate e));
 		  exec s1 cc_h_id;
 		  exec s2 (cc_h2_id)
 	      | _ -> 
 		  let cc_h=(conj_convert (expression2pure (negate e)) (fst sheap)) in
-		  let cc_h_id = add_id_form cc_h in 
+		  let cc_h_id = add_id_form cc_h n in 
 		  add_edge (snd sheap) (snd cc_h_id) (Pprinter.expression2str (negate e));
 		  let cc_h2=(conj_convert (expression2pure e) (fst sheap2)) in
-		  let cc_h2_id = add_id_form cc_h2 in 
+		  let cc_h2_id = add_id_form cc_h2 n in 
 		  add_edge (snd sheap) (snd cc_h2_id) (Pprinter.expression2str e);
 		  exec s1 cc_h_id;
 		  exec s2 (cc_h2_id)
@@ -794,12 +828,12 @@ let rec execute_stmt n (sheap : formset_entry) : unit =
       | Ret_stmt v (* I treat this like return *) 
       | Return_stmt v -> 
 	  let h=exec_return_stmt stm v (fst sheap) in
-	  let h=add_id_form h in
+	  let h=add_id_form h n in
 	  add_edge (snd sheap) (snd h) (Pprinter.statement2str stm.skind);
 	  exec_one h
       | Invoke_stmt ie -> 
 	  let hs=(exec_invoke_stmt ie sheap n) in
-	  let hs=add_id_formset hs in
+	  let hs=add_id_formset hs n in
 	  List.iter (fun h -> 
 		       add_edge_with_proof (snd sheap) (snd h) (Pprinter.statement2str stm.skind) ) hs;
 	  execs_one hs
@@ -844,28 +878,28 @@ let initialize_node_formsets mdl fields cname=
       try 
 	MethodMap.find msi !curr_static_methodSpecs 
       with  Not_found -> 
-	warning(); Format.printf "\n\n Error: Cannot find spec for method %s\n\n" (Pprinter.methdec2signature_str m); reset();
+	warning(); Format.printf "\n\n Error: Cannot find spec for method %s %s\n\n" (Pprinter.name2str m.name) (Pprinter.class_name2str m.class_name); reset();
 	assert false
     in
     let meth_initial_form=if is_init_method m then (* we treat <init> in a special way*)
       pconjunction spec.pre class_this_fields 
     else spec.pre 
     in 
-
+    let minfo=Cfg.mcfginfo_tbl_find (key_method m) in
+    let start_node=method_cfg_info_get_start_node minfo in
+    let end_node=method_cfg_info_get_exit_node minfo in
     let meth_initial_form_noid = convert meth_initial_form in
-    let meth_initial_form = add_id_form meth_initial_form_noid in 
+    let meth_initial_form = add_id_form meth_initial_form_noid start_node in 
     let id = add_good_node ("METHOD: "^(Pprinter.name2str m.name)) in 
+    make_start_node id;
     let id_exit = add_good_node ("EXIT: "^(Pprinter.name2str m.name)) in 
     add_edge id (snd meth_initial_form) "";
     let meth_initial_formset =  [meth_initial_form] in
     let meth_final_formset_noid = [convert spec.post] in 
-    let meth_final_formset = add_id_formset meth_final_formset_noid in
+    let meth_final_formset = add_id_formset meth_final_formset_noid end_node in
     List.iter (fun (_,id) -> add_edge id id_exit "") meth_final_formset; 
     if Config.symb_debug () then print_formset ("\n"^(Pprinter.name2str m.name)^" init_form=") [meth_initial_form_noid] ;
     if Config.symb_debug () then print_formset ("\n"^(Pprinter.name2str m.name)^" final_form=") meth_final_formset_noid ;
-    let minfo=Cfg.mcfginfo_tbl_find (key_method m) in
-    let start_node=method_cfg_info_get_start_node minfo in
-    let end_node=method_cfg_info_get_exit_node minfo in
     formset_table_replace (node_get_id start_node) meth_initial_formset;
     formset_table_replace (node_get_id end_node) meth_final_formset;
   in

@@ -234,13 +234,13 @@ let field_signature2str fs =
 %start rule_file
 %type <Global_types.rules list> rule_file
 
-/*
-%start file
-%type <Prover.question list> question_file
+
+%start question_file
+%type <Global_types.question list> question_file
 
 %start test_file
-%type <Prover.test list> test_file
-*/
+%type <Global_types.test list> test_file
+
 %% /* rules */
 
 /* entry points */
@@ -830,15 +830,38 @@ rule_file:
    | EOF  { [] }
    | rule rule_file  {$1 :: $2}
 
-/*
+
+
+
+boolean: 
+   | TRUE { true }
+   | FALSE { false }
+;
+
+
+
+question:
+   | IMPLICATION COLON formula VDASH formula {Implication($3,$5)}
+   | INCONSISTENCY COLON formula {Inconsistency($3)}
+   | FRAME COLON formula VDASH formula {Frame($3,$5)}
+   | ABS COLON formula {Abs($3)} 
+
+test:
+   | IMPLICATION COLON formula VDASH formula QUESTIONMARK boolean {TImplication($3,$5,$7)}
+   | INCONSISTENCY COLON formula QUESTIONMARK boolean {TInconsistency($3,$5)}
+   | FRAME COLON formula VDASH formula QUESTIONMARK formula {TFrame($3,$5,$7)}
+   | ABS COLON formula QUESTIONMARK formula {TAbs($3,$5)} 
+
+
+
 question_file: 
    | EOF  { [] }
-   | question file  {$1 :: $2}
+   | question question_file  {$1 :: $2}
 
 test_file: 
    | EOF  { [] }
    | test test_file  {$1 :: $2}
-*/
+
 
 
 %% (* trailer *)

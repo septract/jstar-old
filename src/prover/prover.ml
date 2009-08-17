@@ -871,14 +871,14 @@ let rec apply_rule_list logic (sequents : ts_sequent list) find_frame abs : ts_s
   (* perform rewrite rules *)
   let sequents = List.map (rewrites_sequent rwm ep abs false) sequents in
   let sequents = map_option apply_contradiction sequents in 
-  (*  Apply subtarction *)
-  let sequents : ts_sequent list = sequents_subtract sequents in
   (* Use neqs *)
   let sequents : ts_sequent list = sequents_use_neqs sequents in 
   (* perform rewrite rules *)
   let sequents = List.map (rewrites_sequent rwm ep abs false) sequents in 
   let sequents : ts_sequent list = List.map exists_elim_simple sequents in 
   let sequents : ts_sequent list = map_option (fun seq -> try Some (eqs_elim seq) with Success -> (if true || !(Debug.debug_ref) then Format.fprintf !dump "Success : %a\n" (string_ts_seq (rao_create ())) seq; None)) sequents in 
+  (*  Apply subtarction *)
+  let sequents : ts_sequent list = sequents_subtract sequents in
 (*  List.iter (fun seq -> Printf.printf "%s> %s\n" (String.make n '-') (string_ts_seq seq)) sequents;*)
   (* Apply rules lots *)
     List.flatten 
