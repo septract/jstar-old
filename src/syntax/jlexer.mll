@@ -124,6 +124,7 @@ let keyword_al = [
   ("where",WHERE);
   ("or",ORTEXT);
   ("abstraction",ABSRULE);
+  ("equiv",EQUIV);
 ]
 
 
@@ -237,6 +238,8 @@ rule token = parse
    | "!=" { CMPNE }
    | ">" { CMPGT }
    | ">=" { CMPGE }
+   | "=>" { IMP }
+   | "<=>" { BIMP }
    | "<" { CMPLT }
    | "<=" { CMPLE }
    | "<<" { SHL }

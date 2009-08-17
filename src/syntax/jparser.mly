@@ -47,6 +47,7 @@ let field_signature2str fs =
 /* tokens */
 
 %token ABSRULE
+%token EQUIV
 %token LEADSTO
 %token ABSTRACT
 %token FINAL 
@@ -157,6 +158,9 @@ let field_signature2str fs =
 %token R_BRACKET 
 %token UNDERSCORE 
 %token QUESTIONMARK 
+%token IMP
+%token BIMP
+
 
 %token EOF
 
@@ -386,9 +390,9 @@ identifier:
   | FALSE   { "False" }
   | TRUE   { "True" }
   | GARBAGE   { "Garbage" }
-  | IMPLICATION   { "Implication" }
+/*  | IMPLICATION   { "Implication" }
   | FRAME   { "Frame" }
-  | INCONSISTENCY   { "Inconsistency" }
+  | INCONSISTENCY   { "Inconsistency" }*/
 /*  | RULE   { "rule" }
   | EMPRULE   { "emprule" }
   | PURERULE   { "purerule" }
@@ -824,7 +828,7 @@ rule:
 							       let seq2=([],$6,[]) in
 							       let seq_list=[[seq2]] in
 							       SeqRule(seq,seq_list,$2,wo,$7) }
-   | RULE identifier_op COLON formula EQUALS CMPGT formula CMPLT EQUALS CMPGT formula without  { EquivRule($2,$4,$7,$11,$12) } 
+   | EQUIV identifier_op COLON formula IMP formula BIMP formula without  { EquivRule($2,$4,$6,$8,$9) } 
 
 rule_file:
    | EOF  { [] }
