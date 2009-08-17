@@ -8,6 +8,7 @@ let load_logic dirs filename =
   let rec rule_list_to_logic filename rl (sl,rm) =
     let rel_dir = (Filename.dirname filename) in
     let rec rule_list_to_logic_inner rl (sl,rm) =
+      let rl = expand_equiv_rules rl in 
       match rl with
 	[] -> sl,rm
       | r :: rl -> let (sl,rm) = rule_list_to_logic_inner rl (sl,rm) in 
@@ -19,6 +20,7 @@ let load_logic dirs filename =
 	| RewriteRule(r) -> 
 	    (match r with 
 	      (fn,a,b,c,d,e,f,g) -> (sl,Rterm.rm_add fn ((a,b,(c,d,e),f,g)::(try Rterm.rm_find fn rm with Not_found -> [])) rm))
+	| EquivRule(r) -> assert false
     in 
     let sl,rm = rule_list_to_logic_inner rl (sl,rm) in
     sl,rm

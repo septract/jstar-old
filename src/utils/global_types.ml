@@ -93,10 +93,13 @@ type sequent_rule = representative psequent * (representative psequent list list
 
 type rewrite_rule = string * representative args list * representative args * (representative pform) * (where list) * (representative pform) (* if *) * string * bool
 
+type equiv_rule = string * (representative pform) * (representative pform) * (representative pform) * (representative pform)
+
 type rules = 
   | SeqRule of sequent_rule
   | RewriteRule of rewrite_rule
   | Import of string
+  | EquivRule of equiv_rule
 
 
 type question =
@@ -115,6 +118,18 @@ type test =
   |  TAbs of representative pform * representative pform
 
 
+let expand_equiv_rules rules = 
+(*encode equiv rule as three rules *)
+  let equiv_rule_to_seq_rule x list : rules list= 
+    match x with 
+      EquivRule(name, guard, leftform, rightform, without) -> 
+	let lhs_rule = SeqRule((guard, leftform, []), [[([],rightform,[])]],name ^ "_left", without, []) in 
+	let rhs_rule = SeqRule(([],[],guard&&&leftform), [[([],guard&&&rightform,[])]], name ^"_right", without, []) in 
+	let spl_rule = SeqRule((guard, [], leftform), [[([],[],rightform)]], name ^ "_split", without, []) in 
+	lhs_rule::rhs_rule::spl_rule::list
+    | _ -> x::list
+  in
+  List.fold_right equiv_rule_to_seq_rule rules []
 
 (***************************************************
  end from prover
