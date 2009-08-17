@@ -10,6 +10,7 @@ Error messages:
 Grammar:
 
 - Jimple parser cannot deal with nested comments.
+- Migrate code for parsing test files to the "new" parser.
 
 Syntax:
 
@@ -21,7 +22,7 @@ Syntax:
 - Why do method specifications have to end with a semicolon? It is easy to forget and even without a semicolon at the end, it is very clear where a specification ends.
 - Infix operators could improve readability of terms involving arithmetic.
 - Allow "simultaneous equalities" (e.g. ?a = ?b = ?c) in specs and logic rules.
-- Java's boolean values true and false are represented as 1 and 0, respectively, in jimple. Thus, in specification true and false are numeric_const(1) and numeric_const(0). Readability could be increased by allowing "true" and "false" instead.
+- Java's boolean values true and false are represented as 1 and 0, respectively, in jimple. Thus, in specification true and false are numeric_const(1) and numeric_const(0). Readability could be increased by using "true" and "false" instead.
 - Allow negative integer constants (eg. "numeric_const(-1)") in specs.
 - Support infix notation in rewrite rules.
 - Currently the signature of field in "?e.?t |-> ?v" is not allowed to be a variable.
@@ -55,3 +56,7 @@ Semantics
 Prover
 - Give higher priorities to the rules (apf_body_right_*) responsible for expanding definition (like "export AbstractList(x, {modcount = m}) = ...") on the RHS.
 - Contruct the transitive closure of the term that we have to prove (eg. RHS).
+
+Testing
+- Let the user specify which rules she expects the prover to use when proving (or disproving) a test case.
+
