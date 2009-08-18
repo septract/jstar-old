@@ -124,7 +124,7 @@ let expand_equiv_rules rules =
     match x with 
       EquivRule(name, guard, leftform, rightform, without) -> 
 	let lhs_rule = SeqRule((guard, leftform, []), [[([],rightform,[])]],name ^ "_left", without, []) in 
-	let rhs_rule = SeqRule(([],[],guard&&&leftform), [[([],guard&&&rightform,[])]], name ^"_right", without, []) in 
+	let rhs_rule = SeqRule(([],[],guard&&&leftform), [[([],[],guard&&&rightform)]], name ^"_right", without, []) in 
 	let spl_rule = SeqRule((guard, [], leftform), [[([],[],rightform)]], name ^ "_split", without, []) in 
 	lhs_rule::rhs_rule::spl_rule::list
     | _ -> x::list
