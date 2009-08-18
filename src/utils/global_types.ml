@@ -123,10 +123,16 @@ let expand_equiv_rules rules =
   let equiv_rule_to_seq_rule x list : rules list= 
     match x with 
       EquivRule(name, guard, leftform, rightform, without) -> 
-	let lhs_rule = SeqRule((guard, leftform, []), [[([],rightform,[])]],name ^ "_left", without, []) in 
-	let rhs_rule = SeqRule(([],[],guard&&&leftform), [[([],[],guard&&&rightform)]], name ^"_right", without, []) in 
-	let spl_rule = SeqRule((guard, [], leftform), [[([],[],rightform)]], name ^ "_split", without, []) in 
-	lhs_rule::rhs_rule::spl_rule::list
+	(SeqRule((guard, leftform, []), [[([],rightform,[])]],name ^ "_left", without, []))
+	:: 
+	  (SeqRule(([],[],guard&&&leftform), [[([],[],guard&&&rightform)]], name ^"_right", without, []))
+	::
+	  if(guard = []) then 
+	    (SeqRule((guard, [], leftform), [[([],[],rightform)]], name ^ "_split", without, []))
+	    ::
+	      list
+	  else
+	    list
     | _ -> x::list
   in
   List.fold_right equiv_rule_to_seq_rule rules []
