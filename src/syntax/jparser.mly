@@ -866,6 +866,12 @@ ifclause:
    | /* empty plain term */ { [] } 
    | IF formula {$2}
 
+/* Need to do tests that simplified rules are fine for pure bits.*/
+equiv_rule:
+   | EQUIV identifier_op COLON formula WAND formula BIMP formula without  { EquivRule($2,$4,$6,$8,$9) } 
+   | EQUIV identifier_op COLON formula IMP formula BIMP formula without  { EquivRule($2,$4,$6,$8,$9) } 
+   | EQUIV identifier_op COLON formula IMP formula without  { EquivRule($2,$4,$6,mkEmpty,$7) } 
+   | EQUIV identifier_op COLON formula BIMP formula without  { EquivRule($2,mkEmpty,$4,$6,$7) } 
 
 rule:
    | IMPORT STRING_CONSTANT SEMICOLON { Import($2) }
@@ -877,9 +883,7 @@ rule:
 							       let seq2=([],$6,[]) in
 							       let seq_list=[[seq2]] in
 							       SeqRule(seq,seq_list,$2,wo,$7) }
-   | EQUIV identifier_op COLON formula WAND formula BIMP formula without  { EquivRule($2,$4,$6,$8,$9) } 
-   | EQUIV identifier_op COLON formula WAND formula without  { EquivRule($2,$4,$6,mkEmpty,$7) } 
-   | EQUIV identifier_op COLON formula BIMP formula without  { EquivRule($2,mkEmpty,$4,$6,$7) } 
+   | equiv_rule { $1 }
 
 rule_file:
    | EOF  { [] }
