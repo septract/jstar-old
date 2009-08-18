@@ -127,7 +127,7 @@ let expand_equiv_rules rules =
 	:: 
 	  (SeqRule(([],[],guard&&&leftform), [[([],[],guard&&&rightform)]], name ^"_right", without, []))
 	::
-	  if(guard = []) then 
+	  if(guard != []) then 
 	    (SeqRule((guard, [], leftform), [[([],[],rightform)]], name ^ "_split", without, []))
 	    ::
 	      list
