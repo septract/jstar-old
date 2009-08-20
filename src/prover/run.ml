@@ -29,7 +29,7 @@ let arg_list =[ ("-f", Arg.String(set_file_name ), "program file name" );
 let main () =
   let usage_msg="Usage: -f <file_name> -l <logic_file_name>" in 
   Arg.parse arg_list (fun s ->()) usage_msg;
-  Debug.dump := Format.std_formatter;
+
   if !program_file_name="" then 
     Printf.printf "File name not specified. Can't continue....\n %s \n" usage_msg
   else if !logic_file_name="" then

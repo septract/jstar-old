@@ -33,8 +33,6 @@ let main () =
   let usage_msg="Usage: -f <test_file_name> -l <logic_file_name>" in 
   Arg.parse arg_list (fun s ->()) usage_msg;
 
-  Debug.dump := Format.std_formatter;
-
   if !program_file_name="" then 
     Printf.printf "Test file name not specified. Can't continue....\n %s \n" usage_msg
   else if !logic_file_name="" then
@@ -59,7 +57,7 @@ let main () =
 	      Plogic.string_form heap1 
 	      Plogic.string_form heap2
 	);
-	if !(Debug.debug_ref) then Prover.pprint_proof stdout
+(*	if !(Debug.debug_ref) then Prover.pprint_proof stdout*)
 	  
     | Global_types.TFrame (heap1, heap2, result)  -> ()
 (*	Printf.printf "Find frame for\n %s\n ===> \n %s\n" (Plogic.string_form heap1) (Plogic.string_form heap2);
@@ -80,7 +78,7 @@ let main () =
 	| false,true -> Format.printf "Test failed! Prover could not prove@ %a@ inconsistent.\n" 
 	      Plogic.string_form heap1
 	);
-	if !(Debug.debug_ref) then Prover.pprint_proof stdout
+(*	if !(Debug.debug_ref) then Prover.pprint_proof stdout*)
     | Global_types.TEqual (heap,arg1,arg2,result) -> ()
 (*	if Prover.check_equal logic heap arg1 arg2 
 	then Printf.printf("Equal!\n\n") else Printf.printf("Not equal!\n\n")*)
