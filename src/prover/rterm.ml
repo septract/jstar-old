@@ -782,8 +782,7 @@ let rec add_term_id (ts : term_structure) (interp : var_subst)
 	| Vars.EVar _ -> let rid,tid = add_flat_term ts (FTPVar v) [] redun rhs in 
 	                 rid,interp,Some tid
         | Vars.AnyVar _  -> let rid = add_existential ts in (rid, add_vs v rid interp, None) 
-	| _ -> unsupported ()
-      ))	    
+        ))	    
   | Arg_string s ->  f( add_flat_term ts (FTString s) [] redun rhs, interp)
   | Arg_op (name, al) -> let rl,interp = add_terms ts interp al redun rhs in f(add_flat_term ts (FTFunct(name, rl)) rl redun rhs,interp)
   | Arg_cons (name, al) -> let rl,interp = add_terms ts interp al redun rhs in f(add_flat_term ts (FTConstr(name, rl)) rl redun rhs,interp)
@@ -792,6 +791,10 @@ let rec add_term_id (ts : term_structure) (interp : var_subst)
       let rl,interp = add_terms ts interp al redun rhs in 
       let fld_list = List.combine fl rl in 
       f(add_flat_term ts (FTRecord fld_list) rl redun rhs, interp)
+  | Arg_hole _ -> 
+      (* Arg_hole is only used well constructing terms for the pretty
+      printer *) 
+      assert false
 and add_term ts interp t redun rhs = let rid,interp,tid = add_term_id ts interp t redun rhs in (rid,interp)
 and add_terms (ts : term_structure) (interp : var_subst) (tl : (representative args) list) (redun : bool) (rhs : bool) : representative list * var_subst =  
   map_lift (fun x y -> add_term ts x y redun rhs) tl interp
@@ -824,6 +827,10 @@ let rec find_term_id (ts: term_structure) (t: 'a args) (interp : var_subst): rep
       let rl = find_terms_id ts al interp in 
       let fld_list = List.combine fl rl in 
       Thash.find ts.termhash (FTRecord fld_list), Some (FTRecord fld_list)
+  | Arg_hole _ -> 
+      (* Arg_hole is only used well constructing terms for the pretty
+      printer *) 
+      assert false
   in r, 
     match ft with 
       Some ft ->
@@ -1015,7 +1022,12 @@ let rec make_equal (ts : term_structure) (eqs : (representative * representative
       let str2 = List.filter (fun t -> match t with FTString(_) -> true | _ -> false) ftl2 in 
       (match str1,str2 with
 	[],_ | _,[] -> ()
-      | [FTString(x)],[FTString(y)] -> if x=y then () else raise Contradiction(* Contradicition *));
+      | [FTString(x)],[FTString(y)] -> if x=y then () else raise Contradiction(* Contradicition *)
+      | _,_ ->
+	  (* Each equivalence class can have at most one string by
+	  construction, so the previous three matchs cover all
+	  eventuallities *) 
+	  assert false );
       (*  Find records contained in either *)
       let rec1 = List.filter (fun t -> match t with FTRecord(_) -> true | _ -> false) ftl1 in 
       let rec2 = List.filter (fun t -> match t with FTRecord(_) -> true | _ -> false) ftl2 in 
@@ -1335,6 +1347,11 @@ let rec unifies (ts : term_structure) (p : representative args) (r : representat
 	      try unifies_list ts al rl forbidden_tids interp cont 
 	      with No_match -> f rls  
 	in f terms
+    | Arg_hole _ -> 
+        (* Arg_hole is only used well constructing terms for the pretty
+	   printer *) 
+	assert false
+
 and unifies_list ts al rl (forbidden_tids : TIDset.t) interp cont =
   match al,rl with
     [],[] -> cont interp 

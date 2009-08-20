@@ -120,7 +120,6 @@ let escape_for_dot_label s =
   Str.global_replace (Str.regexp "\\\\n") "\\l" (String.escaped s)
 
 let pp_dotty_transition_system () =
-  let foname="execution.dot" in
   let foname="execution.dot~" in
   let dotty_outf=open_out foname in
   if Config.symb_debug() then Printf.printf "\n Writing transition system file execution.dot  \n";

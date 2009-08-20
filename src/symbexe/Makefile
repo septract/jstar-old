@@ -38,10 +38,10 @@ default: jstar
 all: jstar
 
 #Needs to rebuild as OcamlMakefile does relink if a library changes.
-.prover: ../../lib/sepprover.cmxa
-	touch .prover
-	make clean
-	cd ../prover; make
+#.prover: ../../lib/sepprover.cmxa
+#	touch .prover
+#	make clean
+#	cd ../prover; make
 
 .PHONY: jstar.byte  
 jstar.byte:
@@ -49,7 +49,7 @@ jstar.byte:
 
 
 .PHONY: jstar
-jstar: .prover
+jstar: #.prover
 	$(MAKE) -f $(OCAMLMAKEFILE) $(MAINOPT) native-code
 
 clean:

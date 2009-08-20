@@ -157,7 +157,7 @@ module SepProver = struct
 
     let kill_var : var -> rform -> unit = fun (Var v) (RForm rform) -> Rlogic.kill_var v rform
 
-    let update_var_to : var -> term -> rform -> unit = fun (Var x) (Term y) (RForm z) -> Rlogic.update_var_to x y z;()
+    let update_var_to : var -> term -> rform -> unit = fun (Var x) (Term y) (RForm z) -> ignore (Rlogic.update_var_to x y z) ;()
 
     let form_clone : rform -> rform = fun (RForm rform) -> RForm (Rlogic.form_clone rform false)
 

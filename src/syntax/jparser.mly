@@ -183,7 +183,6 @@ let field_signature2str fs =
 %token IF
 %token WITHOUT
 %token WHERE
-%token EV
 %token NOTIN
 %token NOTINCONTEXT
 %token ORTEXT
@@ -399,7 +398,6 @@ identifier:
   | WITHOUT   { "without" }  
   | NOTIN   { "notin" }  
   | NOTINCONTEXT   { "notincontext" }  
-  | EV   { "EV" }  
   | WHERE   { "where" }*/
 /*  | ORTEXT   { "or" }*/
 /*  | ABSRULE   { "abstraction" }*/
@@ -852,7 +850,6 @@ without_simp:
 
 varterm:
    | lvariable_list { Var(vs_from_list $1) }
-   | EV jargument { EV($2) }
 
 clause: 
    | varterm NOTINCONTEXT { NotInContext($1) }

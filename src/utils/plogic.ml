@@ -115,6 +115,8 @@ let rec fv_args args set =
   | Arg_op (name,argsl) -> fv_args_list argsl set
   | Arg_cons (name,argsl) -> fv_args_list argsl set
   | Arg_record fldlist -> fv_fld_list fldlist set
+  | Arg_hole _ -> (* This is only used in the pretty printer*)
+      assert false
 and fv_args_list argsl set =
   match argsl with 
     [] -> set
@@ -151,6 +153,8 @@ let rec ev_args args set =
   | Arg_op (name,argsl) -> ev_args_list argsl set
   | Arg_cons (name,argsl) -> ev_args_list argsl set
   | Arg_record fldlist -> ev_fld_list fldlist set
+  | Arg_hole _ -> (* This is only used in the pretty printer*)
+      assert false
 and ev_args_list argsl set =
   match argsl with 
     [] -> set

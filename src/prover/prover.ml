@@ -239,11 +239,11 @@ let rec unify_form_at ts (pa : representative pform_at) (f : form) (use_ep) (int
              | _ -> raise No_match
 
        ) cl
-  |  P_Or (f1,f2) -> 
+  |  P_Or (f1,f2) -> (
       try 
         match_form ts f1 f use_ep interp remove cont 
       with No_match -> 
-	match_form ts f2 f use_ep interp remove cont 
+	match_form ts f2 f use_ep interp remove cont )
   | _ -> unsupported ()
 
 
@@ -277,7 +277,6 @@ let check_cxt where (context_evs,interp) ts =
   let var_term_to_set varterm =
     match varterm with 
       Var vl -> vl
-(*    | EV args -> ev_args (subst_args interp args) vs_empty (* TODO *) *)
   in
   match where with
     NotInContext varterm ->
@@ -484,7 +483,7 @@ let use_neq ((pl,sl,cl) : form) neqs : form =
   match cl with 
   | [] -> (pl,sl,cl) 
   | _ -> 
-      let neqs = List.filter (fun p -> match p with NEQ(_,_) -> true | _ -> false) pl @ neqs in
+      let neqs = map_option (fun p -> match p with NEQ(x,y) -> Some (x,y) | _ -> None) (pl @ neqs) in
       let rec f c () = 
 	match c with 
 	  Or(c1,c2) -> 
@@ -494,7 +493,7 @@ let use_neq ((pl,sl,cl) : form) neqs : form =
 		(fun p -> 
 		  match p with 
 		    EQ(r1,r2) -> List.exists 
-			(fun (NEQ (r3,r4)) -> (rep_eq r1 r3 && rep_eq r2 r4) || (rep_eq r1 r4 && rep_eq r2 r3) ) neqs 
+			(fun (r3,r4) -> (rep_eq r1 r3 && rep_eq r2 r4) || (rep_eq r1 r4 && rep_eq r2 r3) ) neqs 
 		  | NEQ(r1,r2) -> rep_eq r1 r2
 		  | _ -> false) 
 		pl  
@@ -745,8 +744,6 @@ let rec sequents_subtract seqs =
 let ask_the_audience ep ts p1 rs = 
   (*raise No_match*)
   if true || !(Debug.debug_ref) then Format.fprintf !dump "Query external prover@\n";
-  let flag = ref false in 
-  let eqs = ref [] in 
   let hash = (rao_create ()) in
   let interp = Rhash_args.create 30 in
   let out_form = ts_form_plain_pform_rs interp hash (ts,p1) rs in
@@ -778,23 +775,8 @@ let ask_the_audience ep ts p1 rs =
     [] -> raise No_match 
   | _ ->  make_equal ts eqs (empty_subst())
 
-(*  
-  Rset.iter (fun r1 -> 
-    Rset.iter (fun r2 -> 
-    if rep_compare r1 r2 = 1 then () else
-    (
-      let test_term = [P_EQ(pterm_rep interp rs hash r1,pterm_rep interp rs hash r2)] in
-      let test_term = Plogic.subst_pform subst test_term in 
-      let res = query  test_term in 
-      if res then (
-        flag := true;
-        eqs := (r1,r2)::!eqs;
-      )
-    ) 
-    ) rs ) rs;
-  if !flag then make_equal ts !eqs (Rterm.empty_subst ()) else raise No_match
-*)
-  
+
+
 let rec sequents_backtrack  f (seqss : ts_sequent list list) xs
     =
   match seqss with 
@@ -1101,7 +1083,7 @@ let check_implication_inner logic ts heap1 heap2 =
 (*  let subs = Logic.concrete_subs() in 
   let heap1 = subst_form subs heap1 in *)
   try 
-    get_frames (apply_rule_list logic [ts,([],heap1,heap2)] false false); true
+    ignore (get_frames (apply_rule_list logic [ts,([],heap1,heap2)] false false)); true
   with Failed -> false
   | Failed_eg x -> prover_counter_example := x ; false
 

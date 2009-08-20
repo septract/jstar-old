@@ -120,7 +120,6 @@ let keyword_al = [
   ("without",WITHOUT);  
   ("notin",NOTIN);  
   ("notincontext",NOTINCONTEXT);  
-  ("EV",EV);  
   ("where",WHERE);
   ("or",ORTEXT);
   ("abstraction",ABSRULE);

@@ -74,7 +74,6 @@ type spec_file = class_spec list
 ***************************************************)
 type varterm = 
     Var of varset
-  | EV of representative args
 
 type where = 
   | NotInContext of varterm
