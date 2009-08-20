@@ -486,7 +486,15 @@ let use_neq ((pl,sl,cl) : form) neqs : form =
 	  Or(c1,c2) -> 
 	    mkOrLazy (f c1) (f c2) 
 	| Form(pl,sl,cl) -> 
-	    if List.exists (fun p -> match p with EQ(r1,r2) -> List.exists (fun (NEQ (r3,r4)) -> (rep_eq r1 r3 && rep_eq r2 r4) || (rep_eq r1 r4 && rep_eq r2 r3) ) neqs | _ -> false) pl  then raise Contradiction else c
+	    if List.exists 
+		(fun p -> 
+		  match p with 
+		    EQ(r1,r2) -> List.exists 
+			(fun (NEQ (r3,r4)) -> (rep_eq r1 r3 && rep_eq r2 r4) || (rep_eq r1 r4 && rep_eq r2 r3) ) neqs 
+		  | NEQ(r1,r2) -> rep_eq r1 r2
+		  | _ -> false) 
+		pl  
+	    then raise Contradiction else c
 	| c -> c in
       (pl,sl,List.map (fun c -> f c ()) cl)
  
@@ -806,7 +814,34 @@ let eqs_elim (ts_seq : ts_sequent) : ts_sequent =
   let eqs = List.map (fun p -> match p with EQ(x,y) -> (x,y) | _ -> unsupported ()) eqs in
   try 
     let subst = make_equal ts eqs (empty_subst ()) in 
-    (ts, subst_sequent subst (f,(pl,sl,cl),(List.filter (function EQ(x,y) -> not (rep_eq x y) | _ -> true) pl2,sl2,cl2)))
+    
+    let rhs = 
+      try 
+	(List.filter 
+	   (function 
+	       EQ(x,y) -> (if rep_eq x y then false 
+	       else 
+		 let find_string x = List.find 
+		     (function tid -> match !tid.term with 
+		       FTString _ -> true | _ -> false) 
+		     !x.terms in
+		 try 
+		   if find_string x = find_string y 
+		   then 
+		     (* If they had the same string, then they would
+		     have the same representative.  So this control
+		     path cannot be reached unless something is
+		     wrong. *)
+		     assert false 
+		   else
+		     (* We are trying to prove two different strings
+		     have the same value, this is impossible.*)
+		     raise Contradiction 
+		 with Not_found -> true)
+	     | _ -> true) 
+	   pl2,sl2,cl2) 	  
+      with Contradiction ->  ([],[],[False])  in
+    (ts, subst_sequent subst (f,(pl,sl,cl),rhs))
   with Contradiction -> raise Success 
 
 let exists_elim_simple (ts_seq : ts_sequent) : ts_sequent =
