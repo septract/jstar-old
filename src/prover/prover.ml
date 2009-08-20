@@ -1105,7 +1105,7 @@ let check_implication_inner logic ts heap1 heap2 =
 let check_implication logic (ts1,heap1) (ts2,heap2)  =
   (* Do some kind of merge of ts2 and ts1 *)
   let eqs,subst = ts_to_eqs ts2 ts1 (rv_form heap2 Rset.empty) in 
-  let pl,sl,cl = (subst_form subst heap2) in
+  let pl,sl,cl = try (subst_form subst heap2) with Contradiction -> ([],[],[False]) in
   let pl = (List.map (fun (x,y) -> EQ(x,y)) eqs) @ pl in 
   check_implication_inner logic ts1 heap1 (pl,sl,cl)
 
