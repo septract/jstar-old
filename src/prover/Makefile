@@ -38,7 +38,8 @@ LIBRARYSOURCE = $(CORESOURCE)  load_logic.ml
 
 DEFAULT_ARGS = LIBS="str utils parser" \
        OCAMLLDFLAGS="-g -I $(LIB)" \
-       OCAMLFLAGS="-g -I ../utils -I ../syntax" \
+       INCDIRS="../utils ../syntax"
+       OCAMLFLAGS="-g" \
        TRASH=""
 
 MAIN = $(DEFAULT_ARGS) SOURCES="$(PROVERSOURCE)" \
@@ -57,42 +58,47 @@ TMAINOPT = $(DEFAULT_ARGS) SOURCES="$(TESTPROVERSOURCE)" \
 
 LIBRARY = SOURCES="$(LIBRARYSOURCE)" \
        OCAMLLDFLAGS="-g -a" \
-       OCAMLFLAGS="-g -I ../utils -I ../syntax" \
+       INCDIRS="../utils ../syntax" \
+       OCAMLFLAGS="-g" \
        RESULT="$(LIB)/sepprover.cmxa" \
        TRASH=""
 BLIBRARY = SOURCES="$(LIBRARYSOURCE)" \
        OCAMLLDFLAGS="-g -a" \
-       OCAMLFLAGS="-g -I ../utils -I ../syntax" \
+       INCDIRS="../utils ../syntax" \
+       OCAMLFLAGS="-g" \
        RESULT="$(LIB)/sepprover.cma" \
        TRASH=""
 
 default: toplevel testharness sepprover.cmxa
 
+prebuild: 
+	@(cd ../syntax; make)
+
 all: toplevel testharness
 
 .PHONY: toplevel.byte
-toplevel.byte:
-	$(MAKE) -f $(OCAMLMAKEFILE) $(MAIN) byte-code
+toplevel.byte: prebuild
+	@$(MAKE) -f $(OCAMLMAKEFILE) $(MAIN) byte-code
 
 
 .PHONY: toplevel
-toplevel:
-	$(MAKE) -f $(OCAMLMAKEFILE) $(MAINOPT) native-code
+toplevel: prebuild
+	@$(MAKE) -f $(OCAMLMAKEFILE) $(MAINOPT) native-code
 
-sepprover.cmxa: 
-	$(MAKE) -f $(OCAMLMAKEFILE) $(LIBRARY) native-code
+sepprover.cmxa: prebuild
+	@$(MAKE) -f $(OCAMLMAKEFILE) $(LIBRARY) native-code
 
-sepprover.cma: 
-	$(MAKE) -f $(OCAMLMAKEFILE) $(BLIBRARY) byte-code
+ssepprover.cma: prebuild
+	@$(MAKE) -f $(OCAMLMAKEFILE) $(BLIBRARY) byte-code
 
 .PHONY: testharness.byte
-testharness.byte:
-	$(MAKE) -f $(OCAMLMAKEFILE) $(TMAIN) byte-code
+testharness.byte: prebuild
+	@$(MAKE) -f $(OCAMLMAKEFILE) $(TMAIN) byte-code
 
 
 .PHONY: testharness
-testharness:
-	$(MAKE) -f $(OCAMLMAKEFILE) $(TMAINOPT) native-code
+testharness: prebuild
+	@$(MAKE) -f $(OCAMLMAKEFILE) $(TMAINOPT) native-code
 
 
 

@@ -22,22 +22,26 @@ SOURCES = config.ml support_syntax.ml jparser.mly jlexer.mll
 
 LIBRARY = SOURCES="$(SOURCES)" \
        OCAMLLDFLAGS="-g -a" \
-       OCAMLFLAGS="-g  -I ../utils" \
+       INCDIRS="../utils" \
+       OCAMLFLAGS="-g" \
        RESULT="$(LIB)/parser.cmxa" \
        TRASH=""
 
 BLIBRARY = SOURCES="$(SOURCES)" \
        OCAMLLDFLAGS="-g -a" \
-       OCAMLFLAGS="-g -I ../utils" \
+       INCDIRS="../utils" \
+       OCAMLFLAGS="-g" \
        RESULT="$(LIB)/parser.cma" \
        TRASH=""
 
-parser.cmxa: 
-	$(MAKE) -f $(OCAMLMAKEFILE) $(LIBRARY) native-code
+parser.cmxa: prebuild
+	@$(MAKE) -f $(OCAMLMAKEFILE) $(LIBRARY) native-code
 
-parser.cma: 
-	$(MAKE) -f $(OCAMLMAKEFILE) $(BLIBRARY) byte-code
+parser.cma: prebuild
+	@$(MAKE) -f $(OCAMLMAKEFILE) $(BLIBRARY) byte-code
 
+prebuild:
+	@(cd ../utils; make)
 
 clean:
 	$(MAKE) -f $(OCAMLMAKEFILE) $(LIBRARY) clean

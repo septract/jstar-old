@@ -26,7 +26,8 @@ TOPLEVEL_SOURCES = $(SYMBEXE_SOURCES)
 DEFAULT_ARGS = SOURCES="$(TOPLEVEL_SOURCES)" \
        LIBS="str unix utils parser sepprover" \
        OCAMLLDFLAGS="-g -I $(LIB)" \
-       OCAMLFLAGS="-g -I ../prover -I ../utils -I ../syntax" \
+       INCDIRS="../prover ../utils ../syntax" \
+       OCAMLFLAGS="-g" \
        TRASH=""
 
 MAIN = $(DEFAULT_ARGS) RESULT=$(BIN)/jstar.byte
@@ -37,20 +38,17 @@ default: jstar
 
 all: jstar
 
-#Needs to rebuild as OcamlMakefile does relink if a library changes.
-#.prover: ../../lib/sepprover.cmxa
-#	touch .prover
-#	make clean
-#	cd ../prover; make
+prebuild: 
+	@(cd ../prover; make)
 
 .PHONY: jstar.byte  
-jstar.byte:
-	$(MAKE) -f $(OCAMLMAKEFILE) $(MAIN) 
+jstar.byte: prebuild
+	@$(MAKE) -f $(OCAMLMAKEFILE) $(MAIN) 
 
 
 .PHONY: jstar
-jstar: #.prover
-	$(MAKE) -f $(OCAMLMAKEFILE) $(MAINOPT) native-code
+jstar: prebuild
+	@$(MAKE) -f $(OCAMLMAKEFILE) $(MAINOPT) native-code
 
 clean:
 	$(MAKE) -f $(OCAMLMAKEFILE) $(MAIN) clean
