@@ -808,6 +808,10 @@ let rec sequents_backtrack  f (seqss : ts_sequent list list) xs
 *)
 
 let eqs_elim (ts_seq : ts_sequent) : ts_sequent =
+  let find_string x = List.find 
+      (function tid -> match !tid.term with 
+	FTString _ -> true | _ -> false) 
+      !x.terms in
   let (ts,(f,(pl,sl,cl),(pl2,sl2,cl2))) = ts_seq in 
   let eqs,pl = List.partition (fun p -> match p with EQ(_,_) -> true | _ -> false) pl in 
   if !debug_ref && eqs != [] then Format.fprintf !dump "Elim eqs : %a@\n" (string_plain_list (rao_create ())) eqs;
@@ -821,10 +825,6 @@ let eqs_elim (ts_seq : ts_sequent) : ts_sequent =
 	   (function 
 	       EQ(x,y) -> (if rep_eq x y then false 
 	       else 
-		 let find_string x = List.find 
-		     (function tid -> match !tid.term with 
-		       FTString _ -> true | _ -> false) 
-		     !x.terms in
 		 try 
 		   if find_string x = find_string y 
 		   then 
@@ -838,7 +838,24 @@ let eqs_elim (ts_seq : ts_sequent) : ts_sequent =
 		     have the same value, this is impossible.*)
 		     raise Contradiction 
 		 with Not_found -> true)
-	     | _ -> true) 
+	     | NEQ(x,y) -> 
+		 (if rep_eq x y then raise Contradiction
+		 else 
+		   try 
+		     if find_string x = find_string y 
+		     then
+		       (* Cannot happen as this requires them to have
+		       same representative*)
+		       assert false
+		     else
+		       (* The two equivalence classes contain
+		       different strings, so the inequality must be
+		       true. So filter can drop it. *)
+		       false
+		   with 
+		     (* We know nothing, so leave it there *)
+		     Not_found -> true)
+	     | _  -> true) 
 	   pl2,sl2,cl2) 	  
       with Contradiction ->  ([],[],[False])  in
     (ts, subst_sequent subst (f,(pl,sl,cl),rhs))
@@ -900,6 +917,7 @@ let rec apply_rule_list logic (sequents : ts_sequent list) find_frame abs : ts_s
 (*  let sequents = List.map simp_seq_with_record sequents in *)
   (* substitute away equalities *)
 (*  let sequents = map_option (fun seq -> try Some (subs_eqs_seq seq) with Success -> None) sequents in*)
+  Format.fprintf  !dump "Foo";
     let sequents : ts_sequent list = map_option (fun seq -> try Some (eqs_elim seq) with Success -> (if true || !(Debug.debug_ref) then Format.fprintf !dump "Success : %a\n" (string_ts_seq (rao_create ())) seq; None)) sequents in 
 (*  List.iter (fun seq -> Printf.printf "%s> %s\n" (String.make n '-') (string_ts_seq seq)) sequents;*)
   let sequents : ts_sequent list = List.map exists_elim_simple sequents in 
