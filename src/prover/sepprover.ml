@@ -194,7 +194,7 @@ module SepProver = struct
       
 
     let add_sequent_rule (sr : sequent_rule) (Logic (sl,rm,ep) : logic) : logic =
-      let sr = ((seq_con sr.conclusion,premises_con sr.premises,sr.name,unform sr.without,[])) in
+      let sr = ((seq_con sr.conclusion,premises_con sr.premises,sr.name,(unform sr.without,[]),[])) in
 (*      Printf.printf "Adding rule: \n%s" (Prover.string_psr sr) ;*)
       Logic (sl @ [sr] , rm, ep)
      

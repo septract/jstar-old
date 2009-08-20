@@ -842,6 +842,11 @@ identifier_op:
 
 without:
 /*   | WITHOUT plain_list { $2 }*/
+   | WITHOUT formula { ($2, mkEmpty) }
+   | WITHOUT formula VDASH formula { ($2,$4) }
+   | /* empty */ { (mkEmpty,mkEmpty) }
+
+without_simp:
    | WITHOUT formula { $2 }
    | /* empty */ { [] }
 
@@ -868,18 +873,18 @@ ifclause:
 
 /* Need to do tests that simplified rules are fine for pure bits.*/
 equiv_rule:
-   | EQUIV identifier_op COLON formula WAND formula BIMP formula without  { EquivRule($2,$4,$6,$8,$9) } 
-   | EQUIV identifier_op COLON formula IMP formula BIMP formula without  { EquivRule($2,$4,$6,$8,$9) } 
-   | EQUIV identifier_op COLON formula IMP formula without  { EquivRule($2,$4,$6,mkEmpty,$7) } 
-   | EQUIV identifier_op COLON formula BIMP formula without  { EquivRule($2,mkEmpty,$4,$6,$7) } 
+   | EQUIV identifier_op COLON formula WAND formula BIMP formula without_simp  { EquivRule($2,$4,$6,$8,$9) } 
+   | EQUIV identifier_op COLON formula IMP formula BIMP formula without_simp  { EquivRule($2,$4,$6,$8,$9) } 
+   | EQUIV identifier_op COLON formula IMP formula without_simp  { EquivRule($2,$4,$6,mkEmpty,$7) } 
+   | EQUIV identifier_op COLON formula BIMP formula without_simp  { EquivRule($2,mkEmpty,$4,$6,$7) } 
 
 rule:
    | IMPORT STRING_CONSTANT SEMICOLON { Import($2) }
    |  RULE identifier_op COLON sequent without where IF sequent_list_or_list { SeqRule($4,$8,$2,$5,$6) }
-   |  REWRITERULE identifier_op COLON identifier L_PAREN jargument_list R_PAREN EQUALS jargument ifclause without where { RewriteRule($4,$6,$9,$11,$12,$10,$2,false) }
-   |  REWRITERULE identifier_op MULT COLON identifier L_PAREN jargument_list R_PAREN EQUALS jargument ifclause without where { RewriteRule($5,$7,$10,$12,$13,$11,$2,true) }
+   |  REWRITERULE identifier_op COLON identifier L_PAREN jargument_list R_PAREN EQUALS jargument ifclause without_simp where { RewriteRule($4,$6,$9,$11,$12,$10,$2,false) }
+   |  REWRITERULE identifier_op MULT COLON identifier L_PAREN jargument_list R_PAREN EQUALS jargument ifclause without_simp where { RewriteRule($5,$7,$10,$12,$13,$11,$2,true) }
    |  ABSRULE identifier_op COLON formula LEADSTO formula where  { let seq=([],$4,[]) in
-							       let wo=[] in 
+							       let wo=(mkEmpty,mkEmpty) in 
 							       let seq2=([],$6,[]) in
 							       let seq_list=[[seq2]] in
 							       SeqRule(seq,seq_list,$2,wo,$7) }

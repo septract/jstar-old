@@ -66,7 +66,7 @@ let string_psr sr =
 	*)
 
 let mk_seq_rule (mat_seq,premises,name) = 
-  mat_seq,premises,name,[],[]
+  mat_seq,premises,name,([],[]),[]
 
 (*
 type rewrite_rule = string * representative args list * representative args * (representative pform) * (where list) * (representative pform) (* if *) * string * bool
@@ -335,8 +335,12 @@ let apply_rule (rule : sequent_rule) (seq : ts_sequent)  ep : ts_sequent list li
 			(fun (interp,_) -> 
 			  (* check if there is a without clause, and if it is matched
 			     If it is matched, then throw no_match as we don't want to apply*)
-			  if without != []  && 
-			    (contains ts without ((f2f ff)@@@ afl) (Some ep) interp != None) 
+			  if fst without != []  && 
+			    (contains ts (fst without) ((f2f ff)@@@ afl) (Some ep) interp != None) 
+			  then (raise No_match );
+			  (* Check on the right hand side too *)
+			  if snd without != []  && 
+			    (contains ts (snd without) ((f2f ff)@@@ afl @@@ fr) (Some ep) interp != None) 
 			  then (raise No_match );
 			  (* check where clauses are satisfied *)
 			  if List.for_all (fun where -> check where (f2f ff@@@fl,interp) ts) wherelist 

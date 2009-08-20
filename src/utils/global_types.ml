@@ -89,7 +89,7 @@ type where =
 (***************************************************
  from prover
 ***************************************************)
-type sequent_rule = representative psequent * (representative psequent list list) * string * (representative pform) * (where list)
+type sequent_rule = representative psequent * (representative psequent list list) * string * ((* without *)representative pform * representative pform) * (where list)
 
 type rewrite_rule = string * representative args list * representative args * (representative pform) * (where list) * (representative pform) (* if *) * string * bool
 
@@ -123,12 +123,12 @@ let expand_equiv_rules rules =
   let equiv_rule_to_seq_rule x list : rules list= 
     match x with 
       EquivRule(name, guard, leftform, rightform, without) -> 
-	(SeqRule((guard, leftform, []), [[([],rightform,[])]],name ^ "_left", without, []))
+	(SeqRule((guard, leftform, []), [[([],rightform,[])]],name ^ "_left", (without,mkEmpty) , []))
 	:: 
-	  (SeqRule(([],[],guard&&&leftform), [[([],[],guard&&&rightform)]], name ^"_right", without, []))
+	  (SeqRule(([],[],guard&&&leftform), [[([],[],guard&&&rightform)]], name ^"_right", (mkEmpty, without), []))
 	::
 	  if(guard != []) then 
-	    (SeqRule((guard, [], leftform), [[([],[],rightform)]], name ^ "_split", without, []))
+	    (SeqRule((guard, [], leftform), [[([],[],rightform)]], name ^ "_split", (mkEmpty, without), []))
 	    ::
 	      list
 	  else
