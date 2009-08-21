@@ -168,7 +168,7 @@ let signature2str = function
   | Field_signature (c,t,n) ->  mkStrOfFieldSignature c t n
 
 let methdec2signature_str dec =
-  class_name2str dec.class_name ^ "(" ^ (list2str parameter2str (list_option2list dec.params) ", ") ^ ")"
+  class_name2str dec.class_name ^ "." ^ name2str dec.name ^ "(" ^ (list2str parameter2str (list_option2list dec.params) ", ") ^ ")"
 
 let reference2str = function
   |Array_ref (id,im) ->  identifier2str id ^ fixed_array_descriptor2str im
