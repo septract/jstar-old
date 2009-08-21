@@ -1,0 +1,28 @@
+equiv le_length_app:
+  => (length(?alpha) <= length(app(?alpha, ?beta)))
+
+equiv lt_length_app:
+      (length(?alpha) < length(app(?alpha, ?beta)))
+  <=> (length(empty()) < length(?beta))
+
+equiv le_zero_length:
+  => (numeric_const("0") <= length(?alpha))
+
+equiv le_length_cons_zero:
+  (length(cons(?a, ?alpha)) <= numeric_const("0")) <=> False
+
+equiv le_zero_length:
+  => (numeric_const("0") < length(cons(?a, ?alpha)))
+
+equiv lt_length_cons_zero:
+  (length(?alpha) < numeric_const("0")) <=> False
+
+equiv lt_length_plus_n_cons_zero:
+  ((numeric_const(?n) + length(?alpha)) < numeric_const("0")) <=> False
+
+equiv le_length_plus_one_zero:
+  | ((numeric_const("1") + length(?alpha)) <= numeric_const("0")) <=> False
+
+equiv le_zero_length_plus_one_left:
+  => (numeric_const("0") < length(cons(?a, length(?alpha))))
+

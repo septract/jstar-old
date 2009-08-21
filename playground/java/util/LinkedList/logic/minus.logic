@@ -1,0 +1,17 @@
+rewrite minus_0_second:
+  builtin_minus(numeric_const(?x), numeric_const("0")) = numeric_const(?x)
+
+rewrite minus_eq:
+  builtin_minus(numeric_const(?x), numeric_const(?x)) = numeric_const("0")
+
+rewrite minus_plus_first:
+  builtin_minus(builtin_plus(?x, ?y), ?x) = ?y
+
+rewrite minus_plus_second:
+  builtin_minus(builtin_plus(?x, ?y), ?y) = ?x
+
+/*rule minus_one_plus_one_eq:
+  || |- builtin_minus(?x, numeric_const("1")) = ?y |
+if
+  || |- ?x = builtin_plus(numeric_const("1"), ?y) |*/
+

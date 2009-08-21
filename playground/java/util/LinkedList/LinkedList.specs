@@ -23,7 +23,7 @@ class java.util.AbstractCollection {
 
 class java.util.AbstractList {
   export AbstractList(x, {modCount=count}) =
-    field(x, <java.util.AbstractList: int modCount>, count);
+    x.<java.util.AbstractList: int modCount> |-> count;
 
   void <init>():
     {}
@@ -43,19 +43,19 @@ class java.util.LinkedList {
   export LinkedList(x, {handle=h; head=n; tail=p; list=l}) =
       length(l) = _s
     * AbstractSequentialList$java.util.AbstractSequentialList(x, {modCount=_modCount})
-    * field(x, <java.util.LinkedList: int size>, _s)
-    * field(x, <java.util.LinkedList: java.util.LinkedList$Entry header>, h)
-    * field(h, <java.util.LinkedList$Entry: java.util.LinkedList$Entry next>, n)
-    * field(h, <java.util.LinkedList$Entry: java.util.LinkedList$Entry previous>, p)
+    * x.<java.util.LinkedList: int size> |-> _s
+    * x.<java.util.LinkedList: java.util.LinkedList$Entry header> |-> h
+    * h.<java.util.LinkedList$Entry: java.util.LinkedList$Entry next> |-> n
+    * h.<java.util.LinkedList$Entry: java.util.LinkedList$Entry previous> |-> p
     * dseg(n, h, h, p, l);
 
   export LinkedListInternal(x, {handle=h; head=n; tail=p; list=l}) =
       length(l) = _s
     * AbstractSequentialList$java.util.AbstractSequentialList(x, {modCount=_modCount})
-    * field(x, <java.util.LinkedList: int size>, _s)
-    * field(x, <java.util.LinkedList: java.util.LinkedList$Entry header>, h)
-    * field(h, <java.util.LinkedList$Entry: java.util.LinkedList$Entry next>, n)
-    * field(h, <java.util.LinkedList$Entry: java.util.LinkedList$Entry previous>, p);
+    * x.<java.util.LinkedList: int size> |-> _s
+    * x.<java.util.LinkedList: java.util.LinkedList$Entry header> |-> h
+    * h.<java.util.LinkedList$Entry: java.util.LinkedList$Entry next> |-> n
+    * h.<java.util.LinkedList$Entry: java.util.LinkedList$Entry previous> |-> p;
 
   void <init>():
     {}
@@ -63,16 +63,16 @@ class java.util.LinkedList {
 
   /** Private method. Specification closely matches the implementation. **/
   java.util.LinkedList$Entry addBefore(java.lang.Object, java.util.LinkedList$Entry):
-    {   field(@this:, <java.util.LinkedList: int size>, _size)
-      * field(@parameter1:, <java.util.LinkedList$Entry: java.util.LinkedList$Entry previous>, _prev)
-      * field(_prev, <java.util.LinkedList$Entry: java.util.LinkedList$Entry next>, @parameter1:)
-      * field(@this:, <java.util.LinkedList: int modCount>, _modcount)}
+    {   @this:.<java.util.LinkedList: int size> |-> _size
+      * @parameter1:.<java.util.LinkedList$Entry: java.util.LinkedList$Entry previous> |-> _prev
+      * _prev.<java.util.LinkedList$Entry: java.util.LinkedList$Entry next> |-> @parameter1:
+      * @this:.<java.util.LinkedList: int modCount> |-> _modcount}
     {   $ret_var = _new
-      * field(@this:, <java.util.LinkedList: int size>, (_size + numeric_const(1))) *
-      * field(@parameter1:, <java.util.LinkedList$Entry: java.util.LinkedList$Entry previous>, _new) *
-      * field(_prev, <java.util.LinkedList$Entry: java.util.LinkedList$Entry next>, _new) *
+      * @this:.<java.util.LinkedList: int size> |-> (_size + numeric_const(1)) *
+      * @parameter1:.<java.util.LinkedList$Entry: java.util.LinkedList$Entry previous> |-> _new *
+      * _prev.<java.util.LinkedList$Entry: java.util.LinkedList$Entry next> |-> _new *
       * node(_new, _prev, @parameter1:, @parameter0:) *
-      * field(@this:, <java.util.LinkedList: int modCount>, (_modcount + numeric_const(1)))
+      * @this:.<java.util.LinkedList: int modCount> |-> (_modcount + numeric_const(1))
     }
 
   void addFirst(java.lang.Object):
@@ -86,24 +86,24 @@ class java.util.LinkedList {
   /** Private method. Specification closely matches the implementation. **/
   java.lang.Object remove(java.util.LinkedList$Entry):
     {@parameter0: = _h
-      * field(@this:, <java.util.LinkedList: java.util.LinkedList$Entry header>, _h)}
+      * @this:.<java.util.LinkedList: java.util.LinkedList$Entry header> |-> _h}
     {$ret_var = nil()
-      * field(@this:, <java.util.LinkedList: java.util.LinkedList$Entry header>, _h)}
+      * @this:.<java.util.LinkedList: java.util.LinkedList$Entry header> |-> _h}
   andalso
     {@parameter0: != _h
-      * field(@this:, <java.util.LinkedList: java.util.LinkedList$Entry header>, _h)
-      * field(@this:, <java.util.LinkedList: int size>, _size)
+      * @this:.<java.util.LinkedList: java.util.LinkedList$Entry header> |-> _h
+      * @this:.<java.util.LinkedList: int size> |-> _size
       * node(@parameter0:, _prev, _next, _a)
-      * field(_prev, <java.util.LinkedList$Entry: java.util.LinkedList$Entry next>, _prev_next)
-      * field(_next, <java.util.LinkedList$Entry: java.util.LinkedList$Entry previous>, _next_prev)
-      * field(@this:, <java.util.LinkedList: int modCount>, _modcount)}
+      * _prev.<java.util.LinkedList$Entry: java.util.LinkedList$Entry next> |-> _prev_next
+      * _next.<java.util.LinkedList$Entry: java.util.LinkedList$Entry previous> |-> _next_prev
+      * @this:.<java.util.LinkedList: int modCount> |-> _modcount}
     {$ret_var = _a
-      * field(@this:, <java.util.LinkedList: java.util.LinkedList$Entry header>, _h)
-      * field(@this:, <java.util.LinkedList: int size>, (_size - numeric_const(1)))
-      * field(_prev, <java.util.LinkedList$Entry: java.util.LinkedList$Entry next>, _next)
-      * field(_next, <java.util.LinkedList$Entry: java.util.LinkedList$Entry previous>, _prev)
+      * @this:.<java.util.LinkedList: java.util.LinkedList$Entry header> |-> _h
+      * @this:.<java.util.LinkedList: int size> |-> (_size - numeric_const(1))
+      * _prev.<java.util.LinkedList$Entry: java.util.LinkedList$Entry next> |-> _next
+      * _next.<java.util.LinkedList$Entry: java.util.LinkedList$Entry previous> |-> _prev
       * node(@parameter0:, nil(), nil(), nil())
-      * field(@this:, <java.util.LinkedList: int modCount>, (_modcount + numeric_const(1)))
+      * @this:.<java.util.LinkedList: int modCount> |-> (_modcount + numeric_const(1))
     }
 
   java.lang.Object removeLast():
@@ -204,49 +204,49 @@ class java.util.LinkedList {
   /** Helper functions allowing inner classes to access fields and methods of the LinkedList class (inserted by the javac compiler). **/
   /* Get LinkedList.header. */
   static java.util.LinkedList$Entry access$000(java.util.LinkedList):
-    {field(@parameter0:, <java.util.LinkedList: java.util.LinkedList$Entry header>, _h)}
+    {@parameter0:.<java.util.LinkedList: java.util.LinkedList$Entry header> |-> _h}
     {$ret_var = _h *
-     field(@parameter0:, <java.util.LinkedList: java.util.LinkedList$Entry header>, _h)}
+     @parameter0:.<java.util.LinkedList: java.util.LinkedList$Entry header> |-> _h}
 
   /* Get LinkedList.size. */
   static int access$100(java.util.LinkedList):
-    {field(@parameter0:, <java.util.LinkedList: int size>, _s)}
-    {field(@parameter0:, <java.util.LinkedList: int size>, _s)
+    {@parameter0:.<java.util.LinkedList: int size> |-> _s}
+    {@parameter0:.<java.util.LinkedList: int size> |-> _s
       * $ret_var = _s}
 
   /* Call LinkedList.remove(java.util.LinkedList$Entry). */
   static java.lang.Object access$200(java.util.LinkedList, java.util.LinkedList$Entry):
-    {field(@parameter0:, <java.util.LinkedList: java.util.LinkedList$Entry header>, _h)
+    {@parameter0:.<java.util.LinkedList: java.util.LinkedList$Entry header> |-> _h
       * @parameter1: = _h}
-    {field(@parameter0:, <java.util.LinkedList: java.util.LinkedList$Entry header>, _h)
+    {@parameter0:.<java.util.LinkedList: java.util.LinkedList$Entry header> |-> _h
       * $ret_var = nil()}
   andalso
-    {   field(@parameter0:, <java.util.LinkedList: java.util.LinkedList$Entry header>, _h)
-      * field(_prev, <java.util.LinkedList$Entry: java.util.LinkedList$Entry next>, _prev_next)
-      * field(_next, <java.util.LinkedList$Entry: java.util.LinkedList$Entry previous>, _next_prev)
+    {   @parameter0:.<java.util.LinkedList: java.util.LinkedList$Entry header> |-> _h
+      * _prev.<java.util.LinkedList$Entry: java.util.LinkedList$Entry next> |-> _prev_next
+      * _next.<java.util.LinkedList$Entry: java.util.LinkedList$Entry previous> |-> _next_prev
       * node(@parameter1:, _prev, _next, _a)
       * @parameter1: != _h
-      * field(@parameter0:, <java.util.LinkedList: int size>, _size)
-      * field(@parameter0:, <java.util.LinkedList: int modCount>, _modcount)}
-    {   field(@parameter0:, <java.util.LinkedList: java.util.LinkedList$Entry header>, _h) *
-      * field(_prev, <java.util.LinkedList$Entry: java.util.LinkedList$Entry next>, _next) *
-      * field(_next, <java.util.LinkedList$Entry: java.util.LinkedList$Entry previous>, _prev) *
+      * @parameter0:.<java.util.LinkedList: int size> |-> _size
+      * @parameter0:.<java.util.LinkedList: int modCount> |-> _modcount}
+    {   @parameter0:.<java.util.LinkedList: java.util.LinkedList$Entry header> |-> _h *
+      * _prev.<java.util.LinkedList$Entry: java.util.LinkedList$Entry next> |-> _next *
+      * _next.<java.util.LinkedList$Entry: java.util.LinkedList$Entry previous> |-> _prev *
       * node(@parameter1:, nil(), nil(), nil()) *
-      * field(@parameter0:, <java.util.LinkedList: int size>, (_size - numeric_const(1))) *
-      * field(@parameter0:, <java.util.LinkedList: int modCount>, (_modcount + numeric_const(1)))
+      * @parameter0:.<java.util.LinkedList: int size> |-> (_size - numeric_const(1)) *
+      * @parameter0:.<java.util.LinkedList: int modCount> |-> (_modcount + numeric_const(1))
       * $ret_var = _a
     }
 
   /* Call LinkedList.addBefore(java.lang.Object, java.util.LinkedList$Entry). */
   static java.util.LinkedList$Entry access$300(java.util.LinkedList, java.lang.Object, java.util.LinkedList$Entry):
-    {   field(@parameter2:, <java.util.LinkedList$Entry: java.util.LinkedList$Entry previous>, _prev)
-      * field(_prev, <java.util.LinkedList$Entry: java.util.LinkedList$Entry next>, @parameter2:)
-      * field(@parameter0:, <java.util.LinkedList: int size>, _size)
-      * field(@parameter0:, <java.util.LinkedList: int modCount>, _modcount)}
-    {   field(@parameter2:, <java.util.LinkedList$Entry: java.util.LinkedList$Entry previous>, _new)
-      * field(_prev, <java.util.LinkedList$Entry: java.util.LinkedList$Entry next>, _new)
-      * field(@parameter0:, <java.util.LinkedList: int size>, (_size + numeric_const(1)))
-      * field(@parameter0:, <java.util.LinkedList: int modCount>, (_modcount + numeric_const(1)))
+    {   @parameter2:.<java.util.LinkedList$Entry: java.util.LinkedList$Entry previous> |-> _prev
+      * _prev.<java.util.LinkedList$Entry: java.util.LinkedList$Entry next> |-> @parameter2:
+      * @parameter0:.<java.util.LinkedList: int size> |-> _size
+      * @parameter0:.<java.util.LinkedList: int modCount> |-> _modcount}
+    {   @parameter2:.<java.util.LinkedList$Entry: java.util.LinkedList$Entry previous> |-> _new
+      * _prev.<java.util.LinkedList$Entry: java.util.LinkedList$Entry next> |-> _new
+      * @parameter0:.<java.util.LinkedList: int size> |-> (_size + numeric_const(1))
+      * @parameter0:.<java.util.LinkedList: int modCount> |-> (_modcount + numeric_const(1))
       * node(_new, _prev, @parameter2:, @parameter1:)
       * $ret_var = _new
     }
@@ -260,21 +260,21 @@ class java.util.LinkedList$Entry {
 
 class java.util.LinkedList$ListItr {
   export ListItr(x, {handle=h; l1=l1; l2=l2; next=next; lastReturned=lastReturned}) =
-      field(x, <java.util.LinkedList$ListItr: java.util.LinkedList$Entry lastReturned>, lastReturned)
-    * field(x, <java.util.LinkedList$ListItr: java.util.LinkedList$Entry next>, next)
-    * field(x, <java.util.LinkedList$ListItr: int nextIndex>, length(l1))
-    * field(x, <java.util.LinkedList$ListItr: int expectedModCount>, _expectedModCount)
+      x.<java.util.LinkedList$ListItr: java.util.LinkedList$Entry lastReturned> |-> lastReturned
+    * x.<java.util.LinkedList$ListItr: java.util.LinkedList$Entry next> |-> next
+    * x.<java.util.LinkedList$ListItr: int nextIndex> |-> length(l1)
+    * x.<java.util.LinkedList$ListItr: int expectedModCount> |-> _expectedModCount
     * next = h
-    * field(x, <java.util.LinkedList$ListItr: java.util.LinkedList this$0>, _ll)
+    * x.<java.util.LinkedList$ListItr: java.util.LinkedList this$0> |-> _ll
     * LinkedList$java.util.LinkedList(_ll, {handle=h; head=_n; tail=_p; list=_list})
     * _list = app(l1, l2)
     * l2 = empty()
   ||
-      field(x, <java.util.LinkedList$ListItr: java.util.LinkedList this$0>, _ll)
-    * field(x, <java.util.LinkedList$ListItr: java.util.LinkedList$Entry lastReturned>, lastReturned)
-    * field(x, <java.util.LinkedList$ListItr: java.util.LinkedList$Entry next>, next)
-    * field(x, <java.util.LinkedList$ListItr: int nextIndex>, length(l1))
-    * field(x, <java.util.LinkedList$ListItr: int expectedModCount>, _expectedModCount)
+      x.<java.util.LinkedList$ListItr: java.util.LinkedList this$0> |-> _ll
+    * x.<java.util.LinkedList$ListItr: java.util.LinkedList$Entry lastReturned> |-> lastReturned
+    * x.<java.util.LinkedList$ListItr: java.util.LinkedList$Entry next> |-> next
+    * x.<java.util.LinkedList$ListItr: int nextIndex> |-> length(l1)
+    * x.<java.util.LinkedList$ListItr: int expectedModCount> |-> _expectedModCount
     * LinkedListInternal$java.util.LinkedList(_ll, {handle=h; head=_n; tail=_p; list=_list})
     * _list = app(l1, cons(_element, _l2tail))
     * l2 = cons(_element, _l2tail)
@@ -283,20 +283,20 @@ class java.util.LinkedList$ListItr {
     * dseg(_back, next, h, _p, _l2tail);
 
   export ListItrEdit(x, {handle=h; l1=l1; l2=l2; next=next; lastReturned=lastReturned}) =
-      field(x, <java.util.LinkedList$ListItr: java.util.LinkedList this$0>, _ll)
-    * field(x, <java.util.LinkedList$ListItr: java.util.LinkedList$Entry lastReturned>, lastReturned)
-    * field(x, <java.util.LinkedList$ListItr: java.util.LinkedList$Entry next>, next)
-    * field(x, <java.util.LinkedList$ListItr: int nextIndex>, length(l1))
-    * field(x, <java.util.LinkedList$ListItr: int expectedModCount>, _expectedModCount)
+      x.<java.util.LinkedList$ListItr: java.util.LinkedList this$0> |-> _ll
+    * x.<java.util.LinkedList$ListItr: java.util.LinkedList$Entry lastReturned> |-> lastReturned
+    * x.<java.util.LinkedList$ListItr: java.util.LinkedList$Entry next> |-> next
+    * x.<java.util.LinkedList$ListItr: int nextIndex> |-> length(l1)
+    * x.<java.util.LinkedList$ListItr: int expectedModCount> |-> _expectedModCount
     * lastReturned = h
     * LinkedList$java.util.LinkedList(_ll, {handle=h; head=_n; tail=_p; list=_list})
     * _list = app(l1, l2)
   ||
-      field(x, <java.util.LinkedList$ListItr: java.util.LinkedList this$0>, _ll)
-    * field(x, <java.util.LinkedList$ListItr: java.util.LinkedList$Entry lastReturned>, lastReturned)
-    * field(x, <java.util.LinkedList$ListItr: java.util.LinkedList$Entry next>, next)
-    * field(x, <java.util.LinkedList$ListItr: int nextIndex>, length(l1))
-    * field(x, <java.util.LinkedList$ListItr: int expectedModCount>, _expectedModCount)
+      x.<java.util.LinkedList$ListItr: java.util.LinkedList this$0> |-> _ll
+    * x.<java.util.LinkedList$ListItr: java.util.LinkedList$Entry lastReturned> |-> lastReturned
+    * x.<java.util.LinkedList$ListItr: java.util.LinkedList$Entry next> |-> next
+    * x.<java.util.LinkedList$ListItr: int nextIndex> |-> length(l1)
+    * x.<java.util.LinkedList$ListItr: int expectedModCount> |-> _expectedModCount
     * lastReturned != h
     * LinkedListInternal$java.util.LinkedList(_ll, {handle=h; head=_n; tail=_p; list=_list})
     * _list = app(l1, cons(_element, _l2tail))

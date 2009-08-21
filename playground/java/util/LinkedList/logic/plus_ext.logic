@@ -1,0 +1,98 @@
+/*************************************
+ * Extends logic rules for addition. *
+ *************************************/
+
+/*
+  Commutativity of addition.
+      a = d /\ b = c
+  =>  a + b = c + d.
+*/
+equiv plus_commutativity:
+  ?a = ?d * ?b = ?c => (?a + ?b) = (?c + ?d) 
+
+/** Rewriting rules. **/
+
+/*
+  Addition of neutral element.
+      x + 0 = x.
+*/
+rewrite plus_zero_second:
+/*  (?x + numeric_const("0")) = ?x*/
+  builtin_plus(?x, numeric_const("0")) = ?x
+
+/*
+  Addition of neutral element.
+      0 + x = x.
+*/
+rewrite plus_zero_first:
+/*  (numeric_const("0") + ?x) = ?x*/
+  builtin_plus(numeric_const("0"), ?x) = ?x
+
+/*
+  Associativity of addition.
+      (x + y) + z
+  =   x + (y + z).
+
+  Rewrites sums such that they "associate" to the right to make it easy to
+  access the first summand.
+  Side conditions prevent the execution of this rule when one one the terms is
+  equal to zero.
+*/
+rewrite plus_assoc*:
+/*  ((?x + ?y) + ?z) = (?x + (?y + ?z))*/
+  builtin_plus(builtin_plus(?x, ?y), ?z) = builtin_plus(?x, builtin_plus(?y, ?z))
+without
+     ?y = numeric_const("0")
+  || ?z = numeric_const("0")
+  || ?x = numeric_const("0")
+  || ((?x + ?y) + ?z) = ?x
+  || ((?x + ?y) + ?z) = ?y
+  || ((?x + ?y) + ?z) = ?z
+  || ((?x + ?y) + ?z) = (?x + ?y)
+  || ((?x + ?y) + ?z) = (?x + ?z)
+  || ((?x + ?y) + ?z) = (?y + ?z)
+
+/*
+  Equivalence on LHS.
+      a + (x + b) = x + c
+  <=> a + b = c.
+*/
+equiv plus_nested_first_eq_first:
+  (?a + (?x + ?b)) = (?x + ?c) <=> (?a + ?b) = ?c
+without
+     ?c = (?a + ?b)
+  || ?c = (?b + ?a)
+
+/*
+  Equivalence on LHS.
+      a + (b +x) = x + c
+  <=> a + b = c.
+*/
+equiv plus_nested_second_eq_first:
+  (?a + (?b + ?x)) = (?x + ?c) <=> (?a + ?b) = ?c
+without
+     ?c = (?a + ?b)
+  || ?c = (?b + ?a)
+
+/*
+  Equivalence on LHS.
+      a + (x + b) = c + x
+  <=> a + b = c.
+*/
+equiv plus_nested_first_eq_second:
+  (?a + (?x + ?b)) = (?c + ?x) <=> (?a + ?b) = ?c
+without
+     ?c = (?a + ?b)
+  || ?c = (?b + ?a)
+
+/*
+  Equivalence on LHS.
+      a + (b +x) = c + x
+  <=> a + b = c.
+*/
+equiv plus_nested_second_eq_second:
+  (?a + (?b + ?x)) = (?c + ?x) <=> (?a + ?b) = ?c 
+without
+     ?c = (?a + ?b)
+  || ?c = (?b + ?a)
+

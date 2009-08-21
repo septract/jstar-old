@@ -1,103 +1,192 @@
-/**
- * Extends list logic.
- **/
+/***********************
+ * Extends list logic. *
+ ***********************/
 
 /*
   Identity: (a::alpha) @ beta = a::(alpha @ beta).
-  The rewrite rule pushes applications to deeper nesting levels.
+
+  The rewrite rule pushes appends to deeper nesting levels.
 */
 rewrite app_cons:
   app(cons(?a, ?alpha), ?beta) = cons(?a, app(?alpha, ?beta))
+without
+     app(cons(?a, ?alpha), ?beta) = cons(?a, ?alpha)
+  || app(cons(?a, ?alpha), ?beta) = cons(?a, ?beta)
+  || app(cons(?a, ?alpha), ?beta) = ?alpha
+  || app(cons(?a, ?alpha), ?beta) = ?beta
 
 /*
-  If we have alpha @ (b::beta) = alpha, the we have a contradiction (since
-  b::beta is non-empty)and we are done.
+  Equivalence.
+      alpha @ beta = alpha @ gamma
+  <=> beta = gamma.
 */
-rule app_cons_contradiction_left1:
-  | app(?alpha, cons(?b, ?beta)) = ?alpha | |- |
-if
+equiv app_eq_first:
+  app(?alpha, ?beta) = app(?alpha, ?gamma) <=> ?beta = ?gamma
+without
+  ?beta = ?gamma
 
 /*
-  If we have alpha @ (b::beta) = beta, the we have a contradiction (since
-  alpha @ (b::[]) is non-empty)and we are done.
-*/
-rule app_cons_contradiction_left2:
-  | app(?alpha, cons(?b, ?beta)) = ?beta | |- |
-if
+  Equivalence on LHS:
+      alpha @ beta = gamma @ beta
+  <=> alpha = beta.
 
-/*
-  If we have to prove that alpha @ (b::beta) = alpha, then the conclusion is
-  false and we therefore have to search for a contradication.
-*/
-rule app_cons_contradiction_right1:
-  || |- app(?alpha, cons(?b, ?beta)) = ?beta |
-if
-  || |- | False
-
-/*
-  If we have to show that alpha @ beta = gamma @ beta, then it is sufficient to
-  prove that alpha = beta.
-*/
-rule app_eq_second_right:
-  || |- app(?alpha, ?beta) = app(?gamma, ?beta) |
-if
-  || |- ?alpha = ?gamma |
-
-/*
   Iff we know that alpha @ beta = gamma @ beta, then alpha = gamma.
 */
-rule app_eq_second_left:
-  | app(?alpha, ?beta) = app(?gamma, ?beta) | |- |
+equiv app_eq_second:
+  app(?alpha, ?beta) = app(?gamma, ?beta) <=> ?alpha = ?gamma
 without
   ?alpha = ?gamma
-if
-  | ?alpha = ?gamma | |- |
 
 /*
+  Associativity Rule.
   Identity: (alpha @ beta) @ gamma = alpha @ (beta @ gamma).
-  Move applications to the right. Side conditions prevent the application of then
-  rule in the trivial when one one the sub lists is empty. In the trivial case,
+
+  Move appends to the right. Side conditions prevent the application of the
+  rule in the trivial when one of the sub-lists is empty. In the trivial case,
   the terms should be simplified by the rules app_nil_1 and app_nil_2.
 */
 rewrite app_assoc:
   app(app(?alpha, ?beta), ?gamma) = app(?alpha, app(?beta, ?gamma))
 without
-  |( |( |( | (| (?alpha = empty() |)
-             || (?beta  = empty() |))
-             || (?gamma = empty() |))
-             || (app(app(?alpha, ?beta), ?gamma) = app(?alpha, ?beta)  |))
-             || (app(app(?alpha, ?beta), ?gamma) = app(?alpha, ?gamma) |))
-             || (app(app(?alpha, ?beta), ?gamma) = app(?beta,  ?gamma) |)
+     ?alpha = empty()
+  || ?beta  = empty()
+  || ?gamma = empty()
+  || app(app(?alpha, ?beta), ?gamma) = app(?alpha, ?beta)
+  || app(app(?alpha, ?beta), ?gamma) = app(?alpha, ?gamma)
+  || app(app(?alpha, ?beta), ?gamma) = app(?beta,  ?gamma)
+  || app(app(?alpha, ?beta), ?gamma) = ?alpha
+  || app(app(?alpha, ?beta), ?gamma) = ?beta
+  || app(app(?alpha, ?beta), ?gamma) = ?gamma
 
 /*
-  If a::[] = beta @ (b::[]), then both LHS and RHS of the equation must be
-  singleton lists. Thus, the equality holds iff a = b and b = [].
+  Equivalence.
+      alpha @ beta = alpha
+  <=> beta = [].
 */
-rule cons_eq_app_cons_left:
-  | cons(?a, empty()) = app(?beta, cons(?b, empty())) | |- |
-if
-  | ?a = ?b * ?beta = empty() | |- |
+equiv app_first:
+  app(?alpha, ?beta) = ?alpha <=> ?beta = empty()
+without
+  ?beta = empty()
 
 /*
-  Iff alpha @ (a::[]) = beta @ (b::[]), then the last elements of the two lists
+  Equivalence on LHS:
+      alpha @ beta = beta
+  <=> alpha = [].
+
+  Iff we have alpha @ beta = beta, then we also have alpha = [].
+*/
+equiv app_second:
+  app(?alpha, ?beta) = ?beta <=> ?alpha = empty()
+without
+  ?alpha = empty()
+
+/*
+  Equivalence on LHS:
+      a::gamma = beta @ (b::gamma)
+  <=> a = b /\ beta = [].
+
+  If a::gamma = beta @ (b::gamma), then both LHS and RHS of the equation must
+  be singleton lists. Thus, the equality holds iff a = b and beta = [].
+*/
+equiv cons_eq_app_cons:
+  cons(?a, ?gamma) = app(?beta, cons(?b, ?gamma)) <=> ?a = ?b * ?beta = empty()
+without
+  ?a = ?b
+
+equiv cons_eq_app_cons:
+  cons(?a, ?gamma) = app(?beta, cons(?b, ?gamma)) <=> ?a = ?b * ?beta = empty()
+without
+  ?beta = empty()
+
+/*
+  Equivalence.
+      alpha @ (a::gamma) = beta @ (b::gamma)
+  <=> a = b /\ alpha = beta.
+
+  Iff alpha @ (a::gamma) = beta @ (b::gamma), then the last elements of the two lists
   must coincide (i.e. a = b) and similarly alpha = beta. Side condition makes
   sure that this rule is not applied more than once to the same term.
 */
-rule app_cons_eq_app_cons_left:
-  | app(?alpha, cons(?a, empty())) = app(?beta, cons(?b, empty())) | |- |
+equiv app_cons_eq_app_cons:
+      app(?alpha, cons(?a, ?gamma)) = app(?beta, cons(?b, ?gamma))
+  <=> ?alpha = ?beta * ?a = ?b
 without
   ?a = ?b
-if
-  | ?alpha = ?beta * ?a = ?b | |- |
 
 /*
+  Equivalence.
+        alpha @ (a::gamma) = beta @ (b::gamma)
+  <=> a = b /\ alpha = beta.
+
   Same as above but different side condition.
 */
-rule app_cons_eq_app_cons_left:
-  | app(?alpha, cons(?a, empty())) = app(?beta, cons(?b, empty())) | |- |
+equiv app_cons_eq_app_cons_left:
+      app(?alpha, cons(?a, ?gamma)) = app(?beta, cons(?b, ?gamma))
+  <=> ?alpha = ?beta * ?a = ?b
 without
   ?alpha = ?beta
+
+/**
+ * Contradictions.
+ */
+
+/*
+  Contradiction.
+*/
+equiv cons_contradiction:
+  cons(?a, ?alpha) = ?alpha <=> False
+
+/*
+  Contradiction.
+*/
+equiv cons_eq_empty_contradiction:
+  empty() = cons(?a, ?alpha) <=> False
+
+/*rule cons_eq_empty_contradiction_right:
+  | |- empty() = ?beta * ?beta = cons(?a, ?alpha)
 if
-  | ?alpha = ?beta * ?a = ?b | |- |
+  | |- False
 
+rule cons_eq_empty_contradiction_right:
+  | |- empty() = ?beta * ?gamma = cons(?a, ?alpha) * ?beta = ?gamma
+if
+  | |- False*/
 
+/*
+  Contradiction.
+*/
+equiv app_cons_first_contradiction:
+  app(cons(?a, ?alpha), ?beta) = ?alpha <=> False
+
+/*
+  Contradiction.
+
+  If we have alpha @ (b::beta) = beta, then we have a contradiction (since
+  alpha @ [b] is non-empty).
+*/
+equiv app_cons_second_contradiction:
+  app(?alpha, cons(?b, ?beta)) = ?beta <=> False
+
+/*
+  False statement.
+*/
+equiv cons_app_first_contradiction:
+  cons(?a, app(?alpha, ?beta)) = ?alpha <=> False
+
+/*
+  False statement.
+*/
+equiv cons_app_second_contradiction:
+  cons(?a, app(?alpha, ?beta)) = ?beta <=> False
+
+/*
+  These rules are equivalent to app_cons_{first,second}_contradiction_left!
+
+rule cons_app_first_contradiction_left:
+  | cons(?a, app(?alpha, ?beta)) = ?alpha |-
+if
+
+rule cons_app_second_contradiction_left:
+  | cons(?a, app(?alpha, ?beta)) = ?beta |-
+if
+*/

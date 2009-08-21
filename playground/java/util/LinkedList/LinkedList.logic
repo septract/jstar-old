@@ -1,10 +1,15 @@
-import "logic/field.logic";
+import "field_logic";
+
 import "logic/field_ext.logic";
 import "logic/list.logic";
 import "logic/list_ext.logic";
 import "logic/field_ext.logic";
 import "logic/plus.logic";
 import "logic/plus_ext.logic";
+import "logic/minus.logic";
 import "logic/cmp.logic";
 import "logic/length.logic";
+import "logic/length_cmp.logic";
 import "logic/dseg.logic";
+import "logic/shift.logic";
+import "logic/hacks.logic";

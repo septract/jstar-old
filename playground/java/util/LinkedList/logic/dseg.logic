@@ -1,0 +1,322 @@
+/***************************************
+ * Doubly-linked list segments (dseg). *
+ ***************************************/
+
+/* Include type information? */
+
+/*
+  dseg(i, ip, jn, j, ls):
+
+       +----+       +----+         +----+
+  i -->| a1 |<-. .->| a2 |<- ... ->| an |<-- j
+       +----+   X   +----+         +----+
+       | __ |__/ \  | __ |   ...   | jn |-->
+       +----+     \ +----+ /     \ +----+
+    <--| ip |      \| __ |/       \| __ |
+       +----+       +----+         +----+
+
+  ls = [a1, a2, ..., an]
+
+  Argument "i" is a field pointing to the first node of the list segment, "j"
+  points to the last node.
+  The fields "ip" and "jn" point to the nodes in front of the list segment and the node following afte
+
+  Inductive definition:
+    dseg(i, ip, jn, j, empty()) := emp * i = jn * j = ip
+
+    dseg(i, ip, jn, j, cons(a, alpha)) :=
+      i.<Entry: Entry prev> |-> ip *
+      i.<Entry: Entry next> |-> _in *
+      i.<Entry: Object element> |-> a *
+      dseg(_in ,i ,jn ,j ,alpha)
+
+  
+*/
+
+/**
+ * Empty list segments.
+ */
+
+equiv dseg_empty1:
+  dseg(?i, ?j, ?i, ?j, ?ls) <=> ?ls = empty()
+
+equiv dseg_empty2:
+  dseg(?i, ?ip, ?jn, ?j, empty()) <=> ?i = ?jn * ?ip = ?j
+
+/**
+ * Contradictions.
+ */
+
+equiv dseg_ne1:
+  dseg_ne(?i, ?ip, ?jn, ?j, ?l) => ?i = ?jn <=> False
+
+equiv dseg_ne2:
+  dseg_ne(?i, ?ip, ?jn, ?j, ?l) => ?j = ?ip <=> False
+
+equiv dseg_ne3:
+  ?i = ?jn => dseg_ne(?i, ?ip, ?jn, ?j, ?l) <=> False
+
+equiv dseg_ne4:
+  ?j = ?ip => dseg_ne(?i, ?ip, ?jn, ?j, ?l) <=> False
+
+equiv dseg_ne5:
+  dseg_ne(?i, ?ip, ?i, ?j, ?l) <=> False
+
+equiv dseg_ne6:
+  dseg_ne(?i, ?j, ?jn, ?j, ?l) <=> False
+
+/* List segments are non-touching! */
+
+equiv dseg_dseg_contradiction1:
+  dseg_ne(?i, ?ip, ?jn, ?j, ?l1) * dseg_ne(?i, ?kp, ?mn, ?m, ?l2) <=> False
+
+equiv dseg_dseg_contradiction2:
+      dseg_ne(?i, ?ip, ?jn, ?j, ?l1) * dseg_ne(?k, ?kp, ?mn, ?m, ?l2)
+  =>  ?i = ?k <=> False
+
+equiv dseg_non_circular_front1:
+  desg_ne(?i, ?ip, ?jn, ?j, ?l) => ?i = ?ip <=> False
+
+equiv dseg_non_circular_back1:
+  desg_ne(?i, ?ip, ?jn, ?j, ?l) => ?j = ?jn <=> False
+
+equiv dseg_non_circular_front2:
+  ?i = ?ip => desg_ne(?i, ?ip, ?jn, ?j, ?l) <=> False
+
+equiv dseg_non_circular_back2:
+  ?j = ?jp => desg_ne(?i, ?ip, ?jn, ?j, ?l) <=> False
+
+equiv dseg_non_circular_front3:
+  desg_ne(?i, ?i, ?jn, ?j, ?l) <=> False
+
+equiv dseg_non_circular_back3:
+  desg_ne(?i, ?ip, ?j, ?j, ?l) <=> False
+
+/*rule dseg_non_circular_front_left2:
+  | desg_ne(?i, ?ip, ?i, ?j, ?l) |-
+if
+
+rule dseg_non_circular_back_left2:
+  | desg_ne(?i, ?j, ?jn, ?j, ?l) |-
+if
+
+rule dseg_non_circular_front_right:
+  | |- desg_ne(?i, ?ip, ?i, ?j, ?l)
+if
+  | |- False
+
+rule dseg_non_circular_back_right:
+  | |- desg_ne(?i, ?j, ?jn, ?j, ?l)
+if
+  | |- False*/
+
+/*
+rule dseg_app_expand:
+  | dseg_ne(?i, ?ip, ?jn, ?j, app(?alpha, ?beta))
+    |- dseg_ne(?kn, ?k, ?jn, ?j, ?beta)
+if
+  | dseg(?i, ?ip, _mn, _m, ?alpha) * dseg(_mn, _m, ?jn, ?j, ?beta)
+    |- dseg_ne(?kn, ?k, ?jn, ?j, ?beta)
+*/
+
+equiv dseg_singleton:
+  dseg_ne(?i, ?ip, ?jn, ?j, cons(?a, empty())) <=>  ?i = ?j * dseg_ne(?i, ?ip, ?jn, ?j, cons(?a, empty()))
+without
+  ?i = ?j
+
+/** Doubly-linked list segments (dseg). **/
+
+  /** Non-empty list segment. **/
+equiv dseg_non_empty1:
+  ?i != ?jn => dseg(?i, ?ip, ?jn, ?j, ?l) <=> dseg_ne(?i, ?ip, ?jn, ?j, ?l)
+/*without
+  ?l = cons(?a, ?alpha)*/
+
+equiv dseg_non_empty2:
+  ?j != ?ip => dseg(?i, ?ip, ?jn, ?j, ?l) <=> dseg_ne(?i, ?ip, ?jn, ?j, ?l)
+/*without
+  ?l = cons(?a, ?alpha)*/
+
+equiv dseg_non_empty3:
+      dseg(?i, ?ip, ?jn, ?j, cons(?a, ?alpha))
+  <=> dseg_ne(?i, ?ip, ?jn, ?j, cons(?a, ?alpha))
+
+/** List concatenation (app). **/
+
+  /** More general rule might be useful. **/
+
+/****rule dseg_app_cons_rollup1:
+  | dseg(?i, ?ip, ?k, ?n, ?l1) * node(?k, ?n, ?m, ?a)
+    * dseg(?m, ?k, ?jn, ?j, ?l2)
+    |- dseg(?i, ?ip, ?jn, ?j, ?l)
+if
+  | dseg_ne(?i, ?ip, ?jn, ?j, app(?l1, cons(?a, ?l2)))
+    |- dseg(?i, ?ip, ?jn, ?j, ?l)
+
+rule dseg_app_right:
+  | |- dseg_ne(?i, ?ip, ?jn, ?j, app(?alpha, ?beta))
+without
+  ?beta = empty() || ?alpha =empty()
+if
+  | |- dseg_ne(?i, ?ip, _kn, _k, ?alpha) * dseg_ne(_kn, _k, ?jn, ?j, ?beta)
+
+rule dseg_app_left:
+  | dseg_ne(?i, ?ip, ?jn, ?j, app(?alpha, ?beta)) |- 
+without
+  ?beta = empty() || ?alpha = empty()
+if
+  | dseg_ne(?i, ?ip, _kn, _k, ?alpha) * dseg_ne(_kn, _k, ?jn, ?j, ?beta) |- ****/
+
+/** Splitting list into head and tail (cons). **/
+
+/*rule dseg_cons_right:
+  | |- dseg_ne(?i, ?ip, ?jn, ?j, cons(?a, ?alpha))
+if
+  | |- node(?i, ?ip, _k, ?a) * dseg(_k, ?i, ?jn, ?j, ?alpha)*/
+
+/** Expand list segment when neccessary. **/
+  /** First element **/
+
+rule dseg_cons_expand:
+  | dseg_ne(?i, ?ip, ?jn, j, cons(?a, ?alpha)) |- dseg_ne(?i, ?ip2, ?jn2, ?j2, cons(?a2, ?alpha2))
+if
+  | dseg_ne(?i, ?ip, ?jn, j, cons(?a, ?alpha))
+    |- node(?i, ?ip2, _m2, ?a2) * dseg(_m2, ?i, ?jn2, ?j2, ?alpha2)
+
+/*rule dseg_app_expand:
+  | dseg_ne(?i, ?ip, ?jn, j, app(?alpha, ?beta)) |- dseg_ne(?i, ?ip2, ?jn2, ?j2, cons(?alpha, ?alpha2))
+if
+  | dseg_ne(?i, ?ip, ?jn, j, cons(?a, ?alpha))
+    |- node(?i, ?ip2, _m2, ?a2) * dseg(_m2, ?i, ?jn2, ?j2, ?alpha2)*/
+
+rule dseg_node_lookup_first_left:
+  | dseg_ne(?i, ?ip, ?jn, ?j, ?alpha) |- node(?i, ?ip2, ?in2, ?a2)
+if
+  | dseg_ne(?i, ?ip, ?jn, ?j, ?alpha)
+    |- ?i.<java.util.LinkedList$Entry: java.util.LinkedList$Entry previous> |-> ?ip2 *
+       ?i.<java.util.LinkedList$Entry: java.util.LinkedList$Entry next> |-> ?in2 *
+       ?i.<java.util.LinkedList$Entry: java.lang.Object element> |-> ?a2
+
+rule dseg_node_lookup_last_left:
+  | dseg_ne(?i, ?ip, ?jn, ?j, ?alpha) |- node(?j, ?jp2, ?jn2, ?a2)
+if
+  | dseg_ne(?i, ?ip, ?jn, ?j, ?alpha)
+    |- ?j.<java.util.LinkedList$Entry: java.util.LinkedList$Entry previous> |-> ?jp2 *
+       ?j.<java.util.LinkedList$Entry: java.util.LinkedList$Entry next> |-> ?jn2 *
+       ?j.<java.util.LinkedList$Entry: java.lang.Object element> |-> ?a2
+
+rule dseg_cons_field_lookup_left:
+  | dseg_ne(?i, ?ip, ?jn, ?j, ?l) |- /*?i.?t |-> ?e*/ field(?i, ?t, ?e)
+if
+  | ?l = cons(?a, ?alpha) * dseg(_k, ?i, ?jn, ?j, ?alpha) * node(?i, ?ip, _k, ?a)
+    |- /*?i.?t |-> ?e*/ field(?i, ?t, ?e)
+
+  /** Last element **/
+
+rule dseg_app_lookup_left:
+  | dseg_ne(?i, ?ip, ?jn, ?j, ?l) |- /*?j.?t |-> ?e*/ field(?j, ?t, ?e)
+if
+  | ?l = app(?alpha, cons(?a, empty())) * dseg(?i, ?ip, ?j, _k, ?alpha) * node(?j, _k, ?jn, ?a)
+    |- /*?j.?t |-> ?e*/ field(?j, ?t, ?e)
+
+/** Warning: These rules can cause non-termination! **/
+/** A non-empty list has a first and a last element (not necessarily distinct). **/
+
+rule dseg_app_lookup:
+  | dseg_ne(?i, ?ip, ?jn, ?j, cons(?a, ?alpha)) |- /*?j.?t |-> ?a2*/ field(?j, ?t, ?a2)
+if
+  | cons(?a, ?alpha) = app(_beta, cons(_b, empty())) * node(?j, _k, ?jn, _b) * dseg(?i, ?ip, ?j, _k, _beta)
+    |- /*?j.?t |-> ?a2*/ field(?j, ?t, ?a2)
+
+rule node_lookup_previous:
+  | node(?i,?ip1,?in,?e) |- ?i.<java.util.LinkedList$Entry: java.util.LinkedList$Entry previous> |-> ?ip2
+if
+  ?i.<java.util.LinkedList$Entry: java.util.LinkedList$Entry previous> |-> ?ip1 |
+    ?i.<java.util.LinkedList$Entry: java.util.LinkedList$Entry next> |-> ?in *
+    ?i.<java.util.LinkedList$Entry: java.lang.Object element> |-> ?e
+      |- ?ip1 = ?ip2
+
+rule node_lookup_next:
+  | node(?i,?ip,?in1,?e) |- ?i.<java.util.LinkedList$Entry: java.util.LinkedList$Entry next> |-> ?in2
+if
+  ?i.<java.util.LinkedList$Entry: java.util.LinkedList$Entry next> |-> ?in1 |
+    ?i.<java.util.LinkedList$Entry: java.util.LinkedList$Entry previous> |-> ?ip *
+    ?i.<java.util.LinkedList$Entry: java.lang.Object element> |-> ?e
+      |- ?in1 = ?in2 
+
+rule node_lookup_element:
+  | node(?i,?ip,?in,?e1) |- ?i.<java.util.LinkedList$Entry: java.lang.Object element> |-> ?e2
+if
+  ?i.<java.util.LinkedList$Entry: java.lang.Object element> |-> ?e1 |
+    ?i.<java.util.LinkedList$Entry: java.util.LinkedList$Entry next> |-> ?in *
+    ?i.<java.util.LinkedList$Entry: java.util.LinkedList$Entry previous> |-> ?ip
+      |- ?e1 = ?e2 
+
+/** Doubly-linked list nodes (node). **/
+
+equiv node_not_nil:
+  node(nil(), ?ip, ?in, ?a) <=>  False
+
+equiv node_not_eq:
+  node(?x, ?ip, ?in, ?a) * node(?x, ?jp, ?jn, ?b) <=> False
+
+rule node_rollup_left:
+  | ?i.<java.util.LinkedList$Entry: java.util.LinkedList$Entry previous> |-> ?ip *
+    ?i.<java.util.LinkedList$Entry: java.util.LinkedList$Entry next> |-> ?in *
+    ?i.<java.util.LinkedList$Entry: java.lang.Object element> |-> ?a |- 
+if
+  | node(?i, ?ip, ?in, ?a) |-
+
+rule dseg_node_rollup_left:
+  | node(?i, ?ip, ?in, ?a) |- 
+if
+  | dseg_ne(?i, ?ip, ?in, ?i, cons(?a, empty())) |- 
+
+/* Maybe can find a more general rule? */
+rule dseg_app_rollup_left2:
+  | dseg_ne(?i, ?ip, ?jn, ?j, ?alpha) * dseg_ne(?jn, ?j, ?kn, ?k, ?beta)
+    |- dseg_ne(?i, ?ip2, ?kn2, ?k, ?list)
+if
+  | dseg_ne(?i, ?ip, ?kn, ?k, app(?alpha, ?beta))
+    |- dseg_ne(?i, ?ip2, ?kn2, ?k, ?list)
+
+rule dseg_app_rollup_left3:
+  | dseg_ne(?i, ?ip, ?jn, ?j, ?alpha) * dseg_ne(?jn, ?j, ?ln, ?l, ?beta)
+  * dseg_ne(?ln, ?l, ?kn, ?k, ?gamma)
+    |- dseg_ne(?i, ?ip2, ?kn2, ?k, ?list)
+if
+  | dseg_ne(?i, ?ip, ?kn, ?k, app(?alpha, app(?beta, ?gamma)))
+    |- dseg_ne(?i, ?ip2, ?kn2, ?k, ?list)
+
+rule node_expand_right:
+  | node(?i, ?ip1, ?in1, ?a1) |- node(?i, ?ip2, ?in2, ?a2)
+if
+  | node(?i, ?ip1, ?in1, ?a1)
+    |- ?i.<java.util.LinkedList$Entry: java.util.LinkedList$Entry previous> |-> ?ip2 *
+       ?i.<java.util.LinkedList$Entry: java.util.LinkedList$Entry next> |-> ?in2 *
+       ?i.<java.util.LinkedList$Entry: java.lang.Object element> |-> ?a2
+
+rule node_rollup_right:
+  | |- ?i.<java.util.LinkedList$Entry: java.util.LinkedList$Entry previous> |-> ?ip *
+       ?i.<java.util.LinkedList$Entry: java.util.LinkedList$Entry next> |-> ?in *
+       ?i.<java.util.LinkedList$Entry: java.lang.Object element> |-> ?a
+if
+  | |- node(?i, ?ip, ?in, ?a)
+
+rule dseg_dseg_eq:
+  | dseg_ne(?i, ?ip1, ?jn1, ?j, ?l1) |- dseg_ne(?i, ?ip2, ?jn2, ?j, ?l2)
+if
+  | dseg_ne(?i, ?ip1, ?jn1, ?j, ?l1) |- ?l1 = ?l2 * ?ip1 = ?ip2 * ?jn1 = ?jn2 
+
+equiv dseg_disj:
+      dseg(?i, ?ip, ?jn, ?j, ?alpha)
+  <=> ?alpha = empty() * ?i = ?jn * ?j = ?ip
+        || dseg_ne(?i, ?ip, ?jn, ?j, ?alpha)
+
+equiv dseg_ne_app_cons_first:
+      dseg(?i, ?ip, ?jn, ?j, app(cons(?a, ?alpha), ?beta))
+  <=> dseg_ne(?i, ?ip, ?jn, ?j, app(cons(?a, ?alpha), ?beta))
+
+equiv dseg_ne_app_cons_second:
+      dseg(?i, ?ip, ?jn, ?j, app(?alpha, cons(?b, ?beta)))
+  <=> dseg_ne(?i, ?ip, ?jn, ?j, app(?alpha, cons(?b, ?beta)))

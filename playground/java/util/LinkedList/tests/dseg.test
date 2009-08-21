@@ -1,0 +1,37 @@
+/******************************************
+ * Tests for doubly-linked list segments. *
+ ******************************************/
+
+ /**
+  * Empty list segment.
+  */
+
+/* dseg_empty_left1 */
+Implication:
+  dseg(i, j, i, j, empty()) |- False
+? False
+
+/* dseg_empty_left2 */
+Implication:
+  dseg(i, ip, jn, j, empty()) |- i = jn * j = ip
+? True
+
+/* dseg_empty_right1  */
+Implication:
+  dseg_ne(a, ap, bn, b, ls) |- dseg(i, j, i, j, ls)
+? False
+
+/* dseg_empty_right2 */
+Implication:
+  |- dseg(i, ip, jn, j, empty())
+? False
+
+/**
+ * Contradictions.
+ */
+
+/* dseg*/
+
+/* Touching list segments. */
+
+/**/

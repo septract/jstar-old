@@ -3,7 +3,7 @@ TEST_CMD = testharness
 JAVA_CMD = java
 
 JSTAR_OPTS = -v -dot
-TEST_OPTS =
+TEST_OPTS = -v
 
 BASE_DIR = $(shell pwd)
 
@@ -25,37 +25,36 @@ LOGIC_FILE = $(BASE_DIR)/$(LOGIC_FILE_NAME)
 ABS_FILE = $(BASE_DIR)/$(ABS_FILE_NAME)
 
 CLASSES = java.lang.Object java.util.AbstractCollection java.util.AbstractSequentialList java.util.LinkedList java.util.LinkedList$$Entry java.util.LinkedList$$Iter
-CLASSES_JIMPLE = $(addsuffix .jimple,$(CLASSES))
 
-LOGIC_FILES = list_ext
+LOGIC_FILES = cmp
 TESTS = $(addsuffix .test, $(LOGIC_FILES))
 
-.SUFFIXES: .jimple
+.SUFFIXES: .jimple .test
+.PRECIOUS: %.jimple
 
-default: java.util.LinkedList.jimple
+default: java.util.LinkedList
 .PHONY: default
 
-all: $(CLASSES_JIMPLE)
+all: $(CLASSES)
 .PHONY: all
 
 clean:
 	-rm -fr $(JIMPLE_DIR)/* &> /dev/null
 	-rm -f $(BASE_DIR)/execution.dot &> /dev/null
 	-rm -f $(BASE_DIR)/icfg.dot &> /dev/null
-	-rm -f $(BASE_DIR)/proof_file_*.txt &> /dev/null
 	-rm -rf $(TRACES_DIR)/*
 .PHONY: clean
 
 test: $(TESTS)
 .PHONY: test
 
-$(CLASSES):
-	$(JAVA_CMD) soot.Main -f jimple $@ -d $(JIMPLE_DIR)
+%.jimple:
+	$(JAVA_CMD) soot.Main -f jimple $(*F) -d $(JIMPLE_DIR)
 
-%.jimple: %
-	mkdir -p $(TRACES_DIR)/$*
-	cd $(TRACES_DIR)/$*; \
-	$(JSTAR_CMD) $(JSTAR_OPTS) -l $(LOGIC_FILE) -a $(ABS_FILE) -s $(SPEC_FILE) -f $(JIMPLE_DIR)/$@
+%: $(JIMPLE_DIR)/%.jimple
+	mkdir -p $(TRACES_DIR)/$(*F)
+	cd $(TRACES_DIR)/$(*F); \
+	$(JSTAR_CMD) $(JSTAR_OPTS) -l $(LOGIC_FILE) -a $(ABS_FILE) -s $(SPEC_FILE) -f $(JIMPLE_DIR)/$@.jimple
 
 %.test:
 	$(TEST_CMD) $(TEST_OPTS) -l $(LOGIC_DIR)/$*.logic -f $(TESTS_DIR)/$@
