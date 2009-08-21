@@ -1394,6 +1394,10 @@ let unifies_eq ts rs a1 a2 interp cont =
     let rid,_ = find_term_id ts a1 interp in 
     unifies ts a2 rid interp cont
   with Not_found | Unsupported (* Really should do something better than catch unsupported*)-> 
+  try 
+    let rid,_ = find_term_id ts a2 interp in 
+    unifies ts a1 rid interp cont
+  with Not_found | Unsupported (* Really should do something better than catch unsupported*)-> 
   let rl = Rset.elements (Rset.union (rv_trans_set rs) (accessible_rs ts)) in 
   unifies_eq_inner ts rl a1 a2 interp cont
 
