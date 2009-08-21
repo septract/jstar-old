@@ -872,7 +872,7 @@ let initialize_node_formsets mdl fields cname=
       try 
 	MethodMap.find msi !curr_static_methodSpecs 
       with  Not_found -> 
-	warning(); Format.printf "\n\n Error: Cannot find spec for method %s %s\n\n" (Pprinter.name2str m.name) (Pprinter.class_name2str m.class_name); reset();
+	warning(); Format.printf "\n\n Error: Cannot find spec for method %s\n\n" (Pprinter.methdec2signature_str m); reset();
 	assert false
     in
     let meth_initial_form=if is_init_method m then (* we treat <init> in a special way*)
