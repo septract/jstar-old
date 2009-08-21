@@ -136,8 +136,9 @@ let main () =
 	Mkspecs.print_specs_template program
        )
      else (
-       at_exit (fun () -> if !(Debug.debug_ref) then  Prover.pprint_proof stdout); 
-       at_exit (Symexec.pp_dotty_transition_system);
+       List.iter 
+	 (fun s ->  Sys.set_signal s (Sys.Signal_handle (fun x -> Symexec.pp_dotty_transition_system (); exit x)))
+	 [Sys.sigint; Sys.sigquit; Sys.sigterm];
        try 
 	 let logic = 
 	     Load_logic.load_logic  (System.getenv_dirlist "JSTAR_LOGIC_LIBRARY") !logic_file_name
