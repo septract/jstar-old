@@ -1,0 +1,5 @@
+rule req:
+  | |- ?i = ?j
+without
+  |- ?i = ?j
+if
