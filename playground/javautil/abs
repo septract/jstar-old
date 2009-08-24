@@ -242,8 +242,16 @@ without
 where
   _x, _y notincontext
 
+rewrite cons_ex: 
+  cons(_x,?y) = app(id(?fresh), ?y)
+without
+  cons(_x,?y) = app(id(?fresh), ?y)
+where 
+  _x notincontext;
+  _x notin ?y
+
 rewrite elist_ex_3:
-  elist(s(_x), s(_y)) = id(?fresh)
+  elist(_x, s(_y)) = id(?fresh)
 without
   elist(_x, s(_y)) = id(?fresh2)
 where

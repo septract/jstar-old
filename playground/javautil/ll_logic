@@ -536,7 +536,7 @@ rewrite plus_0_second:
 rewrite plus_0_first:
   builtin_plus(numeric_const("0"), ?x) = ?x
 
-rewrite plus_assoc * :
+rewrite plus_assoc  :
   builtin_plus(builtin_plus(?x,?y), ?z) = builtin_plus(?x, builtin_plus(?y,?z))
 without
   | (| (| (| (| (| (?y = numeric_const("0") |)

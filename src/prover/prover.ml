@@ -304,7 +304,7 @@ let check_cxt where (context_evs,interp) ts =
 
 let check where (form,interp) ts = 
       let pl,sl,cl = form in 
-      let context_evs = Rset.empty in
+      let context_evs = Rterm.accessible_rs ts in
       let context_evs = rv_spat_list sl context_evs in
       let context_evs = rv_comp_list cl context_evs in 
       let context_evs = rv_plain_list (List.filter (fun p -> match p with NEQ _ -> false | _ -> true) pl) context_evs in 
