@@ -153,7 +153,7 @@ let pp_dotty_transition_system () =
   List.iter (fun (l,c,s,d, o) ->
     let l = escape_for_dot_label l in
     let c = escape_for_dot_label c in
-    Printf.fprintf dotty_outf "\n state%i -> state%i [label=\"%s\", tooltip\"%s\"%s]" s.id d.id l c
+    Printf.fprintf dotty_outf "\n state%i -> state%i [label=\"%s\", tooltip=\"%s\"%s]" s.id d.id l c
 	    (match o with 
 	      None -> ""
 	    | Some f -> Printf.sprintf ", URL=\"file://%s\", fontcolor=blue" f))
