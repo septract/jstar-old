@@ -752,7 +752,7 @@ let rec execute_stmt n (sheap : formset_entry) : unit =
 		  if  
 		    (List.for_all
 		       (fun (form,id) -> 
-			 if check_implication !curr_logic (form_clone sheap2 false) form  then 
+			 if check_implication_frame !curr_logic (form_clone sheap2 false) form  != []then 
 			    (add_edge_with_proof id2 id ("Contains@"^Pprinter.statement2str stm.skind); false) 
 			 else (s := !s ^"\n---------------------------------------------------------\n" ^ (string_of_proof ()); true))
 		       formset)
