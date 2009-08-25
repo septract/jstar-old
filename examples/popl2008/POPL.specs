@@ -6,7 +6,7 @@ class java.lang.Object
 class Cell {
   define Val(x,content=y) = field(x, <Cell: int val>, y) ;
 
-  static void <init>() : { } { field(@this:,<Cell: int val>,_z) };
+  void <init>() : { } { Val$(@this:,{content=_z}) };
   
   int get() : 
   { Val$(@this:, {content=_X})} 
@@ -20,7 +20,7 @@ class Cell {
 class Recell {
   define Val(x,content=y;old=z) = Val$Cell(x, {content=y}) * field(x, <Recell: int bak>, z) ;
 
-  static void <init>() : { } { field(@this:,<Recell: int bak>,_z) * field(@this:, <Cell: int val>,_w) };
+  void <init>() : { } { Val$(@this:, {content=_x; old=_z}) };
   
   int get() : 
   { Val$(@this:, {content=_X; old=_Y})} 
@@ -35,7 +35,7 @@ class DCell {
   define Val(x,content=y) = y!=y ;
   define DVal(x,content=y) =  Val$Cell(x,{content=builtin_plus(y,y)}) ;
 
-  static void <init>() : { } { field(@this:, <Cell: int val>,_w) };
+  void <init>() : { } { DVal$(@this:, {content = _w}) };
 
   int get() : 
   { Val$(@this:, {content=_X}) } 

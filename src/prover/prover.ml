@@ -798,6 +798,10 @@ let eqs_elim (ts_seq : ts_sequent) : ts_sequent =
       (function tid -> match !tid.term with 
 	FTString _ -> true | _ -> false) 
       !x.terms in
+  let find_record x = List.find 
+      (function tid -> match !tid.term with 
+	FTRecord _ -> true | _ -> false) 
+      !x.terms in
   let (ts,(f,(pl,sl,cl),(pl2,sl2,cl2))) = ts_seq in 
   let eqs,pl = List.partition (fun p -> match p with EQ(_,_) -> true | _ -> false) pl in 
   if !debug_ref && eqs != [] then Format.fprintf !dump "Elim eqs : %a@\n" (string_plain_list (rao_create ())) eqs;
@@ -807,9 +811,9 @@ let eqs_elim (ts_seq : ts_sequent) : ts_sequent =
     
     let rhs = 
       try 
-	(List.filter 
-	   (function 
-	       EQ(x,y) -> (if rep_eq x y then false 
+	(List.fold_right
+	   (fun p ps -> match p with 
+	       EQ(x,y) -> (if rep_eq x y then ps
 	       else 
 		 try 
 		   if find_string x = find_string y 
@@ -823,7 +827,18 @@ let eqs_elim (ts_seq : ts_sequent) : ts_sequent =
 		     (* We are trying to prove two different strings
 		     have the same value, this is impossible.*)
 		     raise Contradiction 
-		 with Not_found -> true)
+		 with Not_found -> (
+		   try 
+		     (match !(find_record x).term,!(find_record y).term with
+		       FTRecord fld1, FTRecord fld2 -> 
+			 let fl1,rl1=List.split fld1 in
+			 let fl2,rl2=List.split fld2 in 
+			 if fl1=fl2 then 
+			   ((List.map (fun (x,y) -> EQ(x,y)) (List.combine rl1 rl2)) @ ps)
+			 else raise Contradiction 
+		     |  _ -> assert false)
+		   with Not_found ->  p::ps)
+		     )		     
 	     | NEQ(x,y) -> 
 		 (if rep_eq x y then raise Contradiction
 		 else 
@@ -837,12 +852,13 @@ let eqs_elim (ts_seq : ts_sequent) : ts_sequent =
 		       (* The two equivalence classes contain
 		       different strings, so the inequality must be
 		       true. So filter can drop it. *)
-		       false
+		       ps
 		   with 
 		     (* We know nothing, so leave it there *)
-		     Not_found -> true)
-	     | _  -> true) 
-	   pl2,sl2,cl2) 	  
+		     Not_found -> p::ps)
+	     | _  -> p::ps) 
+	   pl2 [],
+	 sl2,cl2) 	  
       with Contradiction ->  ([],[],[False])  in
     (ts, subst_sequent subst (f,(pl,sl,cl),rhs))
   with Contradiction -> raise Success 

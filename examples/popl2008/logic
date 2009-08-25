@@ -9,7 +9,7 @@ import "boolean_logic";
 rule val_cell_match : 
   | Val$Cell(?x,?y) |- Val$Cell(?x,?z) 
 without
-  ?y != ?z
+  |- ?y != ?z
 if
   Val$Cell(?x,?y) | |- ?y=?z 
 or
@@ -37,27 +37,9 @@ if
 
 
 /********************************************
- *   TODO: This should be dealt with by the framework
- ********************************************/
-rule content__hack :
-| |- { content=?t} = { content=?t2 }
-if
-| |- ?t=?t2 
-
-
-/********************************************
  *   TODO: Needs adding to basic arithmetic file
  ********************************************/
 rule bp :
   | |- builtin_plus(?x,?x) = builtin_plus(?y,?y) 
 if
   | |- ?x=?y 
-
-
-/********************************************
- *   TODO: This should be dealt with by the framework
- ********************************************/
-rule hack_neq :
-  | |- _x != nil()  
-if
-  | _x != nil() |-   

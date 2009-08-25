@@ -26,10 +26,11 @@ if
   If we have (a::alpha) @ beta = alpha, then we have a contradiction (since
   a::beta is non-empty) and we are done.
 */
+/*
 rule app_cons_first_contradiction_left:
   | app(cons(?a, ?alpha), ?beta) = ?alpha |-
 if
-
+*/
 /*
   Associativity Rule.
   Identity: (alpha @ beta) @ gamma = alpha @ (beta @ gamma).
@@ -50,5 +51,4 @@ without
   || app(app(?alpha, ?beta), ?gamma) = ?alpha
   || app(app(?alpha, ?beta), ?gamma) = ?beta
   || app(app(?alpha, ?beta), ?gamma) = ?gamma
-
 
