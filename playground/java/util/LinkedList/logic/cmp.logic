@@ -221,6 +221,8 @@ without
 */
 equiv lt_plus_first_eq1:
   ((?a + ?b) < ?a) <=> (?b < numeric_const("0"))
+without
+  (?a + ?b) = ?b
 
 /*
   Equivalence:
@@ -229,6 +231,8 @@ equiv lt_plus_first_eq1:
 */
 equiv lt_plus_first_eq2:
   ((?a + ?b) < ?b) <=> (?a < numeric_const("0"))
+without
+  (?a + ?b) = ?a
 
 /*
   Equivalence:
@@ -237,6 +241,8 @@ equiv lt_plus_first_eq2:
 */
 equiv lt_plus_second_eq1:
   (?a < (?a + ?b)) <=> (numeric_const("0") < ?b)
+without
+  (?a + ?b) = ?b
 
 /*
   Equivalence on LHS:
@@ -245,6 +251,8 @@ equiv lt_plus_second_eq1:
 */
 equiv lt_plus_second_eq2:
   (?b < (?a + ?b)) <=> (numeric_const("0") < ?a)
+without
+  (?a + ?b) = ?a
 
 /*
   Equivalence.
@@ -332,6 +340,9 @@ equiv lt_plus_le:
 equiv le_plus_le:
   ((numeric_const(?n) + ?x) <= ?y) => (?x <= ?y)
 
+equiv le_plus_le:
+  ((?x + numeric_const(?n)) <= ?y) => (?x <= ?y)
+
 /*
   Implication:
       x < y
@@ -356,9 +367,9 @@ equiv lt_le_plus:
 equiv le_le_plus:
   (?x <= ?y) => (?x <= (numeric_const(?n) + ?y))
 
-/*equiv le_disj:
+equiv le_disj:
   (?a <= ?b) <=> ?a = ?b || (?a < ?b)
-*/
+
 /*rule lt_transitivity_left:
   | (?a < ?b) |-
 if

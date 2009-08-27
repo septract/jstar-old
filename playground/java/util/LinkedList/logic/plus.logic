@@ -1,13 +1,11 @@
 /**************************************
  * Some simple properties of addition *
- **************************************/
+**************************************/
 
-/*
-  False statement:
-    0 = 1.
-*/
-equiv zero_neq_one:
-  "0" = "1" <=> False
+equiv num_eq_num:
+  numeric_const(?x) = numeric_const(?y) <=> ?x = ?y
+without
+  ?x = ?y
 
 /*
   Equivalence:
@@ -17,7 +15,11 @@ equiv zero_neq_one:
 equiv plus_inj_first:
   (?x + ?y) = (?x + ?z) <=> ?y = ?z
 without
-  ?y = ?z
+     ?y = ?z
+  || (?x + ?y) = ?x
+  || (?x + ?y) = ?y
+  || (?x + ?z) = ?x
+  || (?x + ?z) = ?z
 
 /*
   Equivalence:
@@ -27,7 +29,12 @@ without
 equiv plus_inj_second:
   (?y + ?x) = (?z + ?x) <=> ?y = ?z
 without
-  ?y = ?z
+     ?y = ?z
+  || (?x + ?y) = ?x
+  || (?x + ?y) = ?y
+  || (?x + ?z) = ?x
+  || (?x + ?z) = ?z
+ 
 
 /*
   Equality:

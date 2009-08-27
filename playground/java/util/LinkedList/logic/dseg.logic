@@ -19,10 +19,12 @@
 
   Argument "i" is a field pointing to the first node of the list segment, "j"
   points to the last node.
-  The fields "ip" and "jn" point to the nodes in front of the list segment and the node following afte
+  The fields "ip" is the previous pointer of the first node (pointed to by i) and
+  similarly "jn" is the next pointer of the last node (pointed to by j).
+  The argument ls is a list of the elements represented by the predicate.
 
   Inductive definition:
-    dseg(i, ip, jn, j, empty()) := emp * i = jn * j = ip
+    dseg(i, ip, jn, j, empty()) := emp /\ i = jn /\ j = ip
 
     dseg(i, ip, jn, j, cons(a, alpha)) :=
       i.<Entry: Entry prev> |-> ip *
@@ -30,43 +32,71 @@
       i.<Entry: Object element> |-> a *
       dseg(_in ,i ,jn ,j ,alpha)
 
-  
+  The dseg_ne predicate defines a non-empty list segment (i != jn and j != ip).
+  Furthermore, dseg and dseg_ne describe non-touching (non-circular) list
+  segments.
 */
 
 /**
- * Empty list segments.
+ * Empty list segment.
  */
 
+/*
+  Equivalence (definition of empty list segment).
+*/
 equiv dseg_empty1:
   dseg(?i, ?j, ?i, ?j, ?ls) <=> ?ls = empty()
 
+/*
+  Equivalence (definition of empty list segment).
+*/
 equiv dseg_empty2:
   dseg(?i, ?ip, ?jn, ?j, empty()) <=> ?i = ?jn * ?ip = ?j
 
 /**
- * Contradictions.
+ * Contradictions: a list segment given by dseg_ne must not be empty.
  */
 
-equiv dseg_ne1:
+/*
+  Contradiction (dseg_ne describes non-empty list segement).
+*/
+equiv dseg_ne_empty1:
   dseg_ne(?i, ?ip, ?jn, ?j, ?l) => ?i = ?jn <=> False
 
-equiv dseg_ne2:
+/*
+  Contradiction (dseg_ne describes non-empty list segement).
+*/
+equiv dseg_ne_empty2:
   dseg_ne(?i, ?ip, ?jn, ?j, ?l) => ?j = ?ip <=> False
 
-equiv dseg_ne3:
+/*
+  Contradiction (dseg_ne describes non-empty list segement).
+*/
+equiv dseg_ne_empty3:
   ?i = ?jn => dseg_ne(?i, ?ip, ?jn, ?j, ?l) <=> False
 
-equiv dseg_ne4:
+/*
+  Contradiction (dseg_ne describes non-empty list segement).
+*/
+equiv dseg_ne_empty4:
   ?j = ?ip => dseg_ne(?i, ?ip, ?jn, ?j, ?l) <=> False
 
-equiv dseg_ne5:
+/*
+  Contradiction (dseg_ne describes non-empty list segement).
+*/
+equiv dseg_ne_empty5:
   dseg_ne(?i, ?ip, ?i, ?j, ?l) <=> False
 
-equiv dseg_ne6:
+/*
+  Contradiction (dseg_ne describes non-empty list segement).
+*/
+equiv dseg_ne_empty6:
   dseg_ne(?i, ?j, ?jn, ?j, ?l) <=> False
 
-/* List segments are non-touching! */
-
+/*
+  Contradiction.
+    A heap cannot split into two part containing the same field.
+*/
 equiv dseg_dseg_contradiction1:
   dseg_ne(?i, ?ip, ?jn, ?j, ?l1) * dseg_ne(?i, ?kp, ?mn, ?m, ?l2) <=> False
 
@@ -74,68 +104,78 @@ equiv dseg_dseg_contradiction2:
       dseg_ne(?i, ?ip, ?jn, ?j, ?l1) * dseg_ne(?k, ?kp, ?mn, ?m, ?l2)
   =>  ?i = ?k <=> False
 
+/**
+ * List segments are non-touching!
+ */
+
+/*
+  Contradiction (list segments are non-touching).
+    dseg_ne is a predicate defining non-touching list segments and thus,
+    the pointer to the first node is not allowed to be the same a the
+    pointer to the previous node (in front of the list).
+*/
 equiv dseg_non_circular_front1:
   desg_ne(?i, ?ip, ?jn, ?j, ?l) => ?i = ?ip <=> False
 
+/*
+  Contradiction (list segments are non-touching).
+    The pointer to the last node, j, must not coincide with the pointer to the
+    next node (which comes after the list segment).
+*/
 equiv dseg_non_circular_back1:
   desg_ne(?i, ?ip, ?jn, ?j, ?l) => ?j = ?jn <=> False
 
+/*
+  Contradiction (list segments are non-touching).
+    Variant of the dseg_non_circular_front1 rule.
+*/
 equiv dseg_non_circular_front2:
   ?i = ?ip => desg_ne(?i, ?ip, ?jn, ?j, ?l) <=> False
 
+/*
+  Contradiction (list segments are non-touching).
+    Variant of the dseg_non_circular_back1 rule.
+*/
 equiv dseg_non_circular_back2:
   ?j = ?jp => desg_ne(?i, ?ip, ?jn, ?j, ?l) <=> False
 
+/*
+  Contradiction (list segments are non-touching).
+    Variant of the dseg_non_circular_front1 rule.
+*/
 equiv dseg_non_circular_front3:
   desg_ne(?i, ?i, ?jn, ?j, ?l) <=> False
 
+/*
+  Contradiction (list segments are non-touching).
+    Variant of the dseg_non_circular_back1 rule.
+*/
 equiv dseg_non_circular_back3:
   desg_ne(?i, ?ip, ?j, ?j, ?l) <=> False
 
-/*rule dseg_non_circular_front_left2:
-  | desg_ne(?i, ?ip, ?i, ?j, ?l) |-
-if
-
-rule dseg_non_circular_back_left2:
-  | desg_ne(?i, ?j, ?jn, ?j, ?l) |-
-if
-
-rule dseg_non_circular_front_right:
-  | |- desg_ne(?i, ?ip, ?i, ?j, ?l)
-if
-  | |- False
-
-rule dseg_non_circular_back_right:
-  | |- desg_ne(?i, ?j, ?jn, ?j, ?l)
-if
-  | |- False*/
-
 /*
-rule dseg_app_expand:
-  | dseg_ne(?i, ?ip, ?jn, ?j, app(?alpha, ?beta))
-    |- dseg_ne(?kn, ?k, ?jn, ?j, ?beta)
-if
-  | dseg(?i, ?ip, _mn, _m, ?alpha) * dseg(_mn, _m, ?jn, ?j, ?beta)
-    |- dseg_ne(?kn, ?k, ?jn, ?j, ?beta)
+  Equivalence.
+    If a list contains only one element, then the first and the last node are
+    the same.
+    Side condition prevents repeated application of the rule.
 */
-
 equiv dseg_singleton:
-  dseg_ne(?i, ?ip, ?jn, ?j, cons(?a, empty())) <=>  ?i = ?j * dseg_ne(?i, ?ip, ?jn, ?j, cons(?a, empty()))
+      dseg_ne(?i, ?ip, ?jn, ?j, cons(?a, empty()))
+  <=> ?i = ?j * dseg_ne(?i, ?ip, ?jn, ?j, cons(?a, empty()))
 without
   ?i = ?j
 
 /** Doubly-linked list segments (dseg). **/
 
-  /** Non-empty list segment. **/
+/*
+  Equivalence.
+   All non-empty "dseg" list segements are converted to dseg_ne list segments.
+*/
 equiv dseg_non_empty1:
   ?i != ?jn => dseg(?i, ?ip, ?jn, ?j, ?l) <=> dseg_ne(?i, ?ip, ?jn, ?j, ?l)
-/*without
-  ?l = cons(?a, ?alpha)*/
 
 equiv dseg_non_empty2:
   ?j != ?ip => dseg(?i, ?ip, ?jn, ?j, ?l) <=> dseg_ne(?i, ?ip, ?jn, ?j, ?l)
-/*without
-  ?l = cons(?a, ?alpha)*/
 
 equiv dseg_non_empty3:
       dseg(?i, ?ip, ?jn, ?j, cons(?a, ?alpha))
@@ -176,9 +216,9 @@ if
 
 /** Expand list segment when neccessary. **/
   /** First element **/
-
 rule dseg_cons_expand:
-  | dseg_ne(?i, ?ip, ?jn, j, cons(?a, ?alpha)) |- dseg_ne(?i, ?ip2, ?jn2, ?j2, cons(?a2, ?alpha2))
+  | dseg_ne(?i, ?ip, ?jn, j, cons(?a, ?alpha))
+    |- dseg_ne(?i, ?ip2, ?jn2, ?j2, cons(?a2, ?alpha2))
 if
   | dseg_ne(?i, ?ip, ?jn, j, cons(?a, ?alpha))
     |- node(?i, ?ip2, _m2, ?a2) * dseg(_m2, ?i, ?jn2, ?j2, ?alpha2)
@@ -275,18 +315,38 @@ if
 /* Maybe can find a more general rule? */
 rule dseg_app_rollup_left2:
   | dseg_ne(?i, ?ip, ?jn, ?j, ?alpha) * dseg_ne(?jn, ?j, ?kn, ?k, ?beta)
-    |- dseg_ne(?i, ?ip2, ?kn2, ?k, ?list)
+    |- dseg_ne(?i, ?ip, ?kn, ?k, ?list)
 if
-  | dseg_ne(?i, ?ip, ?kn, ?k, app(?alpha, ?beta))
-    |- dseg_ne(?i, ?ip2, ?kn2, ?k, ?list)
+  dseg_ne(?i, ?ip, ?jn, ?j, ?alpha) * dseg_ne(?jn, ?j, ?kn, ?k, ?beta) |
+    |- ?list = app(?alpha, ?beta)
+
+/*rule dseg_app_rollup_left2:
+  | dseg_ne(?i, ?ip, ?jn, ?j, ?alpha) * dseg_ne(?jn, ?j, ?kn, ?k, ?beta)
+    |- dseg_ne(?i, ?ip, ?kn, ?k, ?list)
+if
+  dseg_ne(?i, ?ip, ?kn, ?k, app(?alpha, ?beta)) |
+    |- dseg_ne(?i, ?ip, ?kn, ?k, ?list)*/
 
 rule dseg_app_rollup_left3:
-  | dseg_ne(?i, ?ip, ?jn, ?j, ?alpha) * dseg_ne(?jn, ?j, ?ln, ?l, ?beta)
-  * dseg_ne(?ln, ?l, ?kn, ?k, ?gamma)
-    |- dseg_ne(?i, ?ip2, ?kn2, ?k, ?list)
+  | dseg_ne(?i, ?ip, ?jn, ?j, ?alpha)
+           * dseg_ne(?jn, ?j, ?ln, ?l, ?beta)
+                    * dseg_ne(?ln, ?l, ?kn, ?k, ?gamma)
+      |- dseg_ne(?i, ?ip, ?kn, ?k, ?list)
 if
-  | dseg_ne(?i, ?ip, ?kn, ?k, app(?alpha, app(?beta, ?gamma)))
-    |- dseg_ne(?i, ?ip2, ?kn2, ?k, ?list)
+  dseg_ne(?i, ?ip, ?jn, ?j, ?alpha) *
+  dseg_ne(?jn, ?j, ?ln, ?l, ?beta)  *
+  dseg_ne(?ln, ?l, ?kn, ?k, ?gamma) |
+      |- ?list = app(?alpha, app(?beta, ?gamma))
+
+rule dseg_app_rollup_left_trans:
+  | dseg_ne(?i, ?ip, ?jn, ?j, ?alpha)
+           * dseg_ne(?jn, ?j, ?ln, ?l, ?beta)
+                    * dseg_ne(?m, ?mp, ?kn, ?k, ?gamma)
+      |- dseg_ne(?i, ?ip, ?kn, ?k, ?list)
+if
+  dseg_ne(?i, ?ip, ?ln, ?l, app(?alpha, ?beta)) |
+    dseg_ne(?m, ?mp, ?kn, ?k, ?gamma)
+      |- dseg_ne(?ln, ?l, ?kn, ?k, ?list) * ?list = app(app(?alpha, ?beta), ?delta)
 
 rule node_expand_right:
   | node(?i, ?ip1, ?in1, ?a1) |- node(?i, ?ip2, ?in2, ?a2)

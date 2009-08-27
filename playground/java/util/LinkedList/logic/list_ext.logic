@@ -10,10 +10,10 @@
 rewrite app_cons:
   app(cons(?a, ?alpha), ?beta) = cons(?a, app(?alpha, ?beta))
 without
-     app(cons(?a, ?alpha), ?beta) = cons(?a, ?alpha)
+/*     app(cons(?a, ?alpha), ?beta) = cons(?a, ?alpha)
   || app(cons(?a, ?alpha), ?beta) = cons(?a, ?beta)
   || app(cons(?a, ?alpha), ?beta) = ?alpha
-  || app(cons(?a, ?alpha), ?beta) = ?beta
+  || app(cons(?a, ?alpha), ?beta) = ?beta*/
 
 /*
   Equivalence.
@@ -190,3 +190,6 @@ rule cons_app_second_contradiction_left:
   | cons(?a, app(?alpha, ?beta)) = ?beta |-
 if
 */
+
+equiv app_cons_empty:
+  cons(?a, ?alpha) = app(cons(?a, empty), ?alpha) <=>

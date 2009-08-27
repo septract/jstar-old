@@ -22,6 +22,8 @@ rewrite length_empty*:
 */
 rewrite length_app*:
   length(app(?alpha, ?beta)) = (length(?alpha) + length(?beta))
+without
+  length(app(?alpha, ?beta)) = (?x + ?y)
 
 /*
   Length of a singleton list.

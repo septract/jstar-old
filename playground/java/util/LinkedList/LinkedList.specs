@@ -40,14 +40,14 @@ class java.util.AbstractSequentialList {
 }
 
 class java.util.LinkedList {
-  export LinkedList(x, {handle=h; head=n; tail=p; list=l}) =
+  export LinkedList(x, {list=l}) =
       length(l) = _s
     * AbstractSequentialList$java.util.AbstractSequentialList(x, {modCount=_modCount})
     * x.<java.util.LinkedList: int size> |-> _s
-    * x.<java.util.LinkedList: java.util.LinkedList$Entry header> |-> h
-    * h.<java.util.LinkedList$Entry: java.util.LinkedList$Entry next> |-> n
-    * h.<java.util.LinkedList$Entry: java.util.LinkedList$Entry previous> |-> p
-    * dseg(n, h, h, p, l);
+    * x.<java.util.LinkedList: java.util.LinkedList$Entry header> |-> _h
+    * _h.<java.util.LinkedList$Entry: java.util.LinkedList$Entry next> |-> _n
+    * _h.<java.util.LinkedList$Entry: java.util.LinkedList$Entry previous> |-> _p
+    * dseg(_n, _h, _h, _p, l);
 
   export LinkedListInternal(x, {handle=h; head=n; tail=p; list=l}) =
       length(l) = _s
@@ -59,7 +59,7 @@ class java.util.LinkedList {
 
   void <init>():
     {}
-    {LinkedList$java.util.LinkedList(@this:, {handle=_h; head=_h; tail=_h; list=empty()})}
+    {LinkedList$java.util.LinkedList(@this:, {list=empty()})}
 
   /** Private method. Specification closely matches the implementation. **/
   java.util.LinkedList$Entry addBefore(java.lang.Object, java.util.LinkedList$Entry):
@@ -76,12 +76,12 @@ class java.util.LinkedList {
     }
 
   void addFirst(java.lang.Object):
-    {LinkedList$(@this:, {handle=_h; head=_n1; tail=_p1; list=_alpha})}
-    {LinkedList$(@this:, {handle=_h; head=_n2; tail=_p2; list=cons(@parameter0:, _alpha)})}
+    {LinkedList$(@this:, {list=_alpha})}
+    {LinkedList$(@this:, {list=cons(@parameter0:, _alpha)})}
 
   void addLast(java.lang.Object):
-    {LinkedList$(@this:, {handle=_h; head=_n1; tail=_p1; list=_alpha})}
-    {LinkedList$(@this:, {handle=_h; head=_n2; tail=_p2; list=app(_alpha, cons(@parameter0:, empty()))})}
+    {LinkedList$(@this:, {list=_alpha})}
+    {LinkedList$(@this:, {list=app(_alpha, cons(@parameter0:, empty()))})}
 
   /** Private method. Specification closely matches the implementation. **/
   java.lang.Object remove(java.util.LinkedList$Entry):
@@ -107,66 +107,66 @@ class java.util.LinkedList {
     }
 
   java.lang.Object removeLast():
-    {LinkedList$(@this:, {handle=_h; head=_n; tail=_p; list=empty()})}
-    {LinkedList$(@this:, {handle=_h; head=_n; tail=_p; list=empty()})}
+    {LinkedList$(@this:, {list=empty()})}
+    {LinkedList$(@this:, {list=empty()})}
   andalso
     {_l = app(_l1, cons(_a, empty()))
-      * LinkedList$(@this:, {handle=_h; head=_n1; tail=_p1; list=_l})}
+      * LinkedList$(@this:, {list=_l})}
     {$ret_var = _a
-      * LinkedList$(@this:, {handle=_h; head=_n2; tail=_p2; list=_l1})
+      * LinkedList$(@this:, {list=_l1})
     }
 
   java.lang.Object removeFirst():
-    {LinkedList$(@this:, {handle=_h; head=_n; tail=_p; list=empty()})}
-    {LinkedList$(@this:, {handle=_h; head=_n; tail=_p; list=empty()})}
+    {LinkedList$(@this:, {list=empty()})}
+    {LinkedList$(@this:, {list=empty()})}
   andalso
     {_l = cons(_a, _l1)
-      * LinkedList$(@this:, {handle=_h; head=_n1; tail=_p1; list=_l})}
+      * LinkedList$(@this:, {list=_l})}
     {$ret_var = _a
-      * LinkedList$(@this:, {handle=_h; head=_n2; tail=_p2; list=_l1})
+      * LinkedList$(@this:, {list=_l1})
     }
 
   java.lang.Object getFirst():
-    {LinkedList$(@this:, {handle=_h; head=_n; tail=_p; list=empty()})}
-    {LinkedList$(@this:, {handle=_h; head=_n; tail=_p; list=empty()})
+    {LinkedList$(@this:, {list=empty()})}
+    {LinkedList$(@this:, {list=empty()})
       * $ret_var = nil()}
   andalso
-    {LinkedList$(@this:, {handle=_h; head=_n; tail=_p; list=cons(_a, _alpha)})}
-    {LinkedList$(@this:, {handle=_h; head=_n; tail=_p; list=cons(_a, _alpha)})
+    {LinkedList$(@this:, {list=cons(_a, _alpha)})}
+    {LinkedList$(@this:, {list=cons(_a, _alpha)})
       * $ret_var = _a
     }
 
   java.lang.Object getLast():
-    {LinkedList$(@this:, {handle=_h; head=_n; tail=_p; list=empty()})}
-    {LinkedList$(@this:, {handle=_h; head=_n; tail=_p; list=empty()})
+    {LinkedList$(@this:, {list=empty()})}
+    {LinkedList$(@this:, {list=empty()})
       * $ret_var = nil()}
   andalso
-    {LinkedList$(@this:, {handle=_h; head=_n; tail=_p; list=app(_alpha, cons(_a, empty()))})}
-    {LinkedList$(@this:, {handle=_h; head=_n; tail=_p; list=app(_alpha, cons(_a, empty()))})
+    {LinkedList$(@this:, {list=app(_alpha, cons(_a, empty()))})}
+    {LinkedList$(@this:, {list=app(_alpha, cons(_a, empty()))})
       * $ret_var = _a
     }
 
   int size():
-    {LinkedList$(@this:, {handle=_h; head=_n; tail=_p; list=_l})}
-    {LinkedList$(@this:, {handle=_h; head=_n; tail=_p; list=_l})
+    {LinkedList$(@this:, {list=_l})}
+    {LinkedList$(@this:, {list=_l})
       * $ret_var = length(_l)
     }
 
   void clear():
-    {LinkedList$(@this:, {handle=_h; head=_n1; tail=_p1; list=_l})}
-    {LinkedList$(@this:, {handle=_h; head=_n2; tail=_p2; list=empty()})}
+    {LinkedList$(@this:, {list=_l})}
+    {LinkedList$(@this:, {list=empty()})}
 
   int indexOf(java.lang.Object):
-    {LinkedList$(@this:, {handle=_h; head=_n1; tail=_p1; list=_l})
+    {LinkedList$(@this:, {list=_l})
       * list_without(_l, @parameter0:)}
-    {LinkedList$(@this:, {handle=_h; head=_n1; tail=_p1; list=_l})
+    {LinkedList$(@this:, {list=_l})
       * $ret_var = numeric_const("-1")}
   andalso
-    {LinkedList$(@this:, {handle=_h; head=_n1; tail=_p1; list=_l})
+    {LinkedList$(@this:, {list=_l})
       * _l = app(_l1, cons(_a, _l2))
       * list_without(_l1)
       * _a = @parameter0:}
-    {LinkedList$(@this:, {handle=_h; head=_n1; tail=_p1; list=_l})
+    {LinkedList$(@this:, {list=_l})
       * $ret_var = length(_l1)}
 
   java.lang.Object get(int):
@@ -176,19 +176,19 @@ class java.util.LinkedList {
       * dseg(_n, _h, _k, _j, _l1)
       * node(_k, _j, _m, _a)
       * dseg(_m, _k, _h, _p, _l2)}
-    {LinkedList$(@this:, {handle=_h; head=_n; tail=_p; list=_l})
+    {LinkedList$(@this:, {list=_l})
       * $ret_var = _a
     }
 
   java.util.LinkedList$Entry entry(int):
-    /*{LinkedList$(@this:, {handle=_h; head=_n; tail=_p; list=_l})
+    /*{LinkedList$(@this:, {list=_l})
       * LT(@parameter0:, numeric_const(0))}
-    {LinkedList$(@this:, {handle=_h; head=_n; tail=_p; list=_l})
+    {LinkedList$(@this:, {list=_l})
       * $ret_var = nil()}
   andalso
-    {LinkedList$(@this:, {handle=_h; head=_n; tail=_p; list=_l})
+    {LinkedList$(@this:, {list=_l})
       * LE(length(_l), @parameter0:)}
-    {LinkedList$(@this:, {handle=_h; head=_n; tail=_p; list=_l})
+    {LinkedList$(@this:, {list=_l})
       * $ret_var = nil()}
   andalso*/
     {LinkedListInternal$(@this:, {handle=_h; head=_n; tail=_p; list=_l})
@@ -197,7 +197,7 @@ class java.util.LinkedList {
       * dseg(_n, _h, _k, _j, _l1)
       * node(_k, _j, _m, _a)
       * dseg(_m, _k, _h, _p, _l2)}
-    {LinkedList$(@this:, {handle=_h; head=_n; tail=_p; list=_l})
+    {LinkedList$(@this:, {list=_l})
       * $ret_var = _k
     }
 
@@ -245,8 +245,8 @@ class java.util.LinkedList {
       * @parameter0:.<java.util.LinkedList: int modCount> |-> _modcount}
     {   @parameter2:.<java.util.LinkedList$Entry: java.util.LinkedList$Entry previous> |-> _new
       * _prev.<java.util.LinkedList$Entry: java.util.LinkedList$Entry next> |-> _new
-      * @parameter0:.<java.util.LinkedList: int size> |-> (_size + numeric_const(1))
-      * @parameter0:.<java.util.LinkedList: int modCount> |-> (_modcount + numeric_const(1))
+      * @parameter0:.<java.util.LinkedList: int size> |-> (numeric_const(1) + _size)
+      * @parameter0:.<java.util.LinkedList: int modCount> |-> (numeric_const(1) + _modcount)
       * node(_new, _prev, @parameter2:, @parameter1:)
       * $ret_var = _new
     }
