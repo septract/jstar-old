@@ -1,0 +1,10 @@
+Goal
+r_729 = v_314 = **first**  * r_730 = @this: = r0  *
+r_742 = numeric_const(0) = length(empty()) = $i0    |  |  False  |-  |  False
+
+Start time :0.220013 
+Foo
+
+====================Start rewrites=======================================Finished rewrites====================
+
+End time :0.220013 

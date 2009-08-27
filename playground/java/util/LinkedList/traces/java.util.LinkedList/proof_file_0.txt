@@ -1,0 +1,35 @@
+Goal
+r_2 = @this: = r0   
+| 
+  | field(@this:, <java.util.LinkedList: long serialVersionUID>,
+          numeric_const(0)) *
+    field(@this:, <java.util.LinkedList: int size>, numeric_const(0)) *
+    field(@this:, <java.util.LinkedList: java.util.LinkedList$Entry header>,
+          nil())
+   
+|-  |  
+
+Start time :0.068004 
+Foo
+
+====================Start rewrites=======================================Finished rewrites====================
+
+
+
+====================Start rewrites=======================================Finished rewrites====================
+
+>r_2 = @this: = r0   
+ | 
+   | field(@this:, <java.util.LinkedList: java.util.LinkedList$Entry header>,
+           nil()) *
+     field(@this:, <java.util.LinkedList: int size>, numeric_const(0)) *
+     field(@this:, <java.util.LinkedList: long serialVersionUID>,
+           numeric_const(0))
+    
+ |-  |  
+
+
+
+====================Start rewrites=======================================Finished rewrites====================
+
+End time :0.072004 

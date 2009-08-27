@@ -1,0 +1,114 @@
+Goal
+r_7451 = app(r_7450, r_7468) = v_341  * r_7453 = @this: = r0  *
+r_7456 = $r3 = $r4  * r_7465 = nil() = $n0  * r_7467 = r2 = r1   
+| 
+  | field(@this:, <java.util.LinkedList: java.util.LinkedList$Entry header>,
+          $r3) *
+    dseg_ne(r_7457, nil(), nil(), r_7457, cons(nil(), empty())) *
+    field($r3, <java.util.LinkedList$Entry: java.util.LinkedList$Entry next>,
+          r_7457) *
+    field(@this:, <java.util.LinkedList: int size>, length(v_341)) *
+    field(@this:, <java.util.AbstractList: int modCount>, r_7462) *
+    field($r3,
+          <java.util.LinkedList$Entry: java.util.LinkedList$Entry previous>,
+          r_7455) *
+    dseg_ne(r_7464, nil(), nil(), r_7464, cons(nil(), empty()))
+  (r_7468 = empty() * r2 = $r3 * r_7455 = r_7464 |  )
+  || ( | dseg_ne(r2, r_7464, $r3, r_7455, r_7468) ) 
+|- 
+   | field(@this:, <java.util.LinkedList: java.util.LinkedList$Entry header>,
+           _v_2386)
+   
+
+Start time :3.396212 
+Foo
+
+====================Start rewrites=======================================Finished rewrites====================
+
+
+
+====================Start rewrites=======================================Finished rewrites====================
+
+>r_7451 = app(r_7450, r_7468) = v_341  * r_7453 = @this: = r0  *
+ r_7456 = $r3 = $r4  * r_7465 = nil() = $n0  * r_7467 = r2 = r1   
+ | 
+   | dseg_ne(r_7464, nil(), nil(), r_7464, cons(nil(), empty())) *
+     field($r3,
+           <java.util.LinkedList$Entry: java.util.LinkedList$Entry previous>,
+           r_7455) *
+     field(@this:, <java.util.AbstractList: int modCount>, r_7462) *
+     field(@this:, <java.util.LinkedList: int size>, length(v_341)) *
+     field($r3,
+           <java.util.LinkedList$Entry: java.util.LinkedList$Entry next>,
+           r_7457) *
+     dseg_ne(r_7457, nil(), nil(), r_7457, cons(nil(), empty())) *
+     field(@this:, <java.util.LinkedList: java.util.LinkedList$Entry header>,
+           $r3)
+   (r_7468 = empty() * r2 = $r3 * r_7455 = r_7464 |  )
+   || ( | dseg_ne(r2, r_7464, $r3, r_7455, r_7468) ) 
+ |- 
+    | field(@this:,
+            <java.util.LinkedList: java.util.LinkedList$Entry header>,
+            _v_2386)
+    
+
+Rule: field_remove1
+
+Foo
+
+====================Start rewrites=======================================Finished rewrites====================
+
+
+
+====================Start rewrites=======================================Finished rewrites====================
+
+->r_7451 = app(r_7450, r_7468) = v_341  * r_7453 = @this: = r0  *
+  r_7456 = $r3 = $r4 = _v_2386  * r_7465 = nil() = $n0  * r_7467 = r2 = r1  
+  field(@this:, <java.util.LinkedList: java.util.LinkedList$Entry header>,
+        $r3)
+  | 
+    | dseg_ne(r_7464, nil(), nil(), r_7464, cons(nil(), empty())) *
+      field($r3,
+            <java.util.LinkedList$Entry: java.util.LinkedList$Entry previous>,
+            r_7455) *
+      field(@this:, <java.util.AbstractList: int modCount>, r_7462) *
+      field(@this:, <java.util.LinkedList: int size>, length(v_341)) *
+      field($r3,
+            <java.util.LinkedList$Entry: java.util.LinkedList$Entry next>,
+            r_7457) *
+      dseg_ne(r_7457, nil(), nil(), r_7457, cons(nil(), empty()))
+    (r_7468 = empty() * r2 = $r3 * r_7455 = r_7464 |  )
+    || ( | dseg_ne(r2, r_7464, $r3, r_7455, r_7468) ) 
+  |-  |  
+
+
+
+====================Start rewrites======================Using rule:
+length_app gives r_7517 = (length(r_7450) + length(r_7468))  
+equal to r_7466 = length(v_341) 
+.
+Rewritten to
+ r_7451 = app(r_7450, r_7468) = v_341  * r_7453 = @this: = r0  *
+ r_7456 = $r3 = $r4 = _v_2386  * r_7465 = nil() = $n0  * r_7467 = r2 = r1  *
+ r_7517 = (length(r_7450) + length(r_7468)) = length(v_341)  
+ field(@this:, <java.util.LinkedList: java.util.LinkedList$Entry header>, $r3)
+ | 
+   | dseg_ne(r_7464, nil(), nil(), r_7464, cons(nil(), empty())) *
+     field($r3,
+           <java.util.LinkedList$Entry: java.util.LinkedList$Entry previous>,
+           r_7455) *
+     field(@this:, <java.util.AbstractList: int modCount>, r_7462) *
+     field(@this:, <java.util.LinkedList: int size>,
+           (length(r_7450) + length(r_7468))) *
+     field($r3,
+           <java.util.LinkedList$Entry: java.util.LinkedList$Entry next>,
+           r_7457) *
+     dseg_ne(r_7457, nil(), nil(), r_7457, cons(nil(), empty()))
+   (r_7468 = empty() * r2 = $r3 * r_7455 = r_7464 |  )
+   || ( | dseg_ne(r2, r_7464, $r3, r_7455, r_7468) ) 
+ |-  |  
+
+
+====================Start rewrites=======================================Finished rewrites====================
+
+End time :3.404212 

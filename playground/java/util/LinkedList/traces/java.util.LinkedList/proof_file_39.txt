@@ -1,0 +1,111 @@
+Goal
+r_77 = v_295 = **first**  * r_81 = @this: = r0  * r_3389 = $r1 = $r2  *
+r_3403 = numeric_const(0) = length(empty())   
+| 
+  | field($r1,
+          <java.util.LinkedList$Entry: java.util.LinkedList$Entry previous>,
+          $r1) *
+    field(@this:, <java.util.LinkedList: java.util.LinkedList$Entry header>,
+          $r1) *
+    field(@this:, <java.util.LinkedList: int size>, numeric_const(0)) *
+    field($r1, <java.util.LinkedList$Entry: java.util.LinkedList$Entry next>,
+          $r1) *
+    field(@this:, <java.util.AbstractList: int modCount>, r_3399)
+   
+|- $r1 = r_3496 * _v_1168 = r_3495 *
+   <java.util.LinkedList: java.util.LinkedList$Entry header> = r_3494 *
+   @this: = r_3493 * _v_1173 = r_3492 * v_295 = r_3491 * _v_1169 = r_3490 *
+   <java.util.LinkedList: int size> = r_3489 * _v_1167 = r_3488 *
+   _v_1171 = r_3487 * _v_1170 = r_3486 * _v_1174 = r_3485 *
+   <java.util.LinkedList$Entry: java.util.LinkedList$Entry next> = r_3484 *
+   _v_1175 = r_3483 *
+   <java.util.LinkedList$Entry: java.util.LinkedList$Entry previous> = r_3482 *
+   _v_1172 = r_3481 * <java.util.LinkedList: int modCount> = r_3480 *
+   **second** = r_3479 | 
+   (r_3492 = r_3491 * r_3496 = r_3495 | field(r_3493, r_3494, r_3495) )
+   || (r_3492 = r_3479 * r_3496 != r_3495
+      | field(r_3493, r_3480, r_3481) * field(r_3487, r_3482, r_3483) *
+        field(r_3486, r_3484, r_3485) *
+        node(r_3496, r_3486, r_3487, r_3488) *
+        field(r_3493, r_3489, r_3490) * field(r_3493, r_3494, r_3495)
+      )
+
+Start time :1.380085 
+Foo
+
+====================Start rewrites=======================================Finished rewrites====================
+
+
+
+====================Start rewrites=======================================Finished rewrites====================
+
+>r_77 = v_295 = **first**  * r_81 = @this: = r0  * r_3389 = $r1 = $r2  *
+ r_3403 = numeric_const(0) = length(empty())   
+ | 
+   | field(@this:, <java.util.AbstractList: int modCount>, r_3399) *
+     field($r1,
+           <java.util.LinkedList$Entry: java.util.LinkedList$Entry next>, $r1) *
+     field(@this:, <java.util.LinkedList: int size>, numeric_const(0)) *
+     field(@this:, <java.util.LinkedList: java.util.LinkedList$Entry header>,
+           $r1) *
+     field($r1,
+           <java.util.LinkedList$Entry: java.util.LinkedList$Entry previous>,
+           $r1)
+    
+ |-  | 
+    (_v_1173 = v_295 * $r1 = _v_1168
+    | field(@this:,
+            <java.util.LinkedList: java.util.LinkedList$Entry header>,
+            _v_1168)
+    )
+    || (_v_1173 = **second** * $r1 != _v_1168
+       | field(@this:, <java.util.LinkedList: int modCount>, _v_1172) *
+         field(_v_1171,
+               <java.util.LinkedList$Entry: java.util.LinkedList$Entry previous>,
+               _v_1175) *
+         field(_v_1170,
+               <java.util.LinkedList$Entry: java.util.LinkedList$Entry next>,
+               _v_1174) *
+         node($r1, _v_1170, _v_1171, _v_1167) *
+         field(@this:, <java.util.LinkedList: int size>, _v_1169) *
+         field(@this:,
+               <java.util.LinkedList: java.util.LinkedList$Entry header>,
+               _v_1168)
+       )
+
+
+
+====================Start rewrites=======================================Finished rewrites====================
+
+Query external prover
+Case split on or right!
+Foo
+
+====================Start rewrites=======================================Finished rewrites====================
+
+
+
+====================Start rewrites=======================================Finished rewrites====================
+
+->r_81 = @this: = r0  * r_3389 = $r1 = $r2 = _v_1168  *
+  r_3403 = numeric_const(0) = length(empty())  *
+  r_3505 = _v_1173 = v_295 = **first**  
+  field(@this:, <java.util.LinkedList: java.util.LinkedList$Entry header>,
+        $r1)
+  | 
+    | field($r1,
+            <java.util.LinkedList$Entry: java.util.LinkedList$Entry previous>,
+            $r1) *
+      field(@this:, <java.util.LinkedList: int size>, numeric_const(0)) *
+      field($r1,
+            <java.util.LinkedList$Entry: java.util.LinkedList$Entry next>,
+            $r1) *
+      field(@this:, <java.util.AbstractList: int modCount>, r_3399)
+     
+  |-  |  
+
+
+
+====================Start rewrites=======================================Finished rewrites====================
+
+End time :1.388086 

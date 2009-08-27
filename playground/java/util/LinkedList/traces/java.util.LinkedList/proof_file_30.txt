@@ -1,0 +1,484 @@
+Goal
+r_60 = @this: = r0  * r_2200 = $r1 = $r2  *
+r_2214 = numeric_const(0) = length(empty())  * r_2314 = v_299 = **first**  *
+r_2342 = $r3 = $ret_var   
+| 
+  | field($r1, <java.util.LinkedList$Entry: java.util.LinkedList$Entry next>,
+          $r1) *
+    field(@this:, <java.util.LinkedList: int size>, numeric_const(0)) *
+    field(@this:, <java.util.AbstractList: int modCount>, r_2210) *
+    field($r1,
+          <java.util.LinkedList$Entry: java.util.LinkedList$Entry previous>,
+          $r1)
+  (v_299 = v_299 * $r3 = nil()
+  | field(@this:, <java.util.LinkedList: java.util.LinkedList$Entry header>,
+          $r1)
+  )
+  || (v_299 = **second** * $r3 = _v_879
+     | field(@this:, <java.util.LinkedList: int modCount>,
+             (_v_884 + numeric_const(1))) *
+       node($r1, nil(), nil(), nil()) *
+       field(_v_883,
+             <java.util.LinkedList$Entry: java.util.LinkedList$Entry previous>,
+             _v_882) *
+       field(_v_882,
+             <java.util.LinkedList$Entry: java.util.LinkedList$Entry next>,
+             _v_883) *
+       field(@this:, <java.util.LinkedList: int size>,
+             builtin_minus(_v_881, numeric_const(1))) *
+       field(@this:,
+             <java.util.LinkedList: java.util.LinkedList$Entry header>, $r1)
+     ) 
+|- v_299 = r_2473 * v_299 = r_2472 * empty() = r_2471 *
+   {list=r_2471} = r_2470 * @this: = r_2469 * **second** = r_2468 *
+   v_298 = r_2467 * {list=r_2467} = r_2466 * $r3 = r_2465 * v_296 = r_2464 | 
+    (r_2473 = r_2472 | LinkedList$java.util.LinkedList(r_2469, r_2470) )
+    || (r_2465 = r_2464 * r_2473 = r_2468
+       | LinkedList$java.util.LinkedList(r_2469, r_2466) )
+
+Start time :0.892055 
+Foo
+
+====================Start rewrites======================Using rule:
+plus_reorder_numeric_const_second gives r_2476 = (numeric_const(1) + _v_884) 
+ equal to r_2347 = (_v_884 + numeric_const(1)) 
+.
+Rewritten to
+ r_60 = @this: = r0  * r_2200 = $r1 = $r2  *
+ r_2214 = numeric_const(0) = length(empty())  * r_2314 = v_299 = **first**  *
+ r_2342 = $r3 = $ret_var  *
+ r_2476 = (numeric_const(1) + _v_884) = (_v_884 + numeric_const(1))   
+  | 
+    | field($r1,
+            <java.util.LinkedList$Entry: java.util.LinkedList$Entry next>,
+            $r1) *
+      field(@this:, <java.util.LinkedList: int size>, numeric_const(0)) *
+      field(@this:, <java.util.AbstractList: int modCount>, r_2210) *
+      field($r1,
+            <java.util.LinkedList$Entry: java.util.LinkedList$Entry previous>,
+            $r1)
+    (v_299 = v_299 * $r3 = nil()
+    | field(@this:,
+            <java.util.LinkedList: java.util.LinkedList$Entry header>, $r1)
+    )
+    || (v_299 = **second** * $r3 = _v_879
+       | field(@this:, <java.util.LinkedList: int modCount>,
+               (numeric_const(1) + _v_884)) *
+         node($r1, nil(), nil(), nil()) *
+         field(_v_883,
+               <java.util.LinkedList$Entry: java.util.LinkedList$Entry previous>,
+               _v_882) *
+         field(_v_882,
+               <java.util.LinkedList$Entry: java.util.LinkedList$Entry next>,
+               _v_883) *
+         field(@this:, <java.util.LinkedList: int size>,
+               builtin_minus(_v_881, numeric_const(1))) *
+         field(@this:,
+               <java.util.LinkedList: java.util.LinkedList$Entry header>, $r1)
+       ) 
+ |- v_296 = v_296 * $r3 = $r3 * {list=v_298} = {list=v_298} * v_298 = v_298 *
+    **second** = **second** * @this: = @this: *
+    {list=empty()} = {list=empty()} * empty() = empty() * v_299 = v_299 *
+    v_299 = v_299 | 
+    (v_299 = v_299 | LinkedList$java.util.LinkedList(@this:, {list=empty()})
+    )
+    || ($r3 = v_296 * v_299 = **second**
+       | LinkedList$java.util.LinkedList(@this:, {list=v_298}) )
+
+
+====================Start rewrites=======================================Finished rewrites====================
+
+
+
+====================Start rewrites=======================================Finished rewrites====================
+
+>r_60 = @this: = r0  * r_2200 = $r1 = $r2  *
+ r_2214 = numeric_const(0) = length(empty())  * r_2314 = v_299 = **first**  *
+ r_2342 = $r3 = $ret_var   
+ | 
+   | field($r1,
+           <java.util.LinkedList$Entry: java.util.LinkedList$Entry previous>,
+           $r1) *
+     field(@this:, <java.util.AbstractList: int modCount>, r_2210) *
+     field(@this:, <java.util.LinkedList: int size>, numeric_const(0)) *
+     field($r1,
+           <java.util.LinkedList$Entry: java.util.LinkedList$Entry next>, $r1)
+   (v_299 = v_299 * $r3 = nil()
+   | field(@this:, <java.util.LinkedList: java.util.LinkedList$Entry header>,
+           $r1)
+   )
+   || (v_299 = **second** * $r3 = _v_879
+      | field(@this:, <java.util.LinkedList: int modCount>,
+              (numeric_const(1) + _v_884)) *
+        node($r1, nil(), nil(), nil()) *
+        field(_v_883,
+              <java.util.LinkedList$Entry: java.util.LinkedList$Entry previous>,
+              _v_882) *
+        field(_v_882,
+              <java.util.LinkedList$Entry: java.util.LinkedList$Entry next>,
+              _v_883) *
+        field(@this:, <java.util.LinkedList: int size>,
+              builtin_minus(_v_881, numeric_const(1))) *
+        field(@this:,
+              <java.util.LinkedList: java.util.LinkedList$Entry header>, $r1)
+      ) 
+ |-  | 
+    (v_299 = v_299 | LinkedList$java.util.LinkedList(@this:, {list=empty()})
+    )
+    || ($r3 = v_296 * v_299 = **second**
+       | LinkedList$java.util.LinkedList(@this:, {list=v_298}) )
+
+
+
+====================Start rewrites=======================================Finished rewrites====================
+
+Query external prover
+FooElim eqs : v_299 = **second** *
+$r3 = _v_879
+Success : r_2483 = $r3 = $ret_var  * r_2484 = v_299 = **first**  *
+          r_2491 = numeric_const(0) = length(empty())  *
+          r_2498 = $r1 = $r2  * r_2506 = @this: = r0   
+          | v_299 = **second** * $r3 = _v_879
+            | field(@this:, <java.util.LinkedList: int modCount>,
+                    (numeric_const(1) + _v_884)) *
+              node($r1, nil(), nil(), nil()) *
+              field(_v_883,
+                    <java.util.LinkedList$Entry: java.util.LinkedList$Entry previous>,
+                    _v_882) *
+              field(_v_882,
+                    <java.util.LinkedList$Entry: java.util.LinkedList$Entry next>,
+                    _v_883) *
+              field(@this:, <java.util.LinkedList: int size>,
+                    builtin_minus(_v_881, numeric_const(1))) *
+              field(@this:,
+                    <java.util.LinkedList: java.util.LinkedList$Entry header>,
+                    $r1) *
+              field($r1,
+                    <java.util.LinkedList$Entry: java.util.LinkedList$Entry previous>,
+                    $r1) *
+              field(@this:, <java.util.AbstractList: int modCount>, r_2494) *
+              field(@this:, <java.util.LinkedList: int size>,
+                    numeric_const(0)) *
+              field($r1,
+                    <java.util.LinkedList$Entry: java.util.LinkedList$Entry next>,
+                    $r1)
+             
+          |-  | 
+             (v_299 = v_299
+             | LinkedList$java.util.LinkedList(@this:, {list=empty()}) 
+             )
+             || ($r3 = v_296 * v_299 = **second**
+                | LinkedList$java.util.LinkedList(@this:, {list=v_298}) 
+                )
+Elim eqs : v_299 = v_299 *
+$r3 = nil()
+
+
+====================Start rewrites=======================================Finished rewrites====================
+
+
+
+====================Start rewrites=======================================Finished rewrites====================
+
+->r_60 = @this: = r0  * r_2200 = $r1 = $r2  *
+  r_2214 = numeric_const(0) = length(empty())  *
+  r_2314 = v_299 = **first**  * r_2342 = $r3 = $ret_var = nil()   
+  | 
+    | field($r1,
+            <java.util.LinkedList$Entry: java.util.LinkedList$Entry next>,
+            $r1) *
+      field(@this:, <java.util.LinkedList: int size>, numeric_const(0)) *
+      field(@this:, <java.util.AbstractList: int modCount>, r_2210) *
+      field($r1,
+            <java.util.LinkedList$Entry: java.util.LinkedList$Entry previous>,
+            $r1) *
+      field(@this:,
+            <java.util.LinkedList: java.util.LinkedList$Entry header>, $r1)
+     
+  |-  | 
+     (v_299 = v_299 | LinkedList$java.util.LinkedList(@this:, {list=empty()})
+     )
+     || ($r3 = v_296 * v_299 = **second**
+        | LinkedList$java.util.LinkedList(@this:, {list=v_298}) )
+
+
+
+====================Start rewrites=======================================Finished rewrites====================
+
+Query external prover
+Case split on or right!
+Foo
+
+====================Start rewrites=======================================Finished rewrites====================
+
+
+
+====================Start rewrites=======================================Finished rewrites====================
+
+-->r_60 = @this: = r0  * r_2200 = $r1 = $r2  *
+   r_2214 = numeric_const(0) = length(empty())  *
+   r_2314 = v_299 = **first**  * r_2342 = $r3 = $ret_var = nil()   
+   | 
+     | field(@this:,
+             <java.util.LinkedList: java.util.LinkedList$Entry header>, $r1) *
+       field($r1,
+             <java.util.LinkedList$Entry: java.util.LinkedList$Entry previous>,
+             $r1) *
+       field(@this:, <java.util.AbstractList: int modCount>, r_2210) *
+       field(@this:, <java.util.LinkedList: int size>, numeric_const(0)) *
+       field($r1,
+             <java.util.LinkedList$Entry: java.util.LinkedList$Entry next>,
+             $r1)
+      
+   |-  | LinkedList$java.util.LinkedList(@this:, {list=empty()}) 
+
+Rule: apf_body_right_LinkedList
+
+Foo
+
+====================Start rewrites=======================================Finished rewrites====================
+
+
+
+====================Start rewrites=======================================Finished rewrites====================
+
+--->r_60 = @this: = r0  * r_2200 = $r1 = $r2  * r_2314 = v_299 = **first**  *
+    r_2342 = $r3 = $ret_var = nil()  *
+    r_2533 = length(empty()) = numeric_const(0)  
+    field(@this:, <java.util.LinkedList: int size>, length(empty()))
+    | 
+      | field($r1,
+              <java.util.LinkedList$Entry: java.util.LinkedList$Entry next>,
+              $r1) *
+        field(@this:, <java.util.AbstractList: int modCount>, r_2210) *
+        field($r1,
+              <java.util.LinkedList$Entry: java.util.LinkedList$Entry previous>,
+              $r1) *
+        field(@this:,
+              <java.util.LinkedList: java.util.LinkedList$Entry header>, $r1)
+       
+    |- 
+       | AbstractSequentialList$java.util.AbstractSequentialList(@this:,
+                                                                 {modCount=r_2531}) *
+         field(@this:,
+               <java.util.LinkedList: java.util.LinkedList$Entry header>,
+               r_2528) *
+         field(r_2528,
+               <java.util.LinkedList$Entry: java.util.LinkedList$Entry next>,
+               r_2529) *
+         field(r_2528,
+               <java.util.LinkedList$Entry: java.util.LinkedList$Entry previous>,
+               r_2527) *
+         dseg(r_2529, r_2528, r_2528, r_2527, empty())
+       
+
+Rule: field_remove1
+
+Foo
+
+====================Start rewrites=======================================Finished rewrites====================
+
+
+
+====================Start rewrites=======================================Finished rewrites====================
+
+---->r_60 = @this: = r0  * r_2200 = $r1 = $r2  *
+     r_2314 = v_299 = **first**  * r_2342 = $r3 = $ret_var = nil()  *
+     r_2533 = length(empty()) = numeric_const(0)  
+     field(@this:, <java.util.LinkedList: java.util.LinkedList$Entry header>,
+           $r1)*
+     field(@this:, <java.util.LinkedList: int size>, length(empty()))
+     | 
+       | field($r1,
+               <java.util.LinkedList$Entry: java.util.LinkedList$Entry next>,
+               $r1) *
+         field(@this:, <java.util.AbstractList: int modCount>, r_2210) *
+         field($r1,
+               <java.util.LinkedList$Entry: java.util.LinkedList$Entry previous>,
+               $r1)
+        
+     |- 
+        | AbstractSequentialList$java.util.AbstractSequentialList(@this:,
+                                                                  {modCount=r_2531}) *
+          field($r1,
+                <java.util.LinkedList$Entry: java.util.LinkedList$Entry next>,
+                r_2529) *
+          field($r1,
+                <java.util.LinkedList$Entry: java.util.LinkedList$Entry previous>,
+                r_2527) *
+          dseg(r_2529, $r1, $r1, r_2527, empty())
+        
+
+Rule: field_remove1
+
+Foo
+
+====================Start rewrites=======================================Finished rewrites====================
+
+
+
+====================Start rewrites=======================================Finished rewrites====================
+
+----->r_60 = @this: = r0  * r_2200 = $r1 = $r2  *
+      r_2314 = v_299 = **first**  * r_2342 = $r3 = $ret_var = nil()  *
+      r_2533 = length(empty()) = numeric_const(0)  
+      field($r1,
+            <java.util.LinkedList$Entry: java.util.LinkedList$Entry next>,
+            $r1)*
+      field(@this:,
+            <java.util.LinkedList: java.util.LinkedList$Entry header>, $r1)*
+      field(@this:, <java.util.LinkedList: int size>, length(empty()))
+      | 
+        | field($r1,
+                <java.util.LinkedList$Entry: java.util.LinkedList$Entry previous>,
+                $r1) *
+          field(@this:, <java.util.AbstractList: int modCount>, r_2210)
+         
+      |- 
+         | AbstractSequentialList$java.util.AbstractSequentialList(@this:,
+                                                                   {modCount=r_2531}) *
+           field($r1,
+                 <java.util.LinkedList$Entry: java.util.LinkedList$Entry previous>,
+                 r_2527) *
+           dseg($r1, $r1, $r1, r_2527, empty())
+         
+
+Rule: field_remove1
+
+Foo
+
+====================Start rewrites=======================================Finished rewrites====================
+
+
+
+====================Start rewrites=======================================Finished rewrites====================
+
+------>r_60 = @this: = r0  * r_2200 = $r1 = $r2  *
+       r_2314 = v_299 = **first**  * r_2342 = $r3 = $ret_var = nil()  *
+       r_2533 = length(empty()) = numeric_const(0)  
+       field($r1,
+             <java.util.LinkedList$Entry: java.util.LinkedList$Entry previous>,
+             $r1)*
+       field($r1,
+             <java.util.LinkedList$Entry: java.util.LinkedList$Entry next>,
+             $r1)*
+       field(@this:,
+             <java.util.LinkedList: java.util.LinkedList$Entry header>, $r1)*
+       field(@this:, <java.util.LinkedList: int size>, length(empty()))
+       |  | field(@this:, <java.util.AbstractList: int modCount>, r_2210)  
+       |- 
+          | AbstractSequentialList$java.util.AbstractSequentialList(@this:,
+                                                                    {modCount=r_2531}) *
+            dseg($r1, $r1, $r1, $r1, empty())
+          
+
+Rule: dseg_empty1_right
+
+Foo
+
+====================Start rewrites=======================================Finished rewrites====================
+
+
+
+====================Start rewrites=======================================Finished rewrites====================
+
+------->r_60 = @this: = r0  * r_2200 = $r1 = $r2  *
+        r_2314 = v_299 = **first**  * r_2342 = $r3 = $ret_var = nil()  *
+        r_2533 = length(empty()) = numeric_const(0)  
+        field($r1,
+              <java.util.LinkedList$Entry: java.util.LinkedList$Entry previous>,
+              $r1)*
+        field($r1,
+              <java.util.LinkedList$Entry: java.util.LinkedList$Entry next>,
+              $r1)*
+        field(@this:,
+              <java.util.LinkedList: java.util.LinkedList$Entry header>, $r1)*
+        field(@this:, <java.util.LinkedList: int size>, length(empty()))
+        |  | field(@this:, <java.util.AbstractList: int modCount>, r_2210)  
+        |- 
+           | AbstractSequentialList$java.util.AbstractSequentialList(
+             @this:, {modCount=r_2531})
+           
+
+Rule: apf_body_right_AbstractSequentialList
+
+Foo
+
+====================Start rewrites=======================================Finished rewrites====================
+
+
+
+====================Start rewrites=======================================Finished rewrites====================
+
+-------->r_60 = @this: = r0  * r_2200 = $r1 = $r2  *
+         r_2314 = v_299 = **first**  * r_2342 = $r3 = $ret_var = nil()  *
+         r_2533 = length(empty()) = numeric_const(0)  
+         field($r1,
+               <java.util.LinkedList$Entry: java.util.LinkedList$Entry previous>,
+               $r1)*
+         field($r1,
+               <java.util.LinkedList$Entry: java.util.LinkedList$Entry next>,
+               $r1)*
+         field(@this:,
+               <java.util.LinkedList: java.util.LinkedList$Entry header>, $r1)*
+         field(@this:, <java.util.LinkedList: int size>, length(empty()))
+         |  | field(@this:, <java.util.AbstractList: int modCount>, r_2210)  
+         |-  | AbstractList$java.util.AbstractList(@this:, {modCount=r_2534}) 
+
+Rule: apf_body_right_AbstractList
+
+Foo
+
+====================Start rewrites=======================================Finished rewrites====================
+
+
+
+====================Start rewrites=======================================Finished rewrites====================
+
+--------->r_60 = @this: = r0  * r_2200 = $r1 = $r2  *
+          r_2314 = v_299 = **first**  * r_2342 = $r3 = $ret_var = nil()  *
+          r_2533 = length(empty()) = numeric_const(0)  
+          field($r1,
+                <java.util.LinkedList$Entry: java.util.LinkedList$Entry previous>,
+                $r1)*
+          field($r1,
+                <java.util.LinkedList$Entry: java.util.LinkedList$Entry next>,
+                $r1)*
+          field(@this:,
+                <java.util.LinkedList: java.util.LinkedList$Entry header>,
+                $r1)*
+          field(@this:, <java.util.LinkedList: int size>, length(empty()))
+          |  | field(@this:, <java.util.AbstractList: int modCount>, r_2210)  
+          |-  | field(@this:, <java.util.AbstractList: int modCount>, r_2536) 
+
+Rule: field_remove1
+
+Foo
+
+====================Start rewrites=======================================Finished rewrites====================
+
+
+
+====================Start rewrites=======================================Finished rewrites====================
+
+---------->r_60 = @this: = r0  * r_2200 = $r1 = $r2  *
+           r_2314 = v_299 = **first**  * r_2342 = $r3 = $ret_var = nil()  *
+           r_2533 = length(empty()) = numeric_const(0)  
+           field(@this:, <java.util.AbstractList: int modCount>, r_2210)*
+           field($r1,
+                 <java.util.LinkedList$Entry: java.util.LinkedList$Entry previous>,
+                 $r1)*
+           field($r1,
+                 <java.util.LinkedList$Entry: java.util.LinkedList$Entry next>,
+                 $r1)*
+           field(@this:,
+                 <java.util.LinkedList: java.util.LinkedList$Entry header>,
+                 $r1)*
+           field(@this:, <java.util.LinkedList: int size>, length(empty()))
+           |  |    |-  |  
+
+
+
+====================Start rewrites=======================================Finished rewrites====================
+
+End time :0.916056 

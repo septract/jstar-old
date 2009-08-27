@@ -1,0 +1,120 @@
+Goal
+r_6599 = nil() = $n0  * r_6606 = r2 = r1  * r_6615 = $r3 = $r4  *
+r_6617 = v_341 = cons(r_6607, r_6605)  * r_6619 = @this: = r0   
+| 
+  | field(r_6614, <java.util.LinkedList$Entry: java.lang.Object element>,
+          nil()) *
+    field(r_6614,
+          <java.util.LinkedList$Entry: java.util.LinkedList$Entry next>,
+          nil()) *
+    field(r_6614,
+          <java.util.LinkedList$Entry: java.util.LinkedList$Entry previous>,
+          nil()) *
+    field($r3, <java.util.LinkedList$Entry: java.util.LinkedList$Entry next>,
+          r_6614) *
+    field(@this:, <java.util.LinkedList: int size>, length(v_341)) *
+    field(@this:, <java.util.AbstractList: int modCount>, r_6609) *
+    field($r3,
+          <java.util.LinkedList$Entry: java.util.LinkedList$Entry previous>,
+          r_6616) *
+    field(@this:, <java.util.LinkedList: java.util.LinkedList$Entry header>,
+          $r3)
+  (r_6605 = empty() * r2 = $r3 * r_6616 = r_6614 |  )
+  || ( | dseg_ne(r2, r_6614, $r3, r_6616, r_6605) ) 
+|-  |  
+
+Start time :2.952184 
+Foo
+
+====================Start rewrites=======================================Finished rewrites====================
+
+
+
+====================Start rewrites=======================================Finished rewrites====================
+
+>r_6599 = nil() = $n0  * r_6606 = r2 = r1  * r_6615 = $r3 = $r4  *
+ r_6617 = v_341 = cons(r_6607, r_6605)  * r_6619 = @this: = r0   
+ | 
+   | field(@this:, <java.util.LinkedList: java.util.LinkedList$Entry header>,
+           $r3) *
+     field($r3,
+           <java.util.LinkedList$Entry: java.util.LinkedList$Entry previous>,
+           r_6616) *
+     field(@this:, <java.util.AbstractList: int modCount>, r_6609) *
+     field(@this:, <java.util.LinkedList: int size>, length(v_341)) *
+     field($r3,
+           <java.util.LinkedList$Entry: java.util.LinkedList$Entry next>,
+           r_6614) *
+     field(r_6614,
+           <java.util.LinkedList$Entry: java.util.LinkedList$Entry previous>,
+           nil()) *
+     field(r_6614,
+           <java.util.LinkedList$Entry: java.util.LinkedList$Entry next>,
+           nil()) *
+     field(r_6614, <java.util.LinkedList$Entry: java.lang.Object element>,
+           nil())
+   (r_6605 = empty() * r2 = $r3 * r_6616 = r_6614 |  )
+   || ( | dseg_ne(r2, r_6614, $r3, r_6616, r_6605) ) 
+ |-  |  
+
+Rule: node_rollup_abs
+
+Foo
+
+====================Start rewrites=======================================Finished rewrites====================
+
+
+
+====================Start rewrites=======================================Finished rewrites====================
+
+->r_6599 = nil() = $n0  * r_6606 = r2 = r1  * r_6615 = $r3 = $r4  *
+  r_6617 = v_341 = cons(r_6607, r_6605)  * r_6619 = @this: = r0   
+  | 
+    | field(@this:,
+            <java.util.LinkedList: java.util.LinkedList$Entry header>, $r3) *
+      field($r3,
+            <java.util.LinkedList$Entry: java.util.LinkedList$Entry previous>,
+            r_6616) *
+      field(@this:, <java.util.AbstractList: int modCount>, r_6609) *
+      field(@this:, <java.util.LinkedList: int size>, length(v_341)) *
+      field($r3,
+            <java.util.LinkedList$Entry: java.util.LinkedList$Entry next>,
+            r_6614) *
+      node(r_6614, nil(), nil(), nil())
+    (r_6605 = empty() * r2 = $r3 * r_6616 = r_6614 |  )
+    || ( | dseg_ne(r2, r_6614, $r3, r_6616, r_6605) ) 
+  |-  |  
+
+Rule: dseg_node_rollup_abs
+
+Foo
+
+====================Start rewrites=======================================Finished rewrites====================
+
+
+
+====================Start rewrites=======================================Finished rewrites====================
+
+-->r_6599 = nil() = $n0  * r_6606 = r2 = r1  * r_6615 = $r3 = $r4  *
+   r_6617 = v_341 = cons(r_6607, r_6605)  * r_6619 = @this: = r0   
+   | 
+     | field(@this:,
+             <java.util.LinkedList: java.util.LinkedList$Entry header>, $r3) *
+       field($r3,
+             <java.util.LinkedList$Entry: java.util.LinkedList$Entry previous>,
+             r_6616) *
+       field(@this:, <java.util.AbstractList: int modCount>, r_6609) *
+       field(@this:, <java.util.LinkedList: int size>, length(v_341)) *
+       field($r3,
+             <java.util.LinkedList$Entry: java.util.LinkedList$Entry next>,
+             r_6614) *
+       dseg_ne(r_6614, nil(), nil(), r_6614, cons(nil(), empty()))
+     (r_6605 = empty() * r2 = $r3 * r_6616 = r_6614 |  )
+     || ( | dseg_ne(r2, r_6614, $r3, r_6616, r_6605) ) 
+   |-  |  
+
+
+
+====================Start rewrites=======================================Finished rewrites====================
+
+End time :2.956184 

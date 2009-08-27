@@ -1,0 +1,87 @@
+Goal
+r_2 = @this: = r0   
+| type($r1, java.util.LinkedList$Entry)
+  | AbstractSequentialList$java.util.AbstractSequentialList(@this:,
+                                                            {modCount=
+                                                            numeric_const(0)}) *
+    field(@this:, <java.util.LinkedList: java.util.LinkedList$Entry header>,
+          nil()) *
+    field(@this:, <java.util.LinkedList: int size>, numeric_const(0)) *
+    field(@this:, <java.util.LinkedList: long serialVersionUID>,
+          numeric_const(0))
+   
+|-  |  
+
+Start time :0.084005 
+Foo
+
+====================Start rewrites=======================================Finished rewrites====================
+
+
+
+====================Start rewrites=======================================Finished rewrites====================
+
+>r_2 = @this: = r0   
+ | type($r1, java.util.LinkedList$Entry)
+   | field(@this:, <java.util.LinkedList: long serialVersionUID>,
+           numeric_const(0)) *
+     field(@this:, <java.util.LinkedList: int size>, numeric_const(0)) *
+     field(@this:, <java.util.LinkedList: java.util.LinkedList$Entry header>,
+           nil()) *
+     AbstractSequentialList$java.util.AbstractSequentialList(@this:,
+                                                             {modCount=
+                                                             numeric_const(0)})
+    
+ |-  |  
+
+Rule: apf_body_left_AbstractSequentialList
+
+FooElim eqs : {modCount=r_349} = {modCount=numeric_const(0)}
+
+
+====================Start rewrites=======================================Finished rewrites====================
+
+
+
+====================Start rewrites=======================================Finished rewrites====================
+
+->r_2 = @this: = r0   
+  | type($r1, java.util.LinkedList$Entry)
+    | field(@this:, <java.util.LinkedList: long serialVersionUID>,
+            numeric_const(0)) *
+      field(@this:, <java.util.LinkedList: int size>, numeric_const(0)) *
+      field(@this:,
+            <java.util.LinkedList: java.util.LinkedList$Entry header>, 
+            nil()) *
+      AbstractList$java.util.AbstractList(@this:, {modCount=numeric_const(0)})
+     
+  |-  |  
+
+Rule: apf_body_left_AbstractList
+
+FooElim eqs : {modCount=r_351} = {modCount=numeric_const(0)}
+
+
+====================Start rewrites=======================================Finished rewrites====================
+
+
+
+====================Start rewrites=======================================Finished rewrites====================
+
+-->r_2 = @this: = r0   
+   | type($r1, java.util.LinkedList$Entry)
+     | field(@this:, <java.util.LinkedList: long serialVersionUID>,
+             numeric_const(0)) *
+       field(@this:, <java.util.LinkedList: int size>, numeric_const(0)) *
+       field(@this:,
+             <java.util.LinkedList: java.util.LinkedList$Entry header>, 
+             nil()) *
+       field(@this:, <java.util.AbstractList: int modCount>, numeric_const(0))
+      
+   |-  |  
+
+
+
+====================Start rewrites=======================================Finished rewrites====================
+
+End time :0.088005 

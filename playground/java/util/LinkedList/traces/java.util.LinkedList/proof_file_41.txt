@@ -1,0 +1,171 @@
+Goal
+r_3382 = @this: = r0  * r_3384 = v_295 = **second**  *
+r_3404 = v_293 = app(v_294, cons(v_292, empty()))  *
+r_3425 = numeric_const(1) = length(cons(v_292, empty()))  *
+r_3426 = (numeric_const(1) + length(v_294)) = length(v_293)   
+| 
+  | field(@this:, <java.util.LinkedList: java.util.LinkedList$Entry header>,
+          $r1) *
+    field(@this:, <java.util.LinkedList: int size>,
+          (numeric_const(1) + length(v_294))) *
+    field($r1, <java.util.LinkedList$Entry: java.util.LinkedList$Entry next>,
+          r_3408) *
+    field($r1,
+          <java.util.LinkedList$Entry: java.util.LinkedList$Entry previous>,
+          r_3406) *
+    field(@this:, <java.util.AbstractList: int modCount>, r_3418)
+  (v_293 = empty() * r_3408 = $r1 * r_3406 = $r1 |  )
+  || ( | dseg_ne(r_3408, $r1, $r1, r_3406, v_293) ) 
+|- 
+   | field($r1,
+           <java.util.LinkedList$Entry: java.util.LinkedList$Entry previous>,
+           _v_1210)
+   
+
+Start time :1.468091 
+Foo
+
+====================Start rewrites=======================================Finished rewrites====================
+
+
+
+====================Start rewrites=======================================Finished rewrites====================
+
+>r_3382 = @this: = r0  * r_3384 = v_295 = **second**  *
+ r_3404 = v_293 = app(v_294, cons(v_292, empty()))  *
+ r_3425 = numeric_const(1) = length(cons(v_292, empty()))  *
+ r_3426 = (numeric_const(1) + length(v_294)) = length(v_293)   
+ | 
+   | field(@this:, <java.util.AbstractList: int modCount>, r_3418) *
+     field($r1,
+           <java.util.LinkedList$Entry: java.util.LinkedList$Entry previous>,
+           r_3406) *
+     field($r1,
+           <java.util.LinkedList$Entry: java.util.LinkedList$Entry next>,
+           r_3408) *
+     field(@this:, <java.util.LinkedList: int size>,
+           (numeric_const(1) + length(v_294))) *
+     field(@this:, <java.util.LinkedList: java.util.LinkedList$Entry header>,
+           $r1)
+   (v_293 = empty() * r_3408 = $r1 * r_3406 = $r1 |  )
+   || ( | dseg_ne(r_3408, $r1, $r1, r_3406, v_293) ) 
+ |- 
+    | field($r1,
+            <java.util.LinkedList$Entry: java.util.LinkedList$Entry previous>,
+            _v_1210)
+    
+
+Rule: field_remove1
+
+Foo
+
+====================Start rewrites=======================================Finished rewrites====================
+
+
+
+====================Start rewrites=======================================Finished rewrites====================
+
+->r_3382 = @this: = r0  * r_3384 = v_295 = **second**  *
+  r_3404 = v_293 = app(v_294, cons(v_292, empty()))  *
+  r_3425 = numeric_const(1) = length(cons(v_292, empty()))  *
+  r_3426 = (numeric_const(1) + length(v_294)) = length(v_293)  
+  field($r1,
+        <java.util.LinkedList$Entry: java.util.LinkedList$Entry previous>,
+        _v_1210)
+  | 
+    | field(@this:,
+            <java.util.LinkedList: java.util.LinkedList$Entry header>, $r1) *
+      field(@this:, <java.util.LinkedList: int size>,
+            (numeric_const(1) + length(v_294))) *
+      field($r1,
+            <java.util.LinkedList$Entry: java.util.LinkedList$Entry next>,
+            r_3408) *
+      field(@this:, <java.util.AbstractList: int modCount>, r_3418)
+    (v_293 = empty() * r_3408 = $r1 * _v_1210 = $r1 |  )
+    || ( | dseg_ne(r_3408, $r1, $r1, _v_1210, v_293) ) 
+  |-  |  
+
+
+
+====================Start rewrites======================Using rule:
+length_cons gives r_3778 = (numeric_const(1) + length(empty()))  
+equal to r_3425 = numeric_const(1) = length(cons(v_292, empty())) 
+.
+Rewritten to
+ r_3382 = @this: = r0  * r_3384 = v_295 = **second**  *
+ r_3404 = v_293 = app(v_294, cons(v_292, empty()))  *
+ r_3426 = ((r_3778 + length(empty())) + length(v_294)) = length(v_293)  *
+ r_3778 = ((r_3778 + length(empty())) + length(empty())) = numeric_const(1) =
+ length(cons(v_292, empty()))  
+ field($r1,
+       <java.util.LinkedList$Entry: java.util.LinkedList$Entry previous>,
+       _v_1210)
+ | 
+   | field(@this:, <java.util.LinkedList: java.util.LinkedList$Entry header>,
+           $r1) *
+     field(@this:, <java.util.LinkedList: int size>,
+           ((r_3778 + length(empty())) + length(v_294))) *
+     field($r1,
+           <java.util.LinkedList$Entry: java.util.LinkedList$Entry next>,
+           r_3408) *
+     field(@this:, <java.util.AbstractList: int modCount>, r_3418)
+   (v_293 = empty() * r_3408 = $r1 * _v_1210 = $r1 |  )
+   || ( | dseg_ne(r_3408, $r1, $r1, _v_1210, v_293) ) 
+ |-  |  
+
+
+====================Start rewrites======================Using rule:
+length_empty gives r_3780 = numeric_const(0)  
+equal to r_3777 = length(empty()) 
+.
+Rewritten to
+ r_3382 = @this: = r0  * r_3384 = v_295 = **second**  *
+ r_3404 = v_293 = app(v_294, cons(v_292, empty()))  *
+ r_3426 = ((r_3778 + numeric_const(0)) + length(v_294)) = length(v_293)  *
+ r_3778 = ((r_3778 + numeric_const(0)) + numeric_const(0)) =
+ numeric_const(1) = length(cons(v_292, empty()))  *
+ r_3780 = numeric_const(0) = length(empty())  
+ field($r1,
+       <java.util.LinkedList$Entry: java.util.LinkedList$Entry previous>,
+       _v_1210)
+ | 
+   | field(@this:, <java.util.LinkedList: java.util.LinkedList$Entry header>,
+           $r1) *
+     field(@this:, <java.util.LinkedList: int size>,
+           ((r_3778 + numeric_const(0)) + length(v_294))) *
+     field($r1,
+           <java.util.LinkedList$Entry: java.util.LinkedList$Entry next>,
+           r_3408) *
+     field(@this:, <java.util.AbstractList: int modCount>, r_3418)
+   (v_293 = empty() * r_3408 = $r1 * _v_1210 = $r1 |  )
+   || ( | dseg_ne(r_3408, $r1, $r1, _v_1210, v_293) ) 
+ |-  |  
+
+
+====================Start rewrites======================Rewritten to
+ r_3382 = @this: = r0  * r_3384 = v_295 = **second**  *
+ r_3404 = v_293 = app(v_294, cons(v_292, empty()))  *
+ r_3426 = ((r_3778 + numeric_const(0)) + length(v_294)) = length(v_293)  *
+ r_3778 = ((r_3778 + numeric_const(0)) + numeric_const(0)) =
+ numeric_const(1) = length(cons(v_292, empty()))  *
+ r_3780 = numeric_const(0) = length(empty())  
+ field($r1,
+       <java.util.LinkedList$Entry: java.util.LinkedList$Entry previous>,
+       _v_1210)
+ | 
+   | field(@this:, <java.util.LinkedList: java.util.LinkedList$Entry header>,
+           $r1) *
+     field(@this:, <java.util.LinkedList: int size>,
+           ((r_3778 + numeric_const(0)) + length(v_294))) *
+     field($r1,
+           <java.util.LinkedList$Entry: java.util.LinkedList$Entry next>,
+           r_3408) *
+     field(@this:, <java.util.AbstractList: int modCount>, r_3418)
+   (v_293 = empty() * r_3408 = $r1 * _v_1210 = $r1 |  )
+   || ( | dseg_ne(r_3408, $r1, $r1, _v_1210, v_293) ) 
+ |-  |  
+
+
+====================Start rewrites=======================================Finished rewrites====================
+
+End time :1.476091 

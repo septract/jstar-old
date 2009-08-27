@@ -1,0 +1,67 @@
+Goal
+r_2 = @this: = r0  * r_333 = $r1 = $r2 = $r3   
+| type($r1, java.util.LinkedList$Entry)
+  | field(@this:, <java.util.LinkedList: java.util.LinkedList$Entry header>,
+          $r1) *
+    field(@this:, <java.util.AbstractList: int modCount>, numeric_const(0)) *
+    dseg_ne($r1, nil(), nil(), $r1, cons(nil(), empty())) *
+    field(@this:, <java.util.LinkedList: long serialVersionUID>,
+          numeric_const(0)) *
+    field(@this:, <java.util.LinkedList: int size>, numeric_const(0))
+   
+|- 
+   | field(@this:, <java.util.LinkedList: java.util.LinkedList$Entry header>,
+           _v_355)
+   
+
+Start time :0.124007 
+Foo
+
+====================Start rewrites=======================================Finished rewrites====================
+
+
+
+====================Start rewrites=======================================Finished rewrites====================
+
+>r_2 = @this: = r0  * r_333 = $r1 = $r2 = $r3   
+ | type($r1, java.util.LinkedList$Entry)
+   | field(@this:, <java.util.LinkedList: int size>, numeric_const(0)) *
+     field(@this:, <java.util.LinkedList: long serialVersionUID>,
+           numeric_const(0)) *
+     dseg_ne($r1, nil(), nil(), $r1, cons(nil(), empty())) *
+     field(@this:, <java.util.AbstractList: int modCount>, numeric_const(0)) *
+     field(@this:, <java.util.LinkedList: java.util.LinkedList$Entry header>,
+           $r1)
+    
+ |- 
+    | field(@this:,
+            <java.util.LinkedList: java.util.LinkedList$Entry header>, _v_355)
+    
+
+Rule: field_remove1
+
+Foo
+
+====================Start rewrites=======================================Finished rewrites====================
+
+
+
+====================Start rewrites=======================================Finished rewrites====================
+
+->r_2 = @this: = r0  * r_333 = $r1 = $r2 = $r3 = _v_355  
+  field(@this:, <java.util.LinkedList: java.util.LinkedList$Entry header>,
+        $r1)
+  | type($r1, java.util.LinkedList$Entry)
+    | field(@this:, <java.util.LinkedList: int size>, numeric_const(0)) *
+      field(@this:, <java.util.LinkedList: long serialVersionUID>,
+            numeric_const(0)) *
+      dseg_ne($r1, nil(), nil(), $r1, cons(nil(), empty())) *
+      field(@this:, <java.util.AbstractList: int modCount>, numeric_const(0))
+     
+  |-  |  
+
+
+
+====================Start rewrites=======================================Finished rewrites====================
+
+End time :0.124007 

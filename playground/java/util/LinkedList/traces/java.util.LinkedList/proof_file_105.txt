@@ -1,0 +1,167 @@
+Goal
+r_13458 = (@parameter0: + @parameter0:) = i1  *
+r_13459 = numeric_const(1) = length(v_280) = @parameter0: = i0  *
+r_13460 = length(empty()) = numeric_const(0)  *
+r_13463 = length(v_279) = $i2 = $i4  *
+r_13465 = cons(r_13468, cons(v_275, v_281)) = v_279  *
+r_13480 = @this: = r0  * r_13482 = v_280 = cons(r_13468, empty())  *
+r_13489 = builtin_shiftr($i2, @parameter0:) = $i5   
+| LT(@parameter0:, $i5)
+  | field(v_283,
+          <java.util.LinkedList$Entry: java.util.LinkedList$Entry next>, r2) *
+    field(v_283,
+          <java.util.LinkedList$Entry: java.util.LinkedList$Entry previous>,
+          v_276) *
+    field(v_283, <java.util.LinkedList$Entry: java.lang.Object element>,
+          r_13468) *
+    field(v_276,
+          <java.util.LinkedList$Entry: java.util.LinkedList$Entry next>,
+          v_283) *
+    field(v_276,
+          <java.util.LinkedList$Entry: java.util.LinkedList$Entry previous>,
+          v_284) *
+    dseg_ne(v_278, v_277, v_282, v_278, cons(v_275, empty())) *
+    field(@this:, <java.util.AbstractList: int modCount>, r_13470) *
+    field(@this:, <java.util.LinkedList: java.util.LinkedList$Entry header>,
+          v_276) *
+    field(@this:, <java.util.LinkedList: int size>, $i2)
+  (empty() = empty() * r2 = v_278 * v_277 = v_283 |  )
+  || ( | dseg_ne(r2, v_283, v_278, v_277, empty()) )*
+  (length(empty()) = @parameter0: |  )
+  || (LT(length(empty()), @parameter0:) |  )*
+  (v_281 = empty() * v_282 = v_276 * v_284 = v_278 |  )
+  || ( | dseg_ne(v_282, v_278, v_276, v_284, v_281) )*
+  (length(empty()) = @parameter0: |  )
+  || (LT(length(empty()), @parameter0:) |  ) 
+|-  |  
+
+Start time :6.520406 
+Foo
+
+====================Start rewrites=======================================Finished rewrites====================
+
+
+
+====================Start rewrites=======================================Finished rewrites====================
+
+>r_13458 = (@parameter0: + @parameter0:) = i1  *
+ r_13459 = numeric_const(1) = length(v_280) = @parameter0: = i0  *
+ r_13460 = length(empty()) = numeric_const(0)  *
+ r_13463 = length(v_279) = $i2 = $i4  *
+ r_13465 = cons(r_13468, cons(v_275, v_281)) = v_279  *
+ r_13480 = @this: = r0  * r_13482 = v_280 = cons(r_13468, empty())  *
+ r_13489 = builtin_shiftr($i2, @parameter0:) = $i5   
+ | LT(@parameter0:, $i5)
+   | field(@this:, <java.util.LinkedList: int size>, $i2) *
+     field(@this:, <java.util.LinkedList: java.util.LinkedList$Entry header>,
+           v_276) *
+     field(@this:, <java.util.AbstractList: int modCount>, r_13470) *
+     dseg_ne(v_278, v_277, v_282, v_278, cons(v_275, empty())) *
+     field(v_276,
+           <java.util.LinkedList$Entry: java.util.LinkedList$Entry previous>,
+           v_284) *
+     field(v_276,
+           <java.util.LinkedList$Entry: java.util.LinkedList$Entry next>,
+           v_283) *
+     field(v_283, <java.util.LinkedList$Entry: java.lang.Object element>,
+           r_13468) *
+     field(v_283,
+           <java.util.LinkedList$Entry: java.util.LinkedList$Entry previous>,
+           v_276) *
+     field(v_283,
+           <java.util.LinkedList$Entry: java.util.LinkedList$Entry next>, r2)
+   (length(empty()) = @parameter0: |  )
+   || (LT(length(empty()), @parameter0:) |  )*
+   (v_281 = empty() * v_282 = v_276 * v_284 = v_278 |  )
+   || ( | dseg_ne(v_282, v_278, v_276, v_284, v_281) )*
+   (length(empty()) = @parameter0: |  )
+   || (LT(length(empty()), @parameter0:) |  )*
+   (empty() = empty() * r2 = v_278 * v_277 = v_283 |  )
+   || ( | dseg_ne(r2, v_283, v_278, v_277, empty()) ) 
+ |-  |  
+
+Rule: node_rollup_abs
+
+Foo
+
+====================Start rewrites=======================================Finished rewrites====================
+
+
+
+====================Start rewrites=======================================Finished rewrites====================
+
+->r_13458 = (@parameter0: + @parameter0:) = i1  *
+  r_13459 = numeric_const(1) = length(v_280) = @parameter0: = i0  *
+  r_13460 = length(empty()) = numeric_const(0)  *
+  r_13463 = length(v_279) = $i2 = $i4  *
+  r_13465 = cons(r_13468, cons(v_275, v_281)) = v_279  *
+  r_13480 = @this: = r0  * r_13482 = v_280 = cons(r_13468, empty())  *
+  r_13489 = builtin_shiftr($i2, @parameter0:) = $i5   
+  | LT(@parameter0:, $i5)
+    | field(@this:, <java.util.LinkedList: int size>, $i2) *
+      field(@this:,
+            <java.util.LinkedList: java.util.LinkedList$Entry header>, v_276) *
+      field(@this:, <java.util.AbstractList: int modCount>, r_13470) *
+      dseg_ne(v_278, v_277, v_282, v_278, cons(v_275, empty())) *
+      field(v_276,
+            <java.util.LinkedList$Entry: java.util.LinkedList$Entry previous>,
+            v_284) *
+      field(v_276,
+            <java.util.LinkedList$Entry: java.util.LinkedList$Entry next>,
+            v_283) *
+      node(v_283, v_276, r2, r_13468)
+    (empty() = empty() * r2 = v_278 * v_277 = v_283 |  )
+    || ( | dseg_ne(r2, v_283, v_278, v_277, empty()) )*
+    (length(empty()) = @parameter0: |  )
+    || (LT(length(empty()), @parameter0:) |  )*
+    (v_281 = empty() * v_282 = v_276 * v_284 = v_278 |  )
+    || ( | dseg_ne(v_282, v_278, v_276, v_284, v_281) )*
+    (length(empty()) = @parameter0: |  )
+    || (LT(length(empty()), @parameter0:) |  ) 
+  |-  |  
+
+Rule: dseg_node_rollup_abs
+
+Foo
+
+====================Start rewrites=======================================Finished rewrites====================
+
+
+
+====================Start rewrites=======================================Finished rewrites====================
+
+-->r_13458 = (@parameter0: + @parameter0:) = i1  *
+   r_13459 = numeric_const(1) = length(v_280) = @parameter0: = i0  *
+   r_13460 = length(empty()) = numeric_const(0)  *
+   r_13463 = length(v_279) = $i2 = $i4  *
+   r_13465 = cons(r_13468, cons(v_275, v_281)) = v_279  *
+   r_13480 = @this: = r0  * r_13482 = v_280 = cons(r_13468, empty())  *
+   r_13489 = builtin_shiftr($i2, @parameter0:) = $i5   
+   | LT(@parameter0:, $i5)
+     | field(@this:, <java.util.LinkedList: int size>, $i2) *
+       field(@this:,
+             <java.util.LinkedList: java.util.LinkedList$Entry header>, v_276) *
+       field(@this:, <java.util.AbstractList: int modCount>, r_13470) *
+       dseg_ne(v_278, v_277, v_282, v_278, cons(v_275, empty())) *
+       field(v_276,
+             <java.util.LinkedList$Entry: java.util.LinkedList$Entry previous>,
+             v_284) *
+       field(v_276,
+             <java.util.LinkedList$Entry: java.util.LinkedList$Entry next>,
+             v_283) *
+       dseg_ne(v_283, v_276, r2, v_283, v_280)
+     (length(empty()) = @parameter0: |  )
+     || (LT(length(empty()), @parameter0:) |  )*
+     (v_281 = empty() * v_282 = v_276 * v_284 = v_278 |  )
+     || ( | dseg_ne(v_282, v_278, v_276, v_284, v_281) )*
+     (length(empty()) = @parameter0: |  )
+     || (LT(length(empty()), @parameter0:) |  )*
+     (empty() = empty() * r2 = v_278 * v_277 = v_283 |  )
+     || ( | dseg_ne(r2, v_283, v_278, v_277, empty()) ) 
+   |-  |  
+
+
+
+====================Start rewrites=======================================Finished rewrites====================
+
+End time :6.528407 
