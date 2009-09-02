@@ -93,6 +93,18 @@ void update(Subject) :
 
 
 
+class Subject
+{
+void addObserver(Observer) : 
+{ SubjectObs(@this:, {obs=_O; vals=_V}) * Observer(@parameter0:, {vals=_V2; subject=@this:}) }
+{ SubjectObs(@this:, {obs=add(@parameter0:,_O); vals=_V} ) };
+
+void removeObserver(Observer) : 
+{ SubjectObs(@this:, {obs=add(@parameter0:,_O); vals=_V} ) }
+{ SubjectObs(@this:, {obs=_O; vals=_V}) * Observer(@parameter0:, {vals=_v2; subject=_s}) };
+
+}
+
 class IntegerDataBag
 {
 define SubjectInternal(s, obs=O) =

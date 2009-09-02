@@ -7,19 +7,11 @@ Error messages:
 - Parser: Recover from errors so more than one syntax error can be detected.
 - Check whether the type field in the field predicate represents a (syntactically) valid type!
 
-Grammar:
-
-- Jimple parser cannot deal with nested comments.
-- Migrate code for parsing test files to the "new" parser.
-
 Syntax:
 
-- Too many bars ("|"): Used to split formulae into pure and spatial subformulae, part of the 'entails' token ("|-"), and part of the disjunction token ("||"). Could maybe use different tokens for disjunctions (eg. "or", "\/") or entailment?
 - Full Java class names tend to get rather long (eg. "java.util.LinkedList$Element") so it would be convenient if one could either define abbreviations or have something similar to Java's "import" operator.
-- Contrary to specifications, in files describing interference rules fields must be enclosed by quotation marks. Consistent syntax for logic and specification files might be more intuitive.
 - In specification, it might be useful to introduce "holes" so that the user does not have to introduce a new variable name when its value does not matter.
 - Is there a reason for using semicolons in parameter lists (eg. "Node(x, {element=o; next=n})")? Why do we not use commas?
-- Why do method specifications have to end with a semicolon? It is easy to forget and even without a semicolon at the end, it is very clear where a specification ends.
 - Infix operators could improve readability of terms involving arithmetic.
 - Allow "simultaneous equalities" (e.g. ?a = ?b = ?c) in specs and logic rules.
 - Java's boolean values true and false are represented as 1 and 0, respectively, in jimple. Thus, in specification true and false are numeric_const(1) and numeric_const(0). Readability could be increased by using "true" and "false" instead.
@@ -36,7 +28,6 @@ Functionality
 - When compiling classes that contain inner classes the javac compiler separates outer class and inner classes into individual classes and inserts helper methods into the outer class that give the inner classes access to fields and methods of the outer class. To verify inner classes it is therefore necessary to write specifications for these helper methods. However, since these methods are in essence just thin wrappers, the additional specifications just duplicate already existing ones.
 - Add command line option to the jstar program that takes a list of names of the methods that the user wants to verify (or wants to see traces of).
 - jStar does not fully support inheritance of fields. Example: AbstractList has a (protected) field modCount. Since LinkedList is a sub class of AbstractList, within the LinkedList class field(?i, <LinkedList: int modCount>, ?e1) and field(?i, <AbstractList: int modCount>, ?e2) denote the same field.
-- Make a clear distinction between positive and negative numbers to simplify writing rules that rely on the sign of a number.
 - If a method specification cannot be found, print a warning but do not terminate.
 - Introduce commutativity (or/and associativity) flag for predicates with the effect that terms that are equal under commutativity (or/and associativity) are treated as such when searching for matching rules.
 
@@ -60,3 +51,19 @@ Prover
 Testing
 - Let the user specify which rules she expects the prover to use when proving (or disproving) a test case.
 
+
+
+======================================
+Done
+======================================
+Grammar:
+
+- Jimple parser cannot deal with nested comments.  --- done
+- Migrate code for parsing test files to the "new" parser.  --- done
+
+Syntax:
+
+- Too many bars ("|"): Used to split formulae into pure and spatial subformulae, part of the 'entails' token ("|-"), and part of the disjunction token ("||"). Could maybe use different tokens for disjunctions (eg. "or", "\/") or entailment?
+- Contrary to specifications, in files describing interference rules fields must be enclosed by quotation marks. Consistent syntax for logic and specification files might be more intuitive.
+- Why do method specifications have to end with a semicolon? It is easy to forget and even without a semicolon at the end, it is very clear where a specification ends.
+- Make a clear distinction between positive and negative numbers to simplify writing rules that rely on the sign of a number.
