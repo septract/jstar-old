@@ -15,7 +15,10 @@ ifndef DIR
    DIR = 
 endif 
 
-INDENT := $(INDENT) "  "
+ifdef DIR
+  INDENT := $(INDENT) " "
+endif
+export INDENT 
 
 all: $(addsuffix .jimple, $(TARGETS)) 
 	@for dir in ${SUBDIRS} ; do ( cd $$dir; make all ) ; done
@@ -37,9 +40,9 @@ clean:
 	@rm -f *.jimple *.class *~ *.dot \#* .\#* proof_file*
 
 %.time:
-	@echo Timing $(DIR)/$*
+	@echo $(INDENT) Timing $(DIR)/$*
 	@time ./runtest $*.jimple >/dev/null
 
 %.test : %.jimple
-	@echo Testing $(DIR)/$*
+	@echo $(INDENT) Testing $(DIR)/$*
 	@./runtest $*.jimple
