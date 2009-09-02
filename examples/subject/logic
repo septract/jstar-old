@@ -655,3 +655,15 @@ rule subeq_hack:
 | | |- | subeq(?f,?f2) 
 if
 | | |- ?f=?f2 |
+
+
+
+
+
+
+rewrite elist_rem :
+  elist(?x,?y) = app(?x,?y)
+
+
+rewrite single_rem : 
+  s(?x) = cons(?x,empty())

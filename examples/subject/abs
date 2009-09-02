@@ -126,71 +126,58 @@ if
 | | ls(?x,?y,cons(?s,?t)) |- |
 
 
-/*
-rule hacky2 :
-  | v = cons(_x,?f) | lsObs(?a,?b,cons(_x,?g),?c,?d) |- |
-where 
-  _x notincontext
-if
-  | v = app(_t,?f) | lsObs(?a,?b,app(_t,?g),?c,?d) |- |
-
-rule hacky3 :
-  | v = app(_t,cons(_x,?f)) | lsObs(?a,?b,app(_t,cons(_x,?g)),?c,?d) |- |
-where 
-  _x,_t notincontext
-if
-  | v = app(_t2,?f) | lsObs(?a,?b,app(_t2,?g),?c,?d) |- |
-*/
-
-/*
-rewrite hacky_new :
-  cons(_x,cons(_y,?z)) = app(?w,?z)
-without 
-  cons(_x,cons(_y,?z)) = app(?q,?z)
-
-rewrite hacky_one :
-  app(_x,cons(_y,?z)) = app(?w,?z)
-without 
-  app(_x,cons(_y,?z)) = app(?q,?z)
-
-rewrite hacky_two :
-  app(_x,app(_y,?z)) = app(?w,?z)
-without 
-  app(_x,app(_y,?z)) = app(?q,?z)
-*/
 
 
+/*********************************************
+   Rules for trying to forget data. 
 
-rewrite hack1 :
-  cons(_z,cons(_x,?y)) = app(elist(cons(_z,s(_x))), ?y)
-
-/* Try this later 
-rewrite hack1 :
-  cons(_x,?y) = app(elist(s(_x)), ?y)
-*/
-
-rewrite hack2_e : 
-  app(elist(?z),cons(_x,?y)) = app(elist(app(?z,s(_x))), ?y)
-
-rewrite hack3_e : 
-  app(elist(?z),app(elist(?x),?y)) = app(elist(app(?z,?x)), ?y)
+  ********************************************/
+rewrite hack1 : 
+  app(_y,cons(_x,?y)) = app(elist(_y,s(_x)), ?y)
 
 rewrite hack2 : 
-  app(_z,cons(_x,?y)) = app(elist(app(_z,s(_x))), ?y)
+  app(_z,app(_x,?y)) = app(elist(_z,_x), ?y)
 
 rewrite hack3 : 
-  app(_z,app(elist(?x),?y)) = app(elist(app(_z,?x)), ?y)
-
-rewrite hack4 : 
-  cons(_z,app(elist(?x),?y)) = app(elist(s(_z),?x), ?y)
-
-rewrite hack4 : 
   cons(_z,app(_x,?y)) = app(elist(s(_z),_x), ?y)
 
-rewrite hack5 : 
-  elist(?x) = id(?w)
+rewrite hack4 : 
+  cons(_z,cons(_x,?y)) = app(elist(s(_z),s(_x)), ?y)
+
+rewrite hack5_1 : 
+  elist(_x,_y) = id(?w)
 without 
-  elist(?x) = id(?q)
+  elist(_x,_y) = id(?q)
+where 
+  _x notincontext;
+  _y notincontext
+
+
+rewrite hack5_2 : 
+  elist(s(_x),_y) = id(?w)
+without 
+  elist(s(_x),_y) = id(?q)
+where 
+  _x notincontext;
+  _y notincontext
+
+
+rewrite hack5_3 : 
+  elist(s(_x),s(_y)) = id(?w)
+without 
+  elist(s(_x),s(_y)) = id(?q)
+where 
+  _x notincontext;
+  _y notincontext
+
+rewrite hack5_4 : 
+  elist(_x,s(_y)) = id(?w)
+without 
+  elist(_x,s(_y)) = id(?q)
+where 
+  _x notincontext;
+  _y notincontext
+
 
 rewrite hack5 : 
   id(?w) = ?w

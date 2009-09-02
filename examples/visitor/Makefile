@@ -8,7 +8,7 @@ all: Visitor.jimple Sum.jimple Plus.jimple Const.jimple Ast.jimple RZ.jimple
 
 
 clean: 
-	rm -f *.jimple *.class *~ *.dot \#* .\#*
+	rm -f *.jimple *.class *~ *.dot \#* .\#* proof_file*
 
 time:
 	time ./runtest Const.jimple >/dev/null
