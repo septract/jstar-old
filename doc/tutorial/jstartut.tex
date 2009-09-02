@@ -674,6 +674,48 @@ The authors are bot supported by Royal Academy of Engineering research fellowshi
 \bibliography{objects}
 
 \appendix 
+\section{Syntax of logic}
+
+\begin{verbatim}
+iop      ::=  +
+          |   -
+          |   <<
+          |   >>
+          |   >>>
+          |   %
+          |   /
+          |   &
+
+
+bop      ::=  <  
+          |   >
+          |   =
+          |   !=
+          |   <=
+          |   >=
+
+expression ::= (expression iop expression)
+            |  field_signature
+            |  integer_const
+            |  - integer_const
+              
+variable ::=  name
+          |   ? name
+          |   _ name
+
+formula  ::=  (formula)
+          |   formula * formula
+          |   formula || formula
+          |   expression bop expression
+          |   expression . expression |-> expression
+          |   name ( expression , ... , expression ) 
+          |   ! name ( expression , ... , expression ) 
+          |   expression : name
+          |   variable
+          |   formula | formula                    [deprecated, lhs must be pure]
+          |   False
+\end{verbatim}
+
 \section{A full Example}
 In this section we report the specifications, logic, and abstraction rules to analyze the {\tt LinkedList} class
  reported in Figure~\ref{tab:linkedlist}.
