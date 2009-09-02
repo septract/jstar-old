@@ -1,11 +1,45 @@
-SUBDIRS = popl2008 pool visitor linkedlist subject
+ifndef TARGETS
+  TARGETS =
+endif
 
+ifndef SOURCES
+  SOURCES =  $(addsuffix .java, $(TARGETS)) 
+endif
 
-test: 
-	@for i in $(SUBDIRS); do \
-	echo "\nRunning tests in" $$i ; \
-	(cd $$i; make test); done
+ifndef SUBDIRSDEF
+   SUBDIRSDEF = foo
+   SUBDIRS = pool linkedlist popl2008 visitor subject
+endif
+
+ifndef DIR
+   DIR = 
+endif 
+
+INDENT := $(INDENT) "  "
+
+all: $(addsuffix .jimple, $(TARGETS)) 
+	@for dir in ${SUBDIRS} ; do ( cd $$dir; make all ) ; done
+
+test: all $(addsuffix .test, $(TARGETS))
+	@for dir in ${SUBDIRS} ; do ( echo $(INDENT) Testing $(DIR)$$dir; cd $$dir; make test ) ; done ; echo
+
+time :  all $(addsuffix .time, $(TARGETS))
+	@for dir in ${SUBDIRS} ; do ( cd $$dir; make time ) ; done
+
+%.class: $(SOURCES)
+	javac -g $?
+
+%.jimple: %.class
+	java soot.Main $* -f J -d . -print-tags -keep-line-number
 
 clean: 
-	@for i in $(SUBDIRS); do \
-	(cd $$i; make clean); done
+	@for dir in ${SUBDIRS} ; do ( cd $$dir; make clean ) ; done
+	@rm -f *.jimple *.class *~ *.dot \#* .\#* proof_file*
+
+%.time:
+	@echo Timing $(DIR)/$*
+	@time ./runtest $*.jimple >/dev/null
+
+%.test : %.jimple
+	@echo Testing $(DIR)/$*
+	@./runtest $*.jimple

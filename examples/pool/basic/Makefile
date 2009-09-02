@@ -1,13 +1,12 @@
-all: DBPool.jimple 
+ifndef TARGETS
+  TARGETS = DBPool
+endif
 
-%.class: %.java
-	javac $?
+ifndef SUBDIRSDEF
+   SUBDIRSDEF = foo
+   SUBDIRS = 
+endif
 
-%.jimple: %.class
-	java soot.Main $* -f J -d .
+DIR = pool/basic
 
-clean: 
-	rm -f *.jimple *.class *~ *.dot \#* .\#*
-
-test: DBPool.jimple
-	./runtest DBPool.jimple
+include ../../Makefile

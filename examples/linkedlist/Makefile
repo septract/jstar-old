@@ -1,13 +1,12 @@
-all:  LinkedList.jimple NodeLL.jimple
+ifndef TARGETS
+  TARGETS = LinkedList
+endif
 
-%.class: LinkedList.java
-	javac $?
+ifndef SUBDIRSDEF
+   SUBDIRSDEF = foo
+   SUBDIRS = 
+endif
 
-%.jimple: %.class
-	java soot.Main $* -f J -d . -print-tags -keep-line-number
+DIR = linkedlist
 
-test: all
-	./runtest LinkedList.jimple
-
-clean: 
-	rm -f *.jimple *.class *~ *.dot \#* .\#*
+include ../Makefile

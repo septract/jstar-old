@@ -1,27 +1,16 @@
-all: Visitor.jimple Sum.jimple Plus.jimple Const.jimple Ast.jimple RZ.jimple
+ifndef SOURCES
+  SOURCES = Visitor.java
+endif
 
-%.class: Visitor.java
-	javac -g $?
+ifndef TARGETS
+  TARGETS = Visitor Sum Plus Const Ast RZ
+endif
 
-%.jimple: %.class
-	java soot.Main $* -f J -d . -print-tags -keep-line-number
+ifndef SUBDIRSDEF
+   SUBDIRSDEF = foo
+   SUBDIRS = 
+endif
 
+DIR = visitor
 
-clean: 
-	rm -f *.jimple *.class *~ *.dot \#* .\#* proof_file*
-
-time:
-	time ./runtest Const.jimple >/dev/null
-	time ./runtest Plus.jimple >/dev/null
-	time ./runtest RZ.jimple >/dev/null
-	time ./runtest Sum.jimple >/dev/null
-
-test: all
-	./runtest Const.jimple
-	./runtest Plus.jimple 
-	./runtest RZ.jimple 
-	./runtest Sum.jimple 
-
-demo: RZ.jimple
-	clear
-	time ./runtest RZ.jimple
+include ../Makefile

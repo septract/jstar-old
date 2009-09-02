@@ -1,11 +1,16 @@
-SUBDIRS = basic factory template
+ifndef SOURCES
+  SOURCES = 
+endif
 
+ifndef TARGETS
+  TARGETS = 
+endif
 
-test: 
-	@for i in $(SUBDIRS); do \
-	echo "\nRunning tests in pool/"$$i ; \
-	(cd $$i; make test); done
+ifndef SUBDIRSDEF
+   SUBDIRSDEF = foo
+   SUBDIRS = basic factory template 
+endif
 
-clean: 
-	@for i in $(SUBDIRS); do \
-	(cd $$i; make clean); done
+DIR = pool/
+
+include ../Makefile

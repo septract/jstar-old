@@ -1,14 +1,12 @@
-all: ConnectionPool.jimpl ResourcePool.jimple 
+ifndef TARGETS
+  TARGETS = ResourcePool ConnectionPool
+endif
 
-%.class: %.java
-	javac $?
+ifndef SUBDIRSDEF
+   SUBDIRSDEF = foo
+   SUBDIRS = 
+endif
 
-%.jimple: %.class
-	java soot.Main $* -f J -d .
+DIR = pool/template
 
-clean: 
-	rm -f *.jimple *.class *~ *.dot
-
-test: ResourcePool.jimple ConnectionPool.jimple
-	./runtest ResourcePool.jimple
-	./runtest ConnectionPool.jimple
+include ../../Makefile

@@ -1,14 +1,12 @@
-all:  IntegerDataBag.jimple IntegerSize.jimple Subject.jimple Observer.jimple
+ifndef TARGETS
+  TARGETS = Observer Subject IntegerDataBag IntegerSize
+endif
 
-%.class: %.java
-	javac -Xlint:unchecked $?
+ifndef SUBDIRSDEF
+   SUBDIRSDEF = foo
+   SUBDIRS = 
+endif
 
-%.jimple: %.class
-	java soot.Main $* -f J -d . -print-tags -keep-line-number 
+DIR = subject
 
-test: all
-	./runtest IntegerSize.jimple
-	./runtest IntegerDataBag.jimple
-
-clean: 
-	rm -f *.jimple *.class *~ *.dot \#* .\#*
+include ../Makefile
