@@ -89,7 +89,7 @@ let make_field_signature  cname ty n =
 
 type id = int
 
-
+let set_group,grouped = let x = ref false in (fun y -> x := y),(fun () -> !x )
 
 let fresh_node = let node_counter = ref 0 in fun () ->  let x = !node_counter in node_counter := x+1; x
 
@@ -126,7 +126,8 @@ let pp_dotty_transition_system () =
   Printf.fprintf dotty_outf "digraph main { \nnode [shape=box,  labeljust=l];\n\n";
   Idmap.iter 
     (fun cfg nodes ->
-      ((match cfg with Some cfg -> Printf.fprintf dotty_outf "subgraph cluster_cfg%i {\n"  cfg | _ -> ());
+      ((
+       if grouped () then match cfg with Some cfg -> Printf.fprintf dotty_outf "subgraph cluster_cfg%i {\n"  cfg | _ -> ());
       List.iter (fun {content=label;id=id;ntype=ty;url=url;cfg=cfg} ->
 	let label=escape_for_dot_label label in
 	let url = if url = "" then "" else ", URL=\"file://" ^ url ^"\"" in
@@ -137,7 +138,7 @@ let pp_dotty_transition_system () =
 	| UnExplored -> ()
 	| Abs ->  Printf.fprintf dotty_outf "\n state%i[label=\"%s\",labeljust=l, color=yellow, style=filled%s]\n" id label url)
 	nodes;
-      match cfg with Some _ -> Printf.fprintf dotty_outf "\n}\n" | _ -> ());
+      if grouped () then match cfg with Some _ -> Printf.fprintf dotty_outf "\n}\n" | _ -> ());
       List.iter (fun {content=label;id=id;ntype=ty;url=url;cfg=cfg} ->
 	let label=escape_for_dot_label label in
 	let url = if url = "" then "" else ", URL=\"file://" ^ url ^"\"" in
@@ -228,7 +229,7 @@ let add_edge_with_proof src dest label =
 let add_url_to_node src proof = 
   let f = fresh_file() in
   let out = open_out f in
-  output_string out proof;
+  List.iter (output_string out) proof;
   close_out out;
   src.url <- f
 
@@ -748,16 +749,16 @@ let rec execute_stmt n (sheap : formset_entry) : unit =
 	    List.iter (fun sheap2 ->  add_edge_with_proof (snd sheap) (snd sheap2) ("Abstract@"^Pprinter.statement2str stm.skind)) sheaps_with_id;
 	    let sheaps_with_id = List.filter 
 		(fun (sheap2,id2) -> 
-		  (let s = ref "" in 
+		  (let s = ref [] in 
 		  if  
 		    (List.for_all
 		       (fun (form,id) -> 
 			 if check_implication_frame !curr_logic (form_clone sheap2 false) form  != []then 
 			    (add_edge_with_proof id2 id ("Contains@"^Pprinter.statement2str stm.skind); false) 
-			 else (s := !s ^"\n---------------------------------------------------------\n" ^ (string_of_proof ()); true))
+			 else (s := ("\n---------------------------------------------------------\n" ^ (string_of_proof ())) :: !s; true))
 		       formset)
 		  then ( 
-		    if String.length !s != 0 then (add_url_to_node id2 !s); true
+		    if !s != [] then (add_url_to_node id2 !s); true
 		   ) else false
 		  )
 		)

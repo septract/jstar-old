@@ -37,6 +37,8 @@ let set_specs_template_mode () =
 let set_dotty_flag () = 
   Config.dotty_print := true 
 
+let set_grouped () =
+  Symexec.set_group true
 
 let arg_list =[ 
 ("-v", Arg.Unit(set_verbose ), "run in verbose mode" );
@@ -45,6 +47,7 @@ let arg_list =[
 ("-f", Arg.String(set_program_file_name ), "program file name" );
 ("-l", Arg.String(set_logic_file_name ), "logic file name" );
 ("-s", Arg.String(set_spec_file_name ), "spec file name" );
+("-g", Arg.Unit(set_grouped), "group abstraction nodes" );
 ("-a", Arg.String(set_absrules_file_name ), "abstraction rules file name" );
 ("-dot", Arg.Unit(set_dotty_flag ), "print heaps in dotty format for every node of cfg (default=false) " );
  ]

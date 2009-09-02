@@ -623,6 +623,7 @@ binop_val_no_multor:
    | PLUS {Plus}  
    | MINUS {Minus} 
    | DIV {Div}   
+//   | OR  {Jparsetree.Or}    
 ;
 binop_val:
    | OR  {Jparsetree.Or}    
@@ -711,19 +712,6 @@ paramlist:
    | identifier EQUALS lvariable SEMICOLON fldlist  { ($1,Arg_var $3) :: $5 }
 ;
 
-/*
-pure: 
-   | identifier L_PAREN jargument_list R_PAREN {[P_PPred($1,$3)] }
-   | jargument EQUALS jargument { mkEQ($1,$3) }
-   | jargument CMPNE jargument { mkNEQ($1,$3) }
-   | jargument COLON identifier { [P_PPred("type", [$1;Arg_string($3)])] }
-;
-pure_list:
-   |      { [] }
-   | pure { $1 }
-   | pure MULT pure_list {pconjunction $1 $3}
-;
-*/
 
 /* Code for matching where not allowing question mark variables:
    no pattern vars*/
@@ -773,7 +761,7 @@ formula:
    |  { [] }
    | FALSE { mkFalse}
    | GARBAGE { mkGarbage}
-   | jargument DOT field_signature MAPSTO  jargument { [P_SPred("field", [$1; Arg_string(field_signature2str $3); $5] )] }
+   | lvariable DOT jargument MAPSTO  jargument { [P_SPred("field", [Arg_var $1; $3; $5] )] }
    | BANG identifier L_PAREN jargument_list R_PAREN { [P_PPred($2, $4)] } 
    | identifier L_PAREN jargument_list R_PAREN 
        {if List.length $3 =1 then [P_SPred($1,$3 @ [mkArgRecord []])] else [P_SPred($1,$3)] }
@@ -781,7 +769,7 @@ formula:
    | formula MULT formula { pconjunction $1 $3 }
    | formula OR formula { if Config.symb_debug() then parse_warning "deprecated use of |"  ; pconjunction (purify $1) $3 }
    | formula OROR formula { mkOr ($1,$3) }
-   | jargument COLON identifier { [P_PPred("type", [$1;Arg_string($3)])] }
+   | lvariable COLON identifier { [P_PPred("type", [Arg_var($1);Arg_string($3)])] }
    | jargument binop_cmp jargument { Support_syntax.bop_to_prover_pred $2 $1 $3 }
    | jargument EQUALS jargument { Support_syntax.bop_to_prover_pred (Cmpeq) $1 $3 }
    | L_PAREN formula R_PAREN { $2 }
@@ -790,7 +778,7 @@ formula_npv:
    |  { [] }
    | FALSE { mkFalse}
    | GARBAGE { mkGarbage}
-   | jargument_npv DOT field_signature MAPSTO  jargument_npv { [P_SPred("field", [$1; Arg_string(field_signature2str $3); $5] )] }
+   | lvariable_npv DOT jargument_npv MAPSTO  jargument_npv { [P_SPred("field", [Arg_var $1; $3; $5] )] }
    | BANG identifier L_PAREN jargument_list_npv R_PAREN { [P_PPred($2, $4)] } 
    | identifier L_PAREN jargument_list_npv R_PAREN 
        {if List.length $3 =1 then [P_SPred($1,$3 @ [mkArgRecord []])] else [P_SPred($1,$3)] }
@@ -798,7 +786,7 @@ formula_npv:
    | formula_npv MULT formula_npv { pconjunction $1 $3 }
    | formula_npv OR formula_npv { if Config.symb_debug() then parse_warning "deprecated use of |"  ; pconjunction (purify $1) $3 }
    | formula_npv OROR formula_npv { mkOr ($1,$3) }
-   | jargument_npv COLON identifier { [P_PPred("type", [$1;Arg_string($3)])] }
+   | lvariable_npv COLON identifier { [P_PPred("type", [Arg_var $1;Arg_string($3)])] }
    | jargument_npv binop_cmp jargument_npv { Support_syntax.bop_to_prover_pred $2 $1 $3 }
    | jargument_npv EQUALS jargument_npv { Support_syntax.bop_to_prover_pred (Cmpeq) $1 $3 }
    | L_PAREN formula_npv R_PAREN { $2 }
