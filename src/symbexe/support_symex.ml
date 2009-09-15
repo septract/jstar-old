@@ -24,6 +24,8 @@ let reset () =
   Printf.printf "%c[%dm" (Char.chr 0x1B) 0 
 
 
+let file = ref ""
+
 type var_hashtbl = (string, Vars.var) Hashtbl.t
 
 (* table to connect local variables used in symbolic execution 

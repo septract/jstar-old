@@ -15,6 +15,7 @@
 
 open Jparsetree
 open Pprinter
+open Support_symex
 
 let debug =true
 
@@ -497,7 +498,7 @@ let print_cfg_filename (filename : string) (md : methdec) =
 
 let print_icfg_dotty mdl =
   if cfg_debug () then ignore (Printf.printf "\n\nPrinting iCFG as dot file...");
-  let chan = open_out "icfg.dot" in
+  let chan = open_out (!file ^ ".icfg.dot") in
   ignore (Printf.fprintf chan "digraph iCFG {\n");
   List.iter (print_cfg_channel chan) mdl;
   ignore(Printf.fprintf chan  "}\n");

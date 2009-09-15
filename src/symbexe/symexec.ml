@@ -93,7 +93,7 @@ let set_group,grouped = let x = ref false in (fun y -> x := y),(fun () -> !x )
 
 let fresh_node = let node_counter = ref 0 in fun () ->  let x = !node_counter in node_counter := x+1; x
 
-let fresh_file = let file_id = ref 0 in fun () -> let x = !file_id in file_id := x+1;  Sys.getcwd() ^  "/proof_file_"^(string_of_int x)^".txt"
+let fresh_file = let file_id = ref 0 in fun () -> let x = !file_id in file_id := x+1;  Sys.getcwd() ^  "/" ^ !file ^ ".proof_file_"^(string_of_int x)^".txt"
 
 type ntype = 
     Plain | Good | Error | Abs | UnExplored
@@ -120,7 +120,7 @@ let escape_for_dot_label s =
   Str.global_replace (Str.regexp "\\\\n") "\\l" (String.escaped s)
 
 let pp_dotty_transition_system () =
-  let foname="execution.dot~" in
+  let foname = (!file) ^ ".execution.dot~" in
   let dotty_outf=open_out foname in
   if Config.symb_debug() then Printf.printf "\n Writing transition system file execution.dot  \n";
   Printf.fprintf dotty_outf "digraph main { \nnode [shape=box,  labeljust=l];\n\n";
@@ -161,7 +161,7 @@ let pp_dotty_transition_system () =
     !graphe;
   Printf.fprintf dotty_outf "\n\n\n}";
   close_out dotty_outf;
-  Sys.rename foname "execution.dot"
+  Sys.rename foname (!file ^ ".execution.dot")
 
 
 
@@ -734,6 +734,7 @@ let rec execute_stmt n (sheap : formset_entry) : unit =
 	    if Config.symb_debug() then Format.printf "@\nPre-abstraction:@\n    %a@."  (string_ts_form (Rterm.rao_create ())) sheap_noid;
 	    let sheap_pre_abs = form_clone sheap_noid true in 
 	    let sheaps_abs = Prover.abs !curr_abs_rules sheap_pre_abs in 
+	    let sheaps_abs = List.map (fun x -> form_clone x true) sheaps_abs in 
 	    if Config.symb_debug() then Format.printf "@\nPost-abstractionc count:@\n    %d@."  (List.length sheaps_abs);
 	    List.iter Rlogic.kill_all_exists_names sheaps_abs;
 	    if Config.symb_debug() then List.iter (fun sheap -> Format.printf "@\nPost-abstraction:@\n    %a@."  (string_ts_form (Rterm.rao_create ())) sheap) sheaps_abs;

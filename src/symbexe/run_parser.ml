@@ -23,7 +23,8 @@ let set_absrules_file_name n =
 
 
 let set_program_file_name n = 
-  program_file_name := n 
+  program_file_name := n ;
+  Support_symex.file := n
 
 let set_verbose () = 
   Config.verbose := true 

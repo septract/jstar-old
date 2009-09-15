@@ -23,8 +23,8 @@ export INDENT
 all: $(addsuffix .jimple, $(TARGETS)) 
 	@for dir in ${SUBDIRS} ; do ( cd $$dir; make all ) ; done
 
-test: all $(addsuffix .test, $(TARGETS))
-	@for dir in ${SUBDIRS} ; do ( echo $(INDENT) Testing $(DIR)$$dir; cd $$dir; make test ) ; done ; echo
+test: all $(addsuffix .test, $(TARGETS)) $(addsuffix .test.dir, ${SUBDIRS})
+	@echo
 
 time :  all $(addsuffix .time, $(TARGETS))
 	@for dir in ${SUBDIRS} ; do ( cd $$dir; make time ) ; done
@@ -35,9 +35,12 @@ time :  all $(addsuffix .time, $(TARGETS))
 %.jimple: %.class
 	java soot.Main $* -f J -d . -print-tags -keep-line-number
 
+%.test.dir: 
+	@echo $(INDENT) Testing $(DIR); cd $*; make test
+
 clean: 
 	@for dir in ${SUBDIRS} ; do ( cd $$dir; make clean ) ; done
-	@rm -f *.jimple *.class *~ *.dot \#* .\#* proof_file*
+	@rm -f *.jimple *.class *~ *.dot \#* .\#* *.proof_file* 
 
 %.time:
 	@echo $(INDENT) Timing $(DIR)/$*
