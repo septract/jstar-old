@@ -71,12 +71,14 @@ equiv dseg_ne_empty2:
 
 /*
   Contradiction (dseg_ne describes non-empty list segement).
+  (FIXME: Hopefully redundant in future.)
 */
 equiv dseg_ne_empty3:
   ?i = ?jn => dseg_ne(?i, ?ip, ?jn, ?j, ?l) <=> False
 
 /*
   Contradiction (dseg_ne describes non-empty list segement).
+  (FIXME: Hopefully redundant in future.)
 */
 equiv dseg_ne_empty4:
   ?j = ?ip => dseg_ne(?i, ?ip, ?jn, ?j, ?l) <=> False
@@ -115,7 +117,7 @@ equiv dseg_dseg_contradiction2:
     pointer to the previous node (in front of the list).
 */
 equiv dseg_non_circular_front1:
-  desg_ne(?i, ?ip, ?jn, ?j, ?l) => ?i = ?ip <=> False
+  dseg_ne(?i, ?ip, ?jn, ?j, ?l) => ?i = ?ip <=> False
 
 /*
   Contradiction (list segments are non-touching).
@@ -123,35 +125,35 @@ equiv dseg_non_circular_front1:
     next node (which comes after the list segment).
 */
 equiv dseg_non_circular_back1:
-  desg_ne(?i, ?ip, ?jn, ?j, ?l) => ?j = ?jn <=> False
+  dseg_ne(?i, ?ip, ?jn, ?j, ?l) => ?j = ?jn <=> False
 
 /*
   Contradiction (list segments are non-touching).
     Variant of the dseg_non_circular_front1 rule.
 */
 equiv dseg_non_circular_front2:
-  ?i = ?ip => desg_ne(?i, ?ip, ?jn, ?j, ?l) <=> False
+  ?i = ?ip => dseg_ne(?i, ?ip, ?jn, ?j, ?l) <=> False
 
 /*
   Contradiction (list segments are non-touching).
     Variant of the dseg_non_circular_back1 rule.
 */
 equiv dseg_non_circular_back2:
-  ?j = ?jp => desg_ne(?i, ?ip, ?jn, ?j, ?l) <=> False
+  ?j = ?jp => dseg_ne(?i, ?ip, ?jn, ?j, ?l) <=> False
 
 /*
   Contradiction (list segments are non-touching).
     Variant of the dseg_non_circular_front1 rule.
 */
 equiv dseg_non_circular_front3:
-  desg_ne(?i, ?i, ?jn, ?j, ?l) <=> False
+  dseg_ne(?i, ?i, ?jn, ?j, ?l) <=> False
 
 /*
   Contradiction (list segments are non-touching).
     Variant of the dseg_non_circular_back1 rule.
 */
 equiv dseg_non_circular_back3:
-  desg_ne(?i, ?ip, ?j, ?j, ?l) <=> False
+  dseg_ne(?i, ?ip, ?j, ?j, ?l) <=> False
 
 /*
   Equivalence.
@@ -169,7 +171,7 @@ without
 
 /*
   Equivalence.
-   All non-empty "dseg" list segements are converted to dseg_ne list segments.
+   All non-empty "dseg" list segements are converted to "dseg_ne" list segments.
 */
 equiv dseg_non_empty1:
   ?i != ?jn => dseg(?i, ?ip, ?jn, ?j, ?l) <=> dseg_ne(?i, ?ip, ?jn, ?j, ?l)
@@ -181,41 +183,25 @@ equiv dseg_non_empty3:
       dseg(?i, ?ip, ?jn, ?j, cons(?a, ?alpha))
   <=> dseg_ne(?i, ?ip, ?jn, ?j, cons(?a, ?alpha))
 
+equiv dseg_non_empty_app_cons_first:
+      dseg(?i, ?ip, ?jn, ?j, app(cons(?a, ?alpha), ?beta))
+  <=> dseg_ne(?i, ?ip, ?jn, ?j, app(cons(?a, ?alpha), ?beta))
+
+equiv dseg_non_empty_app_cons_second:
+      dseg(?i, ?ip, ?jn, ?j, app(?alpha, cons(?b, ?beta)))
+  <=> dseg_ne(?i, ?ip, ?jn, ?j, app(?alpha, cons(?b, ?beta)))
+
 /** List concatenation (app). **/
 
-  /** More general rule might be useful. **/
-
-/****rule dseg_app_cons_rollup1:
-  | dseg(?i, ?ip, ?k, ?n, ?l1) * node(?k, ?n, ?m, ?a)
-    * dseg(?m, ?k, ?jn, ?j, ?l2)
-    |- dseg(?i, ?ip, ?jn, ?j, ?l)
-if
-  | dseg_ne(?i, ?ip, ?jn, ?j, app(?l1, cons(?a, ?l2)))
-    |- dseg(?i, ?ip, ?jn, ?j, ?l)
-
-rule dseg_app_right:
-  | |- dseg_ne(?i, ?ip, ?jn, ?j, app(?alpha, ?beta))
-without
-  ?beta = empty() || ?alpha =empty()
-if
-  | |- dseg_ne(?i, ?ip, _kn, _k, ?alpha) * dseg_ne(_kn, _k, ?jn, ?j, ?beta)
-
-rule dseg_app_left:
-  | dseg_ne(?i, ?ip, ?jn, ?j, app(?alpha, ?beta)) |- 
-without
-  ?beta = empty() || ?alpha = empty()
-if
-  | dseg_ne(?i, ?ip, _kn, _k, ?alpha) * dseg_ne(_kn, _k, ?jn, ?j, ?beta) |- ****/
-
-/** Splitting list into head and tail (cons). **/
-
-/*rule dseg_cons_right:
-  | |- dseg_ne(?i, ?ip, ?jn, ?j, cons(?a, ?alpha))
-if
-  | |- node(?i, ?ip, _k, ?a) * dseg(_k, ?i, ?jn, ?j, ?alpha)*/
-
 /** Expand list segment when neccessary. **/
-  /** First element **/
+
+/*
+  Equality of non-empty list segments.
+
+  If non-empty list segments with the same first node appear on both sides of
+  the entailment, we split the RHS segment into tail and head according to the
+  inductive case of the "dseg" definition.
+*/
 rule dseg_cons_expand:
   | dseg_ne(?i, ?ip, ?jn, j, cons(?a, ?alpha))
     |- dseg_ne(?i, ?ip2, ?jn2, ?j2, cons(?a2, ?alpha2))
@@ -229,7 +215,14 @@ if
   | dseg_ne(?i, ?ip, ?jn, j, cons(?a, ?alpha))
     |- node(?i, ?ip2, _m2, ?a2) * dseg(_m2, ?i, ?jn2, ?j2, ?alpha2)*/
 
-rule dseg_node_lookup_first_left:
+/*
+  Equality of list segment nodes.
+
+  If the RHS contains a node of a LHS list segment, we expand the node on the
+  RHS into its constituent fields. Afterwards the rules dseg_cons_field_lookup
+  can be applied.
+*/
+rule dseg_node_lookup_first:
   | dseg_ne(?i, ?ip, ?jn, ?j, ?alpha) |- node(?i, ?ip2, ?in2, ?a2)
 if
   | dseg_ne(?i, ?ip, ?jn, ?j, ?alpha)
@@ -237,7 +230,12 @@ if
        ?i.<java.util.LinkedList$Entry: java.util.LinkedList$Entry next> |-> ?in2 *
        ?i.<java.util.LinkedList$Entry: java.lang.Object element> |-> ?a2
 
-rule dseg_node_lookup_last_left:
+/*
+  Equality of list segment nodes.
+
+  Same as dseg_node_lookup_first but for the last node of the list segment.
+*/
+rule dseg_node_lookup_last:
   | dseg_ne(?i, ?ip, ?jn, ?j, ?alpha) |- node(?j, ?jp2, ?jn2, ?a2)
 if
   | dseg_ne(?i, ?ip, ?jn, ?j, ?alpha)
@@ -245,7 +243,11 @@ if
        ?j.<java.util.LinkedList$Entry: java.util.LinkedList$Entry next> |-> ?jn2 *
        ?j.<java.util.LinkedList$Entry: java.lang.Object element> |-> ?a2
 
-rule dseg_cons_field_lookup_left:
+/*
+  If we have a field on the RHS of the first node in a non_empty list segment
+  on the LHS, we expand the list segment on the LHS.
+*/
+rule dseg_cons_field_lookup:
   | dseg_ne(?i, ?ip, ?jn, ?j, ?l) |- /*?i.?t |-> ?e*/ field(?i, ?t, ?e)
 if
   | ?l = cons(?a, ?alpha) * dseg(_k, ?i, ?jn, ?j, ?alpha) * node(?i, ?ip, _k, ?a)
@@ -253,39 +255,49 @@ if
 
   /** Last element **/
 
-rule dseg_app_lookup_left:
+/*
+  Same as dseg_cons_field_lookup but for the last node of the list segment.
+*/
+rule dseg_app_lookup:
   | dseg_ne(?i, ?ip, ?jn, ?j, ?l) |- /*?j.?t |-> ?e*/ field(?j, ?t, ?e)
 if
   | ?l = app(?alpha, cons(?a, empty())) * dseg(?i, ?ip, ?j, _k, ?alpha) * node(?j, _k, ?jn, ?a)
     |- /*?j.?t |-> ?e*/ field(?j, ?t, ?e)
 
-/** Warning: These rules can cause non-termination! **/
-/** A non-empty list has a first and a last element (not necessarily distinct). **/
+/*
+  Expand node.
 
-rule dseg_app_lookup:
-  | dseg_ne(?i, ?ip, ?jn, ?j, cons(?a, ?alpha)) |- /*?j.?t |-> ?a2*/ field(?j, ?t, ?a2)
-if
-  | cons(?a, ?alpha) = app(_beta, cons(_b, empty())) * node(?j, _k, ?jn, _b) * dseg(?i, ?ip, ?j, _k, _beta)
-    |- /*?j.?t |-> ?a2*/ field(?j, ?t, ?a2)
-
+  If we have a node predicate on the LHS of an implication and the "previous"
+  field of the node object appears on the RHS, then we rewrite the node in terms
+  of its constituent fields.
+*/
 rule node_lookup_previous:
-  | node(?i,?ip1,?in,?e) |- ?i.<java.util.LinkedList$Entry: java.util.LinkedList$Entry previous> |-> ?ip2
+  | node(?i, ?ip1, ?in, ?e)
+      |- ?i.<java.util.LinkedList$Entry: java.util.LinkedList$Entry previous> |-> ?ip2
 if
   ?i.<java.util.LinkedList$Entry: java.util.LinkedList$Entry previous> |-> ?ip1 |
     ?i.<java.util.LinkedList$Entry: java.util.LinkedList$Entry next> |-> ?in *
     ?i.<java.util.LinkedList$Entry: java.lang.Object element> |-> ?e
       |- ?ip1 = ?ip2
 
+/*
+  Same as node_lookup_previous but for "next" field.
+*/
 rule node_lookup_next:
-  | node(?i,?ip,?in1,?e) |- ?i.<java.util.LinkedList$Entry: java.util.LinkedList$Entry next> |-> ?in2
+  | node(?i, ?ip, ?in1, ?e)
+      |- ?i.<java.util.LinkedList$Entry: java.util.LinkedList$Entry next> |-> ?in2
 if
   ?i.<java.util.LinkedList$Entry: java.util.LinkedList$Entry next> |-> ?in1 |
     ?i.<java.util.LinkedList$Entry: java.util.LinkedList$Entry previous> |-> ?ip *
     ?i.<java.util.LinkedList$Entry: java.lang.Object element> |-> ?e
       |- ?in1 = ?in2 
 
+/*
+  Same as node_lookup_previous but for "element" field.
+*/
 rule node_lookup_element:
-  | node(?i,?ip,?in,?e1) |- ?i.<java.util.LinkedList$Entry: java.lang.Object element> |-> ?e2
+  | node(?i, ?ip, ?in, ?e1)
+      |- ?i.<java.util.LinkedList$Entry: java.lang.Object element> |-> ?e2
 if
   ?i.<java.util.LinkedList$Entry: java.lang.Object element> |-> ?e1 |
     ?i.<java.util.LinkedList$Entry: java.util.LinkedList$Entry next> |-> ?in *
@@ -294,12 +306,29 @@ if
 
 /** Doubly-linked list nodes (node). **/
 
+/*
+  Contradiction.
+
+  A node object cannot be null.
+*/
 equiv node_not_nil:
   node(nil(), ?ip, ?in, ?a) <=>  False
 
+/*
+  Contradiction.
+
+  If two node with the same name exit (on the same side on the entailment),
+  then we have a contradiction (see field_field_contradiction1 for comparison).
+*/
 equiv node_not_eq:
   node(?x, ?ip, ?in, ?a) * node(?x, ?jp, ?jn, ?b) <=> False
 
+/*
+  Collapse to node.
+
+  If all fields of a node object are present on one side, we collapse them to
+  the node predicate.
+*/
 rule node_rollup_left:
   | ?i.<java.util.LinkedList$Entry: java.util.LinkedList$Entry previous> |-> ?ip *
     ?i.<java.util.LinkedList$Entry: java.util.LinkedList$Entry next> |-> ?in *
@@ -307,27 +336,25 @@ rule node_rollup_left:
 if
   | node(?i, ?ip, ?in, ?a) |-
 
+/*
+  Convert all nodes on LHS to singleton list segments.
+*/
 rule dseg_node_rollup_left:
   | node(?i, ?ip, ?in, ?a) |- 
 if
   | dseg_ne(?i, ?ip, ?in, ?i, cons(?a, empty())) |- 
 
-/* Maybe can find a more general rule? */
-rule dseg_app_rollup_left2:
+/*
+  Substraction rules for list segments.
+*/
+rule dseg_app_rollup2:
   | dseg_ne(?i, ?ip, ?jn, ?j, ?alpha) * dseg_ne(?jn, ?j, ?kn, ?k, ?beta)
     |- dseg_ne(?i, ?ip, ?kn, ?k, ?list)
 if
   dseg_ne(?i, ?ip, ?jn, ?j, ?alpha) * dseg_ne(?jn, ?j, ?kn, ?k, ?beta) |
     |- ?list = app(?alpha, ?beta)
 
-/*rule dseg_app_rollup_left2:
-  | dseg_ne(?i, ?ip, ?jn, ?j, ?alpha) * dseg_ne(?jn, ?j, ?kn, ?k, ?beta)
-    |- dseg_ne(?i, ?ip, ?kn, ?k, ?list)
-if
-  dseg_ne(?i, ?ip, ?kn, ?k, app(?alpha, ?beta)) |
-    |- dseg_ne(?i, ?ip, ?kn, ?k, ?list)*/
-
-rule dseg_app_rollup_left3:
+rule dseg_app_rollup3:
   | dseg_ne(?i, ?ip, ?jn, ?j, ?alpha)
            * dseg_ne(?jn, ?j, ?ln, ?l, ?beta)
                     * dseg_ne(?ln, ?l, ?kn, ?k, ?gamma)
@@ -338,7 +365,7 @@ if
   dseg_ne(?ln, ?l, ?kn, ?k, ?gamma) |
       |- ?list = app(?alpha, app(?beta, ?gamma))
 
-rule dseg_app_rollup_left_trans:
+rule dseg_app_rollup_trans:
   | dseg_ne(?i, ?ip, ?jn, ?j, ?alpha)
            * dseg_ne(?jn, ?j, ?ln, ?l, ?beta)
                     * dseg_ne(?m, ?mp, ?kn, ?k, ?gamma)
@@ -347,6 +374,28 @@ if
   dseg_ne(?i, ?ip, ?ln, ?l, app(?alpha, ?beta)) |
     dseg_ne(?m, ?mp, ?kn, ?k, ?gamma)
       |- dseg_ne(?ln, ?l, ?kn, ?k, ?list) * ?list = app(app(?alpha, ?beta), ?delta)
+
+/*
+  Equality of list segments.
+
+  If we have a non-empty list segment on the LHS and one on the RHS which
+  coincide in the first and the last node, then the other arguments of the
+  "dseg_ne" must also be the same in both.
+*/
+rule dseg_dseg_eq:
+  | dseg_ne(?i, ?ip1, ?jn1, ?j, ?l1) |- dseg_ne(?i, ?ip2, ?jn2, ?j, ?l2)
+if
+  | dseg_ne(?i, ?ip1, ?jn1, ?j, ?l1) |- ?l1 = ?l2 * ?ip1 = ?ip2 * ?jn1 = ?jn2 
+
+/*
+  Equivalence.
+
+  A list segment must be either empty or non-empty.
+*/
+equiv dseg_disj:
+      dseg(?i, ?ip, ?jn, ?j, ?alpha)
+  <=> ?alpha = empty() * ?i = ?jn * ?j = ?ip
+        || dseg_ne(?i, ?ip, ?jn, ?j, ?alpha)
 
 rule node_expand_right:
   | node(?i, ?ip1, ?in1, ?a1) |- node(?i, ?ip2, ?in2, ?a2)
@@ -363,20 +412,4 @@ rule node_rollup_right:
 if
   | |- node(?i, ?ip, ?in, ?a)
 
-rule dseg_dseg_eq:
-  | dseg_ne(?i, ?ip1, ?jn1, ?j, ?l1) |- dseg_ne(?i, ?ip2, ?jn2, ?j, ?l2)
-if
-  | dseg_ne(?i, ?ip1, ?jn1, ?j, ?l1) |- ?l1 = ?l2 * ?ip1 = ?ip2 * ?jn1 = ?jn2 
 
-equiv dseg_disj:
-      dseg(?i, ?ip, ?jn, ?j, ?alpha)
-  <=> ?alpha = empty() * ?i = ?jn * ?j = ?ip
-        || dseg_ne(?i, ?ip, ?jn, ?j, ?alpha)
-
-equiv dseg_ne_app_cons_first:
-      dseg(?i, ?ip, ?jn, ?j, app(cons(?a, ?alpha), ?beta))
-  <=> dseg_ne(?i, ?ip, ?jn, ?j, app(cons(?a, ?alpha), ?beta))
-
-equiv dseg_ne_app_cons_second:
-      dseg(?i, ?ip, ?jn, ?j, app(?alpha, cons(?b, ?beta)))
-  <=> dseg_ne(?i, ?ip, ?jn, ?j, app(?alpha, cons(?b, ?beta)))

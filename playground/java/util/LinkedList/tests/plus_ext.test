@@ -44,6 +44,10 @@ Implication:
   (a + b) = c |- (a + (b + x)) = (x + c)
 ? True
 
+Implication:
+  (a + (a + b)) = (b + (a + a)) |- False
+? True
+
 /* plus_nested_first_eq_second_left */
 Implication:
   (a + (x + b)) = (c + x) |- (a + b) = c

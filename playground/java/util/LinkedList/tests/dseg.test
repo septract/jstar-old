@@ -2,36 +2,181 @@
  * Tests for doubly-linked list segments. *
  ******************************************/
 
- /**
-  * Empty list segment.
-  */
+/**
+ * Empty list segment.
+ */
 
-/* dseg_empty_left1 */
+/* dseg_empty1_left */
 Implication:
   dseg(i, j, i, j, empty()) |- False
 ? False
 
-/* dseg_empty_left2 */
-Implication:
-  dseg(i, ip, jn, j, empty()) |- i = jn * j = ip
-? True
-
-/* dseg_empty_right1  */
+/* dseg_empty1_right (dseg_ne must not be empty) */
 Implication:
   dseg_ne(a, ap, bn, b, ls) |- dseg(i, j, i, j, ls)
 ? False
 
-/* dseg_empty_right2 */
+/* dseg_empty2_left */
 Implication:
-  |- dseg(i, ip, jn, j, empty())
+  dseg(i, ip, jn, j, empty()) |- i = jn * j = ip
+? True
+
+/* dseg_empty2_right */
+Implication:
+  i = "0" * jn = "1" |- dseg(i, ip, jn, j, empty())
 ? False
 
 /**
  * Contradictions.
  */
 
-/* dseg*/
+/* dseg_ne_empty1 */
+Implication:
+  dseg_ne(i, ip, jn, j, ls) |- i = jn
+? False
+
+/* dseg_ne_empty2 */
+Implication:
+  dseg_ne(i, ip, jn, j, ls) |- j = ip
+? False
+
+/* dseg_ne_empty3 */
+Implication:
+  |- dseg_ne(i, ip, jn, j, ls) * i = jn
+? False
+
+/* dseg_ne_empty4 */
+Implication:
+  |- dseg_ne(i, ip, jn, j, ls) * j = ip
+? False
+
+/* dseg_ne_empty5 */
+Implication:
+  dseg_ne(i, ip, i, j, ls) |-
+? True
+
+Implication:
+  |- dseg_ne(i, ip, i, j, ls)
+? False
+
+/* dseg_ne_empty6 */
+Implication:
+  dseg_ne(i, j, jn, j, ls) |-
+? True
+
+Implication:
+  |- dseg_ne(i, j, jn, j, ls)
+? False 
+
+/* dseg_dseg_contradiction1 */
+Implication:
+  dseg_ne(i, ip, jn, j, l1) * dseg_ne(i, kp, mn, m, l2) |-
+? True
+
+Implication:
+  |- dseg_ne(i, ip, jn, j, l1) * dseg_ne(i, kp, mn, m, l2)
+? False
+
+/* dseg_dseg_contradiction2 */
+Implication:
+  dseg_ne(i, ip, jn, j, l1) * dseg_ne(k, kp, mn, m, l2) |- i = k
+? False
 
 /* Touching list segments. */
 
-/**/
+/* dseg_non_circular_front1 */
+Implication:
+  dseg_ne(i, ip, jn, j, l) |- i = ip
+? False
+
+/* dseg_non_circular_back1 */
+Implication:
+  dseg_ne(i, ip, jn, j, l) |- j = jn
+? False
+
+/* dseg_non_circular_front2 */
+Implication:
+  |- i = ip * dseg_ne(i, ip, jn, j, l)
+? False
+
+/* dseg_ne_circular_back2 */
+Implication:
+  |- j = jn * dseg_ne(i, ip, jn, j, l)
+? False
+
+/* dseg_ne_circular_front3 */
+Implication:
+  dseg_ne(i, i, jn, j, l) |-
+? True
+
+/* dseg_ne_circular_back3 */
+Implication:
+  dseg_ne(i, ip, j, j, l) |-
+? True
+
+/* dseg_singleton */
+Implication:
+  dseg_ne(i, ip, jn, j, l) |- i = j
+? True
+
+/* dseg_non_empty1 */
+Implication:
+  i != jn * dseg(i, ip, jn, j, l) |- dseg_ne(i, ip, jn, j, l)
+? True
+
+/* dseg_ne_empty2 */
+Implication:
+  j != ip * dseg(i, ip, jn, j, l) |- dseg_ne(i, ip, jn, j, l)
+? True
+
+/* dseg_ne_empty3 */
+Implication:
+  dseg(i, ip, jn, j, cons(a, alpha)) |- dseg_ne(i, ip, jn, j, cons(a, alpha))
+? True
+
+/* dseg_non_empty_app_cons_first */
+Implication:
+  dseg(i, ip, jn, j, app(cons(a, alpha), beta)) |- dseg_ne(i, ip, jn, j, app(cons(a, alpha), beta))
+? True
+
+/* dseg_non_empty_app_cons_second */
+Implication:
+  dseg(i, ip, jn, j, app(cons(a, alpha), beta)) |- dseg_ne(i, ip, jn, j, app(cons(a, alpha), beta))
+? True
+
+/* dseg_cons_expand */
+Implication:
+  dseg_ne(i, ip, jn, j, cons(a, cons(b, beta))) |- dseg_ne(i, ip, jn2, j2, cons(a, cons(b, empty())))
+? True
+
+/* dseg_node_lookup_first */
+Implication:
+  dseg_ne(i, ip, in, i, cons(a, empty())) |- node(i, ip, in, a)
+? True
+
+/* dseg_node_lookup_last */
+Implication:
+  dseg_ne(i, ip, jn, j, cons(a, cons(b, empty()))) |- node(j, k, jn, b)
+? True
+
+/* dseg_cons_field_lookup */
+Implication:
+  dseg_ne(i, ip, jn, j, cons(a, alpha)) |- i.<java.util.LinkedList$Entry: java.lang.Object element> |-> a
+? True
+
+/* dseg_app_lookup */
+
+/* node_lookup_previous */
+
+/* node_lookup_next */
+
+/* node_lookup_element */
+
+/* node_not_nil */
+
+/* node_not_eq */
+
+/* node_not_eq */
+
+/* dseg_node_rollup */
+

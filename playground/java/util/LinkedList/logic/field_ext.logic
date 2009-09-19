@@ -1,6 +1,6 @@
-/**
- * Tautologies.
- */
+/*******************************************
+ * Extends the rules for field predicates. *
+ ******************************************/
 
 /*
   If there are two fields with the same type, then they must be distinct fields.

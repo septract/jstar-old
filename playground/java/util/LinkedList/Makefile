@@ -26,7 +26,7 @@ ABS_FILE = $(BASE_DIR)/$(ABS_FILE_NAME)
 
 CLASSES = java.lang.Object java.util.AbstractCollection java.util.AbstractSequentialList java.util.LinkedList java.util.LinkedList$$Entry java.util.LinkedList$$Iter
 
-LOGIC_FILES = cmp
+LOGIC_FILES = dseg
 TESTS = $(addsuffix .test, $(LOGIC_FILES))
 
 .SUFFIXES: .jimple .test

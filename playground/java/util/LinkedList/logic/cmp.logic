@@ -222,7 +222,9 @@ without
 equiv lt_plus_first_eq1:
   ((?a + ?b) < ?a) <=> (?b < numeric_const("0"))
 without
-  (?a + ?b) = ?b
+     ?a = numeric_const("0")
+  || (?a + ?b) = ?a
+  || (?a + ?b) = numeric_const("0")
 
 /*
   Equivalence:
@@ -232,7 +234,9 @@ without
 equiv lt_plus_first_eq2:
   ((?a + ?b) < ?b) <=> (?a < numeric_const("0"))
 without
-  (?a + ?b) = ?a
+     ?b = numeric_const("0")
+  || (?a + ?b) = ?b
+  || (?a + ?b) = numeric_const("0")
 
 /*
   Equivalence:
@@ -242,7 +246,8 @@ without
 equiv lt_plus_second_eq1:
   (?a < (?a + ?b)) <=> (numeric_const("0") < ?b)
 without
-  (?a + ?b) = ?b
+     ?a = numeric_const("0")
+  || (?a + ?b) = ?a
 
 /*
   Equivalence on LHS:
@@ -252,7 +257,8 @@ without
 equiv lt_plus_second_eq2:
   (?b < (?a + ?b)) <=> (numeric_const("0") < ?a)
 without
-  (?a + ?b) = ?a
+     ?b = numeric_const("0")
+  || (?a + ?b) = ?b
 
 /*
   Equivalence.
