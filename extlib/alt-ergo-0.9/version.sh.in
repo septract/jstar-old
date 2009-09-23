@@ -1,0 +1,20 @@
+#!/bin/sh
+
+# Note: the LIBDIR variable is a free variable
+# Note: the mkdirs are needed for the Ocamlbuild Makefile.
+
+. ./Version
+
+# 
+ALTERGOVF=version.ml
+mkdir -p .
+echo "let version = \""$ALTERGO_VERSION"\"" >> $ALTERGOVF
+echo "let date = \""`date`"\"" >> $ALTERGOVF
+echo "let libdir = \""@libdir@"\"" >> $ALTERGOVF
+
+# 
+CTRLERGOVF=gergo_version.ml
+mkdir -p .
+echo "let version = \""$CTRLERGO_VERSION"\"" > $CTRLERGOVF
+echo "let date = \""`date`"\"" >> $CTRLERGOVF
+echo "let libdir = \""@libdir@"\"" >> $CTRLERGOVF

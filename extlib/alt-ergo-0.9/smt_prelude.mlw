@@ -1,0 +1,31 @@
+(*logic ite : bool, 'a1, 'a1 -> 'a1
+
+axiom ite_true: (forall x:'a1. (forall y:'a1. (ite(true, x, y) = x)))
+
+axiom ite_false: (forall x:'a1. (forall y:'a1. (ite(false, x, y) = y)))
+*)
+type U
+
+type ('a,'b) Array_poly
+
+logic select : ('a,'b) Array_poly, 'a -> 'b
+logic store : ('a,'b) Array_poly, 'a, 'b -> ('a,'b) Array_poly
+
+axiom select_store:
+  (forall m:('a,'b) Array_poly.
+    (forall p:'a.
+      (forall a:'b [select(store(m, p, a), p)|store(m, p, a)]. 
+	 (select(store(m, p, a), p) = a))))
+
+axiom select_store_neq:
+  (forall m: ('a,'b) Array_poly.
+    (forall p1: 'a.
+      (forall p2: 'a.
+        (forall a:'b 
+	   [select(store(m, p1, a), p2) | store(m, p1, a), select(m,p2)].
+          ((p1 <> p2) -> (select(store(m, p1, a), p2) = select(m, p2)))))))
+
+(* Those traductions are done in smt_to_why.ml *)
+(*type Array = (int,int) Array_poly
+type Array1 = (int,Real) Array_poly
+type Array2 = (int,Array1) Array_poly*)
