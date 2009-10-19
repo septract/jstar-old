@@ -4,6 +4,12 @@ open Vars
 open Pterm
 open Plogic 
 
+
+type 'a importoption =
+    Import of string 
+  | Normal of 'a
+
+
 (***************************************************
  from rterm
 ***************************************************)

@@ -31,9 +31,8 @@ let load_logic dirs filename =
 	System.find_file_from_dirs dirs filename 
       with Not_found  ->  Format.printf "Cannot find logic file: %s@\n" filename; raise Exit
     in   
-    let l = string_of_file filename in 
     if !(Debug.debug_ref) then Printf.printf "Start parsing logic in %s...\n" filename;
-    let rule_list  = Jparser.rule_file Jlexer.token (Lexing.from_string l) in 
+    let rule_list  = Jparser.rule_file Jlexer.token (Lexing.from_channel (open_in filename)) in 
     let logic = rule_list_to_logic filename rule_list (sl,rm) in 
     if !(Debug.debug_ref) then Printf.printf "Parsed %s!\n" filename;
     logic in 

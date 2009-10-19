@@ -24,7 +24,7 @@ SYMBEXE_SOURCES = jlogic.ml specification.ml support_symex.ml methdec.ml cfg.ml 
 TOPLEVEL_SOURCES = $(SYMBEXE_SOURCES)
 
 DEFAULT_ARGS = SOURCES="$(TOPLEVEL_SOURCES)" \
-       LIBS="str unix utils parser sepprover" \
+       LIBS="str unix utils sepprover parser" \
        OCAMLLDFLAGS="-g -I $(LIB)" \
        INCDIRS="../prover ../utils ../syntax" \
        OCAMLFLAGS="-g" \

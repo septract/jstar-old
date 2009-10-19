@@ -18,18 +18,18 @@ export LIB
 
 INCLUDES = 
 
-SOURCES = config.ml support_syntax.ml jparser.mly jlexer.mll
+SOURCES = config.ml support_syntax.ml jparser.mly jlexer.mll load_logic.ml
 
 LIBRARY = SOURCES="$(SOURCES)" \
        OCAMLLDFLAGS="-g -a" \
-       INCDIRS="../utils" \
+       INCDIRS="../utils ../prover" \
        OCAMLFLAGS="-g" \
        RESULT="$(LIB)/parser.cmxa" \
        TRASH=""
 
 BLIBRARY = SOURCES="$(SOURCES)" \
        OCAMLLDFLAGS="-g -a" \
-       INCDIRS="../utils" \
+       INCDIRS="../utils ../prover" \
        OCAMLFLAGS="-g" \
        RESULT="$(LIB)/parser.cma" \
        TRASH=""
@@ -41,7 +41,7 @@ parser.cma: prebuild
 	@$(MAKE) -f $(OCAMLMAKEFILE) $(BLIBRARY) byte-code
 
 prebuild:
-	@(cd ../utils; make)
+	@(cd ../prover; make)
 
 clean:
 	$(MAKE) -f $(OCAMLMAKEFILE) $(LIBRARY) clean
