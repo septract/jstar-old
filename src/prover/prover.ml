@@ -11,7 +11,6 @@ open Vars
 open Misc
 open Pterm
 open Rterm
-open Global_types
 open Rlogic
 open Plogic
 open Debug 
@@ -43,6 +42,10 @@ exception Failed_eg of ts_sequent list
 let filter_eq_eq pl = 
   let ret = List.filter (fun x -> match x with EQ(r1,r2) -> not (rep_eq r1 r2) | _ -> true) pl in
   ret
+
+
+type sequent_rule = representative psequent * (representative psequent list list) * string * ((* without *)representative pform * representative pform) * (where list)
+
 
 (* if sequent matches, then replace with each thing  in the sequent list *)
 (*

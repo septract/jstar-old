@@ -14,7 +14,6 @@
 open Debug
 open Pterm
 open Plogic
-open Global_types
 open Printf 
 open Misc
 exception Contradiction
@@ -38,7 +37,7 @@ let ts_debug=false
  *   of terms
  * 
  ***************************************************)
-(*
+
 (* terms that only refer to representatives for subterms. *)
 type flattened_term = 
     FTConstr of string * representative list
@@ -65,7 +64,8 @@ and term_record =
     mutable rep : representative;
     nn : int;
    }
-    *)
+
+
 (*************
  *  Term constructor
  ************)

@@ -3,47 +3,15 @@ open Vars
 (*open Rterm *)
 open Pterm
 open Plogic 
-
+open Rterm
+open Rlogic
+open Prover
 
 type 'a importoption =
     ImportEntry of string 
   | NormalEntry of 'a
 
 
-(***************************************************
- from rterm
-***************************************************)
-
-(* terms that only refer to representatives for subterms. *)
-type flattened_term = 
-    FTConstr of string * representative list
-  | FTFunct of string * representative list
-  | FTRecord of (string * representative) list
-  | FTString of string
-  | FTPVar of Vars.var  (* Not sure we need existential variables *)
-and representative =
-    rep_record ref
-and rep_record =
-    {
-     mutable terms: term list;
-     mutable uses: term list;
-     n: int;
-     name: string;
-     mutable deleted: bool;
-   }
-and term = term_record ref 
-and term_record =
-   {
-    mutable redundant : bool;
-    mutable righthand : bool;
-    mutable term : flattened_term;
-    mutable rep : representative;
-    nn : int;
-   }
-    
-(***************************************************
- end from rterm
-***************************************************)
 
 module ClassMap =   
   Map.Make(struct
@@ -78,12 +46,6 @@ type spec_file = class_spec list
 (***************************************************
  from rlogic
 ***************************************************)
-type varterm = 
-    Var of varset
-
-type where = 
-  | NotInContext of varterm
-  | NotInTerm of varterm * representative args
 (***************************************************
  end from rlogic
 ***************************************************)
@@ -94,7 +56,9 @@ type where =
 (***************************************************
  from prover
 ***************************************************)
-type sequent_rule = representative psequent * (representative psequent list list) * string * ((* without *)representative pform * representative pform) * (where list)
+
+
+
 
 type rewrite_rule = string * representative args list * representative args * (representative pform) * (where list) * (representative pform) (* if *) * string * bool
 
@@ -104,7 +68,6 @@ type rules =
   | SeqRule of sequent_rule
   | RewriteRule of rewrite_rule
   | EquivRule of equiv_rule
-
 
 type question =
   |  Implication of representative pform * representative pform 
@@ -140,6 +103,8 @@ let expand_equiv_rules rules =
     | SeqRule _ | RewriteRule _ -> x::list
   in
   List.fold_right equiv_rule_to_seq_rule rules []
+
+
 
 (***************************************************
  end from prover

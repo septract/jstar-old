@@ -7,7 +7,8 @@ open Jparsetree
 
 open Vars
 open Pterm 
-open Plogic 
+open Plogic
+open Rlogic 
 open Lexing
 open Parsing 
 open Global_types

@@ -3,7 +3,7 @@ namespace Microsoft.Research.Vcc2
 F#*)
 
 open Debug
-open Global_types
+open Rterm
 
 module SepProver = struct
 
