@@ -5,6 +5,7 @@
  
 *******************************************************************)
 open Debug
+open Misc
 open Vars
 open Pterm
 open Rterm
@@ -52,6 +53,8 @@ let conjunction (p1,s1,c1) (p2,s2,c2) =
     
 
 let disjunction (p1,s1,c1) (p2,s2,c2) = ([], [], [Or(Form(p1,s1,c1),Form(p2,s2,c2))])
+
+let rfalse = ([], [], [False])
 
 let wand (p1,s1,c1) (p2,s2,c2) = ([], [], [Wand(Form(p1,s1,c1),Form(p2,s2,c2))])
   

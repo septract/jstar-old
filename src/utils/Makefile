@@ -18,7 +18,7 @@ export LIB
 
 INCLUDES = 
 
-SOURCES = system.ml vars.ml debug.ml pterm.ml plogic.ml jparsetree.ml global_types.ml pprinter.ml
+SOURCES = misc.ml system.ml vars.ml debug.ml pterm.ml plogic.ml jparsetree.ml global_types.ml pprinter.ml
 #dotty.ml
 
 LIBRARY = SOURCES="$(SOURCES)" \

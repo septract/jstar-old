@@ -8,6 +8,7 @@
 
 
 open Vars
+open Misc
 open Pterm
 open Rterm
 open Global_types
@@ -1116,11 +1117,29 @@ let check_implication logic (ts1,heap1) (ts2,heap2)  =
 let check_inconsistency logic ((ts,heap1) : ts_form)  = 
   check_implication_inner logic ts heap1 ([],[],[False]) 
 
+
 (* This is inefficient, but save writing a new interface *)
 let check_equal logic (f : ts_form) (a1 : representative args) (a2 : representative args)  = 
     match check_implication_frame logic f (Rlogic.convert (mkEQ(a1,a2))) with
       [] -> false
     | _ -> true
+
+
+let check_equiv (f1 : ts_form) (f2 : ts_form) =
+  check_implication empty_logic f1 f2 && check_implication empty_logic f2 f1
+
+
+let check_equiv (fl1 : ts_form list) (fl2 : ts_form list) =
+  let lifted_imp fl1 fl2 = 
+    List.for_all 
+      (fun f1 -> 
+	List.exists
+	  (fun f2 -> 
+	    check_implication empty_logic f1 f2
+	  ) fl2
+      ) fl1 in
+  lifted_imp fl1 fl2 && lifted_imp fl2 fl1
+
 
      
 (* 
