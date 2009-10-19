@@ -70,7 +70,7 @@ let main () =
 	      Plogic.string_form heap2;
 	  List.iter 
 	      (fun form -> 
-		Format.printf "Resulted in frames:@\n %a@\n" (Rlogic.string_ts_form (Rterm.rao_create ())) form) x;
+		Format.printf "Resulted in frames:@\n %a@\n" Rlogic.string_ts_form form) x;
 	  Format.printf "Was expecting:@\n%a@\n" Plogic.string_form result
 	 )
     | Global_types.TAbs (heap1,result)  ->
@@ -81,7 +81,7 @@ let main () =
 	      Plogic.string_form heap1;
 	  List.iter 
 	      (fun form -> 
-		Format.printf "Resulted in forms:@\n %a@\n" (Rlogic.string_ts_form (Rterm.rao_create ())) form) x;
+		Format.printf "Resulted in forms:@\n %a@\n" Rlogic.string_ts_form form) x;
 	  Format.printf "Was expecting:@\n%a@\n" Plogic.string_form result
 	 )	
     | Global_types.TInconsistency (heap1,result) ->

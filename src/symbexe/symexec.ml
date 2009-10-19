@@ -7,9 +7,8 @@
 *******************************************************************)
 
 open Pterm
-open Rterm
-open Rlogic
 open Plogic
+open Rlogic
 open Jlogic
 open Global_types
 open Jparsetree
@@ -186,15 +185,15 @@ let add_node label cfg = add_node label UnExplored (Some cfg)
 let explore_node src = if src.ntype = UnExplored then src.ntype <- Plain
 
 let add_abs_heap_node (heap : Rlogic.ts_form) cfg= 
-  (Format.fprintf (Format.str_formatter) "%a" (string_ts_form (Rterm.rao_create ())) heap);
+  (Format.fprintf (Format.str_formatter) "%a" string_ts_form heap);
   add_abs_node (Format.flush_str_formatter ()) cfg
 
 let add_heap_node (heap : Rlogic.ts_form) cfg = 
-  (Format.fprintf (Format.str_formatter) "%a" (string_ts_form (Rterm.rao_create ())) heap);
+  (Format.fprintf (Format.str_formatter) "%a" string_ts_form heap);
   add_node (Format.flush_str_formatter ()) cfg
 
 let add_error_heap_node (heap : Rlogic.ts_form) = 
-  (Format.fprintf (Format.str_formatter) "%a" (string_ts_form (Rterm.rao_create ())) heap);
+  (Format.fprintf (Format.str_formatter) "%a" string_ts_form heap);
   add_error_node (Format.flush_str_formatter ())
 
 
@@ -376,10 +375,10 @@ let exec_mutation_assign  (v:Jparsetree.reference) (e:Jparsetree.immediate) (she
   List.map
     (fun res -> 
       (* put back the new points to *)
-      if Config.symb_debug() then Format.printf "@\nBefore update@\n   %a@\n" (string_ts_form (Rterm.rao_create ())) res;
+      if Config.symb_debug() then Format.printf "@\nBefore update@\n   %a@\n" string_ts_form res;
       let x = conj_convert new_pointsto res in
       kill_var e_var res;
-      if Config.symb_debug() then Format.printf "@\nAfter update@\n   %a@\n" (string_ts_form (Rterm.rao_create ())) x;
+      if Config.symb_debug() then Format.printf "@\nAfter update@\n   %a@\n" string_ts_form x;
       x
     )
     frames
@@ -669,7 +668,7 @@ let rec execute_stmt n (sheap : formset_entry) : unit =
   Rlogic.kill_all_exists_names sheap_noid;
   let stm=node_get_stmt n in
   if Config.symb_debug() then Format.printf "@\nExecuting statement:@ %s" (Pprinter.statement2str stm.skind); 
-  if Config.symb_debug() then Format.printf "@\nwith heap:@\n    %a@\n@\n@."  (string_ts_form (Rterm.rao_create ())) sheap_noid;
+  if Config.symb_debug() then Format.printf "@\nwith heap:@\n    %a@\n@\n@."  string_ts_form sheap_noid;
   if (Prover.check_inconsistency !curr_logic (form_clone sheap_noid false)) then 
     (if Config.symb_debug() then Printf.printf "\n\nInconsistent heap. Skip it!\n";
      let idd = add_good_node "Inconsistent"  in add_edge_with_proof (snd sheap) idd "proof";
@@ -710,7 +709,7 @@ let rec execute_stmt n (sheap : formset_entry) : unit =
   let exec n sheap = 
     let sheap_noid=fst sheap in
     Rlogic.kill_all_exists_names sheap_noid;
-    if Config.symb_debug() then Format.printf "Output to %i with heap@\n   %a@\n" (node_get_id n) (string_ts_form (Rterm.rao_create ())) sheap_noid;
+    if Config.symb_debug() then Format.printf "Output to %i with heap@\n   %a@\n" (node_get_id n) string_ts_form sheap_noid;
     execute_stmt n sheap in 
   let execs n sheaps = List.iter (exec n) sheaps in 
 (*  let minfo=node_get_method_cfg_info n in *)
@@ -725,24 +724,24 @@ let rec execute_stmt n (sheap : formset_entry) : unit =
       [s] -> exec s sheaps 
     | _ -> assert false in
   if Config.symb_debug() then Format.printf "@\nExecuting statement:@ %s%!" (Pprinter.statement2str stm.skind); 
-  if Config.symb_debug() then Format.printf "@\nwith heap:@\n    %a@\n@\n%!"  (string_ts_form (Rterm.rao_create ())) sheap_noid;
+  if Config.symb_debug() then Format.printf "@\nwith heap:@\n    %a@\n@\n%!"  string_ts_form sheap_noid;
     (match stm.skind with 
       | Label_stmt l -> 
 	  (*  Update the labels formset, if sheap already implied then fine, otherwise or it in. *)
 	  (let id = node_get_id n in 
 	  try
-	    if Config.symb_debug() then Format.printf "@\nPre-abstraction:@\n    %a@."  (string_ts_form (Rterm.rao_create ())) sheap_noid;
+	    if Config.symb_debug() then Format.printf "@\nPre-abstraction:@\n    %a@."  string_ts_form sheap_noid;
 	    let sheap_pre_abs = form_clone sheap_noid true in 
 	    let sheaps_abs = Prover.abs !curr_abs_rules sheap_pre_abs in 
 	    let sheaps_abs = List.map (fun x -> form_clone x true) sheaps_abs in 
 	    if Config.symb_debug() then Format.printf "@\nPost-abstractionc count:@\n    %d@."  (List.length sheaps_abs);
 	    List.iter Rlogic.kill_all_exists_names sheaps_abs;
-	    if Config.symb_debug() then List.iter (fun sheap -> Format.printf "@\nPost-abstraction:@\n    %a@."  (string_ts_form (Rterm.rao_create ())) sheap) sheaps_abs;
+	    if Config.symb_debug() then List.iter (fun sheap -> Format.printf "@\nPost-abstraction:@\n    %a@."  string_ts_form sheap) sheaps_abs;
 
 	    let formset = (formset_table_find id) in 
 	    if Config.symb_debug() then (
                Format.printf "Testing inclusion of :@    %a" 
-		  (Debug.list_format "@\n" (string_ts_form (Rterm.rao_create ()))) sheaps_abs;
+		  (Debug.list_format "@\n" string_ts_form) sheaps_abs;
                print_formset "in " (remove_id_formset formset)
 	     );
 	    explore_node (snd sheap);

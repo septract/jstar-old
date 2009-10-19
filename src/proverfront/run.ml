@@ -51,13 +51,13 @@ let main () =
 	Format.printf "Find frame for\n %a\n ===> \n %a\n" Plogic.string_form heap1   Plogic.string_form heap2;
 	let x = Prover.check_implication_frame logic 
 	    (Rlogic.convert heap1) (Rlogic.convert heap2) in 
-	(match x with [] -> Printf.printf "Can't find frame!" | _ -> List.iter (fun form -> Format.printf "Frame:\n %a\n" (Rlogic.string_ts_form (Rterm.rao_create ())) form) x);
+	(match x with [] -> Printf.printf "Can't find frame!" | _ -> List.iter (fun form -> Format.printf "Frame:\n %a\n" Rlogic.string_ts_form  form) x);
 	Printf.printf "\n";
 	if !(Debug.debug_ref) then Prover.pprint_proof stdout
     | Global_types.Abs (heap1)  ->
 	Format.printf "Abstract@\n  @[%a@]@\nresults in@\n  " Plogic.string_form heap1;
 	let x = Prover.abs logic (Rlogic.convert heap1) in 
-	List.iter (fun form -> Format.printf "%a\n" (Rlogic.string_ts_form (Rterm.rao_create ())) form) x;
+	List.iter (fun form -> Format.printf "%a\n" Rlogic.string_ts_form form) x;
 	Printf.printf "\n";
 	if !(Debug.debug_ref) then Prover.pprint_proof stdout
     | Global_types.Inconsistency (heap1) ->

@@ -364,6 +364,9 @@ let string_ts_form hash ppf ((ts,f) :ts_form) =
     (match f with ([],_,_) -> "" | _ -> "* ")
     (string_form hash) f
 
+let string_ts_form ppf ((ts,f) :ts_form) =
+  string_ts_form (rao_create ()) ppf (ts,f)
+
 let string_seq hash ppf (f,l,r) = 
   Format.fprintf ppf "@[%a@]@ | @[%a@] @ |- @[%a@]" 
     (Debug.list_format "*" (string_spatial hash)) f
