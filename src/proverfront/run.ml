@@ -4,7 +4,7 @@
     Copyright Matthew Parkinson & Dino Distefano
  
 *******************************************************************)
-open Load_logic
+open Load
 
 let program_file_name = ref "";;
 let logic_file_name = ref "";;

@@ -145,10 +145,10 @@ let main () =
 	 [Sys.sigint; Sys.sigquit; Sys.sigterm];
        try 
 	 let logic = 
-	     Load_logic.load_logic  (System.getenv_dirlist "JSTAR_LOGIC_LIBRARY") !logic_file_name
+	     Load.load_logic  (System.getenv_dirlist "JSTAR_LOGIC_LIBRARY") !logic_file_name
 	 in 
 	
-	 let abs_rules = Load_logic.load_logic  (System.getenv_dirlist "JSTAR_LOGIC_LIBRARY") !absrules_file_name in
+	 let abs_rules = Load.load_logic  (System.getenv_dirlist "JSTAR_LOGIC_LIBRARY") !absrules_file_name in
 	 
 	 let spec_list = System.parse_file Jparser.spec_file Jlexer.token !spec_file_name "Specs" 
 	     !Config.sym_debug in 

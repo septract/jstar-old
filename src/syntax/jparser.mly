@@ -235,7 +235,7 @@ let field_signature2str fs =
 %type <Global_types.spec_file> spec_file
 
 %start rule_file
-%type <Global_types.rules list> rule_file
+%type <Global_types.rules Global_types.importoption list> rule_file
 
 
 %start question_file
@@ -864,16 +864,16 @@ equiv_rule:
    | EQUIV identifier_op COLON formula BIMP formula without_simp  { EquivRule($2,mkEmpty,$4,$6,$7) } 
 
 rule:
-   | IMPORT STRING_CONSTANT SEMICOLON { Import($2) }
-   |  RULE identifier_op COLON sequent without where IF sequent_list_or_list { SeqRule($4,$8,$2,$5,$6) }
-   |  REWRITERULE identifier_op COLON identifier L_PAREN jargument_list R_PAREN EQUALS jargument ifclause without_simp where { RewriteRule($4,$6,$9,$11,$12,$10,$2,false) }
-   |  REWRITERULE identifier_op MULT COLON identifier L_PAREN jargument_list R_PAREN EQUALS jargument ifclause without_simp where { RewriteRule($5,$7,$10,$12,$13,$11,$2,true) }
+   | IMPORT STRING_CONSTANT SEMICOLON { ImportEntry($2) }
+   |  RULE identifier_op COLON sequent without where IF sequent_list_or_list { NormalEntry(SeqRule($4,$8,$2,$5,$6)) }
+   |  REWRITERULE identifier_op COLON identifier L_PAREN jargument_list R_PAREN EQUALS jargument ifclause without_simp where { NormalEntry(RewriteRule($4,$6,$9,$11,$12,$10,$2,false)) }
+   |  REWRITERULE identifier_op MULT COLON identifier L_PAREN jargument_list R_PAREN EQUALS jargument ifclause without_simp where { NormalEntry(RewriteRule($5,$7,$10,$12,$13,$11,$2,true)) }
    |  ABSRULE identifier_op COLON formula LEADSTO formula where  { let seq=([],$4,[]) in
 							       let wo=(mkEmpty,mkEmpty) in 
 							       let seq2=([],$6,[]) in
 							       let seq_list=[[seq2]] in
-							       SeqRule(seq,seq_list,$2,wo,$7) }
-   | equiv_rule { $1 }
+							       NormalEntry(SeqRule(seq,seq_list,$2,wo,$7)) }
+   | equiv_rule { NormalEntry($1) }
 
 rule_file:
    | EOF  { [] }

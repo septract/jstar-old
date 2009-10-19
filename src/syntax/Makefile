@@ -18,7 +18,7 @@ export LIB
 
 INCLUDES = 
 
-SOURCES = config.ml support_syntax.ml jparser.mly jlexer.mll load_logic.ml
+SOURCES = config.ml support_syntax.ml jparser.mly jlexer.mll load.ml
 
 LIBRARY = SOURCES="$(SOURCES)" \
        OCAMLLDFLAGS="-g -a" \

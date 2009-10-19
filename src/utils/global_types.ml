@@ -6,8 +6,8 @@ open Plogic
 
 
 type 'a importoption =
-    Import of string 
-  | Normal of 'a
+    ImportEntry of string 
+  | NormalEntry of 'a
 
 
 (***************************************************
@@ -103,7 +103,6 @@ type equiv_rule = string * (representative pform) * (representative pform) * (re
 type rules = 
   | SeqRule of sequent_rule
   | RewriteRule of rewrite_rule
-  | Import of string
   | EquivRule of equiv_rule
 
 
@@ -138,7 +137,7 @@ let expand_equiv_rules rules =
 	      list
 	  else
 	    list
-    | _ -> x::list
+    | SeqRule _ | RewriteRule _ -> x::list
   in
   List.fold_right equiv_rule_to_seq_rule rules []
 
