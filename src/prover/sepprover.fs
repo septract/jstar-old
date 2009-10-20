@@ -12,97 +12,91 @@ module SepProver = struct
     **************************************)
     let debug f = Debug.debug_ref := f
     
-    type var = Vars.var
+    type var = Var of Vars.var
 
-    let prog_var (n : string) : var = (Vars.concretep_str n)
+    let prog_var (n : string) : var = Var (Vars.concretep_str n)
 
-    let exists_var (n : string) : var = (Vars.concretee_str n)
+    let exists_var (n : string) : var = Var (Vars.concretee_str n)
   
-    let fresh_exists_var () : var = (Vars.freshe ()) 
+    let fresh_exists_var () : var = Var (Vars.freshe ()) 
 
-    let fresh_unify_var () : var = (Vars.fresha ()) 
+    let fresh_unify_var () : var = Var (Vars.fresha ()) 
 
-    let fresh_prog_var () : var = (Vars.freshp ()) 
+    let fresh_prog_var () : var = Var (Vars.freshp ()) 
 
-    let fresh_exists_var_str s : var = (Vars.freshe_str s) 
+    let fresh_exists_var_str s : var = Var (Vars.freshe_str s) 
 
-    let fresh_prog_var_str s : var = (Vars.freshp_str s) 
+    let fresh_prog_var_str s : var = Var (Vars.freshp_str s) 
     
     (* Used in rules for pattern matching *)
-    let unify_var (n : string) : var = (Vars.fresha_str n)
+    let unify_var (n : string) : var = Var (Vars.fresha_str n)
 
-    type term = representative Pterm.args
+    type term = Term of representative Pterm.args
 
-    let mkVar : var -> term = fun x -> Pterm.Arg_var x
+    let unterm = (fun (Term a) -> a) 
+    let unterm_list = List.map unterm 
 
-    let mkFun : string -> term list -> term = fun n tl -> Pterm.Arg_op(n, tl)
+    let mkVar : var -> term = fun (Var x) -> Term (Pterm.Arg_var x)
 
-    let mkString : string -> term = fun n -> Pterm.Arg_string(n)
+    let mkFun : string -> term list -> term = fun n tl -> Term (Pterm.Arg_op(n,unterm_list tl))
+
+    let mkString : string -> term = fun n -> Term (Pterm.Arg_string(n))
 
     (*************************************
        Syntactic representation of formula
     **************************************)
-    type form  = representative Plogic.pform
+    type form  = Form of representative Plogic.pform
+
+    let unform = fun (Form x) -> x 
 
     (* False *)
-    let mkFalse : form = Plogic.mkFalse
+    let mkFalse : form = Form Plogic.mkFalse
 
     (* Inequality between two terms *)
-    let mkNEQ : term * term -> form = fun (a1,a2) ->  Plogic.mkNEQ(a1,a2)
+    let mkNEQ : term * term -> form = fun (Term a1,Term a2) ->  Form (Plogic.mkNEQ(a1,a2))
 
     (* Equality between two terms *)
-    let mkEQ : term * term -> form = fun (a1,a2) -> Plogic.mkEQ(a1,a2)
+    let mkEQ : term * term -> form = fun (Term a1,Term a2) ->  Form (Plogic.mkEQ(a1,a2))
 
     (* A pure predicate *)
     let mkPPred : string * term list -> form 
-        = fun (n,al) -> Plogic.mkPPred(n, al)
+        = fun (n,al) ->  Form (Plogic.mkPPred(n,unterm_list al))
 
     (* A spatial predicate *)
     let mkSPred : string * term list -> form 
-        = fun (n,al) ->  Plogic.mkSPred(n, al)
+        = fun (n,al) ->  Form (Plogic.mkSPred(n,unterm_list al))
 
     (* Disjunction of two formula *)
-    let mkOr : form * form -> form  = fun (f1, f2) ->Plogic.mkOr(f1,f2)
+    let mkOr : form * form -> form  = fun (Form f1, Form f2) -> Form (Plogic.mkOr(f1,f2))
 
     (* Star conjunction of two formula *)
-    let mkStar : form -> form -> form = fun f1 f2 -> Plogic.pconjunction f1 f2
+    let mkStar : form -> form -> form = fun (Form f1) (Form f2) -> Form (Plogic.pconjunction f1 f2)
 
     (* Empty formula/heap*)
-    let mkEmpty : form = Plogic.mkEmpty
+    let mkEmpty : form = Form (Plogic.mkEmpty)
     
     (***************************************
        Free variable functions
      ***************************************)
-    type varset = Pterm.varset
+    type varset = VS of Pterm.varset
 
-    let vs_mem : var -> varset -> bool 
-	= fun v vs -> Pterm.vs_mem v vs
-
-    let vs_add : var -> varset -> varset 
-	= fun v vs -> (Pterm.vs_add v vs)
-
-    let vs_empty : varset 
-	= Pterm.vs_empty
-
+    let vs_mem : var -> varset -> bool = fun (Var v) (VS vs) -> Pterm.vs_mem v vs
+    let vs_add : var -> varset -> varset = fun (Var v) (VS vs) -> VS(Pterm.vs_add v vs)
+    let vs_empty : varset = VS Pterm.vs_empty
     let vs_fold : (var -> 'a -> 'a) -> varset -> 'a -> 'a 
-      = fun f vs x -> Pterm.vs_fold (fun v x -> f v x) vs x 
-
+      = fun f (VS vs) x -> Pterm.vs_fold (fun v x -> f (Var v) x) vs x 
     let vs_iter : (var -> unit) -> varset -> unit 
-      = fun f vs -> Pterm.vs_iter (fun v -> f v) vs
-
+      = fun f (VS vs) -> Pterm.vs_iter (fun v -> f (Var v)) vs
     let vs_diff : varset -> varset -> varset 
-      = fun vs1  vs2 -> Pterm.vs_diff vs1 vs2 
-
+      = fun (VS vs1) (VS vs2) -> VS(Pterm.vs_diff vs1 vs2) 
     let vs_exists : (var -> bool) -> varset -> bool 
-      = fun f vs -> Pterm.vs_exists (fun v -> f v) vs 
+      = fun f (VS vs) -> Pterm.vs_exists (fun v -> f (Var v)) vs 
 
     (* returns the set of free variables  in the term *)
-    let fv_form : form -> varset 
-      = fun f -> Plogic.fv_form f Pterm.vs_empty
+    let fv_form : form -> varset = fun (Form f) -> VS(Plogic.fv_form f Pterm.vs_empty)
 
     (* returns the set of existential variables in the term *)
-    let ev_form : form -> varset 
-      = fun f -> Plogic.ev_form f Pterm.vs_empty
+    let ev_form : form -> varset = fun (Form f) -> VS(Plogic.ev_form f Pterm.vs_empty)
 
 
 
@@ -110,8 +104,7 @@ module SepProver = struct
      *  Pretty print functions
      ***************************************)
 
-    let string_form : Format.formatter -> form -> unit 
-	= fun ppf form -> Plogic.string_form ppf form 
+    let string_form : Format.formatter -> form -> unit = fun (ppf) (Form form) -> Plogic.string_form ppf form 
     
     
     (***************************************
@@ -119,61 +112,54 @@ module SepProver = struct
      ***************************************)
 
     (* Substitution on terms *)
-    type var_subst 
-      = representative Pterm.varmap
+    type var_subst = VSub of representative Pterm.varmap
 
     (* Creates the empty variable substitution *)
-    let empty_subst : var_subst 
-      = Pterm.empty
+    let empty_subst : var_subst = VSub (Pterm.empty)
 
     (* Adds a variable to a substitution *)
-    let add_subst : var -> term -> var_subst -> var_subst 
-      = fun  v t vs -> Pterm.add v t vs
+    let add_subst : var -> term -> var_subst -> var_subst = fun (Var v) (Term t) (VSub vs) -> VSub (Pterm.add v t vs)
      
     (* Makes a substitution freshen all variables it 
        does have a substitution for *)
-    let freshening_subst : var_subst -> var_subst = fun vs -> Pterm.freshening_subs vs
+    let freshening_subst : var_subst -> var_subst = fun (VSub vs) -> VSub (Pterm.freshening_subs vs)
 
 
     (* Builds a substitution which replaces each variable 
        in the supplied set with a fresh program variable *)
     let subst_kill_vars_to_fresh_prog : varset -> var_subst
-      = fun vs -> Pterm.subst_kill_vars_to_fresh_prog vs
+      = fun (VS vs) -> VSub (Pterm.subst_kill_vars_to_fresh_prog vs)
       
     (* Builds a substitution which replaces each variable 
        in the supplied set with a fresh exists variable *)      
     let subst_kill_vars_to_fresh_exist : varset -> var_subst  
-      = fun vs -> Pterm.subst_kill_vars_to_fresh_exist vs
+      = fun (VS vs) -> VSub (Pterm.subst_kill_vars_to_fresh_exist vs)
 
     (* Builds a substitution which replaces each variable 
        in the supplied set with a fresh variable of the same sort*)          
     let subst_freshen_vars : varset -> var_subst 
-      = fun vs -> Pterm.subst_freshen_vars vs
+      = fun (VS vs) -> VSub (Pterm.subst_freshen_vars vs)
     
     (* Use a substitution on a formula *)
     let subst_form : var_subst -> form -> form =
-      fun vs form -> Plogic.subst_pform vs form      
+      fun (VSub vs) (Form form) -> Form (Plogic.subst_pform vs form)
+      
 
     (*****************************************
        Internal formula operations
      *****************************************)
 
-    type rform = Rlogic.ts_form
+    type rform = RForm of Rlogic.ts_form
 
-    let convert : form -> rform  
-      = fun form -> Rlogic.convert form
+    let convert : form -> rform  = fun (Form form) -> RForm (Rlogic.convert form)
 
-    let conjoin : form -> rform -> rform 
-      = fun form rform -> Rlogic.conj_convert form rform
+    let conjoin : form -> rform -> rform = fun (Form form) (RForm rform) -> RForm (Rlogic.conj_convert form rform)
 
-    let kill_var : var -> rform -> unit 
-      = fun v rform -> Rlogic.kill_var v rform
+    let kill_var : var -> rform -> unit = fun (Var v) (RForm rform) -> Rlogic.kill_var v rform
 
-    let update_var_to : var -> term -> rform -> unit 
-      = fun x y z -> ignore (Rlogic.update_var_to x y z)
+    let update_var_to : var -> term -> rform -> unit = fun (Var x) (Term y) (RForm z) -> ignore (Rlogic.update_var_to x y z) ;()
 
-    let form_clone : rform -> rform 
-      = fun rform -> Rlogic.form_clone rform false
+    let form_clone : rform -> rform = fun (RForm rform) -> RForm (Rlogic.form_clone rform false)
 
 
 
@@ -181,9 +167,11 @@ module SepProver = struct
         Logic operations
      ******************************************)
 
-    type logic = Prover.logic
+    type logic = Logic of Prover.logic
 
     type sequent = form * form * form
+    let seq_con (Form f1,Form f2,Form f3) = (f1,f2,f3)
+    let premises_con = List.map (List.map seq_con)
 
     type rewrite_rule = { 
         op : string;
@@ -199,35 +187,25 @@ module SepProver = struct
         without : form;
       }
 
-    let empty_logic = Prover.empty_logic
+    let empty_logic = Logic (Prover.empty_logic)
 
-    let add_rewrite_rule (rr : rewrite_rule) ((sl,rm,ep) : logic) : logic = 
-      (sl,
-       Rterm.rm_add rr.op ((rr.arguments,rr.new_term,([],[],[]),rr.rule_name,false)
-			   ::(try Rterm.rm_find rr.op rm with Not_found -> [])) 
-	 rm,
-       ep)
+    let add_rewrite_rule (rr : rewrite_rule) (Logic (sl,rm,ep) : logic) : logic = 
+      Logic (sl,Rterm.rm_add rr.op ((unterm_list rr.arguments,unterm rr.new_term,([],[],[]),rr.rule_name,false)::(try Rterm.rm_find rr.op rm with Not_found -> [])) rm,ep)
       
 
-    let add_sequent_rule (sr : sequent_rule) ((sl,rm,ep) : logic) : logic =
-      let sr = ((sr.conclusion,sr.premises,sr.name,(sr.without,[]),[])) in
+    let add_sequent_rule (sr : sequent_rule) (Logic (sl,rm,ep) : logic) : logic =
+      let sr = ((seq_con sr.conclusion,premises_con sr.premises,sr.name,(unform sr.without,[]),[])) in
 (*      Printf.printf "Adding rule: \n%s" (Prover.string_psr sr) ;*)
-      (sl @ [sr] , rm, ep)
+      Logic (sl @ [sr] , rm, ep)
      
     (******************************************
        Entailment operations
      ******************************************)
 
-    let implies : logic -> rform -> rform -> bool 
-      = fun logic rform1 rform2 -> Prover.check_implication logic rform1 rform2
+    let implies : logic -> rform -> rform -> bool = fun (Logic logic) (RForm rform1) (RForm rform2) -> Prover.check_implication logic rform1 rform2
 
-    let frame : logic -> rform -> form -> rform list 
-      = fun logic rform1 form2 -> 
-	Prover.check_implication_frame_pform logic rform1 form2
-
-(*
-
-Need to do something better here for integration with multiple SMT provers and such like.
+    let rform_lift = List.map (fun x-> RForm x)  
+    let frame : logic -> rform -> form -> rform list = fun (Logic logic) (RForm rform1) (Form form2) -> rform_lift (Prover.check_implication_frame_pform logic rform1 form2)
 
     (******************************************
 	  External prover calls
@@ -291,5 +269,5 @@ Need to do something better here for integration with multiple SMT provers and s
 
 						)))
  
-*)
+
   end
