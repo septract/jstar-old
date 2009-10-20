@@ -141,35 +141,35 @@ and subst_form subs ((pf,sf,cf) : form) : form =
 
 (* pretty print *)
 
-let string_plain hash ppf ca =  
+let string_plain ppf ca =  
   match ca with 
-    NEQ(a1,a2) -> Format.fprintf ppf "@[%a != %a@]" (string_rep hash) a1  (string_rep hash) a2
-  | EQ(a1,a2) -> Format.fprintf ppf "@[%a = %a@]" (string_rep hash) a1   (string_rep hash) a2 
-  | PPred(op,al) -> Format.fprintf ppf "%s(@[%a@])" op (string_rlist hash) al
+    NEQ(a1,a2) -> Format.fprintf ppf "@[%a != %a@]" string_rep  a1  string_rep  a2
+  | EQ(a1,a2) -> Format.fprintf ppf "@[%a = %a@]" string_rep a1   string_rep a2 
+  | PPred(op,al) -> Format.fprintf ppf "%s(@[%a@])" op string_rlist al
 
 
-let string_plain_list hash ppf pl = 
-  Debug.list_format " *" (string_plain hash) ppf pl
+let string_plain_list ppf pl = 
+  Debug.list_format " *" string_plain ppf pl
 
-let string_spatial hash ppf s =
+let string_spatial ppf s =
   match s with 
-    SPred (s,al) ->  Format.fprintf ppf"%s(@[%a@])" s (string_rlist hash) al 
+    SPred (s,al) ->  Format.fprintf ppf"%s(@[%a@])" s string_rlist  al 
 
-let string_spatial_list hash ppf sl = 
-  Debug.list_format " *" (string_spatial hash) ppf sl
+let string_spatial_list ppf sl = 
+  Debug.list_format " *" string_spatial ppf sl
 
 
-let rec string_combined hash ppf s =
+let rec string_combined ppf s =
   match s with 
-    Form (f) -> Format.fprintf ppf "%a" (string_form hash) f
-  | Or(f1,f2) -> Format.fprintf ppf "@[@[(%a)@]@ || @[(%a)@]@]" (string_combined hash) f1 (string_combined hash) f2
-  | Wand(f1,f2) -> Format.fprintf ppf "(%a)@ -* (%a)" (string_combined hash) f1   (string_combined hash) f2
-  | Septract(f1,f2) -> Format.fprintf ppf "(%a)@ -o (%a)" (string_combined hash) f1   (string_combined hash) f2
+    Form (f) -> Format.fprintf ppf "%a" string_form f
+  | Or(f1,f2) -> Format.fprintf ppf "@[@[(%a)@]@ || @[(%a)@]@]" string_combined f1 string_combined f2
+  | Wand(f1,f2) -> Format.fprintf ppf "(%a)@ -* (%a)" string_combined f1   string_combined f2
+  | Septract(f1,f2) -> Format.fprintf ppf "(%a)@ -o (%a)" string_combined f1   string_combined f2
   | False -> Format.fprintf ppf "False"
   | Garbage -> Format.fprintf ppf "Garbage"
 
-and string_combined_list hash ppf cl =
-  Format.fprintf ppf "%a" (Debug.list_format "*" (string_combined hash)) cl 
+and string_combined_list ppf cl =
+  Format.fprintf ppf "%a" (Debug.list_format "*" string_combined) cl 
 
 
 (*
@@ -177,11 +177,11 @@ and string_spatial_list_nl sl =
     (String.concat " *\n " (List.map string_spatial sl))
 *)
 
-and string_form hash ppf ((pl,sl,cl) : form) = 
+and string_form ppf ((pl,sl,cl) : form) = 
   Format.fprintf ppf "@[%a@]@ | @[%a@]@ @[%a@]"
-    (string_plain_list hash) pl
-    (string_spatial_list hash) sl
-    (string_combined_list hash) cl
+    string_plain_list  pl
+    string_spatial_list sl
+    string_combined_list cl
 
 (*and string_form_nl (pl,sl) = 
   Printf.sprintf "%s |\n %s"
@@ -244,7 +244,7 @@ type varterm =
 
 type where = 
   | NotInContext of varterm
-  | NotInTerm of varterm * representative args
+  | NotInTerm of varterm * args
 
 (*type varterm = 
     Var of varset
@@ -293,7 +293,7 @@ type rewrite_map =  rewrite_entry RewriteMap.t
 *)
 (* rules for simplifying septraction need defining as well *)
 
-type rewrite_entry_arg =  ((representative Plogic.pform) * (where list) * (representative Plogic.pform)) 
+type rewrite_entry_arg =  (Plogic.pform * (where list) * Plogic.pform) 
 
 type rewrite_entry_2 = rewrite_entry_arg rewrite_entry
 
@@ -353,25 +353,25 @@ let rv_sequent ((f,p1,p2) : sequent) =
     (rv_form p2 
        (rv_spat_list f Rset.empty))
 
-let string_ts_form hash ppf ((ts,f) :ts_form) =
+let string_ts_form ppf ((ts,f) :ts_form) =
   Format.fprintf ppf "@[@[%a@]@ %s%a@]" 
-    (string_ts_rs (rv_form f Rset.empty) hash) ts    
+    (string_ts_rs (rv_form f Rset.empty)) ts    
     (match f with ([],_,_) -> "" | _ -> "* ")
-    (string_form hash) f
+    (string_form) f
 
 let string_ts_form ppf ((ts,f) :ts_form) =
-  string_ts_form (rao_create ()) ppf (ts,f)
+  string_ts_form ppf (ts,f)
 
-let string_seq hash ppf (f,l,r) = 
+let string_seq ppf (f,l,r) = 
   Format.fprintf ppf "@[%a@]@ | @[%a@] @ |- @[%a@]" 
-    (Debug.list_format "*" (string_spatial hash)) f
-    (string_form hash) l
-    (string_form hash) r
+    (Debug.list_format "*" (string_spatial)) f
+    (string_form) l
+    (string_form) r
 
-let string_ts_seq hash ppf (ts,s) = 
+let string_ts_seq ppf (ts,s) = 
   Format.fprintf ppf "@[%a@ %a@]"
-     (string_ts_rs (rv_sequent s) hash) ts  
-     (string_seq hash) s
+     (string_ts_rs (rv_sequent s)) ts  
+     (string_seq) s
 
 
 
@@ -379,7 +379,7 @@ let string_ts_seq hash ppf (ts,s) =
 
 (*   CONVERSION from plogic to rlogic representation *)
 
-let rec pform_at_convert ts (interp : var_subst) (rhs : bool) (p : representative pform_at) ((pl,sl,cl) : form) : form * var_subst=
+let rec pform_at_convert ts (interp : var_subst) (rhs : bool) (p : pform_at) ((pl,sl,cl) : form) : form * var_subst=
  match p with 
  |  P_EQ (a1,a2) -> 
      let r1,interp = add_term ts interp a1 false rhs in 
@@ -409,21 +409,21 @@ let rec pform_at_convert ts (interp : var_subst) (rhs : bool) (p : representativ
       (pl,sl,Septract(Form(f1), Form(f2))::cl), interp
   | P_Garbage -> (pl,sl,Garbage::cl), interp 
   | P_False  ->  ([],[],[False]), interp
-and pform_convert ts (interp : var_subst) (pf : representative pform) (rhs : bool) : form * var_subst=
+and pform_convert ts (interp : var_subst) (pf : pform) (rhs : bool) : form * var_subst=
   List.fold_left (fun (pf,interp) pa -> pform_at_convert ts interp rhs pa pf) (([],[],[]),interp) pf
 
 
-let convert (f : representative pform) : ts_form =
+let convert (f : pform) : ts_form =
   let ts = Rterm.blank () in 
   let f,interp = (pform_convert ts (Rterm.empty_vs) f false) in 
   ts, f
 
-let conj_convert (pf : representative pform) ((ts,f) : ts_form) : ts_form =
+let conj_convert (pf : pform) ((ts,f) : ts_form) : ts_form =
   let f,interp = List.fold_left (fun (pf,interp) pa -> pform_at_convert ts interp false pa pf) 
       (f,Rterm.empty_vs) pf in 
   ts, f
 
-let psequent_convert ts interp ((fr,f1,f2) : representative psequent) : sequent =
+let psequent_convert ts interp ((fr,f1,f2) : psequent) : sequent =
   let fr,interp = pform_convert ts interp fr false in
   let f1,interp = pform_convert ts interp f1 false in 
   let f2,interp = pform_convert ts interp f2 true in 
@@ -470,8 +470,9 @@ let form_clone ((ts,form) : ts_form)  abs
 (*********************************************
   ts_form to plain pform 
  *********************************************)
+(*  Not using this for talking to SMT anymore....
  
- let form_to_plain_pform interp rs hash ts pl : representative pform =
+ let form_to_plain_pform interp rs hash ts pl : pform =
    let pterm_rep = pterm_rep interp rs hash in 
    let ftpp c = 
 	match c with
@@ -519,7 +520,7 @@ let ts_sequent_plain_pform interp (ts,(form,form2)) hash rs1 rs2 : representativ
   (pform_ts_rs_left interp ts hash rs1 rs2) @ (form_to_plain_pform interp rs1 hash ts form)
   ,(pform_ts_rs_right interp ts hash rs1 rs2) @ (form_to_plain_pform interp rs1 hash ts form2)
   
-   
+*)   
 
 
 let closes vs p = 

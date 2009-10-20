@@ -16,18 +16,17 @@ open Microsoft.FSharp.Compatibility
 F#*)
 
 (* Main terms *)
-type 'a args = 
+type args = 
   | Arg_var of Vars.var
   | Arg_string of string
-  | Arg_op of string * 'a args list
-  | Arg_cons of string * 'a args list  (* Do not use *)
-  | Arg_record of (string * 'a args) list (* Do not use *)
-  | Arg_hole of 'a
+  | Arg_op of string * args list
+  | Arg_cons of string * args list  (* Do not use *)
+  | Arg_record of (string *  args) list (* Do not use *)
 
 let mkArgRecord fldlist =
   Arg_record (List.sort (fun (a1,b1) (a2,b2) -> compare a1 a2) fldlist)
 
-type 'a fldlist = (string * 'a args) list
+type fldlist = (string * args) list
 
 (* Type for substitution on variables in programs *)
 (*IF-OCAML*) 
@@ -70,7 +69,7 @@ module VarMap = Map
 type 'a varmap_t = VarMap.t<Vars.var,'a> 
 F#*)
 
-type 'a varmapargs = ('a args) varmap_t
+type varmapargs = args varmap_t
 
 let vm_add = VarMap.add
 let vm_empty = VarMap.empty
@@ -84,7 +83,7 @@ module VarHash = Hashtbl.Make(struct
     let equal = (=)
     let hash = Hashtbl.hash
   end)
-type 'a varhashargs = ('a args) VarHash.t  
+type varhashargs = args VarHash.t  
 type 'a varhash_t = 'a VarHash.t
 (*ENDIF-OCAML*)
  
@@ -100,12 +99,12 @@ let vh_find = VarHash.find
 
 
 
-type 'a varmap = 
-  | Plain of ('a varmapargs)
-  | Freshen of ('a varmapargs) *  'a varhashargs
+type varmap = 
+  | Plain of varmapargs
+  | Freshen of varmapargs *  varhashargs
 
 
-let find key (map : 'a varmap) = 
+let find key (map : varmap) = 
   match map with 
     Plain map -> vm_find key map  
   | Freshen (map,h) ->( 
@@ -118,15 +117,15 @@ let find key (map : 'a varmap) =
 	  newvar
      )
  
-let add (key : Vars.var)  (v : 'a args)  (map : 'a varmap) : 'a varmap =
+let add (key : Vars.var)  (v : args)  (map : varmap) : varmap =
   match map with 
     Plain map -> Plain (vm_add key v map)
   | Freshen (map,h) -> Freshen((vm_add key v map),h)
 
-let empty : 'a varmap = Plain (vm_empty)
+let empty : varmap = Plain (vm_empty)
 
 
-let freshening_subs subs : 'a varmap =
+let freshening_subs subs : varmap =
     match subs with 
       Plain subs -> Freshen (subs, vh_create 30 )
     | _ -> unsupported_s "freshening_subs applied to wrong argument type."
@@ -146,14 +145,13 @@ let subst_freshen_vars vars =
 (* substitution code for formula *)
 let subst_var subs v = (try find v subs with Not_found -> Arg_var v)
 
-let rec subst_args subs arg : 'a args= 
+let rec subst_args subs arg : args= 
   match arg with 
   | Arg_var v -> (subst_var subs v)
   | Arg_string s -> Arg_string s
   | Arg_op (name,args) -> Arg_op(name,List.map (subst_args subs) args)
   | Arg_cons (name,args) -> Arg_cons(name,List.map (subst_args subs) args)
   | Arg_record fldlist -> Arg_record (List.map (fun (f,v) -> f,subst_args subs v) fldlist)	
-  | Arg_hole a -> unsupported_s "subst_args: Subst on term with hole."
 
 let rec string_args ppf arg = 
   match arg with 
@@ -164,7 +162,6 @@ let rec string_args ppf arg =
   | Arg_cons (name,args) -> Format.fprintf ppf "%s(%a)" name string_args_list args 
   | Arg_record fldlist -> 
       Format.fprintf ppf "@[{%a}@]" string_args_fldlist fldlist
-  | Arg_hole a -> unsupported_s "string_args: applied to term with hole."
 and string_args_list ppf argsl = 
   match argsl with 
     [] -> Format.fprintf ppf ""
@@ -178,35 +175,37 @@ and string_args_fldlist ppf fdl =
 
 
 
-let rec string_args_hole f ppf arg = 
-  match arg with 
-  | Arg_var v -> Format.fprintf ppf "%s" (string_var v)
-(*  | Arg_string s -> "\"" ^ s ^ "\""*)
-  | Arg_string s -> Format.fprintf ppf "%s" s 
-  | Arg_op ("builtin_plus",[a1;a2]) -> Format.fprintf ppf "@[(%a@ +@ %a)@]" (string_args_hole f) a1 (string_args_hole f) a2
-  | Arg_op (name,args) -> Format.fprintf ppf "@[%s(%a)@]" name (string_args_list_hole f) args 
-  | Arg_cons (name,args) -> Format.fprintf ppf "@[%s(%a)@]" name (string_args_list_hole f) args 
-  | Arg_record fldlist -> 
-      Format.fprintf ppf "@[{%a}@]" (string_args_fldlist_hole f) fldlist
-  | Arg_hole a -> Format.fprintf ppf "%a" f a
-and string_args_list_hole f ppf argsl = 
-  Debug.list_format "," (string_args_hole f) ppf argsl
-and string_args_fldlist_hole f ppf argsl = 
-  Debug.list_format "," (fun ppf (fd,a) -> Format.fprintf ppf "%s=%a" fd (string_args_hole f) a) ppf argsl
+
+let rec fv_args args set = 
+  match args with
+    Arg_var var -> vs_add var set 
+  | Arg_string _ -> set
+  | Arg_op (name,argsl) -> fv_args_list argsl set
+  | Arg_cons (name,argsl) -> fv_args_list argsl set
+  | Arg_record fldlist -> fv_fld_list fldlist set
+and fv_args_list argsl set =
+  match argsl with 
+    [] -> set
+  | args::argsl -> fv_args_list argsl (fv_args args set)
+and fv_fld_list fldlist set =
+  match fldlist with
+    [] -> set
+  | (f,args)::fldlist -> fv_fld_list fldlist (fv_args args set)
+    
 
 
-
-
-let rec hole_replace (f : 'a -> 'b args) (arg : 'a args) : 'b args = 
-  match arg with 
-  | Arg_var _ 
-  | Arg_string _ -> arg
-  | Arg_op (name,args) -> Arg_op(name, hole_replace_list f args)
-  | Arg_cons (name,args) -> Arg_cons(name, hole_replace_list f args)
-  | Arg_record fldlist -> 
-      Arg_record (List.map (fun (a,b) -> a,(hole_replace f b)) fldlist) 
-  | Arg_hole a -> f a
-and hole_replace_list f argsl = 
-  (List.map (hole_replace f) argsl)
-
-
+let rec ev_args args set = 
+  match args with
+    Arg_var var -> (match var with EVar _ -> vs_add var set | _ -> set )
+  | Arg_string _ -> set
+  | Arg_op (name,argsl) -> ev_args_list argsl set
+  | Arg_cons (name,argsl) -> ev_args_list argsl set
+  | Arg_record fldlist -> ev_fld_list fldlist set
+and ev_args_list argsl set =
+  match argsl with 
+    [] -> set
+  | args::argsl -> ev_args_list argsl (ev_args args set)
+and ev_fld_list fldlist set =
+  match fldlist with
+    [] -> set
+  | (f,args)::fldlist -> ev_fld_list fldlist (ev_args args set)

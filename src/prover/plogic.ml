@@ -3,17 +3,17 @@ open Vars
 open Pterm
 
 
-type 'a pform_at =
-  | P_EQ of 'a args * 'a args
-  | P_NEQ of 'a args * 'a args
-  | P_PPred of string * 'a args list
-  | P_SPred of string * 'a args list 
-  | P_Wand of 'a pform * 'a pform
-  | P_Or of 'a pform * 'a pform
-  | P_Septract of 'a pform * 'a pform
+type pform_at =
+  | P_EQ of args * args
+  | P_NEQ of args * args
+  | P_PPred of string * args list
+  | P_SPred of string * args list 
+  | P_Wand of pform * pform
+  | P_Or of pform * pform
+  | P_Septract of pform * pform
   | P_Garbage
   | P_False
-and 'a pform = ('a pform_at) list
+and pform = pform_at list
 
 
 let mkFalse = [P_False]
@@ -23,7 +23,7 @@ let isFalse f =
     [P_False] -> true 
   | _ -> false
 
-let pconjunction (f1 : 'a pform)  (f2 : 'a pform) : 'a pform = 
+let pconjunction (f1 : pform)  (f2 : pform) : pform = 
  if isFalse f1 then f1 else if isFalse f2 then f2 else f1 @ f2
 
 let (&&&) = pconjunction
@@ -108,24 +108,6 @@ and string_form ppf pf =
 
 
 
-let rec fv_args args set = 
-  match args with
-    Arg_var var -> vs_add var set 
-  | Arg_string _ -> set
-  | Arg_op (name,argsl) -> fv_args_list argsl set
-  | Arg_cons (name,argsl) -> fv_args_list argsl set
-  | Arg_record fldlist -> fv_fld_list fldlist set
-  | Arg_hole _ -> (* This is only used in the pretty printer*)
-      assert false
-and fv_args_list argsl set =
-  match argsl with 
-    [] -> set
-  | args::argsl -> fv_args_list argsl (fv_args args set)
-and fv_fld_list fldlist set =
-  match fldlist with
-    [] -> set
-  | (f,args)::fldlist -> fv_fld_list fldlist (fv_args args set)
-    
 let rec fv_form_at pa set =
   match pa with
     P_EQ(x,y) -> fv_args x (fv_args y set)
@@ -145,24 +127,6 @@ let closes subs p  =
   not (vs_exists (fun x -> not (vm_mem x subs)) (fv_form p vs_empty))
 
 
-
-let rec ev_args args set = 
-  match args with
-    Arg_var var -> (match var with EVar _ -> vs_add var set | _ -> set )
-  | Arg_string _ -> set
-  | Arg_op (name,argsl) -> ev_args_list argsl set
-  | Arg_cons (name,argsl) -> ev_args_list argsl set
-  | Arg_record fldlist -> ev_fld_list fldlist set
-  | Arg_hole _ -> (* This is only used in the pretty printer*)
-      assert false
-and ev_args_list argsl set =
-  match argsl with 
-    [] -> set
-  | args::argsl -> ev_args_list argsl (ev_args args set)
-and ev_fld_list fldlist set =
-  match fldlist with
-    [] -> set
-  | (f,args)::fldlist -> ev_fld_list fldlist (ev_args args set)
     
 let rec ev_form_at pa set =
   match pa with
@@ -178,7 +142,7 @@ let rec ev_form_at pa set =
 and ev_form pf set =
  List.fold_left (fun set pa -> ev_form_at pa set) set pf  
 
-type 'a psequent = 'a pform * 'a pform * 'a pform
+type psequent = pform * pform * pform
 
 
 let fv_psequent (pff,pfl,pfr) = 

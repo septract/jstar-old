@@ -420,7 +420,7 @@ let logical_vars_to_prog spec2 =
  
    {P*extra}{Q} ===> spec1
 *)
-let refinement_extra (logic : logic) (spec1 : spec) (spec2 : spec) (extra : representative Plogic.pform): bool =
+let refinement_extra (logic : logic) (spec1 : spec) (spec2 : spec) (extra : Plogic.pform): bool =
   let spec2 = logical_vars_to_prog spec2 in 
   match spec2 with
     {pre=pre; post=post; excep=excep} ->

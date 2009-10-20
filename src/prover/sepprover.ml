@@ -31,7 +31,7 @@ module SepProver = struct
     (* Used in rules for pattern matching *)
     let unify_var (n : string) : var = (Vars.fresha_str n)
 
-    type term = representative Pterm.args
+    type term = Pterm.args
 
     let mkVar : var -> term = fun x -> Pterm.Arg_var x
 
@@ -42,7 +42,7 @@ module SepProver = struct
     (*************************************
        Syntactic representation of formula
     **************************************)
-    type form  = representative Plogic.pform
+    type form  = Plogic.pform
 
     (* False *)
     let mkFalse : form = Plogic.mkFalse
@@ -120,7 +120,7 @@ module SepProver = struct
 
     (* Substitution on terms *)
     type var_subst 
-      = representative Pterm.varmap
+      = Pterm.varmap
 
     (* Creates the empty variable substitution *)
     let empty_subst : var_subst 

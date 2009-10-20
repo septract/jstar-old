@@ -53,6 +53,7 @@ and rep_record =
      mutable uses: term list;
      n: int;
      name: string;
+     mutable pprint: ((Format.formatter -> unit -> unit) * term) option;
      mutable deleted: bool;
    }
 and term = term_record ref 
@@ -157,7 +158,7 @@ let current = ref 0
 let next_rep() : representative = 
   let x = !current in current := x+1;
   if ts_debug then Format.fprintf !dump  "Created new rep: r_%d@\n" x;
-  ref { terms = [] ; uses = []; n=x; name="r" ; deleted = false} 
+  ref { terms = [] ; uses = []; n=x; name="r" ; deleted = false; pprint = None} 
 
 let rep_hash r1 = (!r1).n 
 
@@ -303,99 +304,48 @@ let rec string_tlist ppf tl =
   | t::tl -> Format.fprintf ppf "%a,%a" f t string_tlist tl
 
 
-(* Convert reps to terms *)
-(* Assumes acyclic for now *)
-let rec rep_to_args r hash : (( representative args * (term option)) ) = 
-  try Rhash_args_opt.find hash r 
-  with Not_found -> 
-    Rhash_args_opt.add hash r (Arg_hole r, None);
-    let term_ref = 
-      try Some (List.find (fun x -> match !x.term with FTPVar _ | FTFunct(_,[]) | FTString _ -> true | _ -> false) (!r).terms) 
-      with Not_found -> 
-	try  Some (List.find (fun x -> true ) (!r).terms)  
-	with Not_found -> None  in 
-    (*List.tryfind (fun t -> match term_to_args (!t).term hash with Some _ -> true | _ -> false) ((!r).terms) in*)
-    match term_ref with
-      Some term_ref -> 
-        let args = term_to_args (!term_ref).term hash in 
-        Rhash_args_opt.replace hash r (args, Some term_ref);
-        (args, Some term_ref)
-    | _ -> (Arg_hole r, None)
-and term_to_args term hash : (representative args) =
-  match term with 
-    FTConstr (name,rl) ->  
-      let al = List.map (fun r -> fst (rep_to_args r hash)) rl in
-      Arg_cons(name,al)  
-  | FTFunct (name,rl) -> 
-      let al = List.map (fun r -> fst (rep_to_args r hash)) rl in
-      Arg_op(name,al)  
-  | FTRecord fld_list -> 
-      let fl,rl = List.split fld_list in 
-      let al = List.map (fun r -> fst (rep_to_args r hash)) rl in
-      Arg_record (List.combine fl al)
 
-(*    FTConstr (name,rl) ->  
-      let al_opt = map_lift_forall (fun r -> fst (rep_to_args r hash)) rl in
-      lift (fun x -> Arg_cons(name,x)) al_opt  
-  | FTFunct (name,rl) -> 
-      let al_opt = map_lift_forall (fun r -> fst (rep_to_args r hash)) rl in
-      lift (fun x -> Arg_op(name,x)) al_opt  
-  | FTRecord fld_list -> 
-      let fl,rl = List.split fld_list in 
-      let al_opt = map_lift_forall (fun r -> lift fst (rep_to_args r hash)) rl in
-      lift Arg_record (lift (List.zip fl) al_opt)*)
-  | FTString s -> Arg_string s
-  | FTPVar v -> Arg_var v
-
-
-(***********************************************
- *  Less Ugly printer
- ***********************************************)
-
-(*
-let string_rep_2 (r : representative) = 
-  let term_list = (!r).terms in 
-  if ts_debug then (Printf.sprintf "%s_%d" (!r).name (!r).n ), None 
-  else
-  try 
-    let term_name = List.find (fun x -> match (!x).term with FTString(s) -> true | FTPVar(s) -> true  | FTFunct(n,[]) -> true | _ -> false) term_list in  
-    (match (!term_name).term with 
-    | FTString s -> "\"" ^ s ^ "\"" 
-    | FTPVar v -> Vars.string_var v
-    | FTFunct (n,[]) -> n ^ "()"
-    | _ -> unsupported ()), Some term_name
-  with Not_found -> 
-	(Printf.sprintf "%s_%d" (!r).name (!r).n ), None  *)
-
-let string_rep hash ppf (r : representative) = 
+let rec string_rep ppf (r : representative) = 
   if ts_debug then (Format.fprintf ppf "%s_%d" (!r).name (!r).n )
-  else
-  let f = rep_to_args r hash in  
-  match f with 
-   args, _ -> string_args_hole string_rep_db ppf args
- 
-(* let string_rep (r : representative) : string  = fst(string_rep_2 r) *)
+  else 
+    match !r.pprint with 
+      Some x -> Format.fprintf ppf "%a" (fst x) ()
+    | None -> 
+	(* Try to find something good to pretty print *)
+	let term_list = (!r).terms in 
+	try 
+	  let termid = 
+	    List.find (fun x -> 
+	      match (!x).term with 
+(*		FTString(s) -> true *)
+	      | FTPVar(s) -> true  
+(*	      | FTFunct(n,[]) -> true *)
+	      | _ -> false) term_list in  
+	  (* Print for this go *)
+	  Format.fprintf ppf "%a" string_ft !termid.term ; 
+	  (* Update for next go *)
+	  !r.pprint <- 
+	    Some ((fun ppf () -> Format.fprintf ppf "%a" string_ft !termid.term ; ), 
+		  termid)
+	with Not_found -> 
+	  (Format.fprintf ppf "%s_%d" (!r).name (!r).n )
 
 
-let rec string_rlist hash ppf vl = 
-  Debug.list_format "," (string_rep hash) ppf vl
+and string_rlist ppf vl = 
+  Debug.list_format "," (string_rep) ppf vl
 
- 
-(*
-let string_ft hash ppf ft  = 
+and string_ft ppf ft : unit  = 
   match ft with 
     FTConstr (name,rl) ->  
-      Format.fprintf ppf "%s(%a)" name (Debug.list_format "," (string_rep hash)) rl  
+      Format.fprintf ppf "%s(%a)" name (Debug.list_format "," string_rep) rl  
   | FTFunct (name,rl) -> 
-      Printf.printf "Printing: %s\n" name;
       (match name,rl with
-	"builtin_plus", [r1;r2] -> Format.fprintf ppf "(%a + %a)" (string_rep hash) r1 (string_rep hash) r2
-      | _ -> Format.fprintf ppf "%s(%a)" name (Debug.list_format "," (string_rep hash)) rl  )
+	"builtin_plus", [r1;r2] -> Format.fprintf ppf "(%a + %a)" string_rep r1 string_rep r2
+      | _ -> Format.fprintf ppf "%s(%a)" name (Debug.list_format "," string_rep) rl  )
   | FTRecord fld_list -> 
-      Format.fprintf ppf "@[{%a}@]" (Debug.list_format ";" (fun ppf (f,a) -> Format.fprintf ppf "%s=%a" f (string_rep hash) a)) fld_list  
+      Format.fprintf ppf "@[{%a}@]" (Debug.list_format ";" (fun ppf (f,a) -> Format.fprintf ppf "%s=%a" f string_rep a)) fld_list  
   | FTString s -> Format.fprintf ppf "\"%s\"" s 
   | FTPVar v -> Format.fprintf ppf "%s" (Vars.string_var v)
-*)
 
 let print_termhash ts = 
   Thash.iter (
@@ -483,6 +433,7 @@ let accessible_rs ts =
 (******************************* 
    More pretty printer 
  ********************************)
+(*
 let string_term_args hash ppf (terms,args) = 
   match terms with 
   | [] -> Format.fprintf ppf "%a" (string_args_hole string_rep_db) args 
@@ -501,7 +452,7 @@ let rep_to_terms_args hash r =
 let string_rep_term hash ppf r = 
   let terms,args = rep_to_terms_args hash r in 
   string_term_args hash ppf (terms,args)
-
+*)
 (*	)) ^ " * \n" ) *)
 
 
@@ -510,14 +461,46 @@ let string_rep_term_db ppf r =
 
 let rset_to_list rs = Rset.fold (fun r rl -> r::rl) rs []
 
-let string_ts_inner rs hash ppf ts = 
+
+let string_rep_eqs rep : (Format.formatter -> unit) option =
+  match !rep.terms with 
+    [] -> None 
+  | t::[] -> None
+  | terms -> 
+      (* Remove the term used as representative *)
+      let terms = 
+	match !rep.pprint with 
+	  None -> terms
+	| Some (pp,trep) -> List.filter (fun t -> trep != t) terms in 
+      (* Print rep *)
+      Some 
+	(fun ppf -> 
+	  Format.fprintf ppf "@[%a =@ %a@]" string_rep rep 
+	    (* Print rest of the terms *)
+	    (Debug.list_format " = " 
+	       (fun ppf t -> string_ft ppf (!t).term)
+	    ) terms
+	)
+
+
+let string_rep_term ppf rep = 
+  match string_rep_eqs rep with
+    None -> Format.fprintf ppf "%a" string_rep rep
+  | Some f -> f ppf
+
+
+let string_ts_inner rs ppf ts = 
   let rl = rset_to_list rs in 
-  let tal = List.map (rep_to_terms_args hash) rl in 
-  let tal = List.filter (fun (t,a) -> List.length t>1) tal in 
-  Debug.list_format "*" (string_term_args hash) ppf tal
+  let pplist = map_option string_rep_eqs rl in 
+  let rec pplistcall pplist = 
+    match pplist with 
+      [] -> ()
+    | pp::[] -> pp ppf
+    | pp::pplist -> pp ppf; Format.fprintf ppf "@ * "; pplistcall pplist in 
+  pplistcall pplist
 
 
-let string_ts_inner_db rs ppf ts= 
+let string_ts_inner_db rs ppf ts=  
   let rl = List.filter (fun r -> List.length (!r).terms>0) (rset_to_list rs) in 
   Debug.list_format " *" string_rep_term_db ppf rl
 
@@ -528,19 +511,20 @@ let printf_thash ppf ts =
 		 Format.fprintf ppf "  @[%a,%a@]\n" string_ft_db term string_rep_db rep;
 	      ) ts.termhash
 
-let string_ts_rs rs hash ppf ts= 
+let string_ts_rs rs ppf ts= 
   let rs = Rset.union (rv_trans_set rs) (accessible_rs ts) in 
-  string_ts_inner rs hash ppf ts
+  string_ts_inner rs ppf ts
 
-let string_ts hash ppf ts =
+let string_ts ppf ts =
   let rs = accessible_rs ts in 
-  string_ts_inner rs hash ppf ts
+  string_ts_inner rs ppf ts
 
 let string_ts_db ppf ts =
   let rs = accessible_rs ts in 
   string_ts_inner_db rs ppf ts
 
 
+(*  Removed as this is no longer how we are going to talk to SMT!!!
 (************************************************
  Convert to pterm
  ************************************************)
@@ -630,6 +614,8 @@ let pform_ts_rs_right interp ts hash rs1 rs2 =
   let rs2 = Rset.diff rs2 rs1 in (* ignores ones output on left *) 
   pform_ts_inner interp ts hash rs2 rs1
   
+*)
+
 
 (* Allows the addition of representative with no associated term *)
 let add_existential (ts: term_structure) : representative = 
@@ -700,7 +686,7 @@ let freshening_vs subs : var_subst =
 
 
 
-let add_flat_term (ts : term_structure) (ft : flattened_term) 
+let add_flat_term (ts : term_structure) (ft : flattened_term) (pt : Pterm.args option)
     (sub_uses : representative list) (redun : bool) (rhs : bool)
     : representative * (term, flattened_term) sum =
   try 
@@ -716,6 +702,14 @@ let add_flat_term (ts : term_structure) (ft : flattened_term)
     let term_id = new_term rep_id ft redun rhs in
     (!rep_id).terms <- [term_id];
     assert(not(Thash.mem ts.termhash ft));
+    (match pt with 
+      Some pt ->  
+	!rep_id.pprint <- 
+	  Some (
+	  (fun ppf () -> Format.fprintf ppf "%a" string_args pt)
+	    , term_id
+	 )
+    | None -> ()) ;
     Thash.add ts.termhash ft rep_id;
     List.iter (fun r -> (!r).uses <- (term_id::((!r).uses))) sub_uses;      
     if ts_debug then Format.fprintf !dump  "Added term: %a\n" string_ts_db ts;
@@ -731,7 +725,7 @@ let map_lift f l s=
 (* Returns new term structure and representative, 
    with the representative bound to a flattened version of t *) 
 let rec add_term_id (ts : term_structure) (interp : var_subst) 
-   (t : representative args) (redun : bool) (rhs : bool) : representative * var_subst * (term,flattened_term) sum option  = 
+   (t : args) (redun : bool) (rhs : bool) : representative * var_subst * (term,flattened_term) sum option  = 
   let f ((rid,tid),interp) = rid,interp, Some tid in 
   match t with 
   | Arg_var v ->
@@ -741,24 +735,20 @@ let rec add_term_id (ts : term_structure) (interp : var_subst)
       with Not_found -> 
 	(match v with 
 	  Vars.PVar _ 
-	| Vars.EVar _ -> let rid,tid = add_flat_term ts (FTPVar v) [] redun rhs in 
+	| Vars.EVar _ -> let rid,tid = add_flat_term ts (FTPVar v) (Some t) [] redun rhs in 
 	                 rid,interp,Some tid
         | Vars.AnyVar _  -> let rid = add_existential ts in (rid, add_vs v rid interp, None) 
         ))	    
-  | Arg_string s ->  f( add_flat_term ts (FTString s) [] redun rhs, interp)
-  | Arg_op (name, al) -> let rl,interp = add_terms ts interp al redun rhs in f(add_flat_term ts (FTFunct(name, rl)) rl redun rhs,interp)
-  | Arg_cons (name, al) -> let rl,interp = add_terms ts interp al redun rhs in f(add_flat_term ts (FTConstr(name, rl)) rl redun rhs,interp)
+  | Arg_string s ->  f( add_flat_term ts (FTString s) (Some t) [] redun rhs, interp)
+  | Arg_op (name, al) -> let rl,interp = add_terms ts interp al redun rhs in f(add_flat_term ts (FTFunct(name, rl)) (Some t) rl redun rhs,interp)
+  | Arg_cons (name, al) -> let rl,interp = add_terms ts interp al redun rhs in f(add_flat_term ts (FTConstr(name, rl)) (Some t) rl redun rhs,interp)
   | Arg_record fld_list -> 
       let fl,al = List.split fld_list in 
       let rl,interp = add_terms ts interp al redun rhs in 
       let fld_list = List.combine fl rl in 
-      f(add_flat_term ts (FTRecord fld_list) rl redun rhs, interp)
-  | Arg_hole _ -> 
-      (* Arg_hole is only used well constructing terms for the pretty
-      printer *) 
-      assert false
+      f(add_flat_term ts (FTRecord fld_list) (Some t) rl redun rhs, interp)
 and add_term ts interp t redun rhs = let rid,interp,tid = add_term_id ts interp t redun rhs in (rid,interp)
-and add_terms (ts : term_structure) (interp : var_subst) (tl : (representative args) list) (redun : bool) (rhs : bool) : representative list * var_subst =  
+and add_terms (ts : term_structure) (interp : var_subst) (tl : args list) (redun : bool) (rhs : bool) : representative list * var_subst =  
   map_lift (fun x y -> add_term ts x y redun rhs) tl interp
 (*
 List.fold_left
@@ -770,7 +760,7 @@ List.fold_left
  
 
 (* Lookup a term in term structure. Throws Not_found if it isn't known *)
-let rec find_term_id (ts: term_structure) (t: 'a args) (interp : var_subst): representative * term option =
+let rec find_term_id (ts: term_structure) (t:  args) (interp : var_subst): representative * term option =
   let r,ft = match t with 
   | Arg_var v ->
       (try 
@@ -789,22 +779,18 @@ let rec find_term_id (ts: term_structure) (t: 'a args) (interp : var_subst): rep
       let rl = find_terms_id ts al interp in 
       let fld_list = List.combine fl rl in 
       Thash.find ts.termhash (FTRecord fld_list), Some (FTRecord fld_list)
-  | Arg_hole _ -> 
-      (* Arg_hole is only used well constructing terms for the pretty
-      printer *) 
-      assert false
   in r, 
     match ft with 
       Some ft ->
        Some (try List.find (fun t -> ft_eq (!t).term ft) (!r).terms with Not_found -> unsupported ())
     | None -> None
-and find_terms_id (ts: term_structure) (tl : 'a args list) (interp : var_subst) : representative list = 
+and find_terms_id (ts: term_structure) (tl : args list) (interp : var_subst) : representative list = 
   List.map (fun x -> fst (find_term_id ts x interp)) tl 
 
 
-let find_term (ts: term_structure) (t: 'a args) : representative =
+let find_term (ts: term_structure) (t: args) : representative =
   fst (find_term_id ts t empty_vs)      
-and find_terms (ts: term_structure) (tl : 'a args list) : representative list = 
+and find_terms (ts: term_structure) (tl : args list) : representative list = 
   find_terms_id ts tl empty_vs  
 
 
@@ -977,6 +963,10 @@ let rec make_equal (ts : term_structure) (eqs : (representative * representative
       (* Collapse the two representative sets *)
       let tl1 = (!r1).terms in
       let tl2 = (!r2).terms in
+      (match (!r1).pprint, (!r2).pprint with 
+	_, None 
+      | Some _,_ -> ()
+      | None, Some p -> (!r1).pprint <- Some p);
       let ftl1 = List.map (fun t -> (!t.term)) tl1 in 
       let ftl2 = List.map (fun t -> (!t.term)) tl2 in 
       (* Strings compare *)
@@ -1133,6 +1123,7 @@ let clone (ts : term_structure) (rs : rset_t) abs : term_structure * representat
 	   if (!key).deleted then 
 	  (Printf.printf "Trying to copy deleted representative: %s" (string_rep_db key)(*; unsupported ()*) );*)
 	let new_rep = add_existential newts in
+	!new_rep.pprint <- !key.pprint;
 	extend_subst subst key new_rep)
       rs
       (empty_subst ()) in 
@@ -1203,6 +1194,8 @@ let rec kill_var (ts : term_structure) (v : Vars.var) =
     let tl = (!r).terms in
     let tl = List.filter (fun tid -> match ((!tid).term) with FTPVar v' -> v != v' | _ -> true) tl in 
     (!r).terms <- tl;
+    (* Disable pretty printer as will be out of date *)
+    (!r).pprint <- None;
     if ts_debug then Format.fprintf !dump  "After update looks like: %a\n" string_rep_term_db r;
     Thash.remove ts.termhash (FTPVar v)
   with Not_found -> 
@@ -1229,7 +1222,7 @@ let rec ts_to_eqs (ts : term_structure) (context : term_structure) (rs : rset_t)
 	   (fun equals termid ->
 	     let term = (!termid).term in
 	     let new_term,rl = apply_subst_ft subst term in 
-	     let rep,tid = add_flat_term context new_term rl (!termid).redundant true in 
+	     let rep,tid = add_flat_term context new_term None rl (!termid).redundant true in 
 	     (rep,new_rep)::equals
 	   )  equals (!rep).terms 
       ) rs [] in
@@ -1242,7 +1235,7 @@ let rec ts_to_eqs (ts : term_structure) (context : term_structure) (rs : rset_t)
  calls continuation if it matches
  if continuation throws No_match tries a different match 
  otherwise throws No_match. *)
-let rec unifies (ts : term_structure) (p : representative args) (r : representative)  (forbidden_tids : TIDset.t) (interp : var_subst) (cont : var_subst -> 'a) : 'a  = 
+let rec unifies (ts : term_structure) (p : args) (r : representative)  (forbidden_tids : TIDset.t) (interp : var_subst) (cont : var_subst -> 'a) : 'a  = 
     match p with 
     | Arg_var (Vars.EVar _) -> 
 	if is_existential ts r then () else raise No_match; (* must be an existential variables *)
@@ -1309,10 +1302,6 @@ let rec unifies (ts : term_structure) (p : representative args) (r : representat
 	      try unifies_list ts al rl forbidden_tids interp cont 
 	      with No_match -> f rls  
 	in f terms
-    | Arg_hole _ -> 
-        (* Arg_hole is only used well constructing terms for the pretty
-	   printer *) 
-	assert false
 
 and unifies_list ts al rl (forbidden_tids : TIDset.t) interp cont =
   match al,rl with
@@ -1367,7 +1356,7 @@ let unifies_eq ts rs a1 a2 interp cont =
 
 
 
-type 'a rewrite_entry =  ((representative args) list * (representative args) * 'a * string * bool) list
+type 'a rewrite_entry =  (args list * args * 'a * string * bool) list
 
 (* substitution *)
 (*IF-OCAML*)
@@ -1435,11 +1424,11 @@ let rewrite_ts (ts : term_structure) (rm : 'a rewrite_map) dtref rs (query : var
 			  let r,i,t = add_term_id ts interp a (redundant || !tid.redundant) !tid.righthand in 
 			  if (true || !(Debug.debug_ref)) && not(rep_eq r repid) then 
 			    (Format.fprintf !dump "Using rule:@ %s@ gives@ %a@ equal to %a.@\n" rule 
-			      (string_rep_term (rao_create ())) r  
-			      (string_rep_term (rao_create ())) repid;
+			      string_rep_term r  
+			      string_rep_term repid;
 			     if !debug_ref then Format.printf "Using rule:@ %s@ gives@ %a@ equal to %a.@\n" rule 
-			      (string_rep_term (rao_create ())) r  
-			       (string_rep_term (rao_create ())) repid;);
+			       string_rep_term r  
+			       string_rep_term repid;);
 			  if rep_eq r repid then 
 			    (match t with 
 			      Some (Inr ti) -> (* Term has been added *)

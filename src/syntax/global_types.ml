@@ -20,11 +20,11 @@ module ClassMap =
   end)
 
 
-type excep_post = representative Plogic.pform ClassMap.t 
+type excep_post = Plogic.pform ClassMap.t 
 
 type spec = 
-    { pre : representative Plogic.pform;
-      post : representative Plogic.pform;
+    { pre : Plogic.pform;
+      post : Plogic.pform;
       excep : excep_post }
 
 type methodspec =
@@ -34,7 +34,7 @@ type methodspec =
 type methodspecs =
     methodspec list
 
-type apf_define = (string * var * representative fldlist * representative Plogic.pform * bool)
+type apf_define = (string * var * fldlist * Plogic.pform * bool)
 
 type apf_defines = apf_define list
 
@@ -60,9 +60,9 @@ type spec_file = class_spec list
 
 
 
-type rewrite_rule = string * representative args list * representative args * (representative pform) * (where list) * (representative pform) (* if *) * string * bool
+type rewrite_rule = string * args list * args * (pform) * (where list) * (pform) (* if *) * string * bool
 
-type equiv_rule = string * (representative pform) * (representative pform) * (representative pform) * (representative pform)
+type equiv_rule = string * (pform) * (pform) * (pform) * (pform)
 
 type rules = 
   | SeqRule of sequent_rule
@@ -70,19 +70,19 @@ type rules =
   | EquivRule of equiv_rule
 
 type question =
-  |  Implication of representative pform * representative pform 
-  |  Inconsistency of representative pform
-  |  Frame of representative pform * representative pform
-  |  Equal of representative pform * representative args * representative args
-  |  Abs of representative pform 
+  |  Implication of pform * pform 
+  |  Inconsistency of pform
+  |  Frame of pform * pform
+  |  Equal of pform * args * args
+  |  Abs of pform 
 
 
 type test =
-  |  TImplication of representative pform * representative pform * bool 
-  |  TInconsistency of representative pform * bool 
-  |  TFrame of representative pform * representative pform * representative pform 
-  |  TEqual of representative pform * representative args * representative args * bool
-  |  TAbs of representative pform * representative pform
+  |  TImplication of pform * pform * bool 
+  |  TInconsistency of pform * bool 
+  |  TFrame of pform * pform * pform 
+  |  TEqual of pform * args * args * bool
+  |  TAbs of pform * pform
 
 
 let expand_equiv_rules rules = 
