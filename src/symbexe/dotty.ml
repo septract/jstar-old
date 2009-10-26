@@ -10,7 +10,7 @@ open Pprinter
 open Pterm
 open Plogic 
 open Rlogic
-open Rterm
+
 (** {1 Dotty} *)
 
 type box_kind = Box of int * string * args list

@@ -4,7 +4,7 @@ class java.lang.Object
 }
 
 class Cell {
-  define Val(x,content=y) = field(x, <Cell: int val>, y) ;
+  define Val(x,content=y) = x.<Cell: int val> |-> y ;
 
   void <init>() : { } { Val$(@this:,{content=_z}) };
   

@@ -3,7 +3,6 @@ open Vars
 (*open Rterm *)
 open Pterm
 open Plogic 
-open Rterm
 open Rlogic
 open Prover
 
