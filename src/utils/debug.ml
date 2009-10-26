@@ -48,7 +48,12 @@ let rec list_format sep f ppf list =
   match list with 
     [] -> Format.fprintf ppf ""
   | [x] -> Format.fprintf ppf "%a" f x 
-  | x::xs -> Format.fprintf ppf "@[%a@]%s@ %a" f x sep (list_format sep f) xs 
+  | x::xs -> Format.fprintf ppf "@[%a@]@ %s @[%a@]" f x sep (list_format sep f) xs 
+
+let rec list_format_optional start sep f ppf list = 
+  match list with 
+    [] -> ()
+  | x::xs -> Format.fprintf ppf "%s@ @[%a@]" start (list_format sep f) list 
 
 let toString  f a : string = 
   Format.fprintf (Format.str_formatter) "%a" f a ; Format.flush_str_formatter ()

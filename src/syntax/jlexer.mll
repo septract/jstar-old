@@ -249,7 +249,6 @@ rule token = parse
    | "*" { MULT }
    | "-*" { WAND }
    | "/" { DIV }
-   | "_" { UNDERSCORE }
    | "?" { QUESTIONMARK }
    | "!" { BANG }
    | "|-" { VDASH }

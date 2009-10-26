@@ -34,7 +34,12 @@ let load_logic dirs filename =
     List.fold_left
       (fun (sl,rm) rule ->
 	match rule with
-	| SeqRule(r) -> (r::sl,rm)
+	| SeqRule(r) -> 
+	    if !(Debug.debug_ref) 
+	    then 
+	      Format.printf "Loaded rule:@\n%a@\n" 
+		Prover.string_psr r; 
+	    (r::sl,rm)
 	| RewriteRule(r) -> 
 	    (match r with 
 	      (fn,a,b,c,d,e,f,g) -> (sl,Rterm.rm_add fn ((a,b,(c,d,e),f,g)::(try Rterm.rm_find fn rm with Not_found -> [])) rm))

@@ -246,6 +246,19 @@ type where =
   | NotInContext of varterm
   | NotInTerm of varterm * args
 
+let string_vs ppf vs =
+  vs_iter (fun v -> Format.fprintf ppf "%s" (string_var v)) vs
+
+let string_where ppf where = 
+  match where with 
+    NotInContext (Var vs) -> 
+      Format.fprintf ppf "%a notincontext" 
+	string_vs vs
+  | NotInTerm (Var vs, args) -> 
+      Format.fprintf ppf "%a notin %a" 
+	string_vs vs 
+	string_args args
+
 (*type varterm = 
     Var of varset
   | EV of args

@@ -6,14 +6,14 @@ class java.lang.Object
 class Cell {
   define Val(x,content=y) = x.<Cell: int val> |-> y ;
 
-  void <init>() : { } { Val$(@this:,{content=_z}) };
+  void <init>() : { } { Val$(@this:,{content=_ }) };
   
   int get() : 
-  { Val$(@this:, {content=_X})} 
-  { _X=$ret_var * Val$(@this:, {content=_X}) };
+  { Val$(@this:, {content=_})} 
+  { _X=$ret_var * Val$(@this:, {content=_}) };
 
   void set(int) : 
-  { Val$(@this:, {content=_X})} 
+  { Val$(@this:, {content=_})} 
   { Val$(@this:, {content=@parameter0:}) };
 }
 

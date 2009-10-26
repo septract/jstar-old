@@ -20,8 +20,10 @@ let newAnyVar x = AnyVar(0,x)
 
 let newEVar x = EVar(0,x)
 
-let newVar x = if String.get x 0 = '_' then newEVar (String.sub x 1 ((String.length x) -1)) 
-    else newPVar x
+let newVar x = 
+  if x = "_" then freshe() 
+  else if String.get x 0 = '_' then newEVar (String.sub x 1 ((String.length x) -1)) 
+  else newPVar x
 
 let location_to_string pos = 
   Printf.sprintf "Line %d character %d" pos.pos_lnum  (pos.pos_cnum - pos.pos_bol + 1)

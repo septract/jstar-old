@@ -52,10 +52,26 @@ type sequent_rule = psequent * (psequent list list) * string * ((* without *) pf
 type sequent_rule = representative psequent * (representative psequent list list) * string * (representative pform) * (where list)
 *)
 
-(*
-let string_pseq (g,l,r) = 
-  (Plogic.string_form g) ^ " | " ^ (Plogic.string_form l) ^ " |- " ^ (Plogic.string_form r)
 
+let string_pseq ppf (g,l,r) = 
+  Format.fprintf ppf "%a@ | %a@ |- %a" 
+    Plogic.string_form g 
+    Plogic.string_form l
+    Plogic.string_form r
+
+let string_psr ppf (sr :sequent_rule) : unit = 
+    match sr with 
+      (conclusion, premises, name, (without1,without2), where) ->
+	Format.fprintf ppf 
+	  "rule %s:@\n%a@\n%a@\nwithout@\n %a@ |- %a@\n%a"
+	  name
+	  string_pseq conclusion
+	  (Debug.list_format_optional "if\n " " or " (Debug.list_format ";" string_pseq)) premises
+	  string_form without1
+	  string_form without2
+	  (Debug.list_format_optional "where" ";" string_where) where
+	  
+(*
 let string_psr sr =
   match sr with 
     (conclusion, premises, name, without, where) -> 
