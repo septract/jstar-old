@@ -18,6 +18,7 @@ open Global_types
 open Jlogic
 open Jparsetree
 open Prover
+open Support_syntax
 
 exception Class_defines_external_spec
 

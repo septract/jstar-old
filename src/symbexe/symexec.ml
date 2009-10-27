@@ -34,21 +34,18 @@ let is_primed (v: Vars.var) : bool =
   | _ -> false 
 
 
-let this_var_name = Jlogic.this_var_name
-
 let parameter n = "@parameter"^(string_of_int n)^":"
 
 (* create the variable in the table for the object "this" *)
 let mk_this_of_class () : Vars.var =
-  let v=Vars.concretep_str this_var_name 
-  in var_table_add (this_var_name) v;
+  let v=Vars.concretep_str Support_syntax.this_var_name 
+  in var_table_add (Support_syntax.this_var_name) v;
   v
 
 (* create entries in the variable table for a list of parameters *)
-let mk_parameter_of_class (ps: Jparsetree.parameter list option) : unit =
+let mk_parameter_of_class (ps: Jparsetree.parameter list) : unit =
   match ps with 
-  | None -> ()
-  | Some ps ->   
+  | ps ->   
       for i=0 to List.length ps do
 	let p=parameter i in 
 	let v=Vars.concretep_str p
@@ -58,7 +55,7 @@ let mk_parameter_of_class (ps: Jparsetree.parameter list option) : unit =
 
 (* find the this-variable in the table *)
 let get_this_of_class () =
-  var_table_find (this_var_name)
+  var_table_find (Support_syntax.this_var_name)
 
 
 (* define the constant name for the return variable. *)
@@ -453,7 +450,7 @@ let param_sub il =
 
 let param_this_sub il n = 
   let sub = param_sub il in 
-  let nthis_var = concretep_str this_var_name in 
+  let nthis_var = concretep_str Support_syntax.this_var_name in 
   add nthis_var (name2args n)  sub 
  
 

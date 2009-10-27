@@ -25,6 +25,47 @@ let newVar x =
   else if String.get x 0 = '_' then newEVar (String.sub x 1 ((String.length x) -1)) 
   else newPVar x
 
+
+let msig_simp (typ,name,args_list) =
+  let args_list = List.map fst args_list in
+  (typ,name,args_list) 
+
+let bind_spec_vars (typ,name,args_list) {pre=pre;post=post;excep=excep} =
+  (* Make substitution to normalise names *)
+  let subst = Pterm.empty in 
+  let subst = Pterm.add (newPVar("this")) (Pterm.Arg_var(Support_syntax.this_var)) subst in 
+  (* For each name that is given convert to normalised param name*)
+  let _,subst = 
+    List.fold_left 
+      (fun (n,subst) arg_opt -> 
+	(n+1,
+	 match arg_opt with 
+	   ty,None -> subst 
+	 | ty,Some str -> 
+	     Pterm.add 
+	       (newPVar(str)) 
+	       (Pterm.Arg_var(Support_syntax.parameter_var n)) 
+	       subst
+	)) 
+	  (0,subst) args_list in
+
+  {pre=subst_pform subst pre;
+   post=subst_pform subst post;
+   excep=ClassMap.map (subst_pform subst) excep}
+
+let mkDynamic (msig, specs) =
+  let specs = List.map (bind_spec_vars msig) specs in 
+  let msig = msig_simp msig in   
+  Dynamic(msig,specs)
+
+let mkStatic (msig, specs) =
+  let specs = List.map (bind_spec_vars msig) specs in 
+  let msig = msig_simp msig in   
+  Static(msig,specs)
+  
+    
+  
+
 let location_to_string pos = 
   Printf.sprintf "Line %d character %d" pos.pos_lnum  (pos.pos_cnum - pos.pos_bol + 1)
 
@@ -284,10 +325,10 @@ specs:
    | spec     {[$1]}
 
 method_spec:
-   | method_signature_short COLON specs  SEMICOLON  { Dynamic($1, $3) }
-   | STATIC method_signature_short COLON specs SEMICOLON  { Static($2, $4) }
-   | method_signature_short COLON specs   { Dynamic($1, $3) }
-   | STATIC method_signature_short COLON specs  { Static($2, $4) }
+   | method_signature_short COLON specs  SEMICOLON  { mkDynamic($1, $3) }
+   | STATIC method_signature_short COLON specs SEMICOLON  { mkStatic($2, $4) }
+   | method_signature_short COLON specs   { mkDynamic($1, $3) }
+   | STATIC method_signature_short COLON specs  { mkStatic($2, $4) }
 
 exp_posts:
    | L_BRACE class_name COLON formula R_BRACE exp_posts { ClassMap.add $2 $4 $6 }
@@ -347,8 +388,16 @@ parameter_list:
    | parameter { [$1] }
    | parameter COMMA parameter_list { $1::$3 }
 ;
+parameter_list_args_opt:
+   | parameter_args_opt { [$1] }
+   | parameter_args_opt COMMA parameter_list_args_opt { $1::$3 }
+;
 parameter:
    | nonvoid_type {$1}
+;
+parameter_args_opt:
+   | nonvoid_type {$1,None}
+   | nonvoid_type identifier {$1,Some $2}
 ;
 throws_clause:
    | THROWS class_name_list { Some $2 };
@@ -551,16 +600,20 @@ nonstatic_invoke:
    | INTERFACEINVOKE    {Interface_invoke} 
 ;
 parameter_list_question_mark:
-   | parameter_list { Some $1 }
-   | /* empty */ { None }
+   | parameter_list { $1 }
+   | /* empty */ { [] }
+;
+parameter_args_opt_list_question_mark:
+   | parameter_list_args_opt { $1 }
+   | /* empty */ { [] }
 ;
 method_signature:
    | CMPLT class_name COLON jtype name L_PAREN parameter_list_question_mark R_PAREN CMPGT
        {Method_signature($2,$4,$5,$7)}
 ;
 method_signature_short:
-   | jtype name L_PAREN parameter_list_question_mark R_PAREN
-       { ($1,$2,$4) }
+   | jtype name L_PAREN parameter_args_opt_list_question_mark R_PAREN
+       { $1,$2,$4 }
 ;
 reference:
    |array_ref  {$1} 
@@ -719,6 +772,7 @@ paramlist:
 /* Code for matching where not allowing question mark variables:
    no pattern vars*/
 jargument_npv:
+   | RETURN { Arg_var (newPVar(Support_syntax.name_ret_var)) }
    | lvariable_npv {Arg_var ($1)}
    | identifier L_PAREN jargument_list_npv R_PAREN {Arg_op($1,$3) }        
    | INTEGER_CONSTANT {Arg_string(string_of_int $1)} 
@@ -740,6 +794,7 @@ jargument_list_npv:
 
 
 jargument:
+   | RETURN { Arg_var (newPVar(Support_syntax.name_ret_var)) }
    | lvariable {Arg_var ($1)}
    | identifier L_PAREN jargument_list R_PAREN {Arg_op($1,$3) }        
    | INTEGER_CONSTANT {Arg_string(string_of_int $1)} 

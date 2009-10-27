@@ -227,17 +227,6 @@ let expression2pure e =
   | _ -> Printf.printf "\n\n Expression %s not supported. Abort!" (Pprinter.expression2str e);
       assert false (* ddino: many other cases should be filled in *)			      
 
-(* ================= defines names for this, return and parameter =============== *)
-
-let parameter n = "@parameter"^(string_of_int n)^":"
-
-(* define the constant name for the return variable. *)
-(*let name_ret_var mname = (Pprinter.name2str mname)^"$"^"ret_var"*)
-let name_ret_var = "$"^"ret_var"
-
-
-let this_var_name = Jlogic.this_var_name
-
 
 
 (* ================= misc functions =============== *)

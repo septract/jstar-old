@@ -162,13 +162,12 @@ let case_statement2str = function
   | Case_stmt (cl,ln) -> case_label2str cl ^": goto "^label_name2str ln
 
 let signature2str = function
-  | Method_signature (c,t,n,Some pl) -> "<"^class_name2str c ^": "^ j_type2str t ^" "^ name2str n 
+  | Method_signature (c,t,n,pl) -> "<"^class_name2str c ^": "^ j_type2str t ^" "^ name2str n 
       ^"("^  (list2str parameter2str pl ", " )^")>"
-  | Method_signature (c,t,n,None) -> "<"^class_name2str c ^": "^ j_type2str t ^" "^ name2str n^"()>" 
   | Field_signature (c,t,n) ->  mkStrOfFieldSignature c t n
 
 let methdec2signature_str dec =
-  class_name2str dec.class_name ^ "." ^ name2str dec.name ^ "(" ^ (list2str parameter2str (list_option2list dec.params) ", ") ^ ")"
+  class_name2str dec.class_name ^ "." ^ name2str dec.name ^ "(" ^ (list2str parameter2str (dec.params) ", ") ^ ")"
 
 let reference2str = function
   |Array_ref (id,im) ->  identifier2str id ^ fixed_array_descriptor2str im
@@ -243,11 +242,9 @@ let method_body2str = function
 
 let member2str = function 
   | Field(ml,j,n) -> (list2str modifier2str ml " ")^" "^ j_type2str j ^" "^name2str n^";"
-  | Method(ml,j,n,Some pl,tc,mb) ->  
+  | Method(ml,j,n,pl,tc,mb) ->  
       (list2str modifier2str ml " ") ^" "^  j_type2str j ^" "^ name2str n ^"("^
 	(list2str parameter2str pl ", ")^") "^throws_clause2str tc ^"\n"^ method_body2str mb
-  | Method(ml,j,n,None,tc,mb) ->  (list2str modifier2str ml " ") ^" "^  j_type2str j 
-      ^" "^ name2str n ^"()"^throws_clause2str tc ^"\n"^  method_body2str mb
 
 let extends_clause2str = function
   |None -> ""
