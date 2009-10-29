@@ -1,9 +1,9 @@
 class Cell {
   void <init>() : { } { this.<Cell: int val> |-> _ };
   
-  int get() : 
-  { this.<Cell: int val> |-> _X} 
-  { _X=return * this.<Cell: int val> |-> _X };
+  int get() : int X. 
+  { this.<Cell: int val> |-> X} 
+  { X=return * this.<Cell: int val> |-> X };
 
   void set(int x) : 
   { this.<Cell: int val> |-> _ } 

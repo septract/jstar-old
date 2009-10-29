@@ -66,31 +66,6 @@ let parse_one_class cname =
 *)
 
 
-let parse_program () =
-  if Config.symb_debug() then Printf.printf "Parsing program file  %s...\n" !program_file_name;
-  let s = System.string_of_file !program_file_name  in
-  let program =Jparser.file Jlexer.token (Lexing.from_string s)
-  in if Config.symb_debug() then Printf.printf "Program Parsing... done!\n";
-  (* Replace specialinvokes of <init> after news with virtual invokes of <init>*)
-  let program = program in 
-  let rec spec_to_virt x = match x with 
-      DOS_stm(Assign_stmt(x,New_simple_exp(y)))
-    ::DOS_stm(Invoke_stmt(Invoke_nostatic_exp(Special_invoke,b,(Method_signature (c1,c2,Identifier_name "<init>",c4)),d)))
-    ::ys 
-    when x=Var_name b && y=Class_name c1
-    ->
-      DOS_stm(Assign_stmt(x,New_simple_exp(y)))
-      ::DOS_stm(Invoke_stmt(Invoke_nostatic_exp(Virtual_invoke,b,(Method_signature (c1,c2,Identifier_name "<init>",c4)),d)))
-      ::(spec_to_virt ys)
-    | x::ys -> x::(spec_to_virt ys)
-    | [] -> [] in  
-  match program with 
-    JFile(a,b,c,d,e,f) -> 
-      JFile(a,b,c,d,e,List.map 
-	      (function 
-		  Method (a,b,c,d,e,Some (f,g)) 
-		  -> Method(a,b,c,d,e,Some(spec_to_virt f,g))
-		| x -> x) f )
 
 let parse_program () =
   if Config.symb_debug() then Printf.printf "Parsing program file  %s...\n" !program_file_name;
@@ -150,8 +125,10 @@ let main () =
 	
 	 let abs_rules = Load.load_logic  (System.getenv_dirlist "JSTAR_LOGIC_LIBRARY") !absrules_file_name in
 	 
-	 let spec_list = System.parse_file Jparser.spec_file Jlexer.token !spec_file_name "Specs" 
-	     !Config.sym_debug in 
+	 let spec_list = Load.import_flatten 
+	     (System.getenv_dirlist "JSTAR_SPECS_LIBRARY")
+	     !spec_file_name
+	     (Jparser.spec_file Jlexer.token) in
 	 let apfmap,logic = Specification.spec_file_to_classapfmap logic spec_list in
 	 let (static_method_specs,dynamic_method_specs) = Specification.spec_file_to_method_specs spec_list apfmap in
 	 

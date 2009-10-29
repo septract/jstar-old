@@ -89,7 +89,7 @@ let field_signature2str fs =
 
 /* ============================================================= */
 /* tokens */
-
+%token AS
 %token ABSRULE
 %token EQUIV
 %token LEADSTO
@@ -290,7 +290,6 @@ let field_signature2str fs =
 
 %% /* rules */
 
-/* entry points */
 file:
    | modifier_list_star file_type class_name extends_clause implements_clause file_body
        {JFile($1, $2, $3, $4, $5, $6)}
@@ -298,7 +297,8 @@ file:
 
 spec_file:
    | EOF  { [] }
-   | classspec spec_file { $1 :: $2 }
+   | IMPORT  STRING_CONSTANT  SEMICOLON spec_file{ (ImportEntry $2) :: $4 }
+   | classspec spec_file { (NormalEntry $1) :: $2 }
 
 classspec: 
    | file_type class_name L_BRACE apf_defines methods_specs R_BRACE  { ($2,$4,$5) }
@@ -308,10 +308,14 @@ apf_defines:
    | apf_define apf_defines { $1 :: $2 }
    | /*empty*/ { [] }
 
+eq_as: 
+   | EQUALS { (* Deprecated *)}
+   | AS {}
+
 apf_define:
-   | EXPORT identifier L_PAREN lvariable paramlist_question_mark R_PAREN EQUALS formula SEMICOLON  
+   | EXPORT identifier L_PAREN lvariable paramlist_question_mark R_PAREN eq_as formula SEMICOLON  
        { let a=match $5 with | Some b -> b | None -> [] in ($2,$4,a,$8,true) }
-   | DEFINE identifier L_PAREN lvariable paramlist_question_mark R_PAREN EQUALS formula SEMICOLON  
+   | DEFINE identifier L_PAREN lvariable paramlist_question_mark R_PAREN eq_as formula SEMICOLON  
        { let a=match $5 with | Some b -> b | None -> [] in ($2,$4,a,$8,false) }
 
 methods_specs:
@@ -434,6 +438,7 @@ quoted_name:
    | QUOTED_NAME { $1 }
 ;
 identifier:
+   | AS { "as" }
    | IDENTIFIER { $1 }
 /*   | DEFINE     { "define" }
    | EXPORT     { "export" }
