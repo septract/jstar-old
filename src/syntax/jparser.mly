@@ -11,6 +11,8 @@ open Plogic
 open Rlogic 
 open Lexing
 open Parsing 
+open Jimple_global_types
+open Spec_def
 open Global_types
 open Pprinter
 
@@ -232,10 +234,10 @@ let field_signature2str fs =
 //%start listing_file
 //%type <Jparsetree.list_class_file> listing_file
 %start file
-%type <Jparsetree.jimple_file> file
+%type <Jimple_global_types.jimple_file> file
 
 %start spec_file
-%type <Global_types.spec_file> spec_file
+%type <Spec_def.spec_file> spec_file
 
 %start rule_file
 %type <Global_types.rules Global_types.importoption list> rule_file

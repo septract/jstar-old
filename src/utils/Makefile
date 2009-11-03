@@ -18,7 +18,7 @@ export LIB
 
 INCLUDES = 
 
-SOURCES = misc.ml system.ml vars.ml debug.ml jparsetree.ml pprinter.ml
+SOURCES = misc.ml system.ml vars.ml debug.ml jparsetree.ml jimple_global_types.ml pprinter.ml
 #dotty.ml
 
 LIBRARY = SOURCES="$(SOURCES)" \
@@ -42,7 +42,7 @@ utils.cma:
 
 clean:
 	$(MAKE) -f $(OCAMLMAKEFILE) $(LIBRARY) clean
-	rm -f *.annot doc/*.html doc/*.css doc/test.odoc jparser.output
+	rm -f *.annot doc/*.html doc/*.css doc/test.odoc jparser.output *.cmi *.cmx *.o
 
 .depend:
 	$(OCAMLDEP) $(INCLUDES) *.mli *.ml > .depend

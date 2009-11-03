@@ -3,7 +3,8 @@ ifndef SOURCES
 endif
 
 ifndef TARGETS
-  TARGETS = Visitor Sum Plus Const Ast RZ
+#  TARGETS = Visitor Sum Plus Const Ast RZ
+  TARGETS = Sum Plus Const RZ
 endif
 
 ifndef SUBDIRSDEF

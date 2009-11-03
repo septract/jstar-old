@@ -1,4 +1,4 @@
 #!/bin/bash
 
-jstar -l logic -a abs -s ./specs -q $2 -f ./$1
+jstar -v -l logic -a abs -s ./specs  $2 -f ./$1
 

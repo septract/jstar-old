@@ -10,11 +10,16 @@
 (* Manage methdec infos for a file *) 
 
 open Jparsetree
+open Global_types 
+open Jimple_global_types
+
 
 let num_stmts = ref 0 
 
 
-let stmt_create skind  pred_stmts  succ_stmts = 
+let stmt_create (skind: Jimple_global_types.statement)  
+(pred_stmts: Jimple_global_types.stmt_jimple list)  
+(succ_stmts: Jimple_global_types.stmt_jimple list) : Jimple_global_types.stmt_jimple = 
 incr num_stmts;
   { skind = skind;
     sid = !num_stmts; 
@@ -29,7 +34,7 @@ let make_methdec mos cname ty n pars tc locs b  =
   modifiers= mos;
   class_name = cname;
   ret_type=ty;
-  name= n; 
+  name_m= n; 
   params= pars;
   locals = locs;
   th_clause=tc;
@@ -104,13 +109,8 @@ let make_methdecs_of_list cname meml =
   list_filter_out_none l
 
 let get_msig m cname =
-  (cname,m.ret_type,m.name,m.params)
+  (cname,m.ret_type,m.name_m,m.params)
 
-(*
-let retrieve_methdecs_of meml =
-  let l=List.map retrieve_methdec_from_member meml in
-  list_filter_out_none l
-*)
 
 
 

@@ -16,6 +16,17 @@ or
   | Val$Cell(?x,?y) |-  ?y!=?z * Val$Cell(?x,?z) 
 
 
+
+rule val_recell_match : 
+  | Recell$Cell(?x,?y) |- Recell$Cell(?x,?z) 
+without
+  |- ?y != ?z
+if
+  Recell$Cell(?x,?y) | |- ?y=?z 
+or
+  | Recell$Cell(?x,?y) |-  ?y!=?z * Recell$Cell(?x,?z) 
+
+
 /********************************************
  *   This rule guesses unfolds sub_eq
  ********************************************/
@@ -25,15 +36,33 @@ rule sub_eq_hack :
 if
 | |- ?x=?y 
 
+rule sub_eq_hack2 : 
+| |- subeq({value=?x; old=?z},{value=?y})
+if
+| |- ?x=?y 
+
+
+
 rule sub_eq_hack : 
 | |- subeq({content=?x},{content=?y})
 if
 | |- ?x=?y 
 
 rule sub_eq_hack2 : 
+| |- subeq({value=?x},{value=?y})
+if
+| |- ?x=?y 
+
+rule sub_eq_hack21 : 
 | |- subeq({content=?x},{content=?y; old=_z})
 if
 | |- ?x=?y 
+
+rule sub_eq_hack22 : 
+| |- subeq({value=?x},{value=?y; old=_z})
+if
+| |- ?x=?y 
+
 
 
 /********************************************

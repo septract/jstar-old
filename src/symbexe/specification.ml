@@ -14,6 +14,7 @@ open Vars
 open Rterm
 open Pterm
 open Plogic
+open Spec_def
 open Global_types
 open Jlogic
 open Jparsetree
@@ -62,7 +63,10 @@ let disjunction_excep excep_post1 excep_post2 =
       excep_post2
   in !newClassMap
 
-(*type spec = 
+
+
+(*
+type spec = 
     { pre : representative Plogic.pform;
       post : representative Plogic.pform;
       excep : excep_post }
@@ -211,7 +215,7 @@ let class_spec_to_ms cs (smmap,dmmap) =
 	      (a,b,c) -> 
 		(smmap,addMSpecs (cn,a,b,c) (spec_list_to_spec spec) dmmap)
 	    )
-	| Global_types.Static (ms,spec) -> 
+	| Spec_def.Static (ms,spec) -> 
 	    (match ms with 
 	      (a,b,c) -> 
 		(addMSpecs (cn,a,b,c) (spec_list_to_spec spec) smmap,dmmap)

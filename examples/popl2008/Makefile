@@ -1,12 +1,25 @@
-ifndef TARGETS
-  TARGETS = Cell Recell DCell
-endif
+all: Cell.jimple Recell.jimple
 
-ifndef SUBDIRSDEF
-   SUBDIRSDEF = foo
-   SUBDIRS = 
-endif
+%.class: Cell.java Recell.java
+	javac -g $?
 
-DIR = popl2008
+%.jimple: %.class
+	java soot.Main $* -f J -d . -print-tags -keep-line-number
 
-include ../Makefile
+
+clean: 
+	rm -f *.jimple *.class *~ *.dot \#* .\#* *.txt
+
+time:
+	time ./runtest Cell.jimple
+
+test: all
+	./runtest Cell.jimple
+	./runtest Recell.jimple
+
+
+
+
+demo: Cell.jimple
+	clear
+	time ./runtest Cell.jimple

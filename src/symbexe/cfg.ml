@@ -7,13 +7,10 @@
 *******************************************************************)
 
 
-(*
- * ddino's implementation of control flow graph. 
- * This implementation is an adaptation of my implementation of the iterprocedural cfg for sil.
- *)
-
 
 open Jparsetree
+open Jimple_global_types
+open Pprinter_core
 open Pprinter
 open Support_symex
 
@@ -35,7 +32,7 @@ let stmt_create_default pred_stmts succ_stmts =
  Methdec.stmt_create (Nop_stmt) pred_stmts succ_stmts
 
 
-let rec forallStmts (todo) (md : methdec) = 
+let rec forallStmts (todo) (md : methdec_jimple) = 
     List.iter todo md.bstmts;
 
 
@@ -47,24 +44,24 @@ let rec forallStmts (todo) (md : methdec) =
 
 (* ============== START of ADT node and method_cfg_info ============== *)
 
-type nodekind = Start_node | Exit_node | Call_node | Return_Site_node | Stmt_node
 
 
-type node = {
+
+type node_jimple = {
 (*  mutable nd_id:int; (* unique identifier for node *) *)
   mutable nd_kind : nodekind;
-  nd_stmt : stmt;
-  mutable nd_succs : node list;
-  mutable nd_preds : node list;
+  nd_stmt : stmt_jimple;
+  mutable nd_succs : node_jimple list;
+  mutable nd_preds : node_jimple list;
   mutable nd_method : method_cfg_info option 
 }
 and method_cfg_info = {   
-  pd_md : methdec; 
-  pd_start_node : node; 
-  pd_exit_node : node;
+  pd_md : methdec_jimple; 
+  pd_start_node : node_jimple; 
+  pd_exit_node : node_jimple;
 }
 
-type id_node_hashtbl = (int, node) Hashtbl.t
+type id_node_hashtbl = (int, node_jimple) Hashtbl.t
 
 let id_node_map : id_node_hashtbl = Hashtbl.create 1000
 
@@ -90,7 +87,7 @@ let stmt_to_node stmt = id_node_map_find stmt.sid
 
 let sid_to_node id = id_node_map_find id
 
-let node_list : node list ref = ref []
+let node_list : node_jimple list ref = ref []
 
 let get_all_nodes _ = !node_list
 
@@ -190,8 +187,8 @@ let method_cfg_info_create md start_node exit_node  =
    
 let key_method md = 
   match md.params with 
-  |Some pl ->(j_type2str md.ret_type)^"_"^(name2str md.name)^"_"^(list2str parameter2str pl "_")
-  |None -> (j_type2str  md.ret_type) ^"_"^(name2str md.name)
+  |Some pl ->(j_type2str md.ret_type)^"_"^(name2str md.name_m)^"_"^(list2str parameter2str pl "_")
+  |None -> (j_type2str  md.ret_type) ^"_"^(name2str md.name_m)
 
 
 let method_cfg_info_create_base md =
@@ -207,7 +204,7 @@ let method_cfg_info_create_base md =
 
 
 let method_cfg_info_to_method_name method_cfg_info =
-  method_cfg_info.pd_md.name 
+  method_cfg_info.pd_md.name_m 
 
 let method_name_to_method_cfg_info key =
   mcfginfo_tbl_find key
@@ -230,7 +227,7 @@ let method_cfg_info_get_exit_node method_cfg_info =
 (* =============== END of ADT node and method_cfg_info =============== *)
 
 
-let icfg_create_method_cfg_infos (lmd: Jparsetree.methdec list) : unit = 
+let icfg_create_method_cfg_infos (lmd: Jimple_global_types.methdec_jimple list) : unit = 
   if cfg_debug() then Printf.printf "\nCreating method_cfg_infos for all methods...";
   List.iter (fun m -> ignore(method_cfg_info_create_base m )) lmd;
   if cfg_debug() then Printf.printf "\nEND creation of method_cfg_infos for all methods..."; 
@@ -239,8 +236,8 @@ let icfg_create_method_cfg_infos (lmd: Jparsetree.methdec list) : unit =
 
 (* =============== START of icfg_build_intra_cfg =============== *)
 
-let rec cfgStmts (mdesc: method_cfg_info) (ss: stmt list) 
-    (next:stmt option) (break:stmt option) (cont:stmt option) =
+let rec cfgStmts (mdesc: method_cfg_info) (ss: stmt_jimple list) 
+    (next:stmt_jimple option) (break:stmt_jimple option) (cont:stmt_jimple option) =
   match ss with
     | [] -> ()
     | [s] -> cfgStmt mdesc s next break cont
@@ -249,16 +246,16 @@ let rec cfgStmts (mdesc: method_cfg_info) (ss: stmt list)
 	cfgStmts mdesc tl next break cont
 
 
-and cfgBlock (mdesc: method_cfg_info) (bstmts: stmt list) 
-    (next:stmt option) (break:stmt option) (cont:stmt option) = 
+and cfgBlock (mdesc: method_cfg_info) (bstmts: stmt_jimple list) 
+    (next:stmt_jimple option) (break:stmt_jimple option) (cont:stmt_jimple option) = 
   cfgStmts mdesc bstmts next break cont 
 
 
 
 (* Fill in the CFG info for a stmt
    Meaning of next, break, cont should be clear from earlier comment *)
-and cfgStmt (minfo: method_cfg_info) (s: stmt) 
-    (next:stmt option) (break:stmt option) (cont:stmt option) =
+and cfgStmt (minfo: method_cfg_info) (s: stmt_jimple) 
+    (next:stmt_jimple option) (break:stmt_jimple option) (cont:stmt_jimple option) =
 (*    incr num_stmts;
     s.sid <- !num_stmts;
 *)
@@ -266,14 +263,14 @@ and cfgStmt (minfo: method_cfg_info) (s: stmt)
     Printf.printf "CFG must be cleared before being computed!";
     assert false
   end;
-  let addSucc (n: stmt) =
+  let addSucc (n: stmt_jimple) =
     if not (List.memq n s.succs) then
       let _ = if cfg_debug() then Printf.printf "\n Adding %i as successor of %i" n.sid s.sid in
       s.succs <- n::s.succs;
     if not (List.memq s n.preds) then
       let _ = if cfg_debug() then Printf.printf "  Adding %i as predecessor of %i \n" s.sid n.sid in
       n.preds <- s::n.preds in
-  let addOptionSucc (n: stmt option) =
+  let addOptionSucc (n: stmt_jimple option) =
     match n with
       | None -> ()
       | Some n' -> addSucc n' in
@@ -362,8 +359,8 @@ let initialize_exit_node method_cfg_info stmts =
 
 (* Compute a control flow graph for md.  Stmts in md have preds and succs
    filled in *)
-let rec icfg_build_intra_cfg (md : methdec) : unit = 
-  if cfg_debug() then Printf.printf "\nComputing intra CFG for %s..." (name2str md.name); 
+let rec icfg_build_intra_cfg (md : methdec_jimple) : unit = 
+  if cfg_debug() then Printf.printf "\nComputing intra CFG for %s..." (name2str md.name_m); 
   let method_cfg_info = mcfginfo_tbl_find  (key_method md) in
   let _ = cfgBlock method_cfg_info md.bstmts None None None in
 
@@ -439,7 +436,7 @@ let icfg_compute_node_edges _ =
 
 (* ================== START of functions about interprocedural CFG ================== *)
 
-let clearCFGinfo (md : methdec) =
+let clearCFGinfo (md : methdec_jimple) =
   let clear s =
     s.sid <- -1;
     s.succs <- [];
@@ -468,26 +465,26 @@ let clearFileCFG mdl =
 let d_cfgedge chan src dest =
   Printf.fprintf chan "%i -> %i" src.sid dest.sid
 
-let d_cfgnode chan (s : stmt) =
+let d_cfgnode chan (s : stmt_jimple) =
   Printf.fprintf chan "%i [label=\"%i: %s\"]\n\t" s.sid s.sid (statement2str s.skind);
   List.iter (fun suc ->(d_cfgedge chan s suc); Printf.fprintf chan "\n\t") s.succs  
 
 (** print control flow graph (in dot form) for methdec to channel *)
 (* ddino: I think it can be simplified if we print everything in terms of nodes instead of stmts *)
-let print_cfg_channel (chan : out_channel) (md : methdec) =
-  let pnode (s:stmt) =  d_cfgnode chan s
+let print_cfg_channel (chan : out_channel) (md : methdec_jimple) =
+  let pnode (s:stmt_jimple) =  d_cfgnode chan s
   in forallStmts pnode md;
   let minfo= mcfginfo_tbl_find (key_method md) in
   let sn= method_cfg_info_get_start_node minfo in
-  Printf.fprintf chan "%i [label=\"%i: Method %s START\"]\n\t" (node_get_id sn) (node_get_id sn) (name2str md.name); 
+  Printf.fprintf chan "%i [label=\"%i: Method %s START\"]\n\t" (node_get_id sn) (node_get_id sn) (name2str md.name_m); 
   List.iter (fun suc ->(d_cfgedge chan sn.nd_stmt suc); Printf.fprintf chan "\n\t") sn.nd_stmt.succs;    
   let en= method_cfg_info_get_exit_node minfo in
-  Printf.fprintf chan "%i [label=\"%i: Method %s EXIT\"]\n\t" (node_get_id en) (node_get_id en) (name2str md.name); 
+  Printf.fprintf chan "%i [label=\"%i: Method %s EXIT\"]\n\t" (node_get_id en) (node_get_id en) (name2str md.name_m); 
   List.iter (fun suc ->(d_cfgedge chan en.nd_stmt suc); Printf.fprintf chan "\n\t") en.nd_stmt.succs    
    
 
 (** Print control flow graph (in dot form) for fundec to file *)
-let print_cfg_filename (filename : string) (md : methdec) =
+let print_cfg_filename (filename : string) (md : methdec_jimple) =
   let chan = open_out filename in
     begin
       print_cfg_channel chan md;
@@ -507,7 +504,7 @@ let print_icfg_dotty mdl =
 
 (* ================== END of Printing dotty files ================== *)
 
-let compute_icfg mdecs = 
+let compute_icfg (mdecs: Jimple_global_types.methdec_jimple list) = 
   icfg_create_method_cfg_infos mdecs;
   List.iter icfg_build_intra_cfg mdecs;
   icfg_compute_node_edges ();

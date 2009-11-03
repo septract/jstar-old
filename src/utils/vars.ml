@@ -59,5 +59,12 @@ let rec string_var v =
   | AnyVar (n,vn) -> Printf.sprintf  "a_%s%s" vn (foo n)
 
 
+let rec var2str v =
+  match v with 
+    PVar (n,vn) -> vn
+  | EVar (n,vn) -> vn
+  | AnyVar (n,vn) -> vn
+
+
 
 

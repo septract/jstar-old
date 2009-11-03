@@ -9,6 +9,7 @@
 (* Pretty printer module *)
 
 open Jparsetree
+open Jimple_global_types  
 
 let binop2str bo = 
   match bo with 
@@ -97,7 +98,7 @@ let  modifier2str = function
    | Public ->"public"
    | Protected ->"protected"
    | Private ->"private"
-   | Static ->"static"
+   | Jparsetree.Static ->"static"
    | Synchronized ->"synchronized"
    | Transient ->"transient"
    | Volatile ->"volatile"
@@ -166,9 +167,6 @@ let signature2str = function
       ^"("^  (list2str parameter2str pl ", " )^")>"
   | Method_signature (c,t,n,None) -> "<"^class_name2str c ^": "^ j_type2str t ^" "^ name2str n^"()>" 
   | Field_signature (c,t,n) ->  mkStrOfFieldSignature c t n
-
-let methdec2signature_str dec =
-  class_name2str dec.class_name ^ "." ^ name2str dec.name ^ "(" ^ (list2str parameter2str (list_option2list dec.params) ", ") ^ ")"
 
 let reference2str = function
   |Array_ref (id,im) ->  identifier2str id ^ fixed_array_descriptor2str im
@@ -262,10 +260,6 @@ let jimple_file2str = function
       (list2str modifier2str ml " ")^ j_file_type2str j ^" "^ 
 	class_name2str c  ^" "^extends_clause2str e ^" "^ implements_clause2str i
       ^"\n{\n"^ (list2str member2str meml "\n\n")^"\n}"
-
-
-
-
 
 
 

@@ -7,6 +7,7 @@
 *******************************************************************)
 
 open Jparsetree
+open Jimple_global_types
 
 let  print_spec cname memb =
   match memb with

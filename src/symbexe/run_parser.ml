@@ -6,6 +6,7 @@
  All rights reserved. 
 *******************************************************************)
 open Jparsetree
+open Jimple_global_types
 
 let program_file_name = ref ""
 let logic_file_name = ref ""
@@ -67,6 +68,7 @@ let parse_one_class cname =
 
 
 let parse_program () =
+  Config.sym_debug:=true;
   if Config.symb_debug() then Printf.printf "Parsing program file  %s...\n" !program_file_name;
   let s = System.string_of_file !program_file_name  in
   let program =Jparser.file Jlexer.token (Lexing.from_string s)

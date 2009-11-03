@@ -6,12 +6,13 @@
  All rights reserved. 
 *******************************************************************)
 
-open Jparsetree
+
 open Vars
 open Pterm
 open Plogic
 open Rlogic
 open Config
+open Jparsetree
 open Support_syntax
 
 let warning () =
@@ -273,6 +274,7 @@ let mk_parameter_of_class (ps: Jparsetree.parameter list option) : unit =
 
 
 
+
 let get_class_name_from_signature si =
   match si with
   | Method_signature (c,_,_,_) -> c
@@ -331,3 +333,46 @@ let rec union_formsets lo s2 s1 =
       if (formset_mem lo s s2) then 
 	union_formsets lo s2 s1'  
       else s::(union_formsets lo s2 s1') 
+
+
+(* true if v is a primed variable *)
+let is_primed (v: Vars.var) : bool = 
+  match v with 
+  | EVar _ -> true
+  | _ -> false 
+
+let this_var_name = Jlogic.this_var_name
+
+let parameter n = "@parameter"^(string_of_int n)^":"
+
+(* create the variable in the table for the object "this" *)
+let mk_this_of_class () : Vars.var =
+  let v=Vars.concretep_str this_var_name 
+  in var_table_add (this_var_name) v;
+  v
+
+
+(* create entries in the variable table for a list of parameters *)
+let mk_parameter_of_class (ps: Jparsetree.parameter list option) : unit =
+  match ps with 
+  | None -> ()
+  | Some ps ->   
+      for i=0 to List.length ps do
+	let p=parameter i in 
+	let v=Vars.concretep_str p
+	in var_table_add p v
+      done 
+
+(* define the constant name for the return variable. *)
+(*let name_ret_var mname = (Pprinter.name2str mname)^"$"^"ret_var"*)
+let name_ret_var = "$"^"ret_var"
+
+
+(* find the this-variable in the table *)
+let get_this_of_class () =
+  var_table_find (this_var_name)
+
+
+
+let make_field_signature  cname ty n =
+  Field_signature(cname,ty,n) 

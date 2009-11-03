@@ -18,7 +18,7 @@ export LIB
 
 INCLUDES = 
 
-SYMBEXE_SOURCES = jlogic.ml specification.ml support_symex.ml methdec.ml cfg.ml abs.ml symexec.ml classverification.ml mkspecs.ml run_parser.ml
+SYMBEXE_SOURCES = jlogic.ml pprinter_core.ml specification.ml support_symex.ml methdec_core.ml methdec.ml cfg.ml cfg_core.ml abs.ml  symexec.ml symexec_jimple.ml classverification.ml mkspecs.ml run_parser.ml
 
 
 TOPLEVEL_SOURCES = $(SYMBEXE_SOURCES)
