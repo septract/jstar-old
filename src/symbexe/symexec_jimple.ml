@@ -13,7 +13,6 @@ open Jlogic
 open Jimple_global_types
 open Jparsetree
 open Spec_def
-open Cfg
 open Prover
 open Specification
 open Vars
@@ -49,7 +48,7 @@ let create_program_variables mdl =
 
 
 (* ================  transition system ==================  *)
-
+(*
 type id = int
 
 let set_group,grouped = let x = ref false in (fun y -> x := y),(fun () -> !x )
@@ -211,7 +210,7 @@ let add_id_abs_form cfg h =
     (h,id)
 
 let add_id_abs_formset sheaps cfg =  List.map (add_id_abs_form cfg) sheaps
-
+*)
 
 (* ================   ==================  *)
 
@@ -332,7 +331,6 @@ let rec translate_assign_stmt  (v:Jparsetree.variable) (e:Jparsetree.expression)
       translate_assign_stmt (Var_name n) (Immediate_exp(e'))
   | Var_name n , Invoke_exp ie ->  
       let spec,param=get_spec ie in
-      Printf.printf "\n\n\n\n !!!!!!!!!!! SPEC B4 translation %s" (Pprinter_core.spec2str spec);
       Global_types.Assignment_core ([Var_name n],spec,param)	      
   | _ , _ -> assert false 
 
@@ -347,7 +345,8 @@ let jimple_statement2core_statement s =
   | Lookupswitch_stmt(i,cl) -> assert false
   | Identity_stmt(nn,id,ty) -> 
       (* nn := id: LinkedLisr   ---> nn:={emp}{return=param0}(id)*)
-      Printf.printf "\n Translating a jimple identity statement \n  %s\n" (Pprinter.statement2str s);
+      if Config.symb_debug() then 
+	Printf.printf "\n Translating a jimple identity statement \n  %s\n" (Pprinter.statement2str s);
       let retvar = Arg_var(variable2var  (Var_name(Identifier_name(name_ret_var)))) in
       let id'=Immediate_local_name(Identifier_name(id)) in 
       let p0 = Arg_var(mk_parameter 0) in (* ddino: should it be a fresh program variable? *)
@@ -356,20 +355,21 @@ let jimple_statement2core_statement s =
       Global_types.Assignment_core  ([Var_name(nn)],spec,Some [id']) 
   | Identity_no_type_stmt(n,i) -> assert false
   | Assign_stmt(v,e) -> 
-      Printf.printf "\n Translating a jimple assignment statement  %s\n" (Pprinter.statement2str s);
+      if Config.symb_debug() then 
+	Printf.printf "\n Translating a jimple assignment statement  %s\n" (Pprinter.statement2str s);
       translate_assign_stmt v e
   | If_stmt(b,l) ->
-      Printf.printf "\n Translating a jimple conditional jump statement  %s\n" (Pprinter.statement2str s);  
+      if Config.symb_debug() then Printf.printf "\n Translating a jimple conditional jump statement  %s\n" (Pprinter.statement2str s);  
       Global_types.If_stmt_core(b,l) 
   | Goto_stmt(l) ->
-      Printf.printf "\n Translating a jimple goto statement  %s\n" (Pprinter.statement2str s);    
+      if Config.symb_debug() then Printf.printf "\n Translating a jimple goto statement  %s\n" (Pprinter.statement2str s);    
       Global_types.Goto_stmt_core(l)
   | Nop_stmt ->  
-      Printf.printf "\n Translating a jimple Nop statement  %s\n" (Pprinter.statement2str s);    
+      if Config.symb_debug() then Printf.printf "\n Translating a jimple Nop statement  %s\n" (Pprinter.statement2str s);    
       Global_types.Nop_stmt_core
   | Ret_stmt(i)  (* return i ---->  ret_var:=i  or as nop operation if it does not return anything*)
   | Return_stmt(i) -> 
-      Printf.printf "\n Translating a jimple Return statement  %s\n" (Pprinter.statement2str s);    
+      if Config.symb_debug() then Printf.printf "\n Translating a jimple Return statement  %s\n" (Pprinter.statement2str s);    
       (match i with 
        | None -> Global_types.Nop_stmt_core 
        | Some e' -> let retvar = Arg_var(variable2var  (Var_name(Identifier_name(name_ret_var)))) in
@@ -379,10 +379,10 @@ let jimple_statement2core_statement s =
 	 Global_types.Assignment_core  ([],spec,Some [e']) 
       )
   | Throw_stmt(i) ->
-      Printf.printf "\n Translating a jimple Throw statement %s\n" (Pprinter.statement2str s);      
+      if Config.symb_debug() then Printf.printf "\n Translating a jimple Throw statement %s\n" (Pprinter.statement2str s);      
       Global_types.Throw_stmt_core(i)
   | Invoke_stmt (e) -> 
-      Printf.printf "\n Translating a jimple Invoke statement %s \n" (Pprinter.statement2str s);      
+      if Config.symb_debug() then Printf.printf "\n Translating a jimple Invoke statement %s \n" (Pprinter.statement2str s);      
       let spec,param=get_spec e in
       Global_types.Assignment_core ([],spec,param)	      
 
@@ -396,118 +396,16 @@ let jimple_statement2core_statement s =
 
 
 
-
-(* ================  work list algorithm ==================  *)
-
-(* this type has support for  creating a transition system 
-   (formula, id)
-   id is a unique identifier of the formula
- *)
-type formset_entry = Rlogic.ts_form * node
-
-(* eventually this should be a more efficient data structure than list*)
-type formset = formset_entry list 
-
-
-type formset_hashtbl = (int, formset) Hashtbl.t
-
-(* table associating a cfg node to a set of heaps *)
-let formset_table : formset_hashtbl = Hashtbl.create 10000
-
-
-let formset_table_add key s = 
-  Hashtbl.add formset_table key s
-
-let formset_table_replace key s = 
-  Hashtbl.replace formset_table key s
-
-let formset_table_mem key  = 
-  Hashtbl.mem formset_table key 
-
-let formset_table_find key =
-  try 
-    Hashtbl.find formset_table key
-  with Not_found -> 
-    warning(); let _ =Printf.printf "\n ERROR: cannot find formset for %i in the table. Abort! \n" key in
-    reset(); assert false
-
-let remove_id_formset formset =
-  fst (List.split formset)
-
-	      
-
-
 let get_class_name_from_signature si =
   match si with
   | Method_signature (c,_,_,_) -> c
   | Field_signature (c,_,_) ->c
 
 
-
-(* checks if x \in fset. membership is considered up to logical equivalence *)
-let rec formset_mem lo x fset =
-  match fset with 
-  | [] -> false
-  | y::fset' -> 
-      ((check_implication lo x y) && (check_implication lo y x)) || (formset_mem lo x fset') 
-
-let compact_formset lo xs = 
-  let rec impl xs ys = 
-    match ys with 
-      [] -> xs
-    | y::ys -> 
-	let xs = List.filter 
-	    (fun x -> 
-	      if (Prover.check_implication lo x y) then false else true) xs in 
-	let ys = List.filter 
-	    (fun x -> 
-	      if (Prover.check_implication lo x y) then false else true) ys in 
-	impl (y::xs) ys
-  in (*Debug.debug_ref:=true; *)let xs = impl [] xs in (*Debug.debug_ref:=false;*) xs
-
-(** implements s1 U s2  *)
-let rec union_formsets lo s2 s1 =
-(*  compact_formset lo (s2@s1)*)
-  match s1 with 
-  | [] -> s2
-  | s::s1' -> 
-      if (formset_mem lo s s2) then 
-	union_formsets lo s2 s1'  
-      else s::(union_formsets lo s2 s1') 
-
-(*let worklist = ref [] *)
-
 let add_worklist n = 
   worklist := n::!worklist
 
 exception Contained
-
-
-let check_postcondition m heaps sheap =
-  let sheap_noid=fst sheap in  
-  try 
-    let heap,id = List.find (fun (heap,id) -> (check_implication_frame !curr_logic sheap_noid heap)!=[]) heaps in
-    if Config.symb_debug() then 
-      Printf.printf "\n\nPost okay %s \n" (Pprinter.name2str m.name_m);
-    (*	let idd = add_good_node ("EXIT: "^(Pprinter.name2str m.name)) in *)
-    add_edge_with_proof (snd sheap) id "exit";
-    (*	add_edge id idd "";*)
-  with Not_found -> 
-    warning();
-    let _= Printf.printf "\n\nERROR: cannot prove post for method %s\n" (Pprinter.name2str m.name_m) in
-    Prover.print_counter_example ();
-    reset();
-    List.iter (fun heap -> 
-		 let idd = add_error_heap_node (fst heap) in 
-		 add_edge_with_proof (snd sheap) idd 
-		   (Format.fprintf 
-		      (Format.str_formatter) "ERROR EXIT: %s:@\n %a" 
-		      (Pprinter.name2str m.name_m) 
-		      Prover.pprint_counter_example (); 
-		    Format.flush_str_formatter ()))
-      heaps
-      (*print_formset "\n\n Failed Heap:\n" [sheap]    *)
-
 
 (* 
 recognise if md describes a init method. At the moment it only uses the name. But
@@ -526,7 +424,7 @@ let jimple_methdec2core_methdec
     (m_jimple: Jimple_global_types.methdec_jimple) : Global_types.methdec  = 
   let do_one_stmt stmt_jimple =
     let s=jimple_statement2core_statement stmt_jimple.skind in
-    Printf.printf "\n into the core statement: \n   %s \n" (Pprinter_core.statement_core2str s); 
+    if Config.symb_debug() then Printf.printf "\n into the core statement: \n   %s \n" (Pprinter_core.statement_core2str s); 
     Methdec_core.stmt_create s [] [] 
   in
   let stmt_core_list =List.map do_one_stmt m_jimple.bstmts in

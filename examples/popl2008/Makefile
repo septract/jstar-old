@@ -1,6 +1,6 @@
-all: Cell.jimple Recell.jimple
+all: Cell.jimple Recell.jimple DCell.jimple
 
-%.class: Cell.java Recell.java
+%.class: Cell.java Recell.java D
 	javac -g $?
 
 %.jimple: %.class
