@@ -29,25 +29,6 @@ let file = ref ""
 
 type var_hashtbl = (string, Vars.var) Hashtbl.t
 
-(* table to connect local variables used in symbolic execution 
-   to the internal representation Vars.var 
-*)
-let var_table : var_hashtbl = Hashtbl.create 1000
-
-
-let var_table_add key v = 
-  if symb_debug () then Printf.printf "\n\n Adding variable (%s, %s)\n" key (Vars.string_var v);
-  Hashtbl.add var_table key v
-
-
-let var_table_find key =
-  try 
-    Hashtbl.find var_table key
-  with Not_found -> 
-    let _ =Printf.printf "\n ERROR: cannot find variable for %s in the table. Abort! \n" key in
-    assert false
-
-
 (* given a variable it returns its key to use in the table *)
 let variable2key v = Pprinter.variable2str v
 
@@ -112,11 +93,11 @@ let signature2args si =
 let name2args n =
   match n with 
   | Quoted_name s 
-  | Identifier_name s -> Arg_var(var_table_find (s))
+  | Identifier_name s -> Arg_var(Vars.concretep_str s)
 
 
 let identifier2args s = 
-    Arg_var(var_table_find (s))
+    Arg_var(Vars.concretep_str s)
 
 
 let immediate2args im = 
@@ -173,7 +154,7 @@ let expression2args e =
 
 
 let variable2var v =
-  var_table_find (variable2key v )  
+  Vars.concretep_str (variable2key v )  
 
 
 let var2args x =Arg_var x 
@@ -244,24 +225,6 @@ let is_primed (v: Vars.var) : bool =
 
 
 
-(* create the variable in the table for the object "this" *)
-let mk_this_of_class () : Vars.var =
-  let v=Vars.concretep_str this_var_name 
-  in var_table_add (this_var_name) v;
-  v
-
-(* create entries in the variable table for a list of parameters *)
-let mk_parameter_of_class (ps: Jparsetree.parameter list) : unit =
-  match ps with 
-  | ps ->   
-      for i=0 to List.length ps do
-	let p=parameter i in 
-	let v=Vars.concretep_str p
-	in var_table_add p v
-      done 
-
-
-
 
 let get_class_name_from_signature si =
   match si with
@@ -279,15 +242,6 @@ let invoke_exp_get_signature ie =
   match ie with 
   | Invoke_nostatic_exp(_, _, si, _) -> si
   | Invoke_static_exp(si,_) -> si
-
-
-(* true if e is a variable starting with $ sign. $variables are special variables 
-in jimple and need to e treated in special way  *)
-let is_dollar_variable e =
-  match e with 
-    Immediate_local_name (Identifier_name x) -> 
-      (String.sub x 0 1) = "$" 
-  | _ -> false
 
 
 
@@ -333,29 +287,16 @@ let this_var_name = Support_syntax.this_var_name
 
 let parameter n = "@parameter"^(string_of_int n)^":"
 
-(* create the variable in the table for the object "this" *)
-let mk_this_of_class () : Vars.var =
-  let v=Vars.concretep_str this_var_name 
-  in var_table_add (this_var_name) v;
-  v
+(* create the "this" *)
+let mk_this : Vars.var =
+  Vars.concretep_str this_var_name 
 
-
-(* create entries in the variable table for a list of parameters *)
-let mk_parameter_of_class (ps: Jparsetree.parameter list) : unit =
-  for i=0 to List.length ps do
-    let p=parameter i in 
-    let v=Vars.concretep_str p
-    in var_table_add p v
-  done 
 
 (* define the constant name for the return variable. *)
 (*let name_ret_var mname = (Pprinter.name2str mname)^"$"^"ret_var"*)
 let name_ret_var = "$"^"ret_var"
 
-
-(* find the this-variable in the table *)
-let get_this_of_class () =
-  var_table_find (this_var_name)
+let ret_var = concretep_str name_ret_var 
 
 
 

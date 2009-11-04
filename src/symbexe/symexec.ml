@@ -254,10 +254,9 @@ let rec param_sub il num sub =
 
 
 let param_sub il =
-  let ret_var = concretep_str name_ret_var in 
-  let sub' = add ret_var (Arg_var(var_table_find (name_ret_var)))  empty in 
+  let sub' = add ret_var (Arg_var(ret_var))  empty in 
   let this_var = concretep_str this_var_name in 
-  let sub' = add this_var (Arg_var(var_table_find (this_var_name)))  sub' in 
+  let sub' = add this_var (Arg_var(this_var))  sub' in 
   match il with Some il -> param_sub il 0 sub' | None -> sub'
   
 
@@ -491,7 +490,6 @@ and execute_core_stmt n (sheap : formset_entry) : formset_entry list =
 	    let hs=add_id_formset hs n in
 	    execs_one n hs
 	| [v] ->
-	    let ret_var = var_table_find (name_ret_var) in
 	    let v_var=variable2var v in
 	    let eliminate_ret_var h =
 	      let h = update_var_to v_var (Arg_var ret_var) h in 
@@ -505,7 +503,6 @@ and execute_core_stmt n (sheap : formset_entry) : formset_entry list =
 	| _ -> assert false (* do be done *)
 	      )
     | Throw_stmt_core _ -> assert  false 
-    | _ -> assert false
 	  ))
       
 (* implements a work-list fidex point algorithm *)

@@ -65,7 +65,8 @@ let verify_class
       (* Check BS *)
       if Jparsetree.constructor mname then () else
       ((match clpar_opt with
-	Some clpar -> 
+      |	None -> assert false
+      |	Some clpar -> 
 	  (try 
 	    let par_dyn_spec = MethodMap.find (clpar,rtype,mname,params) dynamic_method_specs in	 
 	    if refinement logic my_dyn_spec par_dyn_spec  then 
