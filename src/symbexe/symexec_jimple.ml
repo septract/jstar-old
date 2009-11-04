@@ -20,9 +20,6 @@ open Support_symex
 open Symexec
 
 (* global variables *)
-let curr_meth = ref ""
-let curr_logic: Prover.logic ref = ref Prover.empty_logic
-let curr_abs_rules: Prover.logic ref = ref Prover.empty_logic
 let curr_static_methodSpecs:Specification.methodSpecs ref = ref Specification.emptyMSpecs
 let curr_dynamic_methodSpecs:Specification.methodSpecs ref = ref Specification.emptyMSpecs
 
@@ -402,8 +399,6 @@ let get_class_name_from_signature si =
   | Field_signature (c,_,_) ->c
 
 
-let add_worklist n = 
-  worklist := n::!worklist
 
 exception Contained
 
@@ -430,9 +425,19 @@ let jimple_methdec2core_methdec
   let stmt_core_list =List.map do_one_stmt m_jimple.bstmts in
   Global_types.mk_methdec  m_jimple.modifiers m_jimple.class_name m_jimple.ret_type m_jimple.name_m m_jimple.params m_jimple.locals m_jimple.th_clause stmt_core_list 
 
+let jimple_methdec2core_body
+    (m_jimple: Jimple_global_types.methdec_jimple) = 
+  let do_one_stmt stmt_jimple =
+    let s=jimple_statement2core_statement stmt_jimple.skind in
+    if Config.symb_debug() then Printf.printf "\n into the core statement: \n   %s \n" (Pprinter_core.statement_core2str s); 
+    Methdec_core.stmt_create s [] [] 
+  in
+  List.map do_one_stmt m_jimple.bstmts
+
+
 
 (* returns a triple (m,initial_formset, final_formset)*)
-let initialize_method_forms mdl fields cname= 
+let get_spec_for m fields cname= 
   let this =mk_this_of_class () in
   let rec make_this_fields fl=
     match fl with
@@ -444,25 +449,21 @@ let initialize_method_forms mdl fields cname=
     | _ -> assert false
   in
   let class_this_fields=make_this_fields fields in
-  let initialize_method_starting_node m = (* initialize starting node of m with spec *)
-    let msi = Methdec.get_msig m cname in
-    let _=mk_parameter_of_class m.params in
-    let spec=
-      try 
-	MethodMap.find msi !curr_static_methodSpecs 
-      with  Not_found -> 
-	warning(); Format.printf "\n\n Error: Cannot find spec for method %s\n\n" (methdec2signature_str m); reset();
-	assert false
-    in
-    let spec = logical_vars_to_prog spec in 
-    let meth_initial_form=if is_init_method m then (* we treat <init> in a special way*)
-      pconjunction spec.pre class_this_fields 
-    else spec.pre 
-    in
-    let meth_initial_form = convert meth_initial_form in
-    (jimple_methdec2core_methdec m,meth_initial_form,convert spec.post)
+
+  let msi = Methdec.get_msig m cname in
+  let _=mk_parameter_of_class m.params in
+  let spec=
+    try 
+      MethodMap.find msi !curr_static_methodSpecs 
+    with  Not_found -> 
+      warning(); Format.printf "\n\n Error: Cannot find spec for method %s\n\n" (methdec2signature_str m); reset();
+      assert false
   in
-  List.map initialize_method_starting_node mdl
+  let spec = logical_vars_to_prog spec in 
+  if is_init_method m then (* we treat <init> in a special way*)
+    {pre=pconjunction spec.pre class_this_fields; post=spec.post; excep=spec.excep }
+  else spec
+
 
 
 
@@ -470,17 +471,27 @@ let initialize_method_forms mdl fields cname=
 (* the queue qu is a list of pairs [(node, expression option)...] the expression
 is used to deal with if statement. It is the expression of the if statement is the predecessor
 of the node is a if_stmt otherwise is None. In the beginning is always None for each node *)
-let compute_fixed_point (f : Jimple_global_types.jimple_file) 
-(apfmap : logic Spec_def.ClassMap.t) (lo : logic) (abs_rules : logic)
-(sspecs: Specification.methodSpecs) (dspecs: Specification.methodSpecs)  =
+let compute_fixed_point 
+    (f : Jimple_global_types.jimple_file) 
+    (apfmap : logic Spec_def.ClassMap.t) 
+    (lo : logic) 
+    (abs_rules : logic)
+    (sspecs: Specification.methodSpecs) 
+    (dspecs: Specification.methodSpecs)  =
+
+  
   curr_static_methodSpecs:=sspecs;
   curr_dynamic_methodSpecs:=dspecs;
   let cname=Methdec.get_class_name f in
+  let lo = try let x=Spec_def.ClassMap.find cname apfmap in x with Not_found -> lo in
   let mdl =  Methdec.make_methdecs_of_list cname (Methdec.get_list_methods f) in
-  create_program_variables mdl; 
+  let mdl = List.filter (fun y -> List.for_all (fun x-> Abstract<>x) (y.modifiers)) mdl in
   let fields=Methdec.get_list_fields f in
-  let method_forms=initialize_method_forms mdl fields cname in
-  let mdl_core=List.map jimple_methdec2core_methdec mdl in
-  let sspecs = MethodMap.map (logical_vars_to_prog) sspecs in 
-  curr_static_methodSpecs:=sspecs;
-  Symexec.compute_fixed_point cname mdl_core method_forms apfmap lo abs_rules sspecs dspecs
+  create_program_variables mdl;  
+  List.iter 
+    (fun m ->
+      let spec = get_spec_for m fields cname in
+      let body = jimple_methdec2core_body m in 
+      Symexec.compute_fixed_point body spec lo abs_rules
+      ) mdl
+

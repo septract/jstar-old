@@ -1,25 +1,12 @@
-all: Cell.jimple Recell.jimple DCell.jimple
+ifndef TARGETS
+  TARGETS = Cell Recell DCell
+endif
 
-%.class: Cell.java Recell.java D
-	javac -g $?
+ifndef SUBDIRSDEF
+   SUBDIRSDEF = foo
+   SUBDIRS = 
+endif
 
-%.jimple: %.class
-	java soot.Main $* -f J -d . -print-tags -keep-line-number
+DIR = subject
 
-
-clean: 
-	rm -f *.jimple *.class *~ *.dot \#* .\#* *.txt
-
-time:
-	time ./runtest Cell.jimple
-
-test: all
-	./runtest Cell.jimple
-	./runtest Recell.jimple
-
-
-
-
-demo: Cell.jimple
-	clear
-	time ./runtest Cell.jimple
+include ../Makefile
