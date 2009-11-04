@@ -9,6 +9,7 @@
 open Pterm
 open Plogic
 open Pprinter
+open Support_syntax
 
 let class2args cl = Arg_string (class_name2str cl)
 
@@ -31,9 +32,6 @@ let mk_type_all var cl = [P_PPred(objtype_name, var::(base_type2args cl)::[])]
 let objtype receiver classname = [P_PPred(objtype_name, [(Arg_var receiver);(Arg_string classname)])]
 
 
-(* constant name for "this" object *)
-let this_var_name  =  "@this:"
-let this_var = (Vars.concretep_str this_var_name)
 
 (* create var <: cl  (is a subtype of) *)
 let mk_objsubtyp var cl = P_PPred("objsubtype", var :: (class2args cl) :: [])

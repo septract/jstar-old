@@ -112,11 +112,6 @@ src/strat.cmi: src/sig.cmi
 src/topological.cmi: src/sig.cmi 
 src/traverse.cmi: src/sig.cmi 
 src/util.cmi: src/sig.cmi 
-editor/dirTree.cmi: 
-editor/gtree.cmi: 
-editor/htree.cmi: 
-editor/dirTree.cmo: editor/dirTree.cmi 
-editor/dirTree.cmx: editor/dirTree.cmi 
 editor/ed_display.cmo: editor/ed_hyper.cmo editor/ed_graph.cmo 
 editor/ed_display.cmx: editor/ed_hyper.cmx editor/ed_graph.cmx 
 editor/ed_draw.cmo: editor/ed_hyper.cmo editor/ed_graph.cmo \
@@ -135,28 +130,6 @@ editor/ed_main.cmo: editor/ed_hyper.cmo editor/ed_graph.cmo \
     editor/ed_draw.cmo editor/ed_display.cmo 
 editor/ed_main.cmx: editor/ed_hyper.cmx editor/ed_graph.cmx \
     editor/ed_draw.cmx editor/ed_display.cmx 
-editor/editor.cmo: editor/gtree.cmi 
-editor/editor.cmx: editor/gtree.cmx 
-editor/gen.cmo: src/classic.cmi 
-editor/gen.cmx: src/classic.cmx 
-editor/graphEd.cmo: editor/outils_tort.cmo editor/outils_math.cmo \
-    src/components.cmi 
-editor/graphEd.cmx: editor/outils_tort.cmx editor/outils_math.cmx \
-    src/components.cmx 
-editor/graphEdGTK.cmo: src/traverse.cmi editor/outils_tort.cmo \
-    editor/outils_math.cmo src/imperative.cmi src/gml.cmi src/dot_ast.cmi \
-    src/dot.cmi src/components.cmi src/builder.cmi 
-editor/graphEdGTK.cmx: src/traverse.cmx editor/outils_tort.cmx \
-    editor/outils_math.cmx src/imperative.cmx src/gml.cmx src/dot_ast.cmi \
-    src/dot.cmx src/components.cmx src/builder.cmx 
-editor/gtree.cmo: editor/htree.cmi src/components.cmi editor/gtree.cmi 
-editor/gtree.cmx: editor/htree.cmx src/components.cmx editor/gtree.cmi 
-editor/htree.cmo: editor/htree.cmi 
-editor/htree.cmx: editor/htree.cmi 
-editor/outils_math.cmo: 
-editor/outils_math.cmx: 
-editor/outils_tort.cmo: editor/outils_math.cmo 
-editor/outils_tort.cmx: editor/outils_math.cmx 
 view_graph/viewGraph.cmi: 
 view_graph/viewGraph_select.cmi: view_graph/viewGraph.cmi 
 view_graph/viewGraph_utils.cmi: view_graph/viewGraph_select.cmi 

@@ -259,7 +259,7 @@ let get_spec  (iexp: Jparsetree.invoke_expr) =
 	     None -> []
 	   | Some il -> il in
 	   let subst = Pterm.empty in 
-	   let subst = Pterm.add this_var (Arg_var (mk_parameter (List.length il))) subst in 
+	   let subst = Pterm.add (mk_this_of_class ()) (Arg_var (mk_parameter (List.length il))) subst in 
 	   sub_spec subst dspec,Some (il@[Immediate_local_name(n)])
        | _ -> 
 	   warning(); Printf.printf "\n No dynamic specs found for %s. Abort!\n\n" (Pprinter.signature2str si); reset();
@@ -518,7 +518,7 @@ let is_init_method md = Pprinter.name2str md.name_m ="<init>"
 
 
 let methdec2signature_str dec =
-  Pprinter.class_name2str dec.class_name ^ "." ^ Pprinter.name2str dec.name_m ^ "(" ^ (Pprinter.list2str Pprinter.parameter2str (Pprinter.list_option2list dec.params) ", ") ^ ")"
+  Pprinter.class_name2str dec.class_name ^ "." ^ Pprinter.name2str dec.name_m ^ "(" ^ (Pprinter.list2str Pprinter.parameter2str  dec.params ", ") ^ ")"
 
 
 (* takes a jimple_methedec and transtalet it in a core methdec *)

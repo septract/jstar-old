@@ -32,7 +32,6 @@ type apf_defines = apf_define list
 
 type class_spec = (class_name * apf_defines * methodspecs)
 
-type spec_file = class_spec list 
 
 
 let mk_spec  pre post excep = 

@@ -1,5 +1,5 @@
-import "/Users/ddino/my_work/tools/java/jstar/trunk/library/logic/field_logic";
-import "/Users/ddino/my_work/tools/java/jstar/trunk/library/logic/boolean_logic";
+import "field_logic";
+import "boolean_logic";
 
 
 /***************************************

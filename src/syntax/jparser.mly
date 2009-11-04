@@ -14,7 +14,7 @@ open Parsing
 open Jimple_global_types
 open Spec_def
 open Global_types
-open Pprinter
+
 
 let newPVar x = concretep_str x
 
@@ -26,6 +26,47 @@ let newVar x =
   if x = "_" then freshe() 
   else if String.get x 0 = '_' then newEVar (String.sub x 1 ((String.length x) -1)) 
   else newPVar x
+
+
+let msig_simp (typ,name,args_list) =
+  let args_list = List.map fst args_list in
+  (typ,name,args_list) 
+
+let bind_spec_vars (typ,name,args_list) {pre=pre;post=post;excep=excep} =
+  (* Make substitution to normalise names *)
+  let subst = Pterm.empty in 
+  let subst = Pterm.add (newPVar("this")) (Pterm.Arg_var(Support_syntax.this_var)) subst in 
+  (* For each name that is given convert to normalised param name*)
+  let _,subst = 
+    List.fold_left 
+      (fun (n,subst) arg_opt -> 
+	(n+1,
+	 match arg_opt with 
+	   ty,None -> subst 
+	 | ty,Some str -> 
+	     Pterm.add 
+	       (newPVar(str)) 
+	       (Pterm.Arg_var(Support_syntax.parameter_var n)) 
+	       subst
+	)) 
+	  (0,subst) args_list in
+
+  {pre=subst_pform subst pre;
+   post=subst_pform subst post;
+   excep=ClassMap.map (subst_pform subst) excep}
+
+let mkDynamic (msig, specs) =
+  let specs = List.map (bind_spec_vars msig) specs in 
+  let msig = msig_simp msig in   
+  Dynamic(msig,specs)
+
+let mkStatic (msig, specs) =
+  let specs = List.map (bind_spec_vars msig) specs in 
+  let msig = msig_simp msig in   
+  Static(msig,specs)
+  
+    
+  
 
 let location_to_string pos = 
   Printf.sprintf "Line %d character %d" pos.pos_lnum  (pos.pos_cnum - pos.pos_bol + 1)
@@ -42,7 +83,7 @@ let parse_warning s =
 
 let field_signature2str fs =
   match fs with 
-  | Field_signature (c,t,n) ->  mkStrOfFieldSignature c t n
+  | Field_signature (c,t,n) ->  Pprinter.mkStrOfFieldSignature c t n
   | _ -> assert false
 
 
@@ -50,7 +91,7 @@ let field_signature2str fs =
 
 /* ============================================================= */
 /* tokens */
-
+%token AS
 %token ABSRULE
 %token EQUIV
 %token LEADSTO
@@ -237,7 +278,7 @@ let field_signature2str fs =
 %type <Jimple_global_types.jimple_file> file
 
 %start spec_file
-%type <Spec_def.spec_file> spec_file
+%type <Global_types.spec_file> spec_file
 
 %start rule_file
 %type <Global_types.rules Global_types.importoption list> rule_file
@@ -251,7 +292,6 @@ let field_signature2str fs =
 
 %% /* rules */
 
-/* entry points */
 file:
    | modifier_list_star file_type class_name extends_clause implements_clause file_body
        {JFile($1, $2, $3, $4, $5, $6)}
@@ -259,7 +299,8 @@ file:
 
 spec_file:
    | EOF  { [] }
-   | classspec spec_file { $1 :: $2 }
+   | IMPORT  STRING_CONSTANT  SEMICOLON spec_file{ (ImportEntry $2) :: $4 }
+   | classspec spec_file { (NormalEntry $1) :: $2 }
 
 classspec: 
    | file_type class_name L_BRACE apf_defines methods_specs R_BRACE  { ($2,$4,$5) }
@@ -269,10 +310,14 @@ apf_defines:
    | apf_define apf_defines { $1 :: $2 }
    | /*empty*/ { [] }
 
+eq_as: 
+   | EQUALS { (* Deprecated *)}
+   | AS {}
+
 apf_define:
-   | EXPORT identifier L_PAREN lvariable paramlist_question_mark R_PAREN EQUALS formula SEMICOLON  
+   | EXPORT identifier L_PAREN lvariable paramlist_question_mark R_PAREN eq_as formula SEMICOLON  
        { let a=match $5 with | Some b -> b | None -> [] in ($2,$4,a,$8,true) }
-   | DEFINE identifier L_PAREN lvariable paramlist_question_mark R_PAREN EQUALS formula SEMICOLON  
+   | DEFINE identifier L_PAREN lvariable paramlist_question_mark R_PAREN eq_as formula SEMICOLON  
        { let a=match $5 with | Some b -> b | None -> [] in ($2,$4,a,$8,false) }
 
 methods_specs:
@@ -286,10 +331,10 @@ specs:
    | spec     {[$1]}
 
 method_spec:
-   | method_signature_short COLON specs  SEMICOLON  { Dynamic($1, $3) }
-   | STATIC method_signature_short COLON specs SEMICOLON  { Static($2, $4) }
-   | method_signature_short COLON specs   { Dynamic($1, $3) }
-   | STATIC method_signature_short COLON specs  { Static($2, $4) }
+   | method_signature_short COLON specs  SEMICOLON  { mkDynamic($1, $3) }
+   | STATIC method_signature_short COLON specs SEMICOLON  { mkStatic($2, $4) }
+   | method_signature_short COLON specs   { mkDynamic($1, $3) }
+   | STATIC method_signature_short COLON specs  { mkStatic($2, $4) }
 
 exp_posts:
    | L_BRACE class_name COLON formula R_BRACE exp_posts { ClassMap.add $2 $4 $6 }
@@ -349,8 +394,16 @@ parameter_list:
    | parameter { [$1] }
    | parameter COMMA parameter_list { $1::$3 }
 ;
+parameter_list_args_opt:
+   | parameter_args_opt { [$1] }
+   | parameter_args_opt COMMA parameter_list_args_opt { $1::$3 }
+;
 parameter:
    | nonvoid_type {$1}
+;
+parameter_args_opt:
+   | nonvoid_type {$1,None}
+   | nonvoid_type identifier {$1,Some $2}
 ;
 throws_clause:
    | THROWS class_name_list { Some $2 };
@@ -387,6 +440,7 @@ quoted_name:
    | QUOTED_NAME { $1 }
 ;
 identifier:
+   | AS { "as" }
    | IDENTIFIER { $1 }
 /*   | DEFINE     { "define" }
    | EXPORT     { "export" }
@@ -553,16 +607,20 @@ nonstatic_invoke:
    | INTERFACEINVOKE    {Interface_invoke} 
 ;
 parameter_list_question_mark:
-   | parameter_list { Some $1 }
-   | /* empty */ { None }
+   | parameter_list { $1 }
+   | /* empty */ { [] }
+;
+parameter_args_opt_list_question_mark:
+   | parameter_list_args_opt { $1 }
+   | /* empty */ { [] }
 ;
 method_signature:
    | CMPLT class_name COLON jtype name L_PAREN parameter_list_question_mark R_PAREN CMPGT
        {Method_signature($2,$4,$5,$7)}
 ;
 method_signature_short:
-   | jtype name L_PAREN parameter_list_question_mark R_PAREN
-       { ($1,$2,$4) }
+   | jtype name L_PAREN parameter_args_opt_list_question_mark R_PAREN
+       { $1,$2,$4 }
 ;
 reference:
    |array_ref  {$1} 
@@ -721,6 +779,7 @@ paramlist:
 /* Code for matching where not allowing question mark variables:
    no pattern vars*/
 jargument_npv:
+   | RETURN { Arg_var (newPVar(Support_syntax.name_ret_var)) }
    | lvariable_npv {Arg_var ($1)}
    | identifier L_PAREN jargument_list_npv R_PAREN {Arg_op($1,$3) }        
    | INTEGER_CONSTANT {Arg_string(string_of_int $1)} 
@@ -742,6 +801,7 @@ jargument_list_npv:
 
 
 jargument:
+   | RETURN { Arg_var (newPVar(Support_syntax.name_ret_var)) }
    | lvariable {Arg_var ($1)}
    | identifier L_PAREN jargument_list R_PAREN {Arg_op($1,$3) }        
    | INTEGER_CONSTANT {Arg_string(string_of_int $1)} 

@@ -187,8 +187,9 @@ let method_cfg_info_create md start_node exit_node  =
    
 let key_method md = 
   match md.params with 
-  |Some pl ->(j_type2str md.ret_type)^"_"^(name2str md.name_m)^"_"^(list2str parameter2str pl "_")
-  |None -> (j_type2str  md.ret_type) ^"_"^(name2str md.name_m)
+  |pl ->(j_type2str md.ret_type)^"_"^(name2str md.name_m)^"_"^(list2str parameter2str pl "_")
+
+
 
 
 let method_cfg_info_create_base md =

@@ -33,3 +33,16 @@ let bop_to_prover_pred bop i1 i2 =
   | Cmple -> P_PPred("LE",[i1; i2])
   | _ -> Printf.printf "\n\n Operation %s not supported. Abort!" (Pprinter.binop2str bop);
       assert false (* ddino: many other cases should be filled in *)]
+
+
+let parameter n = "@parameter"^(string_of_int n)^":"
+let parameter_var n = (Vars.concretep_str (parameter n))
+
+(* define the constant name for the return variable. *)
+(*let name_ret_var mname = (Pprinter.name2str mname)^"$"^"ret_var"*)
+let name_ret_var = "$"^"ret_var"
+
+
+(* constant name for "this" object *)
+let this_var_name  =  "@this:"
+let this_var = (Vars.concretep_str this_var_name)

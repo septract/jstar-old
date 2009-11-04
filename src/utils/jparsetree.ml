@@ -104,6 +104,7 @@ type nonvoid_type =
   | Full_ident_NVT of  full_identifier * array_brackets list
 
 type parameter =  nonvoid_type
+type parameter_named_option =  nonvoid_type * identifier option
 
 type  j_type = 
   | Void 
@@ -123,8 +124,8 @@ type declaration = Declaration of j_type option *  name list
 
 type case_statement = Case_stmt of  case_label *  label_name
 
-type method_signature_short = j_type *  name *  parameter list option 
-type method_signature = class_name * j_type *  name *  parameter list option 
+type method_signature_short = j_type *  name *  parameter list
+type method_signature = class_name * j_type *  name *  parameter list
 type field_signature = class_name * j_type *  name
 
 type signature = 
@@ -169,7 +170,6 @@ type  catch_clause = Catch_clause of class_name * label_name * label_name * labe
 
 (*type  method_body = (declaration list * statement list * catch_clause list) option  *)
 
-      
 type extends_clause = class_name option
 
 type implements_clause = (class_name list) option
@@ -182,7 +182,6 @@ type list_class_file =
 
 
 type local_var = j_type option * name 
-
 
 
 

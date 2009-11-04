@@ -280,7 +280,7 @@ let param_sub il =
 
 let param_this_sub il n = 
   let sub = param_sub il in 
-  let nthis_var = concretep_str this_var_name in 
+  let nthis_var = concretep_str Support_syntax.this_var_name in 
   add nthis_var (name2args n)  sub 
  
 
@@ -297,7 +297,7 @@ let call_jsr_static (sheap,id) spec il node =
 let call_jsr (sheap,id) spec n il si node = 
   let sub' = param_this_sub il n in 
   let sub''= freshening_subs sub' in
-  let spec'=Specification.sub_spec sub'' spec  in 
+  let spec'= Specification.sub_spec sub'' spec  in 
   let res = (jsr !curr_logic sheap spec') in
     match res with 
       None ->   

@@ -11,6 +11,7 @@ type 'a importoption =
     ImportEntry of string 
   | NormalEntry of 'a
 
+type spec_file = class_spec importoption list 
 
 (*
 module ClassMap =   
@@ -40,7 +41,7 @@ type apf_defines = apf_define list
 
 type class_spec = (class_name * apf_defines * methodspecs)
 
-type spec_file = class_spec list 
+type spec_file = class_spec importoption list 
 *)
 
 
@@ -126,7 +127,7 @@ type methdec = {
  class_name: Jparsetree.class_name;
  ret_type:j_type;
  name_m: name; 
- params: parameter list option; 
+ params: parameter list; 
  locals: local_var list;
  th_clause:throws_clause;
  mutable bstmts: stmt_core list; (* this is set after the call of cfg *)
