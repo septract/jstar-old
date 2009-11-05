@@ -66,14 +66,14 @@ let get_spec  (iexp: Jparsetree.invoke_expr) =
 	(match get_dynamic_spec si with
 	  Some spec -> spec
 	| None -> 
-	    warning(); Printf.printf "\n No dynamic specs found for %s. Abort!\n\n" (Pprinter.signature2str si); reset();
+	    System.warning(); Printf.printf "\n No dynamic specs found for %s. Abort!\n\n" (Pprinter.signature2str si); System.reset();
 	    assert false	  )
     | Invoke_nostatic_exp (Special_invoke,_,si,_) 
     | Invoke_static_exp (si,_) -> 
 	(match get_static_spec si with 
 	  Some spec -> spec
 	| None -> 	   
-	    warning(); Printf.printf "\n No static specs found for %s. Abort!\n\n" (Pprinter.signature2str si); reset();
+	    System.warning(); Printf.printf "\n No static specs found for %s. Abort!\n\n" (Pprinter.signature2str si); System.reset();
 	    assert false	  )
   in
   match iexp with
@@ -251,7 +251,7 @@ let get_spec_for m fields cname=
     try 
       MethodMap.find msi !curr_static_methodSpecs 
     with  Not_found -> 
-      warning(); Format.printf "\n\n Error: Cannot find spec for method %s\n\n" (methdec2signature_str m); reset();
+      System.warning(); Format.printf "\n\n Error: Cannot find spec for method %s\n\n" (methdec2signature_str m); System.reset();
       assert false
   in
   let spec = logical_vars_to_prog spec in 
@@ -280,10 +280,16 @@ let compute_fixed_point
   let mdl =  Methdec.make_methdecs_of_list cname (Methdec.get_list_methods f) in
   let mdl = List.filter (fun y -> List.for_all (fun x-> Abstract<>x) (y.modifiers)) mdl in
   let fields=Methdec.get_list_fields f in
-   List.iter 
+  let xs = 
+    List.map 
+      (fun m -> jimple_methdec2core_body m,methdec2signature_str m)
+      mdl in (* TODO HERE *)
+  Cfg_core.print_icfg_dotty xs;
+  List.iter 
     (fun m ->
       let spec = get_spec_for m fields cname in
       let body = jimple_methdec2core_body m in 
+      
       Symexec.compute_fixed_point body spec lo abs_rules
       ) mdl
 

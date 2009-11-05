@@ -291,10 +291,10 @@ let call_jsr (sheap,id) spec n il si node =
 	     (Pprinter_core.statement_core2str node.skind) 
 	     Prover.pprint_counter_example (); 
 	   Format.flush_str_formatter ());
-        warning();
+        System.warning();
 	Printf.printf "\n\nERROR: While executing node %d:\n   %s\n"  (node.sid) (Pprinter_core.statement_core2str node.skind);
 	Prover.print_counter_example ();
-	reset(); 
+	System.reset(); 
 	[]
 	(*assert false*)
 (*	  "Preheap:\n    %s\n\nPrecondition:\n   %s\nCannot find splitting to apply spec. Giving up! \n\n" sheap_string (Plogic.string_form spec.pre); assert false *)
@@ -349,10 +349,10 @@ let check_postcondition heaps sheap =
     add_edge_with_proof (snd sheap) id "exit";
     (*	add_edge id idd "";*)
   with Not_found -> 
-    warning();
+    System.warning();
     let _= Printf.printf "\n\nERROR: cannot prove post\n"  in
     Prover.print_counter_example ();
-    reset();
+    System.reset();
     List.iter (fun heap -> 
 		 let idd = add_error_heap_node (fst heap) in 
 		 add_edge_with_proof (snd sheap) idd 

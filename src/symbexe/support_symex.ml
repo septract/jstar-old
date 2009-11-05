@@ -15,19 +15,8 @@ open Config
 open Jparsetree
 open Support_syntax
 
-let warning () =
-  Printf.printf "%c[%d;%dm"  (Char.chr 0x1B ) 1 31
-
-let good () =
-  Printf.printf "%c[%d;%dm"  (Char.chr 0x1B ) 1 32 
-
-let reset () =
-  Printf.printf "%c[%dm" (Char.chr 0x1B) 0 
-
 
 let file = ref ""
-
-type var_hashtbl = (string, Vars.var) Hashtbl.t
 
 (* given a variable it returns its key to use in the table *)
 let variable2key v = Pprinter.variable2str v
@@ -112,30 +101,6 @@ let reference2args r = (* not sure we need this. Maybe we need reference2PPred*)
   |Field_local_ref(n,si) -> assert false
   |Field_sig_ref(si) -> assert false
 
-(*
-let bop_to_prover_arg = function
-	Jparsetree.And -> "builtin_and"
-      | Jparsetree.Or -> "builtin_or"
-      | Xor -> "builtin_xor"
-      | Mod -> "builtin_mod"
-      | Cmp 
-      | Cmpg 
-      | Cmpl -> assert false
-      | Cmpeq -> "builtin_eq"
-      | Cmpne -> "builtin_ne"
-      | Cmpgt -> "builtin_gt"
-      | Cmpge -> "builtin_ge"
-      | Cmplt -> "builtin_lt"
-      | Cmple -> "builtin_le"
-      | Shl -> "builtin_shiftl"    
-      | Shr -> "builtin_shiftr"
-      | Ushr -> "builtin_ushiftr"
-      | Plus -> "builtin_plus"
-      | Minus -> "builtin_minus"
-      | Mult -> "builtin_mult"
-      | Div -> "builtin_div"
-*)
-
 (* for the moment only few cases are done of this. Need to be extended *)
 let expression2args e = 
   match e with 
@@ -190,19 +155,6 @@ let negate e =
   | Binop_exp (Cmple,i1,i2) -> Binop_exp (Cmpgt,i1,i2)  
   | _ -> assert false (* ddino: many other cases should be filled in *)
 
-(*
-let bop_to_prover_pred bop i1 i2 = 
-  [match bop with 
-  | Cmpeq -> P_EQ (i1, i2)
-  | Cmpne -> P_NEQ (i1, i2)   
-  | Cmpgt -> P_PPred("GT",[i1; i2])
-  | Cmplt -> P_PPred("LT",[i1; i2])
-  | Cmpge -> P_PPred("GE",[i1; i2])
-  | Cmple -> P_PPred("LE",[i1; i2])
-  | _ -> Printf.printf "\n\n Operation %s not supported. Abort!" (Pprinter.binop2str bop);
-      assert false (* ddino: many other cases should be filled in *)]
-*)
-
 let expression2pure e =
   match e with
   | Binop_exp (op,i1,i2) -> bop_to_prover_pred op (immediate2args i1) (immediate2args i2)
@@ -212,13 +164,6 @@ let expression2pure e =
 
 
 (* ================= misc functions =============== *)
-
-
-(* true if v is a primed variable *)
-let is_primed (v: Vars.var) : bool = 
-  match v with 
-  | EVar _ -> true
-  | _ -> false 
 
 
 
@@ -245,44 +190,6 @@ let invoke_exp_get_signature ie =
 
 
 
-(* checks if x \in fset. membership is considered up to logical equivalence *)
-let rec formset_mem lo x fset =
-  match fset with 
-  | [] -> false
-  | y::fset' -> 
-      ((Prover.check_implication lo x y) && (Prover.check_implication lo y x)) || (formset_mem lo x fset') 
-
-let compact_formset lo xs = 
-  let rec impl xs ys = 
-    match ys with 
-      [] -> xs
-    | y::ys -> 
-	let xs = List.filter 
-	    (fun x -> 
-	      if (Prover.check_implication lo x y) then false else true) xs in 
-	let ys = List.filter 
-	    (fun x -> 
-	      if (Prover.check_implication lo x y) then false else true) ys in 
-	impl (y::xs) ys
-  in (*Debug.debug_ref:=true; *)let xs = impl [] xs in (*Debug.debug_ref:=false;*) xs
-
-(** implements s1 U s2  *)
-let rec union_formsets lo s2 s1 =
-(*  compact_formset lo (s2@s1)*)
-  match s1 with 
-  | [] -> s2
-  | s::s1' -> 
-      if (formset_mem lo s s2) then 
-	union_formsets lo s2 s1'  
-      else s::(union_formsets lo s2 s1') 
-
-
-(* true if v is a primed variable *)
-let is_primed (v: Vars.var) : bool = 
-  match v with 
-  | EVar _ -> true
-  | _ -> false 
-
 let this_var_name = Support_syntax.this_var_name
 
 let parameter n = "@parameter"^(string_of_int n)^":"
@@ -294,10 +201,9 @@ let mk_this : Vars.var =
 
 (* define the constant name for the return variable. *)
 (*let name_ret_var mname = (Pprinter.name2str mname)^"$"^"ret_var"*)
-let name_ret_var = "$"^"ret_var"
+let name_ret_var = "$ret_var"
 
-let ret_var = concretep_str name_ret_var 
-
+let ret_var = Vars.concretep_str name_ret_var 
 
 
 let make_field_signature  cname ty n =

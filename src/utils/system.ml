@@ -48,3 +48,15 @@ let find_file_from_dirs dirs fname =
   else 
     let f x = x ^ "/" ^ fname in 
     f (List.find (function d -> Sys.file_exists (f d)) dirs)
+
+
+
+let warning () =
+  Printf.printf "%c[%d;%dm"  (Char.chr 0x1B ) 1 31
+
+let good () =
+  Printf.printf "%c[%d;%dm"  (Char.chr 0x1B ) 1 32 
+
+let reset () =
+  Printf.printf "%c[%dm" (Char.chr 0x1B) 0 
+

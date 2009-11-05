@@ -26,17 +26,3 @@ incr num_stmts;
     preds = pred_stmts }
 
 
-
-
-let make_methdec mos cname ty n pars tc locs b  =
-{
-  modifiers= mos;
-  class_name = cname;
-  ret_type=ty;
-  name_m= n; 
-  params= pars;
-  locals = locs;
-  th_clause=tc;
-  bstmts=b 
-}
-
