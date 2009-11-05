@@ -19,6 +19,7 @@ open Specification
 open Vars
 open Support_symex
 open Spec_def
+open Methdec_core
 (* global variables *)
 
 let curr_logic: Prover.logic ref = ref Prover.empty_logic
@@ -249,7 +250,7 @@ let remove_id_formset formset =
 let rec param_sub il num sub = 
   match il with 
     [] -> sub
-  | i::il -> param_sub il (num+1) (add (Vars.concretep_str (parameter num)) (immediate2args i) sub)
+  | i::il -> param_sub il (num+1) (add (Vars.concretep_str (parameter num)) (i) sub)
 
 
 
@@ -257,7 +258,7 @@ let param_sub il =
   let sub' = add ret_var (Arg_var(ret_var))  empty in 
   let this_var = concretep_str this_var_name in 
   let sub' = add this_var (Arg_var(this_var))  sub' in 
-  match il with Some il -> param_sub il 0 sub' | None -> sub'
+  param_sub il 0 sub'
   
 
 
@@ -266,6 +267,9 @@ let param_this_sub il n =
   let nthis_var = concretep_str Support_syntax.this_var_name in 
   add nthis_var (name2args n)  sub 
  
+let id_clone h = (form_clone (fst h) false, snd h)
+
+
 
 let call_jsr_static (sheap,id) spec il node = 
   let sub' = param_sub il in
@@ -273,26 +277,18 @@ let call_jsr_static (sheap,id) spec il node =
   let spec'=Specification.sub_spec sub'' spec  in 
   let res = (jsr !curr_logic sheap spec') in
     match res with 
-      None -> Printf.printf "\n\n I cannot find splitting to apply spec. Giving up! \n\n"; assert false
-    | Some r -> fst r
-
-
-let call_jsr (sheap,id) spec n il si node = 
-  let sub' = param_this_sub il n in 
-  let sub''= freshening_subs sub' in
-  let spec'= Specification.sub_spec sub'' spec  in 
-  let res = (jsr !curr_logic sheap spec') in
-    match res with 
       None ->   
 	let idd = add_error_node "ERROR" in
 	add_edge_with_proof id idd 	
 	  (Format.fprintf 
-	     (Format.str_formatter) "%s:@\n %a" 
-	     (Pprinter_core.statement_core2str node.skind) 
+	     (Format.str_formatter) "%a:@\n %a" 
+	     Pprinter_core.pp_stmt_core node.skind
 	     Prover.pprint_counter_example (); 
 	   Format.flush_str_formatter ());
         System.warning();
-	Printf.printf "\n\nERROR: While executing node %d:\n   %s\n"  (node.sid) (Pprinter_core.statement_core2str node.skind);
+	Format.printf "\n\nERROR: While executing node %d:\n   %a\n"  
+	  (node.sid) 
+	  Pprinter_core.pp_stmt_core node.skind;
 	Prover.print_counter_example ();
 	System.reset(); 
 	[]
@@ -377,8 +373,9 @@ let rec exec n sheap =
 and execs_one n sheaps = 
   let rec f ls = 
     match ls with 
-    | [] -> [] 
-    | s::ls' ->  List.flatten(List.map (exec s) sheaps) @ (f ls') 
+    | [] -> []
+    | [s] ->  List.flatten (List.map (exec s) sheaps)
+    | s::ls' ->  List.flatten(List.map (fun h -> exec s (id_clone h)) sheaps) @ (f ls') 
   in
   let succs=n.succs in
   match succs with 
@@ -392,7 +389,7 @@ and execute_core_stmt n (sheap : formset_entry) : formset_entry list =
   Rlogic.kill_all_exists_names sheap_noid;
   let stm=n in
   if Config.symb_debug() then 
-    Format.printf "@\nExecuting statement:@ %s" (Pprinter_core.statement_core2str stm.skind); 
+    Format.printf "@\nExecuting statement:@ %a" Pprinter_core.pp_stmt_core stm.skind; 
 (*  if Config.symb_debug() then 
     Format.printf "@\nwith heap:@\n    %a@\n@\n@."  (string_ts_form (Rterm.rao_create ())) sheap_noid; *)
   if (Prover.check_inconsistency !curr_logic (form_clone sheap_noid false)) then 
@@ -403,9 +400,8 @@ and execute_core_stmt n (sheap : formset_entry) : formset_entry list =
     if Config.symb_debug() then 
       Printf.printf "\nStarting execution of node %i \n" (n.sid);
 	(*  let minfo=node_get_method_cfg_info n in *)
-    let id_clone h = (form_clone (fst h) false, snd h) in 
     if Config.symb_debug() then 
-      Format.printf "@\nExecuting statement:@ %s%!" (Pprinter_core.statement_core2str stm.skind); 
+      Format.printf "@\nExecuting statement:@ %a%!" Pprinter_core.pp_stmt_core stm.skind; 
 (*	if Config.symb_debug() then 
    Format.printf "@\nwith heap:@\n    %a@\n@\n%!"  (string_ts_form (Rterm.rao_create ())) sheap_noid; *)
     (match stm.skind with 
@@ -429,7 +425,14 @@ and execute_core_stmt n (sheap : formset_entry) : formset_entry list =
    ); *)
 	  explore_node (snd sheap);
 	  let sheaps_with_id = add_id_abs_formset sheaps_abs n in
-	  List.iter (fun sheap2 ->  add_edge_with_proof (snd sheap) (snd sheap2) ("Abstract@"^Pprinter_core.statement_core2str stm.skind)) sheaps_with_id;
+	  List.iter 
+	    (fun sheap2 ->  
+	      add_edge_with_proof 
+		(snd sheap) 
+		(snd sheap2) 
+		("Abstract@"^(Debug.toString Pprinter_core.pp_stmt_core stm.skind))
+	    ) 
+	    sheaps_with_id;
 	  let sheaps_with_id = List.filter 
 	      (fun (sheap2,id2) -> 
 		(let s = ref [] in 
@@ -437,7 +440,7 @@ and execute_core_stmt n (sheap : formset_entry) : formset_entry list =
 		  (List.for_all
 		     (fun (form,id) -> 
 		       if check_implication_frame !curr_logic (form_clone sheap2 false) form  != []then 
-			 (add_edge_with_proof id2 id ("Contains@"^Pprinter_core.statement_core2str stm.skind); false) 
+			 (add_edge_with_proof id2 id ("Contains@"^(Debug.toString Pprinter_core.pp_stmt_core stm.skind)); false) 
 		       else (s := ("\n---------------------------------------------------------\n" ^ (string_of_proof ())) :: !s; true))
 		     formset)
 		then ( 
@@ -452,35 +455,6 @@ and execute_core_stmt n (sheap : formset_entry) : formset_entry list =
 	  execs_one n (List.map id_clone sheaps_with_id)
 	with Contained -> 
 	  if Config.symb_debug() then Printf.printf "Formula contained.\n"; [])
-    | If_stmt_core(e,l) ->
-	let succs=n.succs in
-	let sheap2 = (form_clone (fst sheap) false, snd sheap) in 
-	(match succs with
-	| [s1;s2] ->  
-	    (match s1.skind with
-	    | Label_stmt_core l' when l'=l -> 
-		let cc_h=(conj_convert (expression2pure e) (fst sheap)) in
-		let cc_h_id = add_id_form cc_h n in 
-		add_edge (snd sheap) (snd cc_h_id) (Pprinter.expression2str e);
-		let cc_h2=(conj_convert (expression2pure (negate e)) (fst sheap2)) in
-		let cc_h2_id = add_id_form cc_h2 n in 
-		add_edge (snd sheap) (snd cc_h2_id) (Pprinter.expression2str (negate e));
-		let h1=exec s1 cc_h_id in
-		let h2=exec s2 (cc_h2_id) in 
-		h1 @ h2
-	    | _ -> 
-		let cc_h=(conj_convert (expression2pure (negate e)) (fst sheap)) in
-		let cc_h_id = add_id_form cc_h n in 
-		add_edge (snd sheap) (snd cc_h_id) (Pprinter.expression2str (negate e));
-		let cc_h2=(conj_convert (expression2pure e) (fst sheap2)) in
-		let cc_h2_id = add_id_form cc_h2 n in 
-		add_edge (snd sheap) (snd cc_h2_id) (Pprinter.expression2str e);
-		let h1=exec s1 cc_h_id in
-		let h2=exec s2 (cc_h2_id) in
-		h1 @ h2
-		       )
-	| _ -> assert false )
-	  
     | Goto_stmt_core _ -> execs_one n [sheap]
     | Nop_stmt_core  -> execs_one n [sheap]
     | Assignment_core (vl, spec, il) -> 
@@ -490,9 +464,8 @@ and execute_core_stmt n (sheap : formset_entry) : formset_entry list =
 	    let hs=add_id_formset hs n in
 	    execs_one n hs
 	| [v] ->
-	    let v_var=variable2var v in
 	    let eliminate_ret_var h =
-	      let h = update_var_to v_var (Arg_var ret_var) h in 
+	      let h = update_var_to v (Arg_var ret_var) h in 
 	      kill_var ret_var h;
 	      h
 	    in

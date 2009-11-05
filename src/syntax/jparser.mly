@@ -586,8 +586,8 @@ bool_expr:
    |unop_expr    {$1}  
 ;
 arg_list_question_mark:
-   | arg_list { Some $1 }
-   | /* empty */ { None }
+   | arg_list { $1 }
+   | /* empty */ { [] }
 ;
 invoke_expr:
    |nonstatic_invoke local_name DOT method_signature L_PAREN arg_list_question_mark R_PAREN 

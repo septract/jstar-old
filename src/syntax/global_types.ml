@@ -13,36 +13,6 @@ type 'a importoption =
 
 type spec_file = class_spec importoption list 
 
-(*
-module ClassMap =   
-  Map.Make(struct
-    type t = class_name
-    let compare = compare
-  end)
-
-
-type excep_post = Plogic.pform ClassMap.t 
-
-type spec = 
-    { pre : Plogic.pform;
-      post : Plogic.pform;
-      excep : excep_post }
-
-type methodspec =
-      Dynamic of method_signature_short * (spec list)
-  |   Static of method_signature_short * (spec list)
-
-type methodspecs =
-    methodspec list
-
-type apf_define = (string * var * fldlist * Plogic.pform * bool)
-
-type apf_defines = apf_define list
-
-type class_spec = (class_name * apf_defines * methodspecs)
-
-type spec_file = class_spec importoption list 
-*)
 
 
 
@@ -103,61 +73,4 @@ let expand_equiv_rules rules =
  end from prover
 ***************************************************)
 
-type core_statement = 
-  | Nop_stmt_core
-  | Label_stmt_core of  label_name 
-  | Assignment_core of variable list * spec * immediate list option 
-  | If_stmt_core of expression * label_name 
-  | Goto_stmt_core of label_name  
-  | Throw_stmt_core of immediate
 
-
-
-type stmt_core = { 
-  (*labels: labels; *)
-  mutable skind: core_statement;
-  mutable sid: int;  (* this is filled when the cfg is done *)
-  mutable succs: stmt_core list; (* this is filled when the cfg is done *)
-  mutable preds: stmt_core list  (* this is filled when the cfg is done *)
- }
-
-
-type methdec = {
- modifiers: modifier list;
- class_name: Jparsetree.class_name;
- ret_type:j_type;
- name_m: name; 
- params: parameter list; 
- locals: local_var list;
- th_clause:throws_clause;
- mutable bstmts: stmt_core list; (* this is set after the call of cfg *)
-}
-
-let mk_methdec  ml cn ty n pl ll tc stm =
-{ modifiers=ml;
-  class_name=cn;
-  ret_type=ty;
-  name_m=n; 
-  params= pl; 
-  locals= ll;
-  th_clause=tc;
-  bstmts=stm; 
-}
-
-
-let mk_stmt_core skind sid succs preds =
-  { 
-     skind=skind;
-     sid=sid;
-     succs=succs;
-     preds=preds;
- }
-
-(*
-let mk_spec  pre post excep = 
-    { pre=pre;
-      post=post;
-      excep=excep
-    }
-
-*)

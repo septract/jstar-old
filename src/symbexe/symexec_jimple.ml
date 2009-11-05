@@ -18,13 +18,18 @@ open Specification
 open Vars
 open Support_symex
 open Symexec
+open Methdec_core
 
 (* global variables *)
 let curr_static_methodSpecs:Specification.methodSpecs ref = ref Specification.emptyMSpecs
 let curr_dynamic_methodSpecs:Specification.methodSpecs ref = ref Specification.emptyMSpecs
 
 
-
+let fresh_label =
+  let label_ref = ref 0 in 
+  fun () -> 
+    label_ref := !label_ref + 1;
+    Printf.sprintf "gen_%i" !label_ref
 
 
 
@@ -80,12 +85,9 @@ let get_spec  (iexp: Jparsetree.invoke_expr) =
   | Invoke_nostatic_exp (Virtual_invoke,n,_,il) 
   | Invoke_nostatic_exp (Interface_invoke,n,_,il) 
   | Invoke_nostatic_exp (Special_invoke,n,_,il) ->
-      let il = match il with 
-	None -> []
-      | Some il -> il in
-      (* Make this be the final parameter, i.e. subst @this: for @parametern: *) 
+      (* Make "this" be the final parameter, i.e. subst @this: for @parametern: *) 
       let subst = Pterm.add (mk_this) (Arg_var (mk_parameter (List.length il))) Pterm.empty in 
-      sub_spec subst spec,Some (il@[Immediate_local_name(n)])
+      sub_spec subst spec,(il@[Immediate_local_name(n)])
   | Invoke_static_exp (si,il) -> 
       spec,il
       
@@ -106,14 +108,14 @@ let rec translate_assign_stmt  (v:Jparsetree.variable) (e:Jparsetree.expression)
       let pre=mk_pointsto p0 (signature2args si) pointed_to_var in
       let post=mk_pointsto p0 (signature2args si) p1 in
       let spec=Spec_def.mk_spec pre post Spec_def.ClassMap.empty in
-      Global_types.Assignment_core ([],spec,Some [Immediate_local_name(n);e'])	
+      Assignment_core ([],spec,[immediate2args (Immediate_local_name(n));immediate2args e'])	
   | Var_name n, Immediate_exp e' -> 
       (* execute  v=e' --> v:={emp}{return=param0}(e') *)
 
       let p0 = Arg_var(mk_parameter 0) in (* ddino: should it be a fresh program variable? *)
       let post= mkEQ(retvar_term,p0) in
       let spec=Spec_def.mk_spec [] post Spec_def.ClassMap.empty in
-      Global_types.Assignment_core  ([Var_name(n)],spec,Some [e'])
+      Assignment_core  ([variable2var (Var_name(n))],spec,[immediate2args e'])
 
   | Var_name v, Reference_exp (Field_local_ref (n,si))  -> 
       (* execute v=n.si --> v:={param0.si|->z}{param0.si|->z * return=z}(n)*)
@@ -123,7 +125,7 @@ let rec translate_assign_stmt  (v:Jparsetree.variable) (e:Jparsetree.expression)
       let pre=mk_pointsto p0 (signature2args si) pointed_to_var in
       let post=pconjunction (mkEQ(retvar_term,pointed_to_var)) (mk_pointsto p0 (signature2args si) pointed_to_var) in
       let spec=Spec_def.mk_spec pre post Spec_def.ClassMap.empty in
-      Global_types.Assignment_core ([Var_name v],spec,Some [Immediate_local_name(n)])	
+      Assignment_core ([variable2var (Var_name v)],spec,[immediate2args (Immediate_local_name(n))])
   | Var_name n, New_simple_exp ty ->
       (* execute x=new(ty) --> x:=null 
 	 We treat it as just assigning null to x. This should have the effect
@@ -137,18 +139,29 @@ let rec translate_assign_stmt  (v:Jparsetree.variable) (e:Jparsetree.expression)
       let args = Arg_op(Support_syntax.bop_to_prover_arg name, [p0;p1]) in
       let post= mkEQ(retvar_term,args) in
       let spec=Spec_def.mk_spec [] post Spec_def.ClassMap.empty in
-      Global_types.Assignment_core  ([Var_name(n)],spec,Some [x;y])
+      Assignment_core  ([variable2var (Var_name(n))],spec,[immediate2args x;immediate2args y])
   | Var_name n , Cast_exp (_,e') -> (* TODO : needs something for the cast *) 
       translate_assign_stmt (Var_name n) (Immediate_exp(e'))
   | Var_name n , Invoke_exp ie ->  
       let spec,param=get_spec ie in
-      Global_types.Assignment_core ([Var_name n],spec,param)	      
+      Assignment_core ([variable2var (Var_name n)],spec,List.map immediate2args param)
   | _ , _ -> assert false 
 
+let assert_core b =
+  let p0 = Arg_var(mk_parameter 0) in 
+  let p1 = Arg_var(mk_parameter 1) in 
+  match b with
+  | Binop_exp (op,i1,i2) -> 
+      let b_pred = Support_syntax.bop_to_prover_pred op p0 p1 in
+      Assignment_core([], 
+		      Spec_def.mk_spec [] b_pred Spec_def.ClassMap.empty, 
+		      [immediate2args i1;immediate2args i2]) 
+  | _ -> assert false
+  
 
-let jimple_statement2core_statement s =
+let jimple_statement2core_statement s : core_statement list =
   match s with 
-  | Label_stmt l -> Global_types.Label_stmt_core l
+  | Label_stmt l -> [Label_stmt_core l]
   | Breakpoint_stmt -> assert false
   | Entermonitor_stmt i -> assert false
   | Exitmonitor_stmt i -> assert false
@@ -162,39 +175,43 @@ let jimple_statement2core_statement s =
       let p0 = Arg_var(mk_parameter 0) in (* ddino: should it be a fresh program variable? *)
       let post= mkEQ(retvar_term,p0) in
       let spec=Spec_def.mk_spec [] post Spec_def.ClassMap.empty in
-      Global_types.Assignment_core  ([Var_name(nn)],spec,Some [id']) 
+      [Assignment_core  ([variable2var (Var_name(nn))],spec,[immediate2args id']) ]
   | Identity_no_type_stmt(n,i) -> assert false
   | Assign_stmt(v,e) -> 
       if Config.symb_debug() then 
 	Printf.printf "\n Translating a jimple assignment statement  %s\n" (Pprinter.statement2str s);
-      translate_assign_stmt v e
+      [translate_assign_stmt v e]
   | If_stmt(b,l) ->
-      if Config.symb_debug() then Printf.printf "\n Translating a jimple conditional jump statement  %s\n" (Pprinter.statement2str s);  
-      Global_types.If_stmt_core(b,l) 
+      if Config.symb_debug() 
+      then Printf.printf "\n Translating a jimple conditional jump statement  %s\n"  (Pprinter.statement2str s);  
+   let l1 = fresh_label () in 
+   let l2 = fresh_label () in 
+   [Goto_stmt_core([l1;l2]); Label_stmt_core l1; assert_core b; Goto_stmt_core [l];
+    Label_stmt_core l2; assert_core (negate b)]
   | Goto_stmt(l) ->
       if Config.symb_debug() then Printf.printf "\n Translating a jimple goto statement  %s\n" (Pprinter.statement2str s);    
-      Global_types.Goto_stmt_core(l)
+      [Goto_stmt_core([l])]
   | Nop_stmt ->  
       if Config.symb_debug() then Printf.printf "\n Translating a jimple Nop statement  %s\n" (Pprinter.statement2str s);    
-      Global_types.Nop_stmt_core
+      [Nop_stmt_core]
   | Ret_stmt(i)  (* return i ---->  ret_var:=i  or as nop operation if it does not return anything*)
   | Return_stmt(i) -> 
       if Config.symb_debug() then Printf.printf "\n Translating a jimple Return statement  %s\n" (Pprinter.statement2str s);    
       (match i with 
-       | None -> Global_types.Nop_stmt_core 
+       | None -> [Nop_stmt_core]
        | Some e' -> 
 	 let p0 = Arg_var(mk_parameter 0) in (* ddino: should it be a fresh program variable? *)
 	 let post= mkEQ(retvar_term,p0) in
 	 let spec=Spec_def.mk_spec [] post Spec_def.ClassMap.empty in
-	 Global_types.Assignment_core  ([],spec,Some [e']) 
+	 [Assignment_core  ([],spec,[immediate2args e']) ]
       )
   | Throw_stmt(i) ->
       if Config.symb_debug() then Printf.printf "\n Translating a jimple Throw statement %s\n" (Pprinter.statement2str s);      
-      Global_types.Throw_stmt_core(i)
+      [Throw_stmt_core(immediate2args i)]
   | Invoke_stmt (e) -> 
       if Config.symb_debug() then Printf.printf "\n Translating a jimple Invoke statement %s \n" (Pprinter.statement2str s);      
       let spec,param=get_spec e in
-      Global_types.Assignment_core ([],spec,param)	      
+      [Assignment_core ([],spec,List.map immediate2args param)]
 
 (* ================   ==================  *)
 
@@ -224,11 +241,13 @@ let methdec2signature_str dec =
 let jimple_methdec2core_body
     (m_jimple: Jimple_global_types.methdec_jimple) = 
   let do_one_stmt stmt_jimple =
-    let s=jimple_statement2core_statement stmt_jimple.skind in
-    if Config.symb_debug() then Printf.printf "\n into the core statement: \n   %s \n" (Pprinter_core.statement_core2str s); 
-    Methdec_core.stmt_create s [] [] 
+    let s=jimple_statement2core_statement stmt_jimple in
+    if Config.symb_debug() then 
+      Format.printf "@\ninto the core statement:@\n  %a @\n" 
+	(Debug.list_format "; " Pprinter_core.pp_stmt_core) s; 
+    List.map (fun s -> Methdec_core.stmt_create s [] []) s
   in
-  List.map do_one_stmt m_jimple.bstmts
+  List.flatten (List.map do_one_stmt m_jimple.bstmts)
 
 
 

@@ -11,14 +11,35 @@
 
 open Jparsetree
 open Global_types 
+open Spec_def
+
+type core_statement = 
+  | Nop_stmt_core
+  | Label_stmt_core of  string 
+  | Assignment_core of Vars.var list * spec * Pterm.args list
+  | Goto_stmt_core of string list  
+  | Throw_stmt_core of Pterm.args
+
+
+
+type stmt_core = { 
+  (*labels: labels; *)
+  mutable skind: core_statement;
+  mutable sid: int;  (* this is filled when the cfg is done *)
+  mutable succs: stmt_core list; (* this is filled when the cfg is done *)
+  mutable preds: stmt_core list  (* this is filled when the cfg is done *)
+ }
+
 
 
 let num_stmts = ref 0 
 
 
-let stmt_create (skind: Global_types.core_statement)  
-(pred_stmts: Global_types.stmt_core list)  
-(succ_stmts: Global_types.stmt_core list) : Global_types.stmt_core = 
+let stmt_create 
+    (skind: core_statement)  
+    (pred_stmts: stmt_core list)  
+    (succ_stmts: stmt_core list) 
+    : stmt_core = 
 incr num_stmts;
   { skind = skind;
     sid = !num_stmts; 

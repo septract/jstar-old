@@ -1,6 +1,6 @@
 (******************************************************************
  JStar: Separation logic verification tool for Java.  
- Copyright (c) 2007-2008,
+ Copyright (c) 2007-2009,
     Dino Distefano <ddino@dcs.qmul.ac.uk>
     Matthew Parkinson <Matthew.Parkinson@cl.cam.ac.uk>
  All rights reserved. 
@@ -12,20 +12,6 @@
 open Jparsetree
 open Global_types 
 open Jimple_global_types
-
-
-let num_stmts = ref 0 
-
-
-let stmt_create (skind: Jimple_global_types.statement)  
-(pred_stmts: Jimple_global_types.stmt_jimple list)  
-(succ_stmts: Jimple_global_types.stmt_jimple list) : Jimple_global_types.stmt_jimple = 
-incr num_stmts;
-  { skind = skind;
-    sid = !num_stmts; 
-    succs = succ_stmts;
-    preds = pred_stmts }
-
 
 
 
@@ -80,7 +66,7 @@ let make_stmts_list b =
   | Some body ->
       let dec_or_stmt_list = fst body in
       let dos=List.map (fun a -> match a with 
-		   |DOS_stm s -> [stmt_create s  [] []]
+		   |DOS_stm s -> [s]
 		   | _ -> [] ) dec_or_stmt_list 
       in  List.flatten dos
 
@@ -97,16 +83,9 @@ let member2methdec cname m =
 
 
 
-
-let rec list_filter_out_none l =
-  match l with
-  | [] -> []
-  | Some s::l' -> s::list_filter_out_none l'
-  | None::l' -> list_filter_out_none l'
-
 let make_methdecs_of_list cname meml =
-  let l=List.map (member2methdec cname) meml in
-  list_filter_out_none l
+  Misc.map_option (member2methdec cname) meml
+  
 
 let get_msig m cname =
   (cname,m.ret_type,m.name_m,m.params)

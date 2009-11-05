@@ -178,13 +178,10 @@ let variable2str = function
   | Var_name n -> name2str n
 
 let invoke_expr2str = function
- | Invoke_nostatic_exp(i,n,s,Some il) ->
+ | Invoke_nostatic_exp(i,n,s,il) ->
      nonstatic_invoke2str i ^" "^ name2str n ^"."^signature2str s ^"("^
    (list2str immediate2str il ", ")^")"
- | Invoke_nostatic_exp(i,n,s,None) ->
-     nonstatic_invoke2str i ^" "^ name2str n ^"."^signature2str s^"()"
- | Invoke_static_exp(s,Some il)-> "staticinvoke " ^ signature2str s ^"("^ (list2str immediate2str il ", ") ^ ")"
- | Invoke_static_exp(s,None)-> "staticinvoke " ^ signature2str s ^"()" 
+ | Invoke_static_exp(s,il)-> "staticinvoke " ^ signature2str s ^"("^ (list2str immediate2str il ", ") ^ ")"
 
 
 let expression2str = function

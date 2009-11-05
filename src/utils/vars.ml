@@ -80,3 +80,10 @@ let string_var v =
   | EVar (n,vn) -> Printf.sprintf  "_%s%s" vn (foo n)
   | AnyVar (n,vn) -> Printf.sprintf  "a_%s%s" vn (foo n)
 
+let pp_var ppf v =
+  let foo n = if n = 0 then Printf.sprintf "" else Printf.sprintf "_%d" n in
+  match v with 
+    PVar (n,vn) -> Format.fprintf ppf "%s%s" vn (foo n)
+  | EVar (n,vn) -> Format.fprintf ppf "_%s%s" vn (foo n)
+  | AnyVar (n,vn) -> Format.fprintf ppf "a_%s%s" vn (foo n)
+

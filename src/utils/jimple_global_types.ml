@@ -38,13 +38,6 @@ type jimple_file =
 
 
  
-type stmt_jimple = { 
-  (*labels: labels; *)
-  mutable skind: statement;
-  mutable sid: int;  (* this is filled when the cfg is done *)
-  mutable succs: stmt_jimple list; (* this is filled when the cfg is done *)
-  mutable preds: stmt_jimple list  (* this is filled when the cfg is done *)
- }
 
 type methdec_jimple = {
  modifiers: modifier list;
@@ -54,5 +47,5 @@ type methdec_jimple = {
  params: parameter list; 
  locals: local_var list;
  th_clause:throws_clause;
- mutable bstmts: stmt_jimple list; (* this is set after the call of cfg *)
+ mutable bstmts: statement list; (* this is set after the call of cfg *)
 }

@@ -3,6 +3,7 @@ open Pprinter
 open Pterm
 open Plogic
 open Spec_def
+open Methdec_core
 (* =================== PPrinter for core  ============================ *)
 
 let rec args2str  arg = 
@@ -48,33 +49,33 @@ and list_form2str  list =
 
 
 
-let spec2str (spec: Spec_def.spec) : string = 
-  let f p =
-    match p with 
-    |[]->""
-    |[p'] -> form_at2str p'
-    | _ -> list_form2str p 
-  in
-  "{"^(f spec.pre)^"}{"^(f spec.post)^"}"
+let spec2str ppf (spec: Spec_def.spec)  = 
+  Format.fprintf ppf "@[{%a}@]@ @[{%a}@]"
+    string_form spec.pre
+    string_form spec.post
   
-let rec variable_list2str lv =
-  match lv with
-  | [] -> ""
-  | [v] -> variable2str v
-  | v::lv' -> (variable2str v)^","^ (variable_list2str lv') 
+  
+let variable_list2str lv =
+  Debug.list_format "," Vars.pp_var lv
 
-let rec immediate_list2str il =
-  match il with
-  | [] -> ""
-  | [i] -> immediate2str i
-  | i::il' -> (immediate2str i)^","^ (immediate_list2str il') 
+let pp_stmt_core ppf = 
+  function
+  | Nop_stmt_core -> 
+      Format.fprintf ppf "nop;"
+  | Label_stmt_core l ->  
+      Format.fprintf ppf "%s:" (label_name2str l) 
+  | Assignment_core (v,spec,e)-> 
+      Format.fprintf ppf "%a@ @[%a@]@[(%a)@];"
+	(fun ppf v -> match v with [] -> () | _ -> Format.fprintf ppf "%a@ :=@ " variable_list2str v) v	
+	spec2str spec
+	string_args_list e
+  | Goto_stmt_core l ->
+      Format.fprintf ppf 
+	"goto %a;"  
+	(Debug.list_format "," (fun ppf -> Format.fprintf ppf "%s")) l
+  | Throw_stmt_core a -> 
+      Format.fprintf ppf 
+	"throw %a;"
+	string_args a
 
-let statement_core2str = function
-  | Nop_stmt_core -> "nop;"
-  | Label_stmt_core l ->  label_name2str l ^":"
-  | Assignment_core (v,spec,Some e)-> (variable_list2str v)^":= "^(spec2str spec)^"("^(immediate_list2str e)^")"
-  | Assignment_core (v,spec,None)-> (variable_list2str v)^":= "^(spec2str spec)^"()"
-  | If_stmt_core (e,l) -> "if "^ expression2str e ^" goto "^ label_name2str l 
-  | Goto_stmt_core l ->"goto "^label_name2str l^";"   
-  | Throw_stmt_core i -> "throw "^immediate2str i^";"
 

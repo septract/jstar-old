@@ -11,6 +11,7 @@
 open Global_types
 open Pprinter_core
 open Support_symex
+open Methdec_core
 
 let cfg_debug () = false
 
@@ -51,10 +52,7 @@ let stmts_to_cfg stmts =
     | Nop_stmt_core ->  addOptionSucc next
     | Label_stmt_core l -> addOptionSucc next  
     | Assignment_core (_,_,_) -> addOptionSucc next
-    | If_stmt_core(_,l) -> 
-	addSucc (find_label_stmt l);
-	addOptionSucc next
-    | Goto_stmt_core l -> addSucc (find_label_stmt l)
+    | Goto_stmt_core ls -> List.iter (fun l -> addSucc (find_label_stmt l)) ls
     | Throw_stmt_core imm -> () (* for the moment it goes to the end. Probably there should be a node for exceptions to denote abnormal termination. *) in
   (* Fill in cfg for a list of statements. *)
   let rec cfgStmts (ss: stmt_core list) (prog : stmt_core list) =
@@ -67,6 +65,8 @@ let stmts_to_cfg stmts =
   cfgStmts stmts stmts
 
 
+let escape_for_dot_label s =
+  Str.global_replace (Str.regexp "\\\\n") "\\l" (String.escaped s)
 
 (* stmtsname is a list of programs and names, such that each program's
    cfg is printed in a subgraph with its name.*)
@@ -76,7 +76,11 @@ let print_icfg_dotty (stmtsname : (stmt_core list * string) list) : unit =
     Printf.fprintf chan "\t\t%i -> %i\n" src.sid dest.sid in
   (* Print a node and edges to its successors *)
   let d_cfgnode chan (s : stmt_core) =
-    Printf.fprintf chan "\t\t%i [label=\"%i: %s\"]\n" s.sid s.sid (statement_core2str s.skind);
+    Printf.fprintf chan 
+      "\t\t%i [label=\"%i: %s\"]\n" 
+      s.sid 
+      s.sid 
+      (escape_for_dot_label (Debug.toString pp_stmt_core s.skind));
     List.iter (d_cfgedge chan s) s.succs  in
 
   if cfg_debug () then ignore (Printf.printf "\n\nPrinting iCFG as dot file...");
@@ -85,7 +89,7 @@ let print_icfg_dotty (stmtsname : (stmt_core list * string) list) : unit =
   List.iter 
     (fun (stmts,name) -> 
       stmts_to_cfg stmts;
-      Printf.fprintf chan "\tsubgraph \"cluster_%s\" {\n\t\tlabel=\"%s\"\n" name name;
+      Printf.fprintf chan "\tsubgraph \"cluster_%s\" {\n\t\tlabel=\"%s\"\n" name (escape_for_dot_label name);
       List.iter (d_cfgnode chan) stmts;
       Printf.fprintf chan  "\t}\n";
     ) 

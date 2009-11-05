@@ -142,8 +142,8 @@ type variable =
   | Var_name of  name
 
 type invoke_expr =
-  | Invoke_nostatic_exp of nonstatic_invoke * name * signature * immediate list option
-  | Invoke_static_exp of signature * immediate list option 
+  | Invoke_nostatic_exp of nonstatic_invoke * name * signature * immediate list 
+  | Invoke_static_exp of signature * immediate list 
 
 
 
