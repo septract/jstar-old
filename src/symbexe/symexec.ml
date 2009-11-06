@@ -199,6 +199,11 @@ let add_id_form h cfg =
 
 let add_id_formset sheaps cfg =  List.map (fun h -> add_id_form h cfg) sheaps
 
+let add_id_formset_edge src label sheaps cfg =  
+  let sheaps_id = add_id_formset sheaps cfg in
+  List.iter (fun dest -> add_edge_with_proof src (snd dest) label) sheaps_id;
+  sheaps_id
+
 let add_id_abs_form cfg h =
     let id=add_abs_heap_node h cfg in
     (h,id)
@@ -300,45 +305,13 @@ let call_jsr_static (sheap,id) spec il node =
 
 
 
-(* checks if x \in fset. membership is considered up to logical equivalence *)
-let rec formset_mem lo x fset =
-  match fset with 
-  | [] -> false
-  | y::fset' -> 
-      ((check_implication lo x y) && (check_implication lo y x)) || (formset_mem lo x fset') 
-
-let compact_formset lo xs = 
-  let rec impl xs ys = 
-    match ys with 
-      [] -> xs
-    | y::ys -> 
-	let xs = List.filter 
-	    (fun x -> 
-	      if (Prover.check_implication lo x y) then false else true) xs in 
-	let ys = List.filter 
-	    (fun x -> 
-	      if (Prover.check_implication lo x y) then false else true) ys in 
-	impl (y::xs) ys
-  in (*Debug.debug_ref:=true; *)let xs = impl [] xs in (*Debug.debug_ref:=false;*) xs
-
-(** implements s1 U s2  *)
-let rec union_formsets lo s2 s1 =
-(*  compact_formset lo (s2@s1)*)
-  match s1 with 
-  | [] -> s2
-  | s::s1' -> 
-      if (formset_mem lo s s2) then 
-	union_formsets lo s2 s1'  
-      else s::(union_formsets lo s2 s1') 
-
-
 exception Contained
 
 
 let check_postcondition heaps sheap =
   let sheap_noid=fst sheap in  
   try 
-    let heap,id = List.find (fun (heap,id) -> (check_implication_frame !curr_logic sheap_noid heap)!=[]) heaps in
+    let heap,id = List.find (fun (heap,id) -> (check_implication_frame !curr_logic (form_clone sheap_noid false) heap)!=[]) heaps in
     if Config.symb_debug() then 
       Printf.printf "\n\nPost okay \n";
     (*	let idd = add_good_node ("EXIT: "^(Pprinter.name2str m.name)) in *)
@@ -390,32 +363,34 @@ and execute_core_stmt n (sheap : formset_entry) : formset_entry list =
   let stm=n in
   if Config.symb_debug() then 
     Format.printf "@\nExecuting statement:@ %a" Pprinter_core.pp_stmt_core stm.skind; 
-(*  if Config.symb_debug() then 
-    Format.printf "@\nwith heap:@\n    %a@\n@\n@."  (string_ts_form (Rterm.rao_create ())) sheap_noid; *)
+  if Config.symb_debug() then 
+    Format.printf "@\nwith heap:@\n    %a@\n@\n@."  string_ts_form  sheap_noid; 
   if (Prover.check_inconsistency !curr_logic (form_clone sheap_noid false)) then 
     (if Config.symb_debug() then Printf.printf "\n\nInconsistent heap. Skip it!\n";
      let idd = add_good_node "Inconsistent"  in add_edge_with_proof (snd sheap) idd "proof";
      [])
   else (
-    if Config.symb_debug() then 
-      Printf.printf "\nStarting execution of node %i \n" (n.sid);
-	(*  let minfo=node_get_method_cfg_info n in *)
-    if Config.symb_debug() then 
-      Format.printf "@\nExecuting statement:@ %a%!" Pprinter_core.pp_stmt_core stm.skind; 
-(*	if Config.symb_debug() then 
-   Format.printf "@\nwith heap:@\n    %a@\n@\n%!"  (string_ts_form (Rterm.rao_create ())) sheap_noid; *)
+   if Config.symb_debug() 
+   then begin
+     Printf.printf "\nStarting execution of node %i \n" (n.sid);
+     Format.printf "@\nExecuting statement:@ %a%!" Pprinter_core.pp_stmt_core stm.skind; 
+     Format.printf "@\nwith heap:@\n    %a@\n@\n%!"  string_ts_form sheap_noid; 
+    end;
     (match stm.skind with 
     | Label_stmt_core l -> 
 	     (*  Update the labels formset, if sheap already implied then fine, otherwise or it in. *)
 	(let id = n.sid in 
 	try
-(*		if Config.symb_debug() then Format.printf "@\nPre-abstraction:@\n    %a@."  (string_ts_form (Rterm.rao_create ())) sheap_noid; *)
+	  if Config.symb_debug() 
+	  then Format.printf "@\nPre-abstraction:@\n    %a@."  string_ts_form  sheap_noid; 
 	  let sheap_pre_abs = form_clone sheap_noid true in 
 	  let sheaps_abs = Prover.abs !curr_abs_rules sheap_pre_abs in 
 	  let sheaps_abs = List.map (fun x -> form_clone x true) sheaps_abs in 
-	  if Config.symb_debug() then Format.printf "@\nPost-abstractionc count:@\n    %d@."  (List.length sheaps_abs);
+	  if Config.symb_debug() 
+	  then Format.printf "@\nPost-abstractionc count:@\n    %d@."  (List.length sheaps_abs);
 	  List.iter Rlogic.kill_all_exists_names sheaps_abs;
-(*		if Config.symb_debug() then List.iter (fun sheap -> Format.printf "@\nPost-abstraction:@\n    %a@."  (string_ts_form (Rterm.rao_create ())) sheap) sheaps_abs; *)
+	  if Config.symb_debug() 
+	  then List.iter (fun sheap -> Format.printf "@\nPost-abstraction:@\n    %a@."  string_ts_form sheap) sheaps_abs; 
 	  
 	  let formset = (formset_table_find id) in 
 (*		if Config.symb_debug() then (
@@ -461,7 +436,7 @@ and execute_core_stmt n (sheap : formset_entry) : formset_entry list =
 	( match vl with 
 	| [] -> 
 	    let hs=call_jsr_static sheap spec il n in
-	    let hs=add_id_formset hs n in
+	    let hs=add_id_formset_edge (snd sheap) (Debug.toString Pprinter_core.pp_stmt_core n.skind) hs n in
 	    execs_one n hs
 	| [v] ->
 	    let eliminate_ret_var h =
@@ -471,9 +446,9 @@ and execute_core_stmt n (sheap : formset_entry) : formset_entry list =
 	    in
 	    let hs=call_jsr_static sheap spec il n in
 	    let hs=List.map eliminate_ret_var hs in 
-	    let hs=add_id_formset hs n in
+	    let hs=add_id_formset_edge (snd sheap) (Debug.toString Pprinter_core.pp_stmt_core n.skind)  hs n in
 	    execs_one n hs
-	| _ -> assert false (* do be done *)
+	| _ -> assert false (* TODO be done *)
 	      )
     | Throw_stmt_core _ -> assert  false 
 	  ))
