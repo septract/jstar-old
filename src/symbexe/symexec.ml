@@ -278,8 +278,8 @@ let id_clone h = (form_clone (fst h) false, snd h)
 
 let call_jsr_static (sheap,id) spec il node = 
   let sub' = param_sub il in
-  let sub''= freshening_subs sub' in
-  let spec'=Specification.sub_spec sub'' spec  in 
+  let sub''= (*freshening_subs*) sub' in
+  let spec'= Specification.sub_spec sub'' spec  in 
   let res = (jsr !curr_logic sheap spec') in
     match res with 
       None ->   

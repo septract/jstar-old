@@ -103,29 +103,27 @@ let rec translate_assign_stmt  (v:Jparsetree.variable) (e:Jparsetree.expression)
       let e_var = freshe() in
       let pointed_to_var = Arg_var (e_var) in
       (* execute  n.si=e' --> _:={param0.si|->-}{param0.si|->param1 * return=x'}(n,e') *)
-      let p0 = Arg_var(mk_parameter 0) in (* ddino: should it be a fresh program variable? *)
-      let p1 = Arg_var(mk_parameter 1) in
+      let p0 = immediate2args (Immediate_local_name(n)) in (* ddino: should it be a fresh program variable? *)
+      let p1 = immediate2args e' in
       let pre=mk_pointsto p0 (signature2args si) pointed_to_var in
       let post=mk_pointsto p0 (signature2args si) p1 in
       let spec=Spec_def.mk_spec pre post Spec_def.ClassMap.empty in
-      Assignment_core ([],spec,[immediate2args (Immediate_local_name(n));immediate2args e'])	
+      Assignment_core ([],spec,[])	
   | Var_name n, Immediate_exp e' -> 
       (* execute  v=e' --> v:={emp}{return=param0}(e') *)
-
-      let p0 = Arg_var(mk_parameter 0) in (* ddino: should it be a fresh program variable? *)
-      let post= mkEQ(retvar_term,p0) in
+      let post= mkEQ(retvar_term,immediate2args e') in
       let spec=Spec_def.mk_spec [] post Spec_def.ClassMap.empty in
-      Assignment_core  ([variable2var (Var_name(n))],spec,[immediate2args e'])
+      Assignment_core  ([variable2var (Var_name(n))],spec,[])
 
   | Var_name v, Reference_exp (Field_local_ref (n,si))  -> 
       (* execute v=n.si --> v:={param0.si|->z}{param0.si|->z * return=z}(n)*)
       let e_var = freshe() in
       let pointed_to_var = Arg_var (e_var) in
-      let p0 = Arg_var(mk_parameter 0) in (* ddino: should it be a fresh program variable? *)
-      let pre=mk_pointsto p0 (signature2args si) pointed_to_var in
-      let post=pconjunction (mkEQ(retvar_term,pointed_to_var)) (mk_pointsto p0 (signature2args si) pointed_to_var) in
+      let x = (immediate2args (Immediate_local_name(n))) in 
+      let pre=mk_pointsto x (signature2args si) pointed_to_var in
+      let post=pconjunction (mkEQ(retvar_term,pointed_to_var)) (mk_pointsto x (signature2args si) pointed_to_var) in
       let spec=Spec_def.mk_spec pre post Spec_def.ClassMap.empty in
-      Assignment_core ([variable2var (Var_name v)],spec,[immediate2args (Immediate_local_name(n))])
+      Assignment_core ([variable2var (Var_name v)],spec,[])
   | Var_name n, New_simple_exp ty ->
       (* execute x=new(ty) --> x:=null 
 	 We treat it as just assigning null to x. This should have the effect
@@ -134,12 +132,10 @@ let rec translate_assign_stmt  (v:Jparsetree.variable) (e:Jparsetree.expression)
       *)
       translate_assign_stmt (Var_name(n)) (Immediate_exp(Immediate_constant(Null_const)))	
   | Var_name n , Binop_exp(name,x,y)-> 
-      let p0 = Arg_var(mk_parameter 0) in 
-      let p1 = Arg_var(mk_parameter 1) in 
-      let args = Arg_op(Support_syntax.bop_to_prover_arg name, [p0;p1]) in
+      let args = Arg_op(Support_syntax.bop_to_prover_arg name, [immediate2args x;immediate2args y]) in
       let post= mkEQ(retvar_term,args) in
       let spec=Spec_def.mk_spec [] post Spec_def.ClassMap.empty in
-      Assignment_core  ([variable2var (Var_name(n))],spec,[immediate2args x;immediate2args y])
+      Assignment_core  ([variable2var (Var_name(n))],spec,[])
   | Var_name n , Cast_exp (_,e') -> (* TODO : needs something for the cast *) 
       translate_assign_stmt (Var_name n) (Immediate_exp(e'))
   | Var_name n , Invoke_exp ie ->  
@@ -148,14 +144,12 @@ let rec translate_assign_stmt  (v:Jparsetree.variable) (e:Jparsetree.expression)
   | _ , _ -> assert false 
 
 let assert_core b =
-  let p0 = Arg_var(mk_parameter 0) in 
-  let p1 = Arg_var(mk_parameter 1) in 
   match b with
   | Binop_exp (op,i1,i2) -> 
-      let b_pred = Support_syntax.bop_to_prover_pred op p0 p1 in
+      let b_pred = Support_syntax.bop_to_prover_pred op (immediate2args i1) (immediate2args i2) in
       Assignment_core([], 
 		      Spec_def.mk_spec [] b_pred Spec_def.ClassMap.empty, 
-		      [immediate2args i1;immediate2args i2]) 
+		      []) 
   | _ -> assert false
   
 
@@ -172,10 +166,9 @@ let jimple_statement2core_statement s : core_statement list =
       if Config.symb_debug() then 
 	Printf.printf "\n Translating a jimple identity statement \n  %s\n" (Pprinter.statement2str s);
       let id'=Immediate_local_name(Identifier_name(id)) in 
-      let p0 = Arg_var(mk_parameter 0) in (* ddino: should it be a fresh program variable? *)
-      let post= mkEQ(retvar_term,p0) in
+      let post= mkEQ(retvar_term,immediate2args id') in
       let spec=Spec_def.mk_spec [] post Spec_def.ClassMap.empty in
-      [Assignment_core  ([variable2var (Var_name(nn))],spec,[immediate2args id']) ]
+      [Assignment_core  ([variable2var (Var_name(nn))],spec,[]) ]
   | Identity_no_type_stmt(n,i) -> assert false
   | Assign_stmt(v,e) -> 
       if Config.symb_debug() then 
