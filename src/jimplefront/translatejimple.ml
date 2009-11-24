@@ -19,10 +19,11 @@ open Vars
 open Support_symex
 open Symexec
 open Methdec_core
+open Javaspecs
 
 (* global variables *)
-let curr_static_methodSpecs:Specification.methodSpecs ref = ref Specification.emptyMSpecs
-let curr_dynamic_methodSpecs:Specification.methodSpecs ref = ref Specification.emptyMSpecs
+let curr_static_methodSpecs: Javaspecs.methodSpecs ref = ref Javaspecs.emptyMSpecs
+let curr_dynamic_methodSpecs: Javaspecs.methodSpecs ref = ref Javaspecs.emptyMSpecs
 
 
 let fresh_label =
@@ -283,8 +284,8 @@ let compute_fixed_point
     (apfmap : logic Spec_def.ClassMap.t) 
     (lo : logic) 
     (abs_rules : logic)
-    (sspecs: Specification.methodSpecs) 
-    (dspecs: Specification.methodSpecs)  =  
+    (sspecs: Javaspecs.methodSpecs) 
+    (dspecs: Javaspecs.methodSpecs)  =  
   curr_static_methodSpecs:=sspecs;
   curr_dynamic_methodSpecs:=dspecs;
   let cname=Methdec.get_class_name f in

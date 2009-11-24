@@ -130,8 +130,8 @@ let main () =
 	     (System.getenv_dirlist "JSTAR_SPECS_LIBRARY")
 	     !spec_file_name
 	     (Jparser.spec_file Jlexer.token) in
-	 let apfmap,logic = Specification.spec_file_to_classapfmap logic spec_list in
-	 let (static_method_specs,dynamic_method_specs) = Specification.spec_file_to_method_specs spec_list apfmap in
+	 let apfmap,logic = Javaspecs.spec_file_to_classapfmap logic spec_list in
+	 let (static_method_specs,dynamic_method_specs) = Javaspecs.spec_file_to_method_specs spec_list apfmap in
 	 
 	 if Config.symb_debug() then Printf.printf "\n\n Starting symbolic execution...";
 	 Classverification.verify_class program static_method_specs dynamic_method_specs apfmap logic abs_rules ;

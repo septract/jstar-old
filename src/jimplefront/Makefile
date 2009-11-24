@@ -18,19 +18,21 @@ export LIB
 
 INCLUDES = 
 
-SYMBEXE_SOURCES = methdec_core.ml pprinter_core.ml specification.ml support_symex.ml cfg_core.ml symexec.ml mkspecs.ml
+SYMBEXE_SOURCES = jlogic.ml javaspecs.ml methdec.ml translatejimple.ml classverification.ml run_parser.ml
+
 
 TOPLEVEL_SOURCES = $(SYMBEXE_SOURCES)
 
 DEFAULT_ARGS = SOURCES="$(TOPLEVEL_SOURCES)" \
-       OCAMLLDFLAGS="-g -a " \
-       INCDIRS="../prover ../utils ../syntax" \
+       LIBS="str unix utils sepprover parser symbexec" \
+       OCAMLLDFLAGS="-g -I $(LIB)" \
+       INCDIRS="../prover ../utils ../syntax ../symbexe" \
        OCAMLFLAGS="-g" \
        TRASH=""
 
-MAIN = $(DEFAULT_ARGS) RESULT=$(LIB)/symbexec.cma
+MAIN = $(DEFAULT_ARGS) RESULT=$(BIN)/jstar.byte
 
-MAINOPT = $(DEFAULT_ARGS)  RESULT=$(LIB)/symbexec.cmxa
+MAINOPT = $(DEFAULT_ARGS)  RESULT=$(BIN)/jstar
 
 default: jstar
 
@@ -39,6 +41,7 @@ all: jstar
 prebuild: 
 	@(cd ../prover; make)
 	@(cd ../syntax; make)
+	@(cd ../symbexe; make)
 
 .PHONY: jstar.byte  
 jstar.byte: prebuild

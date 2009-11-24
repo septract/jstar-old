@@ -9,6 +9,7 @@
 open Spec_def
 open Global_types
 open Specification
+open Javaspecs
 open Support_symex
 
 let warning () =
@@ -44,7 +45,7 @@ let verify_class
 (* Find logic for this class *)
   let logic = try ClassMap.find class_name apfmap with Not_found -> defaultlogic in
 (* call symbolic execution for all methods of this class *)
-  let _ = Symexec_jimple.compute_fixed_point jimple_file apfmap logic abslogic static_method_specs dynamic_method_specs in 
+  let _ = Translatejimple.compute_fixed_point jimple_file apfmap logic abslogic static_method_specs dynamic_method_specs in 
 (* Find method set for this class *)
   let mset = method_set_for_class class_name jimple_file in 
 (* For each method: *)

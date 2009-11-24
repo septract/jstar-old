@@ -10,7 +10,6 @@
 open Pterm
 open Plogic
 open Rlogic
-open Jlogic
 open Global_types
 open Jparsetree
 open Cfg_core
