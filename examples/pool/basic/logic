@@ -36,7 +36,7 @@ union(?z,add(?x,?y)) = add(?x,union(?z,?y))
 rule setof :
 | | |- setof(?x) = setof(?y) |
 without 
-  ?x!=?y
+  |- ?x!=?y
 if
 | | |- ?x=?y |
 or
@@ -87,7 +87,7 @@ if
 rule DBSet :
   | | DBSet(?x,?y) |- | DBSet(?z,?y)
 without
- ?x!=?z
+ |- ?x!=?z
 if
   DBSet(?x,?y) | | |- ?x=?z | 
 or
