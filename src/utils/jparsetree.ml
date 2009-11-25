@@ -189,8 +189,6 @@ type local_var = j_type option * name
 
 type nodekind = Start_node | Exit_node | Call_node | Return_Site_node | Stmt_node
 
-type ntype = 
-    Plain | Good | Error | Abs | UnExplored
 
 
 

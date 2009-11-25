@@ -14,24 +14,29 @@ open Vars
 open Rterm
 open Pterm
 open Plogic
-open Spec_def
-open Global_types
 open Prover
-open Support_syntax
 
-exception Class_defines_external_spec
 
-(*
+
 module ClassMap =   
   Map.Make(struct
-    type t = class_name
+    type t = string
     let compare = compare
   end)
-*)
 
-type java_exception = string
+type excep_post = Plogic.pform ClassMap.t 
+type spec = 
+    { pre : Plogic.pform;
+      post : Plogic.pform;
+      excep : excep_post }
 
-(*type excep_post = representative Plogic.pform ClassMap.t  *)
+let mk_spec  pre post excep = 
+    { pre=pre;
+      post=post;
+      excep=excep
+    }
+
+
 
 type ts_excep_post = Rlogic.ts_form ClassMap.t 
 

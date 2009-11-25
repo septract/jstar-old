@@ -12,6 +12,7 @@ open Rlogic
 open Lexing
 open Parsing 
 open Jimple_global_types
+open Specification
 open Spec_def
 open Global_types
 
@@ -337,7 +338,7 @@ method_spec:
    | STATIC method_signature_short COLON specs  { mkStatic($2, $4) }
 
 exp_posts:
-   | L_BRACE class_name COLON formula R_BRACE exp_posts { ClassMap.add $2 $4 $6 }
+   | L_BRACE identifier COLON formula R_BRACE exp_posts { ClassMap.add $2 $4 $6 }
    | /*empty */ { ClassMap.empty }
 
 modifier:

@@ -33,7 +33,7 @@ PROVERSOURCE = run.ml
 TESTPROVERSOURCE = test.ml
 
 
-DEFAULT_ARGS = LIBS="str utils sepprover parser" \
+DEFAULT_ARGS = LIBS="str utils sepprover symbexe parser" \
        OCAMLLDFLAGS="-g -I $(LIB)" \
        INCDIRS="../utils ../syntax ../prover"
        OCAMLFLAGS="-g" \

@@ -1,9 +1,9 @@
 default: 
 	cd utils; make
-	cd syntax; make
 	cd prover; make
-	cd proverfront; make
 	cd symbexe;  make 
+	cd syntax; make
+	cd proverfront; make
 	cd jimplefront;  make 
 
 clean: 

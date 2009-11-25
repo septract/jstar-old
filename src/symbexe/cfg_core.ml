@@ -8,9 +8,7 @@
 
 
 
-open Global_types
 open Pprinter_core
-open Support_symex
 open Methdec_core
 
 let cfg_debug () = false
@@ -70,7 +68,7 @@ let escape_for_dot_label s =
 
 (* stmtsname is a list of programs and names, such that each program's
    cfg is printed in a subgraph with its name.*)
-let print_icfg_dotty (stmtsname : (stmt_core list * string) list) : unit =
+let print_icfg_dotty (stmtsname : (stmt_core list * string) list) (filename : string) : unit =
   (* Print an edge between to stmts *)
   let d_cfgedge chan src dest =
     Printf.fprintf chan "\t\t%i -> %i\n" src.sid dest.sid in
@@ -84,7 +82,7 @@ let print_icfg_dotty (stmtsname : (stmt_core list * string) list) : unit =
     List.iter (d_cfgedge chan s) s.succs  in
 
   if cfg_debug () then ignore (Printf.printf "\n\nPrinting iCFG as dot file...");
-  let chan = open_out (!file ^ ".icfg.dot") in
+  let chan = open_out (filename ^ ".icfg.dot") in
   Printf.fprintf chan "digraph iCFG {\n\tnode [shape=box,  labeljust=l]\n";
   List.iter 
     (fun (stmts,name) -> 

@@ -43,7 +43,7 @@ let verify_class
     abslogic = 
   let Jimple_global_types.JFile(_,_,class_name,clpar_opt,implements_opt,_) = jimple_file in
 (* Find logic for this class *)
-  let logic = try ClassMap.find class_name apfmap with Not_found -> defaultlogic in
+  let logic = try ClassMap.find (Pprinter.class_name2str class_name) apfmap with Not_found -> defaultlogic in
 (* call symbolic execution for all methods of this class *)
   let _ = Translatejimple.compute_fixed_point jimple_file apfmap logic abslogic static_method_specs dynamic_method_specs in 
 (* Find method set for this class *)

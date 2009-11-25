@@ -18,18 +18,18 @@ export LIB
 
 INCLUDES = 
 
-SOURCES =   spec_def.ml global_types.ml config.ml support_syntax.ml jparser.mly jlexer.mll load.ml
+SOURCES =   spec_def.ml global_types.ml support_syntax.ml jparser.mly jlexer.mll load.ml
 
 LIBRARY = SOURCES="$(SOURCES)" \
        OCAMLLDFLAGS="-g -a" \
-       INCDIRS="../utils ../prover" \
+       INCDIRS="../utils ../prover ../symbexe" \
        OCAMLFLAGS="-g" \
        RESULT="$(LIB)/parser.cmxa" \
        TRASH=""
 
 BLIBRARY = SOURCES="$(SOURCES)" \
        OCAMLLDFLAGS="-g -a" \
-       INCDIRS="../utils ../prover" \
+       INCDIRS="../utils ../prover ../symbexe" \
        OCAMLFLAGS="-g" \
        RESULT="$(LIB)/parser.cma" \
        TRASH=""
@@ -42,6 +42,7 @@ parser.cma: prebuild
 
 prebuild:
 	@(cd ../prover; make)
+	@(cd ../symbexe; make)
 
 clean:
 	$(MAKE) -f $(OCAMLMAKEFILE) $(LIBRARY) clean

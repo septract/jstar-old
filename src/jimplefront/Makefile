@@ -18,13 +18,13 @@ export LIB
 
 INCLUDES = 
 
-SYMBEXE_SOURCES = jlogic.ml javaspecs.ml methdec.ml translatejimple.ml classverification.ml run_parser.ml
+SYMBEXE_SOURCES = support_symex.ml jlogic.ml javaspecs.ml methdec.ml translatejimple.ml classverification.ml run_parser.ml
 
 
 TOPLEVEL_SOURCES = $(SYMBEXE_SOURCES)
 
 DEFAULT_ARGS = SOURCES="$(TOPLEVEL_SOURCES)" \
-       LIBS="str unix utils sepprover parser symbexec" \
+       LIBS="str unix utils sepprover symbexe parser" \
        OCAMLLDFLAGS="-g -I $(LIB)" \
        INCDIRS="../prover ../utils ../syntax ../symbexe" \
        OCAMLFLAGS="-g" \

@@ -6,18 +6,15 @@
  All rights reserved. 
 *******************************************************************)
 
-
+open Vars
 open Pterm
 open Plogic
 open Rlogic
-open Global_types
-open Jparsetree
-open Cfg_core
 open Prover
+
+
+open Cfg_core
 open Specification
-open Vars
-open Support_symex
-open Spec_def
 open Methdec_core
 (* global variables *)
 
@@ -29,8 +26,12 @@ let curr_abs_rules: Prover.logic ref = ref Prover.empty_logic
 
 
 (* ================  transition system ==================  *)
+type ntype = 
+    Plain | Good | Error | Abs | UnExplored
 
 type id = int
+
+let file = ref ""
 
 let set_group,grouped = let x = ref false in (fun y -> x := y),(fun () -> !x )
 
@@ -250,6 +251,12 @@ let formset_table_find key =
 let remove_id_formset formset =
   fst (List.split formset)
 
+let parameter n = "@parameter"^(string_of_int n)^":"
+
+let name_ret_var = "$ret_var"
+
+let ret_var = Vars.concretep_str name_ret_var 
+
 
 let rec param_sub il num sub = 
   match il with 
@@ -260,17 +267,10 @@ let rec param_sub il num sub =
 
 let param_sub il =
   let sub' = add ret_var (Arg_var(ret_var))  empty in 
-  let this_var = concretep_str this_var_name in 
-  let sub' = add this_var (Arg_var(this_var))  sub' in 
   param_sub il 0 sub'
   
 
 
-let param_this_sub il n = 
-  let sub = param_sub il in 
-  let nthis_var = concretep_str Support_syntax.this_var_name in 
-  add nthis_var (name2args n)  sub 
- 
 let id_clone h = (form_clone (fst h) false, snd h)
 
 
@@ -456,7 +456,7 @@ and execute_core_stmt n (sheap : formset_entry) : formset_entry list =
 (* the queue qu is a list of pairs [(node, expression option)...] the expression
 is used to deal with if statement. It is the expression of the if statement is the predecessor
 of the node is a if_stmt otherwise is None. In the beginning is always None for each node *)
-let compute_fixed_point (stmts : stmt_core list)  (spec : Spec_def.spec) (lo : logic) (abs_rules : logic) =
+let verify (stmts : stmt_core list)  (spec : Specification.spec) (lo : logic) (abs_rules : logic) =
 
   (* remove methods that are declared abstraction *)
   curr_logic:= lo;

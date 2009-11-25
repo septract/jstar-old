@@ -1,9 +1,8 @@
-open Global_types
 open Pprinter
 open Pterm
 open Plogic
-open Spec_def
 open Methdec_core
+open Specification
 (* =================== PPrinter for core  ============================ *)
 
 let rec args2str  arg = 
@@ -49,7 +48,7 @@ and list_form2str  list =
 
 
 
-let spec2str ppf (spec: Spec_def.spec)  = 
+let spec2str ppf (spec: spec)  = 
   Format.fprintf ppf "@[{%a}@]@ @[{%a}@]"
     string_form spec.pre
     string_form spec.post

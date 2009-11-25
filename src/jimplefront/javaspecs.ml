@@ -248,7 +248,7 @@ let spec_file_to_classapfmap logic sf =
     [] -> apfmap
   | (classname,apf,specs)::sf -> 
       let logic = add_apf_to_logic logic apf (Pprinter.class_name2str classname) in 
-      sf2classapfm sf   (ClassMap.add classname logic  apfmap)
+      sf2classapfm sf   (ClassMap.add (Pprinter.class_name2str classname) logic  apfmap)
   in (sf2classapfm sf ClassMap.empty, logic)
 
 

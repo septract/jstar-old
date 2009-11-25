@@ -108,12 +108,12 @@ let rec translate_assign_stmt  (v:Jparsetree.variable) (e:Jparsetree.expression)
       let p1 = immediate2args e' in
       let pre=mk_pointsto p0 (signature2args si) pointed_to_var in
       let post=mk_pointsto p0 (signature2args si) p1 in
-      let spec=Spec_def.mk_spec pre post Spec_def.ClassMap.empty in
+      let spec=Specification.mk_spec pre post Specification.ClassMap.empty in
       Assignment_core ([],spec,[])	
   | Var_name n, Immediate_exp e' -> 
       (* execute  v=e' --> v:={emp}{return=param0}(e') *)
       let post= mkEQ(retvar_term,immediate2args e') in
-      let spec=Spec_def.mk_spec [] post Spec_def.ClassMap.empty in
+      let spec=Specification.mk_spec [] post Specification.ClassMap.empty in
       Assignment_core  ([variable2var (Var_name(n))],spec,[])
 
   | Var_name v, Reference_exp (Field_local_ref (n,si))  -> 
@@ -123,7 +123,7 @@ let rec translate_assign_stmt  (v:Jparsetree.variable) (e:Jparsetree.expression)
       let x = (immediate2args (Immediate_local_name(n))) in 
       let pre=mk_pointsto x (signature2args si) pointed_to_var in
       let post=pconjunction (mkEQ(retvar_term,pointed_to_var)) (mk_pointsto x (signature2args si) pointed_to_var) in
-      let spec=Spec_def.mk_spec pre post Spec_def.ClassMap.empty in
+      let spec=Specification.mk_spec pre post Specification.ClassMap.empty in
       Assignment_core ([variable2var (Var_name v)],spec,[])
   | Var_name n, New_simple_exp ty ->
       (* execute x=new(ty) --> x:=null 
@@ -135,7 +135,7 @@ let rec translate_assign_stmt  (v:Jparsetree.variable) (e:Jparsetree.expression)
   | Var_name n , Binop_exp(name,x,y)-> 
       let args = Arg_op(Support_syntax.bop_to_prover_arg name, [immediate2args x;immediate2args y]) in
       let post= mkEQ(retvar_term,args) in
-      let spec=Spec_def.mk_spec [] post Spec_def.ClassMap.empty in
+      let spec=Specification.mk_spec [] post Specification.ClassMap.empty in
       Assignment_core  ([variable2var (Var_name(n))],spec,[])
   | Var_name n , Cast_exp (_,e') -> (* TODO : needs something for the cast *) 
       translate_assign_stmt (Var_name n) (Immediate_exp(e'))
@@ -149,7 +149,7 @@ let assert_core b =
   | Binop_exp (op,i1,i2) -> 
       let b_pred = Support_syntax.bop_to_prover_pred op (immediate2args i1) (immediate2args i2) in
       Assignment_core([], 
-		      Spec_def.mk_spec [] b_pred Spec_def.ClassMap.empty, 
+		      Specification.mk_spec [] b_pred Specification.ClassMap.empty, 
 		      []) 
   | _ -> assert false
   
@@ -168,7 +168,7 @@ let jimple_statement2core_statement s : core_statement list =
 	Printf.printf "\n Translating a jimple identity statement \n  %s\n" (Pprinter.statement2str s);
       let id'=Immediate_local_name(Identifier_name(id)) in 
       let post= mkEQ(retvar_term,immediate2args id') in
-      let spec=Spec_def.mk_spec [] post Spec_def.ClassMap.empty in
+      let spec=Specification.mk_spec [] post Specification.ClassMap.empty in
       [Assignment_core  ([variable2var (Var_name(nn))],spec,[]) ]
   | Identity_no_type_stmt(n,i) -> assert false
   | Assign_stmt(v,e) -> 
@@ -196,7 +196,7 @@ let jimple_statement2core_statement s : core_statement list =
        | Some e' -> 
 	 let p0 = Arg_var(mk_parameter 0) in (* ddino: should it be a fresh program variable? *)
 	 let post= mkEQ(retvar_term,p0) in
-	 let spec=Spec_def.mk_spec [] post Spec_def.ClassMap.empty in
+	 let spec=Specification.mk_spec [] post Specification.ClassMap.empty in
 	 [Assignment_core  ([],spec,[immediate2args e']) ]
       )
   | Throw_stmt(i) ->
@@ -281,7 +281,7 @@ is used to deal with if statement. It is the expression of the if statement is t
 of the node is a if_stmt otherwise is None. In the beginning is always None for each node *)
 let compute_fixed_point 
     (f : Jimple_global_types.jimple_file) 
-    (apfmap : logic Spec_def.ClassMap.t) 
+    (apfmap : logic Specification.ClassMap.t) 
     (lo : logic) 
     (abs_rules : logic)
     (sspecs: Javaspecs.methodSpecs) 
@@ -289,7 +289,7 @@ let compute_fixed_point
   curr_static_methodSpecs:=sspecs;
   curr_dynamic_methodSpecs:=dspecs;
   let cname=Methdec.get_class_name f in
-  let lo = try let x=Spec_def.ClassMap.find cname apfmap in x with Not_found -> lo in
+  let lo = try let x=Specification.ClassMap.find (Pprinter.class_name2str cname) apfmap in x with Not_found -> lo in
   let mdl =  Methdec.make_methdecs_of_list cname (Methdec.get_list_methods f) in
   let mdl = List.filter (fun y -> List.for_all (fun x-> Abstract<>x) (y.modifiers)) mdl in
   let fields=Methdec.get_list_fields f in
@@ -297,12 +297,12 @@ let compute_fixed_point
     List.map 
       (fun m -> jimple_methdec2core_body m,methdec2signature_str m)
       mdl in (* TODO HERE *)
-  Cfg_core.print_icfg_dotty xs;
+  Cfg_core.print_icfg_dotty xs (!file);
   List.iter 
     (fun m ->
       let spec = get_spec_for m fields cname in
       let body = jimple_methdec2core_body m in 
       
-      Symexec.compute_fixed_point body spec lo abs_rules
+      Symexec.verify body spec lo abs_rules
       ) mdl
 
