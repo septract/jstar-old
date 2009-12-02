@@ -15,7 +15,7 @@ open Jimple_global_types
 
 
 
-let make_methdec mos cname ty n pars tc locs b  =
+let make_methdec mos cname ty n pars tc (rlocs,rstms) (locs,b)  =
 {
   modifiers= mos;
   class_name = cname;
@@ -24,6 +24,8 @@ let make_methdec mos cname ty n pars tc locs b  =
   params= pars;
   locals = locs;
   th_clause=tc;
+  req_locals = rlocs;
+  req_stmts=rstms;
   bstmts=b 
 }
 
@@ -71,14 +73,14 @@ let make_stmts_list b =
       in  List.flatten dos
 
 
-
-
 let member2methdec cname m =
   match m with 
-  | Method(mo,t,n,p,thc,mb) -> 
+  | Method(mo,t,n,p,thc,rc,mb) ->
+      let rlocs=get_locals rc in
+      let rstmts=make_stmts_list rc in
       let locs=get_locals mb in
       let bstmts= make_stmts_list mb in
-      Some(make_methdec mo cname t n p thc locs bstmts) 
+      Some(make_methdec mo cname t n p thc (rlocs,rstmts) (locs,bstmts)) 
   | _ -> None
 
 
@@ -90,7 +92,13 @@ let make_methdecs_of_list cname meml =
 let get_msig m cname =
   (cname,m.ret_type,m.name_m,m.params)
 
+let has_body m =
+        List.for_all (fun x -> Abstract<>x) m.modifiers
 
+let has_requires_clause m =
+        match m.req_stmts with
+        |[] -> false
+        |_ -> true
 
 
 (* ========================  ======================== *) 

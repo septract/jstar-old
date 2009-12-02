@@ -29,9 +29,11 @@ type declaration_or_statement =
 
 type  method_body = (declaration_or_statement list * catch_clause list) option  
 
+type requires_clause = method_body
+
 type  member = 
   | Field of  modifier list * j_type *  name
-  | Method of  modifier list * j_type * name * parameter list * throws_clause * method_body
+  | Method of  modifier list * j_type * name * parameter list * throws_clause * requires_clause * method_body
 
 type jimple_file = 
   | JFile of modifier list * j_file_type * class_name * extends_clause * implements_clause * (member list)
@@ -47,5 +49,7 @@ type methdec_jimple = {
  params: parameter list; 
  locals: local_var list;
  th_clause:throws_clause;
+ req_locals: local_var list;
+ mutable req_stmts: statement list;
  mutable bstmts: statement list; (* this is set after the call of cfg *)
 }

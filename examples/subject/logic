@@ -184,7 +184,7 @@ if
  *****************************/
 
 rule sub_eq_hack : 
-| | |- | subeq({content=?x; old=?z},{content=?y})
+| | |- | subeq({content=?x; oldcon=?z},{content=?y})
 if
 | | |- ?x=?y| 
 
@@ -194,7 +194,7 @@ if
 | | |- ?x=?y| 
 
 rule sub_eq_hack2 : 
-| | |- | subeq({content=?x},{content=?y; old=_z})
+| | |- | subeq({content=?x},{content=?y; oldcon=_z})
 if
 | | |- ?x=?y| 
 

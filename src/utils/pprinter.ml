@@ -238,9 +238,9 @@ let method_body2str = function
 
 let member2str = function 
   | Field(ml,j,n) -> (list2str modifier2str ml " ")^" "^ j_type2str j ^" "^name2str n^";"
-  | Method(ml,j,n,pl,tc,mb) ->  
+  | Method(ml,j,n,pl,tc,rc,mb) ->  
       (list2str modifier2str ml " ") ^" "^  j_type2str j ^" "^ name2str n ^"("^
-	(list2str parameter2str pl ", ")^") "^throws_clause2str tc ^"\n"^ method_body2str mb
+	(list2str parameter2str pl ", ")^") "^throws_clause2str tc ^"\nrequires"^ method_body2str rc ^"\n"^ method_body2str mb
 
 let extends_clause2str = function
   |None -> ""

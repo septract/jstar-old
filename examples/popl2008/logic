@@ -32,12 +32,12 @@ or
  ********************************************/
 
 rule sub_eq_hack : 
-| |- subeq({content=?x; old=?z},{content=?y})
+| |- subeq({content=?x; oldcon=?z},{content=?y})
 if
 | |- ?x=?y 
 
 rule sub_eq_hack2 : 
-| |- subeq({value=?x; old=?z},{value=?y})
+| |- subeq({value=?x; oldval=?z},{value=?y})
 if
 | |- ?x=?y 
 
@@ -54,12 +54,12 @@ if
 | |- ?x=?y 
 
 rule sub_eq_hack21 : 
-| |- subeq({content=?x},{content=?y; old=_z})
+| |- subeq({content=?x},{content=?y; oldcon=_z})
 if
 | |- ?x=?y 
 
 rule sub_eq_hack22 : 
-| |- subeq({value=?x},{value=?y; old=_z})
+| |- subeq({value=?x},{value=?y; oldval=_z})
 if
 | |- ?x=?y 
 

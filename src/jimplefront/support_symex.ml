@@ -198,6 +198,9 @@ let parameter n = "@parameter"^(string_of_int n)^":"
 let mk_this : Vars.var =
   Vars.concretep_str this_var_name 
 
+(* create the "res" used for the result of traditional assertions *)
+let mk_res : Vars.var =
+  Vars.concretep_str res_var_name
 
 (* define the constant name for the return variable. *)
 (*let name_ret_var mname = (Pprinter.name2str mname)^"$"^"ret_var"*)

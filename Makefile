@@ -1,6 +1,10 @@
-default:
+default: build test
+
+build:
 	cd src; make
-	. setjstarenv; cd examples; make test
+
+test: build
+	source setjstarenv; cd examples; make test
 
 clean: 
 	cd src; make clean

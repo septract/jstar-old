@@ -85,13 +85,17 @@ let parse_program () =
       DOS_stm(Invoke_stmt(Invoke_nostatic_exp(Virtual_invoke,b,(Method_signature (c1,c2,Identifier_name "<init>",c4)),d)))
       ::(spec_to_virt xs (List.filter (fun x -> fst x <> Var_name b) maps))
     | x::xs -> x::(spec_to_virt xs maps)
-    | [] -> [] in  
+    | [] -> [] in
+  let spec_to_virt_helper x =
+          match x with 
+          Some (f,g) -> Some(spec_to_virt f [],g)
+               |x -> x in
   match program with 
     JFile(a,b,c,d,e,f) -> 
       JFile(a,b,c,d,e,List.map 
 	      (function 
-		  Method (a,b,c,d,e,Some (f,g)) 
-		  -> Method(a,b,c,d,e,Some(spec_to_virt f [],g))
+		  Method (a,b,c,d,e,f,g) 
+		  -> Method(a,b,c,d,e,spec_to_virt_helper f,spec_to_virt_helper g)
 		| x -> x) f )
  
 

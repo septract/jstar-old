@@ -46,3 +46,6 @@ let name_ret_var = "$"^"ret_var"
 (* constant name for "this" object *)
 let this_var_name  =  "@this:"
 let this_var = (Vars.concretep_str this_var_name)
+
+let res_var_name = "$res"
+let res_var = (Vars.concretep_str res_var_name)

@@ -11,7 +11,7 @@ open Jimple_global_types
 
 let  print_spec cname memb =
   match memb with
-  |  Method (modl, jty,n, pars, tc, body) -> Printf.printf "\n%s\n" 
+  |  Method (modl, jty,n, pars, tc, rc, body) -> Printf.printf "\n%s\n" 
        ("static "^(Pprinter.signature2str (Method_signature (cname,jty,n,pars)))^" : { | } { | };")
   | _ -> ()
 

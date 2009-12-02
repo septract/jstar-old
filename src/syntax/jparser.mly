@@ -92,6 +92,9 @@ let field_signature2str fs =
 
 /* ============================================================= */
 /* tokens */
+%token REQUIRES
+%token OLD
+%token ENSURES
 %token AS
 %token ABSRULE
 %token EQUIV
@@ -385,7 +388,9 @@ member_list_star:
 ;
 member:
    | modifier_list_star jtype name SEMICOLON {Field($1,$2,$3)}
-   | modifier_list_star jtype name L_PAREN parameter_list_question_mark R_PAREN throws_clause method_body {Method($1,$2,$3,$5,$7,$8)}
+   | modifier_list_star jtype name L_PAREN parameter_list_question_mark R_PAREN
+   throws_clause requires_clause old_clauses ensures_clause method_body
+   {Method($1,$2,$3,$5,$7,$8,$11)}
 ;
 jtype:
    | VOID {Void}
@@ -407,7 +412,22 @@ parameter_args_opt:
    | nonvoid_type identifier {$1,Some $2}
 ;
 throws_clause:
-   | THROWS class_name_list { Some $2 };
+   | THROWS class_name_list { Some $2 }
+   | /* empty */ { None }
+;
+requires_clause:
+   | REQUIRES method_body { $2 }
+   | /* empty */ { None }
+;
+old_clauses:
+   | old_clause old_clauses { $1::$2 }
+   | /* empty */ { [] }
+;
+old_clause:
+   | OLD method_body { $2 }
+;
+ensures_clause:
+   | ENSURES method_body { $2 }
    | /* empty */ { None }
 ;
 base_type_no_name:

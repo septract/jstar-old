@@ -96,7 +96,7 @@ let get_spec  (iexp: Jparsetree.invoke_expr) =
 
 
 	
-let retvar_term = Arg_var(ret_var) 
+let retvar_term = Arg_var(ret_var)
 
 let rec translate_assign_stmt  (v:Jparsetree.variable) (e:Jparsetree.expression) =
   match v, e with 
@@ -231,9 +231,7 @@ let is_init_method md = Pprinter.name2str md.name_m ="<init>"
 let methdec2signature_str dec =
   Pprinter.class_name2str dec.class_name ^ "." ^ Pprinter.name2str dec.name_m ^ "(" ^ (Pprinter.list2str Pprinter.parameter2str  dec.params ", ") ^ ")"
 
-
-let jimple_methdec2core_body
-    (m_jimple: Jimple_global_types.methdec_jimple) = 
+let jimple_stms2core stms = 
   let do_one_stmt stmt_jimple =
     let s=jimple_statement2core_statement stmt_jimple in
     if Config.symb_debug() then 
@@ -241,8 +239,7 @@ let jimple_methdec2core_body
 	(Debug.list_format "; " Pprinter_core.pp_stmt_core) s; 
     List.map (fun s -> Methdec_core.stmt_create s [] []) s
   in
-  List.flatten (List.map do_one_stmt m_jimple.bstmts)
-
+  List.flatten (List.map do_one_stmt stms)
 
 
 (* returns a triple (m,initial_formset, final_formset)*)
@@ -272,7 +269,26 @@ let get_spec_for m fields cname=
     {pre=pconjunction spec.pre class_this_fields; post=spec.post; excep=spec.excep }
   else spec
 
+let resvar_term = Arg_var(Support_syntax.res_var) 
 
+let get_requires_clause_spec_for m fields cname =
+        let msi = Methdec.get_msig m cname in
+        (* First the the method's dynamic spec *)
+        let dynspec = 
+                try
+                        MethodMap.find msi !curr_dynamic_methodSpecs
+                with Not_found ->
+                        System.warning(); Format.printf "\n\n Error: Cannot find spec for method %s\n\n" (methdec2signature_str m); System.reset();
+                        assert false
+        in
+        let dynspec = logical_vars_to_prog dynspec in
+        (* Now construct the desired spec *)
+        {
+                pre=dynspec.pre;
+                post=pconjunction (dynspec.pre)
+                (mkEQ(resvar_term,Support_symex.constant2args (Int_const (Positive, 1))));
+                excep=ClassMap.empty
+        }
 
 
 (* implements a work-list fidex point algorithm *)
@@ -289,20 +305,45 @@ let compute_fixed_point
   curr_static_methodSpecs:=sspecs;
   curr_dynamic_methodSpecs:=dspecs;
   let cname=Methdec.get_class_name f in
+  (* get the logic lo *)
   let lo = try let x=Specification.ClassMap.find (Pprinter.class_name2str cname) apfmap in x with Not_found -> lo in
+  (* get the method declarations - See make_methdec in methdec.ml *)
   let mdl =  Methdec.make_methdecs_of_list cname (Methdec.get_list_methods f) in
-  let mdl = List.filter (fun y -> List.for_all (fun x-> Abstract<>x) (y.modifiers)) mdl in
-  let fields=Methdec.get_list_fields f in
+  (* get the fields *)
+  let fields = Methdec.get_list_fields f in
+  (* pretty print the cfg's *)
   let xs = 
-    List.map 
-      (fun m -> jimple_methdec2core_body m,methdec2signature_str m)
-      mdl in (* TODO HERE *)
+          List.map (fun m ->
+                  let meth_sig_str = methdec2signature_str m in
+                  let meth_body_info =
+                          if Methdec.has_body m then
+                                  [(jimple_stms2core m.bstmts, meth_sig_str)]
+                          else
+                                  []
+                  in
+                  let requires_info = 
+                          if Methdec.has_requires_clause m then
+                                  [(jimple_stms2core m.req_stmts, meth_sig_str^" requires clause")]
+                          else
+                                  []
+                  in
+                  List.append meth_body_info requires_info
+          ) mdl in (* TODO HERE *)
+  let xs = List.flatten xs in
   Cfg_core.print_icfg_dotty xs (!file);
-  List.iter 
-    (fun m ->
-      let spec = get_spec_for m fields cname in
-      let body = jimple_methdec2core_body m in 
-      
-      Symexec.verify body spec lo abs_rules
-      ) mdl
+  (* now verify each method *)
+  List.iter (fun m ->
+                  (* verify the body only if the method is non-abstract *)
+                  if Methdec.has_body m then
+                          let spec = get_spec_for m fields cname in
+                          let body = jimple_stms2core m.bstmts in
+                          Symexec.verify body spec lo abs_rules
+                  else
+                          ()
+                  ;
+                  if Methdec.has_requires_clause m then
+                          let spec = get_requires_clause_spec_for m fields cname in
+                          let body = jimple_stms2core m.req_stmts in
+                          Symexec.verify body spec lo abs_rules
+            ) mdl
 

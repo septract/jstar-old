@@ -50,6 +50,9 @@ let error_message e lb =
 
 (* association list of keywords. to be checked *)
 let keyword_al = [
+   ( "requires" , REQUIRES );
+   ( "old" , OLD );
+   ( "ensures" , ENSURES );
    ( "abstract"  , ABSTRACT  );
    ( "as"  , AS  );
    ( "final" , FINAL );
