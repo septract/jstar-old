@@ -1,0 +1,28 @@
+import "field_logic";
+import "listdatatype_logic";
+
+rewrite logical1:
+  builtin_eq(cons(?a,?b),empty()) = numeric_const("0")
+
+rewrite logical2:
+  builtin_eq(?x,?x) = numeric_const("1")
+
+rewrite tentative1:
+  len(cons(?x,?y)) = builtin_plus(numeric_const("1"),len(?y))
+
+rewrite tentative2:
+  builtin_minus(builtin_plus(?y,?z),?y) = ?z
+
+rule obvious:
+ | OL(?x,?y) |- OL(?x,?z)
+if
+OL(?x,?y) | |- ?y=?z
+
+rule obvious2:
+ | OL(?x,?y) |- OL(?z,?y)
+without
+ ?x!=?z
+if
+OL(?x,?y) | |- ?x=?z
+
+

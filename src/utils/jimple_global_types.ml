@@ -31,15 +31,17 @@ type  method_body = (declaration_or_statement list * catch_clause list) option
 
 type requires_clause = method_body
 
+type old_clauses = method_body list
+
+type ensures_clause = method_body
+
 type  member = 
   | Field of  modifier list * j_type *  name
-  | Method of  modifier list * j_type * name * parameter list * throws_clause * requires_clause * method_body
+  | Method of  modifier list * j_type * name * parameter list * throws_clause * requires_clause * old_clauses * ensures_clause * method_body
 
 type jimple_file = 
   | JFile of modifier list * j_file_type * class_name * extends_clause * implements_clause * (member list)
 
-
- 
 
 type methdec_jimple = {
  modifiers: modifier list;
@@ -49,7 +51,10 @@ type methdec_jimple = {
  params: parameter list; 
  locals: local_var list;
  th_clause:throws_clause;
- req_locals: local_var list;
- mutable req_stmts: statement list;
+ req_locals: local_var list; (* local variables of the requires clause *)
+ mutable req_stmts: statement list; (* the requires clause statements *)
+ mutable old_stmts_list: statement list list; (* the old statements. Their locals are contained in ens_locals *)
+ ens_locals: local_var list; (* local variables of the ensures clause and old clauses *)
+ mutable ens_stmts: statement list; (* the ensures clause statements *)
  mutable bstmts: statement list; (* this is set after the call of cfg *)
 }

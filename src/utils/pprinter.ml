@@ -236,11 +236,15 @@ let method_body2str = function
   |Some (dl,cl) ->
      "\n{"^(list2str declaration_or_statement2str dl "\n")^" "^(list2str catch_clause2str cl ", ")^"\n}"  
 
+let old_clauses2str ocs = List.fold_left (fun acc oc -> acc^"old "^ method_body2str oc^"\n") "" ocs
+
 let member2str = function 
   | Field(ml,j,n) -> (list2str modifier2str ml " ")^" "^ j_type2str j ^" "^name2str n^";"
-  | Method(ml,j,n,pl,tc,rc,mb) ->  
+  | Method(ml,j,n,pl,tc,rc,ocs,ec,mb) ->  
       (list2str modifier2str ml " ") ^" "^  j_type2str j ^" "^ name2str n ^"("^
-	(list2str parameter2str pl ", ")^") "^throws_clause2str tc ^"\nrequires"^ method_body2str rc ^"\n"^ method_body2str mb
+	(list2str parameter2str pl ", ")^") "^throws_clause2str tc
+        ^"\nrequires"^ method_body2str rc ^"\n"^ old_clauses2str ocs ^"ensures"^
+        method_body2str ec ^"\n"^ method_body2str mb
 
 let extends_clause2str = function
   |None -> ""

@@ -390,7 +390,7 @@ member:
    | modifier_list_star jtype name SEMICOLON {Field($1,$2,$3)}
    | modifier_list_star jtype name L_PAREN parameter_list_question_mark R_PAREN
    throws_clause requires_clause old_clauses ensures_clause method_body
-   {Method($1,$2,$3,$5,$7,$8,$11)}
+   {Method($1,$2,$3,$5,$7,$8,$9,$10,$11)}
 ;
 jtype:
    | VOID {Void}

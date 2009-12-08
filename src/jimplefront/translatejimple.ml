@@ -269,7 +269,11 @@ let get_spec_for m fields cname=
     {pre=pconjunction spec.pre class_this_fields; post=spec.post; excep=spec.excep }
   else spec
 
-let resvar_term = Arg_var(Support_syntax.res_var) 
+
+let resvar_term = Arg_var(Support_syntax.res_var)
+
+let conjoin_with_res_true (assertion : Plogic.pform) : Plogic.pform =
+	 pconjunction assertion (mkEQ(resvar_term,Support_symex.constant2args (Int_const (Positive, 1))))
 
 let get_requires_clause_spec_for m fields cname =
         let msi = Methdec.get_msig m cname in
@@ -285,11 +289,21 @@ let get_requires_clause_spec_for m fields cname =
         (* Now construct the desired spec *)
         {
                 pre=dynspec.pre;
-                post=pconjunction (dynspec.pre)
-                (mkEQ(resvar_term,Support_symex.constant2args (Int_const (Positive, 1))));
+                post=conjoin_with_res_true (dynspec.pre);
                 excep=ClassMap.empty
         }
 
+let get_dyn_spec_for m fields cname =
+        let msi = Methdec.get_msig m cname in
+        (* First the the method's dynamic spec *)
+        let dynspec = 
+                try
+                        MethodMap.find msi !curr_dynamic_methodSpecs
+                with Not_found ->
+                        System.warning(); Format.printf "\n\n Error: Cannot find spec for method %s\n\n" (methdec2signature_str m); System.reset();
+                        assert false
+        in
+        logical_vars_to_prog dynspec
 
 (* implements a work-list fidex point algorithm *)
 (* the queue qu is a list of pairs [(node, expression option)...] the expression
@@ -327,7 +341,16 @@ let compute_fixed_point
                           else
                                   []
                   in
-                  List.append meth_body_info requires_info
+                  let old_clause_info = 
+                          List.map (fun o -> (jimple_stms2core o,meth_sig_str^" old expression")) m.old_stmts_list
+                  in
+                  let ensures_info =
+                          if Methdec.has_ensures_clause m then
+                                  [(jimple_stms2core m.ens_stmts, meth_sig_str^" ensures clause")]
+                          else
+                                  []
+                  in
+                  List.flatten [meth_body_info;requires_info;old_clause_info;ensures_info]
           ) mdl in (* TODO HERE *)
   let xs = List.flatten xs in
   Cfg_core.print_icfg_dotty xs (!file);
@@ -341,9 +364,21 @@ let compute_fixed_point
                   else
                           ()
                   ;
+                  (* verify the requires clause if present *)
                   if Methdec.has_requires_clause m then
                           let spec = get_requires_clause_spec_for m fields cname in
                           let body = jimple_stms2core m.req_stmts in
                           Symexec.verify body spec lo abs_rules
+                  else
+                          ()
+                  ;
+                  (* verify the ensures clause if present *)
+                  if Methdec.has_ensures_clause m then
+                          let spec = get_dyn_spec_for m fields cname in
+                          let frames = List.map (fun oc -> 
+                                let body = jimple_stms2core oc in
+                                Symexec.get_frame body spec.pre lo abs_rules) m.old_stmts_list in
+                          let body = jimple_stms2core m.ens_stmts in
+                          Symexec.verify_ensures body spec.post conjoin_with_res_true frames lo abs_rules
             ) mdl
 

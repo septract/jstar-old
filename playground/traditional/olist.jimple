@@ -1,0 +1,40 @@
+class OLIST extends ANY {
+
+	abstract void remove_first()
+	requires {
+		int a1;
+		OLIST Current;
+		int $res;
+		Current := @this: OLIST;
+		a1 = virtualinvoke Current.<OLIST: int is_empty()>();
+		$res = a1 == 0;
+	}
+	old {
+		int $old1;
+		OLIST Current;
+		int a1;
+		int a2;
+		int $res;
+		
+		Current := @this: OLIST;
+		$old1 = virtualinvoke Current.<OLIST: int count()>();
+	}
+	ensures {
+		int $old1;
+		OLIST Current;
+		int a1;
+		int a2;
+		int $res;
+		
+		Current := @this: OLIST;
+		a1 = virtualinvoke Current.<OLIST: int count()>();
+		a2 = $old1 - 1;
+		$res = a1 == a2;
+	}
+	;
+
+	abstract int is_empty();
+
+	abstract int count();
+
+}

@@ -94,8 +94,8 @@ let parse_program () =
     JFile(a,b,c,d,e,f) -> 
       JFile(a,b,c,d,e,List.map 
 	      (function 
-		  Method (a,b,c,d,e,f,g) 
-		  -> Method(a,b,c,d,e,spec_to_virt_helper f,spec_to_virt_helper g)
+		  Method (a,b,c,d,e,f,g,h,i) 
+		  -> Method(a,b,c,d,e,spec_to_virt_helper f,List.map spec_to_virt_helper g,spec_to_virt_helper h,spec_to_virt_helper i)
 		| x -> x) f )
  
 

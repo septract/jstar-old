@@ -475,5 +475,71 @@ let verify (stmts : stmt_core list)  (spec : Specification.spec) (lo : logic) (a
 	  check_postcondition [(Rlogic.convert spec.post,id_exit)] post) post
 
 
+let verify_ensures (stmts: stmt_core list) (post : Plogic.pform) conjoin_with_res_true (oldexp_frames : Rlogic.ts_form list list) lo abs_rules =
+  (* construct the specification of the ensures clause *)
+	let rec conjoin_disjunctions (d1 : Rlogic.ts_form list) (d2 : Rlogic.ts_form list) : Rlogic.ts_form list =
+		match d1 with
+			| [] -> []
+			| d1first::d1rest ->
+				List.append (
+					List.map (fun d -> Rlogic.tsform_conjunction d1first d) d2
+				) (conjoin_disjunctions d1rest d2)
+	in
+	let oldexp_results = List.fold_left (fun acc oldexp_res -> conjoin_disjunctions oldexp_res acc) [Rlogic.ts_form_true] oldexp_frames in
+	let ensures_preconds = List.map (fun oldexp_result -> Rlogic.conj_convert post oldexp_result) oldexp_results in
+	let ensures_postcond = conjoin_with_res_true post in
+	(* now do the verification *)
+	curr_logic:= lo;
+  curr_abs_rules:=abs_rules;
+  stmts_to_cfg stmts;
+  match stmts with 
+    [] -> assert false
+  | s::stmts -> 
+      let id = add_good_node ("Start") in  
+      make_start_node id;
+      let post = execs_one s (List.map (fun pre -> (pre,id)) ensures_preconds) in 
+      let id_exit = add_good_node ("Exit") in
+      List.iter 
+	(fun post -> 
+	  check_postcondition [(Rlogic.convert ensures_postcond,id_exit)] post) post
 
 
+let check_and_get_frame (heap,id) sheap =
+  let sheap_noid=fst sheap in  
+  let frame = check_implication_frame !curr_logic (form_clone sheap_noid false) heap in
+  if frame != [] then
+                 if Config.symb_debug() then 
+                        (Printf.printf "\n\nOld expression okay \n";
+                        add_edge_with_proof (snd sheap) id "exit";
+                        frame)
+                 else
+                        frame
+  else
+                 (System.warning();
+                 let _= Printf.printf "\n\nERROR: cannot prove frame for old expression\n"  in
+                 Prover.print_counter_example ();
+                 System.reset();
+                 let idd = add_error_heap_node heap in 
+		 add_edge_with_proof (snd sheap) idd 
+		   (Format.fprintf 
+		      (Format.str_formatter) "ERROR EXIT: @\n %a" 
+		      Prover.pprint_counter_example (); 
+                      Format.flush_str_formatter ());
+                 frame)
+
+
+let get_frame (stmts : stmt_core list) (pre : Plogic.pform) (lo : logic) (abs_rules : logic) = 
+  curr_logic:= lo;
+  curr_abs_rules:=abs_rules;
+ 
+  stmts_to_cfg stmts;
+  match stmts with 
+    [] -> assert false
+  | s::stmts -> 
+      let id = add_good_node ("Start") in  
+      make_start_node id;
+      let rlogic_pre = Rlogic.convert pre in
+			(* an old expression is guaranteed to have only one exit point *)
+      let [post] = execute_core_stmt s (rlogic_pre, id) in 
+      let id_exit = add_good_node ("Exit") in 
+      check_and_get_frame (rlogic_pre,id_exit) post

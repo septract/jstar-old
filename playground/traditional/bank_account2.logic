@@ -1,2 +1,6 @@
 import "field_logic";
 
+//rule obvious:
+// GT(?y,?z) | ?x=builtin_gt(?y,?z) |- ?x=numeric_const("1")
+//if
+// GT(?y,?z) | ?x=numeric_const("1") |- 

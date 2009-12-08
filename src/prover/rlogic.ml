@@ -61,8 +61,6 @@ let (@@@) : form -> form -> form = conjunction
 
 
 
-
-
 (* Probably want to be careful so identifiers and strings are dealt with correctly *)
 let compare_plain  ca1 ca2 = compare ca1 ca2
 (*  match ca1 ,ca2 with   
@@ -541,3 +539,14 @@ let closes vs p =
     Plain_VS vm -> closes vm p
   | Fresh_VS _ -> true
 
+
+(* Star-conjunction of two ts_form *)
+let tsform_conjunction (ts1,heap1) (ts2,heap2)  =
+  (* Do some kind of merge of ts2 and ts1 *)
+  let eqs,subst = ts_to_eqs ts2 ts1 (rv_form heap2 Rset.empty) in
+  let pl,sl,cl = (subst_form subst heap2) in
+  let pl = (List.map (fun (x,y) -> EQ(x,y)) eqs) @ pl in
+  (ts1, conjunction heap1 (pl,sl,cl))
+
+(* The ts_form predicate True *)
+let ts_form_true = (Rterm.blank(), ([],[],[]))
