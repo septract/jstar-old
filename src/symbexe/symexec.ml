@@ -341,20 +341,25 @@ let rec exec n sheap =
     Format.printf "Output to %i with heap@\n   %a@\n" (node_get_id n) (string_ts_form (Rterm.rao_create ())) sheap_noid; *)
   execute_core_stmt n sheap 
 
-
-and execs_one n sheaps = 
+and execs_with_function n sheaps g = 
   let rec f ls = 
     match ls with 
     | [] -> []
     | [s] ->  List.flatten (List.map (exec s) sheaps)
     | s::ls' ->  List.flatten(List.map (fun h -> exec s (id_clone h)) sheaps) @ (f ls') 
   in
-  let succs=n.succs in
+  let succs=g n in
   match succs with 
     [] -> 
       if Config.symb_debug() then Printf.printf "Exit node %i\n" (n.sid);
       sheaps
   |  _ -> f succs
+
+and execs_one n sheaps =
+	execs_with_function n sheaps (fun n -> n.succs)
+	
+and execs n sheaps =
+	execs_with_function n sheaps (fun n -> [n])
 
 and execute_core_stmt n (sheap : formset_entry) : formset_entry list =
   let sheap_noid=fst sheap in
@@ -486,6 +491,8 @@ let verify_ensures (stmts: stmt_core list) (post : Plogic.pform) conjoin_with_re
 				) (conjoin_disjunctions d1rest d2)
 	in
 	let oldexp_results = List.fold_left (fun acc oldexp_res -> conjoin_disjunctions oldexp_res acc) [Rlogic.ts_form_true] oldexp_frames in
+	  (* substitute $ret_var in the post! *)
+	let post = subst_pform (add ret_var (Arg_var(Vars.concretep_str (name_ret_var^"_post"))) empty) post in
 	let ensures_preconds = List.map (fun oldexp_result -> Rlogic.conj_convert post oldexp_result) oldexp_results in
 	let ensures_postcond = conjoin_with_res_true post in
 	(* now do the verification *)
@@ -494,10 +501,10 @@ let verify_ensures (stmts: stmt_core list) (post : Plogic.pform) conjoin_with_re
   stmts_to_cfg stmts;
   match stmts with 
     [] -> assert false
-  | s::stmts -> 
+  | s::stmts ->
       let id = add_good_node ("Start") in  
       make_start_node id;
-      let post = execs_one s (List.map (fun pre -> (pre,id)) ensures_preconds) in 
+      let post = execs s (List.map (fun pre -> (pre,id)) ensures_preconds) in
       let id_exit = add_good_node ("Exit") in
       List.iter 
 	(fun post -> 

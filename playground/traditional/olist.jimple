@@ -33,6 +33,25 @@ class OLIST extends ANY {
 	}
 	;
 
+	abstract int first()
+	requires {
+		int a1;
+		OLIST Current;
+		int $res;
+		Current := @this: OLIST;
+		a1 = virtualinvoke Current.<OLIST: int is_empty()>();
+		$res = a1 == 0;
+	}
+	ensures {
+		int a1;
+		OLIST Current;
+		int $res;
+		Current := @this: OLIST;
+		a1 = virtualinvoke Current.<OLIST: int is_empty()>();
+		$res = a1 == 0;
+	}
+	;
+
 	abstract int is_empty();
 
 	abstract int count();
