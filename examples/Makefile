@@ -8,7 +8,7 @@ endif
 
 ifndef SUBDIRSDEF
    SUBDIRSDEF = foo
-   SUBDIRS = pool linkedlist popl2008 visitor subject
+   SUBDIRS = pool linkedlist popl2008 traditional visitor subject
 endif
 
 ifndef DIR
