@@ -71,32 +71,10 @@ let string_psr ppf (sr :sequent_rule) : unit =
 	  string_form without2
 	  (Debug.list_format_optional "where" ";" string_where) where
 	  
-(*
-let string_psr sr =
-  match sr with 
-    (conclusion, premises, name, without, where) -> 
-      "rule " ^ name ^":\n    " ^ (string_pseq conclusion) 
-	^ "\nif \n    " ^ (String.concat "\n or \n" (List.map (fun x -> String.concat ";\n    " (List.map string_pseq x)) premises))
-*)
-
-(*let string_rule (rule :sequent_rule ) =
-  match rule with
-    (conc, prem_s_s, name, without, where) ->
-      string_seq conc
-	*)
 
 let mk_seq_rule (mat_seq,premises,name) = 
   mat_seq,premises,name,([],[]),[]
 
-(*
-type rewrite_rule = string * representative args list * representative args * (representative pform) * (where list) * (representative pform) (* if *) * string * bool
-
-
-type rules = 
-  | SeqRule of sequent_rule
-  | RewriteRule of rewrite_rule
-  | Import of string
-*)
 
 type rewrite_entry =  (args list * args * (pform) * (where list) * (pform) * string * bool) list
 
@@ -118,22 +96,6 @@ type logic = sequent_rule list * Rlogic.rewrite_map * external_prover
 
 let empty_logic : logic = [],Rterm.rm_empty, default_pure_prover
 
-(*
-type question =
-  |  Implication of representative pform * representative pform 
-  |  Inconsistency of representative pform
-  |  Frame of representative pform * representative pform
-  |  Equal of representative pform * representative args * representative args
-  |  Abs of representative pform 
-
-
-type test =
-  |  TImplication of representative pform * representative pform * bool 
-  |  TInconsistency of representative pform * bool 
-  |  TFrame of representative pform * representative pform * representative pform 
-  |  TEqual of representative pform * representative args * representative args * bool
-  |  TAbs of representative pform * representative pform
-*)
 
 let external_proof ep ts pl_assume rs p_goal = 
   false

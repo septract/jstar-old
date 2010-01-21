@@ -70,8 +70,8 @@ and term_record =
 (*************
  *  Term constructor
  ************)
-let tcount = ref 0
-let next_tcount () = 
+let next_tcount =
+  let tcount = ref 0 in fun () -> 
   tcount := !tcount+1;
   !tcount
 
