@@ -74,3 +74,25 @@ let expand_equiv_rules rules =
 ***************************************************)
 
 
+(***************************************************
+ from inductive
+***************************************************)
+
+type inductive_con =
+{
+  con_name : string;
+  con_def : pform * string * args list
+}
+
+type inductive =
+{
+  ind_name : string;
+  ind_args : args list;
+  ind_cons : inductive_con list
+}
+
+type inductive_stmt = IndImport of string | IndDef of inductive
+
+(***************************************************
+ end from inductive
+***************************************************)

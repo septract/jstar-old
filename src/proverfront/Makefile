@@ -30,7 +30,7 @@ export LIB
 PROVERSOURCE = run.ml 
 
 #TESTPROVERSOURCE = $(CORESOURCE) logic_parser.mly logic_lexer.mll load_logic.ml test.ml
-TESTPROVERSOURCE = test.ml
+TESTPROVERSOURCE = inductive.ml test.ml
 
 
 DEFAULT_ARGS = LIBS="str utils sepprover symbexe parser" \
