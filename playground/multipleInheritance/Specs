@@ -1,0 +1,52 @@
+class CELL
+{
+	define Cell(x, {val=v}) = x.<CELL: int my_value> |-> v;
+
+	void <init>(int) :
+		{ }
+		{Cell$(@this:, {val=@parameter0:})};
+	void set_value(int) :
+		{Cell$(@this:, {val=_v})}
+		{Cell$(@this:, {val=@parameter0:})};
+	int value() :
+		{Cell$(@this:, {val=_v})}
+		{Cell$(@this:, {val=_v}) * $ret_var = _v};
+}
+
+class COUNTER
+{
+	define Cn(x, {cnt=c}) = x.<COUNTER: int my_count> |-> c;
+
+	void <init>() :
+		{ }
+		{Cn$(@this:, {cnt=numeric_const(0)})};
+	void increment() :
+		{Cn$(@this:, {cnt=_c})}
+		{Cn$(@this:, {cnt=builtin_plus(_c, numeric_const(1))})};
+	int count() :
+		{Cn$(@this:, {cnt=_c})}
+		{Cn$(@this:, {cnt=_c}) * $ret_var = _c};
+}
+
+class CCELL
+{
+	define Cell(x, {val=v;cnt=c}) = Cc$CCELL(x, {val=v;cnt=c});
+	define Cn(x, {cnt=c}) = Cn$COUNTER(x, {cnt=c});
+	define Cc(x, {val=v;cnt=c}) = Cell$CELL(x, {val=v}) * Cn$COUNTER(x, {cnt=c});
+
+	void <init>(int) :
+		{ }
+		{Cc$(@this:, {val=@parameter0:;cnt=numeric_const(0)})};
+	int value() :
+		{Cc$(@this:, {val=_v;cnt=_c})} {Cc$(@this:, {val=_v;cnt=_c}) * $ret_var = _v}
+		andalso {Cell$(@this:, {val=_v;cnt=_c})} {Cell$(@this:, {val=_v;cnt=_c}) * $ret_var = _v};
+	void set_value(int) :
+		{Cc$(@this:, {val=_v;cnt=_c})} {Cc$(@this:, {val=@parameter0:;cnt=builtin_plus(_c,numeric_const(1))})}
+		andalso {Cell$(@this:, {val=_v;cnt=_c})} {Cell$(@this:, {val=@parameter0:;cnt=builtin_plus(_c,numeric_const(1))})};
+	int count() :
+		{Cc$(@this:, {val=_v;cnt=_c})} {Cc$(@this:, {val=_v;cnt=_c}) * $ret_var = _c}
+		andalso {Cn$(@this:, {cnt=_c})} {Cn$(@this:, {cnt=_c}) * $ret_var = _c};
+	void increment() :
+		{Cc$(@this:, {val=_v;cnt=_c})} {Cc$(@this:, {val=_v;cnt=builtin_plus(_c,numeric_const(1))})}
+		andalso {Cn$(@this:, {cnt=_c})} {Cn$(@this:, {cnt=builtin_plus(_c,numeric_const(1))})};
+}
