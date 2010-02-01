@@ -2,6 +2,10 @@ ifndef TARGETS
   TARGETS =
 endif
 
+ifndef CLEAN
+  CLEAN =  *.jimple *.class *~ *.dot \#* .\#* *.proof_file* 
+endif 
+
 ifndef SOURCES
   SOURCES =  $(addsuffix .java, $(TARGETS)) 
 endif
@@ -40,7 +44,7 @@ time :  all $(addsuffix .time, $(TARGETS))
 
 clean: 
 	@for dir in ${SUBDIRS} ; do ( cd $$dir; make clean ) ; done
-	@rm -f *.jimple *.class *~ *.dot \#* .\#* *.proof_file* 
+	@rm -f $(CLEAN)
 
 %.time:
 	@echo $(INDENT) Timing $(DIR)/$*

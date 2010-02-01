@@ -2,6 +2,10 @@ ifndef TARGETS
   TARGETS = OLIST
 endif
 
+ifndef CLEAN
+  CLEAN =  *.class *~ *.dot \#* .\#* *.proof_file*
+endif
+
 ifndef SUBDIRSDEF
    SUBDIRSDEF = foo
    SUBDIRS = 
@@ -13,7 +17,3 @@ include ../../Makefile
 
 %.jimple:
 	@echo Jimple file provided manually
-
-clean:
-	@for dir in ${SUBDIRS} ; do ( cd $$dir; make clean ) ; done
-	@rm -f *.class *~ *.dot \#* .\#* *.proof_file*
