@@ -41,7 +41,8 @@ let verify_class
     apfmap 
     defaultlogic 
     abslogic = 
-  let Jimple_global_types.JFile(_,_,class_name,clpar_opt,implements_opt,_) = jimple_file in
+  let Jimple_global_types.JFile(modifiers,_,class_name,clpar_opt,implements_opt,_) = jimple_file in
+	let is_class_abstract = List.mem Jparsetree.Abstract modifiers in
 (* Find logic for this class *)
   let logic = try ClassMap.find (Pprinter.class_name2str class_name) apfmap with Not_found -> defaultlogic in
 (* call symbolic execution for all methods of this class *)
@@ -58,11 +59,15 @@ let verify_class
 	try MethodMap.find msig dynamic_method_specs 
 	with Not_found -> Printf.printf "\n\n Using static spec for %s" (Pprinter.name2str mname) ; my_sta_spec 
       in
-      if refinement_this logic my_sta_spec my_dyn_spec (class_name) then 	
-	(good();if Config.symb_debug() then Printf.printf "\n\nDynamic spec is consistent with static for %s!\n" (Pprinter.name2str mname); reset())
-      else 
-	(warning();Printf.printf "\n\nDynamic spec is not consistent with static for %s!\n" (Pprinter.name2str mname);reset()(*; 
-         assert false*));
+			(* Check Dynamic Dispatch only if the class is not abstract *)
+			if is_class_abstract then
+				()
+			else
+	      if refinement_this logic my_sta_spec my_dyn_spec (class_name) then 	
+					(good();if Config.symb_debug() then Printf.printf "\n\nDynamic spec is consistent with static for %s!\n" (Pprinter.name2str mname); reset())
+	      else 
+					(warning();Printf.printf "\n\nDynamic spec is not consistent with static for %s!\n" (Pprinter.name2str mname);reset()(*; 
+	         assert false*));
       (* Check BS *)
       if Jparsetree.constructor mname then () else
       ((match clpar_opt with
