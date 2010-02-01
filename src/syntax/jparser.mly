@@ -368,7 +368,7 @@ file_type:
    | INTERFACE { InterfaceFile }
        
 extends_clause:
-   | EXTENDS class_name {Some $2}
+   | EXTENDS class_name_list {Some $2}
    | /* empty */ {None}
 ;
 implements_clause:

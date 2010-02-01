@@ -248,7 +248,7 @@ let member2str = function
 
 let extends_clause2str = function
   |None -> ""
-  |Some c -> "extends "^class_name2str c
+  |Some cl -> "extends "^(list2str class_name2str cl " ")
 
 let implements_clause2str = function
   | None -> "" 

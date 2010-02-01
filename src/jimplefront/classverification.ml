@@ -72,32 +72,38 @@ let verify_class
       if Jparsetree.constructor mname then () else
       ((match clpar_opt with
       |	None -> assert false
-      |	Some clpar -> 
-	  (try 
-	    let par_dyn_spec = MethodMap.find (clpar,rtype,mname,params) dynamic_method_specs in	 
-	    if refinement logic my_dyn_spec par_dyn_spec  then 
-	      (good();if Config.symb_debug() then Printf.printf "\n\nBehavioural subtyping succeeds for %s in %s!\n"
-		(Pprinter.name2str mname) 
-		(Pprinter.class_name2str class_name); reset())
-	    else 
-	      (warning();Printf.printf "\n\nBehavioural subtyping fails for %s in %s!\n"
-		(Pprinter.name2str mname) 
-		(Pprinter.class_name2str class_name); reset();
-	      (*assert false;*))
-	  with Not_found -> ());
+      |	Some clpars -> 
+					List.iter (fun clpar -> 
+				  (try 
+				    let par_dyn_spec = MethodMap.find (clpar,rtype,mname,params) dynamic_method_specs in	 
+				    if refinement logic my_dyn_spec par_dyn_spec  then 
+				      (good();if Config.symb_debug() then Printf.printf "\n\nBehavioural subtyping succeeds for %s in %s w.r.t. %s!\n" 
+					(Pprinter.name2str mname) 
+					(Pprinter.class_name2str class_name)
+					(Pprinter.class_name2str clpar); reset())
+				    else 
+				      (warning();Printf.printf "\n\nBehavioural subtyping fails for %s in %s w.r.t. %s!\n" 
+					(Pprinter.name2str mname) 
+					(Pprinter.class_name2str class_name)
+					(Pprinter.class_name2str clpar); reset();
+				      (*assert false;*))
+				  with Not_found -> ()))
+				    clpars;
       (match implements_opt with
 	Some interpars -> 
 	  List.iter (fun interpar -> 
 	    (try 
 	    let par_dyn_spec = MethodMap.find (interpar,rtype,mname,params) dynamic_method_specs in	 
 	    if refinement logic my_dyn_spec par_dyn_spec  then 
-	      (if Config.symb_debug() then Printf.printf "\n\nBehavioural subtyping succeeds for %s in %s!\n" 
+	      (if Config.symb_debug() then Printf.printf "\n\nBehavioural subtyping succeeds for %s in %s w.r.t. %s!\n" 
 		(Pprinter.name2str mname) 
-		(Pprinter.class_name2str class_name))
+		(Pprinter.class_name2str class_name)
+		(Pprinter.class_name2str interpar))
 	    else 
-	      (Printf.printf "\n\nBehavioural subtyping fails for %s in %s!\n" 
+	      (Printf.printf "\n\nBehavioural subtyping fails for %s in %s w.r.t. %s!\n" 
 		(Pprinter.name2str mname) 
-		(Pprinter.class_name2str class_name);
+		(Pprinter.class_name2str class_name)
+		(Pprinter.class_name2str interpar);
 	      (*assert false;*))
 	  with Not_found -> ()))
 	    interpars
