@@ -45,6 +45,7 @@ class Sum implements Visitor{
 
 class RZ implements Visitor {
     boolean isZero;
+    boolean isChanged;
     Ast newl;
 
     public void visitC(Const c) {
@@ -71,7 +72,7 @@ class RZ implements Visitor {
 	    if(this.isZero) {
 		this.newl = p.left;
 		this.isZero = false;
-	    } else if (newl!=null) {
+	    } else if (this.newl != null) {
 		p.right = this.newl;
 		this.newl = null;
 	    }
