@@ -311,7 +311,6 @@ is used to deal with if statement. It is the expression of the if statement is t
 of the node is a if_stmt otherwise is None. In the beginning is always None for each node *)
 let compute_fixed_point 
     (f : Jimple_global_types.jimple_file) 
-    (apfmap : logic Specification.ClassMap.t) 
     (lo : logic) 
     (abs_rules : logic)
     (sspecs: Javaspecs.methodSpecs) 
@@ -319,8 +318,6 @@ let compute_fixed_point
   curr_static_methodSpecs:=sspecs;
   curr_dynamic_methodSpecs:=dspecs;
   let cname=Methdec.get_class_name f in
-  (* get the logic lo *)
-  let lo = try let x=Specification.ClassMap.find (Pprinter.class_name2str cname) apfmap in x with Not_found -> lo in
   (* get the method declarations - See make_methdec in methdec.ml *)
   let mdl =  Methdec.make_methdecs_of_list cname (Methdec.get_list_methods f) in
   (* get the fields *)

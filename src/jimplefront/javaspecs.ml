@@ -196,7 +196,7 @@ let rec filterdollar_at spat =
 and filterdollar x = List.map (filterdollar_at) x
 
 
-let dynamic_to_static apfmap cn spec = 
+let dynamic_to_static cn spec = 
   match spec with
     {pre=f1; post=f2; excep=excep}
       -> {pre=filtertype cn f1; 
@@ -210,7 +210,7 @@ let filter_dollar_spec spec =
 	  post=filterdollar f2; 
 	  excep=ClassMap.map filterdollar excep}
 
-let fix_gaps (smmap,dmmap) apfmap =
+let fix_gaps (smmap,dmmap) =
   let dmmapr = ref dmmap in 
   let smmapr = ref smmap in 
   let _ = MethodMap.iter 
@@ -220,36 +220,29 @@ let fix_gaps (smmap,dmmap) apfmap =
   let _ = MethodMap.iter 
       (fun (cn,a,b,c) spec -> 
 	if MethodMap.mem (cn,a,b,c) (!smmapr) then () 
-	else smmapr := MethodMap.add (cn,a,b,c) (dynamic_to_static apfmap (Pprinter.class_name2str cn) spec) (!smmapr);
+	else smmapr := MethodMap.add (cn,a,b,c) (dynamic_to_static (Pprinter.class_name2str cn) spec) (!smmapr);
 	dmmapr := MethodMap.add (cn,a,b,c) (filter_dollar_spec spec) !dmmapr
       ) dmmap in
   (!smmapr,!dmmapr)
 
 
-let spec_file_to_method_specs sf apfmap =
+let spec_file_to_method_specs sf =
   let rec sf_2_ms_inner sf (pairmmap) = 
     match sf with 
       [] -> pairmmap
     | cs::sf -> sf_2_ms_inner sf (class_spec_to_ms cs pairmmap)
-  in fix_gaps (sf_2_ms_inner sf (emptyMSpecs,emptyMSpecs)) apfmap
+  in fix_gaps (sf_2_ms_inner sf (emptyMSpecs,emptyMSpecs))
 
 
-
-let spec_file_to_classapfmap logic sf =
-  let rec add_globals sf logic = 
+let augmented_logic_for_class class_name sf logic =
+  let rec add_globals_and_apf_info sf logic = 
     match sf with
-      (classname,apf,exports_clause,specs)::sf -> 
-	let logic = add_apf_to_logic logic (List.filter (fun (a,b,x,y,w) -> w) apf) (Pprinter.class_name2str classname) in 
-	add_globals sf logic
-    | [] -> logic in
-  let logic = add_globals sf logic in
-  let rec sf2classapfm sf  apfmap = 
-  match sf with
-    [] -> apfmap
-  | (classname,apf,exports_clause,specs)::sf -> 
-      let logic = add_apf_to_logic logic apf (Pprinter.class_name2str classname) in 
-      sf2classapfm sf   (ClassMap.add (Pprinter.class_name2str classname) logic  apfmap)
-  in (sf2classapfm sf ClassMap.empty, logic)
+      (cn,apf,exports_clause,specs)::sf ->
+				let apfs_to_add = if class_name=cn then apf else (List.filter (fun (a,b,x,y,w) -> w) apf) in
+				let logic = add_apf_to_logic logic apfs_to_add (Pprinter.class_name2str cn) in 
+				add_globals_and_apf_info sf logic
+    | [] -> logic
+	in add_globals_and_apf_info sf logic
 
 
 

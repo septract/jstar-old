@@ -38,15 +38,12 @@ let verify_class
     jimple_file
     static_method_specs 
     dynamic_method_specs 
-    apfmap 
-    defaultlogic 
+    logic 
     abslogic = 
   let Jimple_global_types.JFile(modifiers,_,class_name,clpar_opt,implements_opt,_) = jimple_file in
 	let is_class_abstract = List.mem Jparsetree.Abstract modifiers in
-(* Find logic for this class *)
-  let logic = try ClassMap.find (Pprinter.class_name2str class_name) apfmap with Not_found -> defaultlogic in
 (* call symbolic execution for all methods of this class *)
-  let _ = Translatejimple.compute_fixed_point jimple_file apfmap logic abslogic static_method_specs dynamic_method_specs in 
+  let _ = Translatejimple.compute_fixed_point jimple_file logic abslogic static_method_specs dynamic_method_specs in 
 (* Find method set for this class *)
   let mset = method_set_for_class class_name jimple_file in 
 (* For each method: *)

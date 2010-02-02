@@ -34,6 +34,12 @@ class CCELL
 	define Cn(x, {cnt=c}) = Cn$COUNTER(x, {cnt=c});
 	define Cc(x, {val=v;cnt=c}) = Cell$CELL(x, {val=v}) * Cn$COUNTER(x, {cnt=c});
 
+	exports {
+		cc_cn: x : CCELL * Cc(x,{val=v;cnt=c}) <=> x : CCELL * Cn(x,{cnt=c}) * Rest(x,v);
+	} where {
+		Rest(x,v) = Cell$CELL(x,{val=v});
+	}
+
 	void <init>(int) :
 		{ }
 		{Cc$(@this:, {val=@parameter0:;cnt=numeric_const(0)})};
