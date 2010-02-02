@@ -126,7 +126,9 @@ let field_signature2str fs =
 %token NULL_TYPE 
 %token UNKNOWN 
 %token EXTENDS 
-%token EXPORT 
+%token EXPORT
+%token EXPORTS
+%token AXIOMS
 %token IMPLEMENTS 
 %token BREAKPOINT  
 %token CASE 
@@ -217,7 +219,6 @@ let field_signature2str fs =
 
 %token ANDALSO 
 %token DEFINE
-%token EXPORT
 
 %token FALSE
 %token TRUE
@@ -311,7 +312,7 @@ spec_file:
    | classspec spec_file { (NormalEntry $1) :: $2 }
 
 classspec: 
-   | file_type class_name L_BRACE apf_defines methods_specs R_BRACE  { ($2,$4,$5) }
+   | file_type class_name L_BRACE apf_defines exports_clause methods_specs R_BRACE  { ($2,$4,$5,$6) }
 
 
 apf_defines: 
@@ -327,6 +328,25 @@ apf_define:
        { let a=match $5 with | Some b -> b | None -> [] in ($2,$4,a,$8,true) }
    | DEFINE identifier L_PAREN lvariable paramlist_question_mark R_PAREN eq_as formula SEMICOLON  
        { let a=match $5 with | Some b -> b | None -> [] in ($2,$4,a,$8,false) }
+			
+exports_clause:
+   | EXPORTS L_BRACE exported_implication_star R_BRACE WHERE L_BRACE exportLocal_predicate_def_star R_BRACE { Some ($3,$7) }
+	 | /*empty*/ {None}
+
+exported_implication_star:
+   | exported_implication exported_implication_star { $1 @ $2 }
+   | /*empty*/ { [] }
+
+exported_implication:
+   | identifier COLON formula IMP formula SEMICOLON { [($1,$3,$5)] }
+   | identifier COLON formula BIMP formula SEMICOLON { [($1^"_forwards",$3,$5); ($1^"_backwards",$5,$3)] }
+
+exportLocal_predicate_def_star:
+   | exportLocal_predicate_def exportLocal_predicate_def_star { $1 :: $2 }
+   | /*empty*/ { [] }
+
+exportLocal_predicate_def:
+   | identifier L_PAREN lvariable_list_ne R_PAREN eq_as formula SEMICOLON { ($1,$3,$6) }
 
 methods_specs:
    | method_spec methods_specs { $1 :: $2 }

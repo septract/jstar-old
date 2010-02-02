@@ -60,7 +60,7 @@ class LIBRARY {
 
 class CLIENT {
 	CCELL warm_up(LIBRARY) :
-		{} {$ret_var : CCELL}
-	//	{} {Cc($ret_var, {val=numeric_const(5);cnt=numeric_const(10)})};
+	//	{} {$ret_var : CCELL}
+		{} {Cc($ret_var, {val=numeric_const(5);cnt=numeric_const(10)})};
 	// NB: Does it check whether the target of a call is non-null?
 }

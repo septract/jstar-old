@@ -125,7 +125,7 @@ let rec spec_list_to_spec specs =
        spec_conjunction spec (spec_list_to_spec specs)
  
 let class_spec_to_ms cs (smmap,dmmap) =
-  let (classname,apf,specs) = cs in 
+  let (classname,apf,exports_clause,specs) = cs in 
   let cn = (*Pprinter.class_name2str*) classname in
   List.fold_left 
     (fun (smmap,dmmap) pre_spec
@@ -238,7 +238,7 @@ let spec_file_to_method_specs sf apfmap =
 let spec_file_to_classapfmap logic sf =
   let rec add_globals sf logic = 
     match sf with
-      (classname,apf,specs)::sf -> 
+      (classname,apf,exports_clause,specs)::sf -> 
 	let logic = add_apf_to_logic logic (List.filter (fun (a,b,x,y,w) -> w) apf) (Pprinter.class_name2str classname) in 
 	add_globals sf logic
     | [] -> logic in
@@ -246,7 +246,7 @@ let spec_file_to_classapfmap logic sf =
   let rec sf2classapfm sf  apfmap = 
   match sf with
     [] -> apfmap
-  | (classname,apf,specs)::sf -> 
+  | (classname,apf,exports_clause,specs)::sf -> 
       let logic = add_apf_to_logic logic apf (Pprinter.class_name2str classname) in 
       sf2classapfm sf   (ClassMap.add (Pprinter.class_name2str classname) logic  apfmap)
   in (sf2classapfm sf ClassMap.empty, logic)

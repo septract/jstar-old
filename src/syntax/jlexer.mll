@@ -108,6 +108,8 @@ let keyword_al = [
    ( "cls" , CLS );
    ( "andalso" , ANDALSO );
    ( "export" , EXPORT );
+	 ( "exports" , EXPORTS );
+	 ( "axioms" , AXIOMS );
    ( "define" , DEFINE );
   ("import",IMPORT);
   ("False",FALSE);
