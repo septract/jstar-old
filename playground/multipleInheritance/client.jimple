@@ -1,0 +1,10 @@
+class CLIENT extends ANY {
+	CCELL warm_up(LIBRARY) {
+		LIBRARY r0;
+		CCELL r1;
+		r0 := @parameter0: LIBRARY;
+		r1 = new CCELL;
+		specialinvoke r1.<CCELL: void <init>(int)>(5);
+		return r1;
+	}
+}

@@ -50,3 +50,17 @@ class CCELL
 		{Cc$(@this:, {val=_v;cnt=_c})} {Cc$(@this:, {val=_v;cnt=builtin_plus(_c,numeric_const(1))})}
 		andalso {Cn$(@this:, {cnt=_c})} {Cn$(@this:, {cnt=builtin_plus(_c,numeric_const(1))})};
 }
+
+class LIBRARY {
+	void use_counter(COUNTER) :
+		{Cn(@parameter0:,{cnt=_v})} {Cn(@parameter0:,{cnt=builtin_plus(_v,numeric_const(10))})};
+	void use_cell(CELL,int) :
+		{Cell(@parameter0:,{val=_v})} {Cell(@parameter0:,{val=@parameter1:})};
+}
+
+class CLIENT {
+	CCELL warm_up(LIBRARY) :
+		{} {$ret_var : CCELL}
+	//	{} {Cc($ret_var, {val=numeric_const(5);cnt=numeric_const(10)})};
+	// NB: Does it check whether the target of a call is non-null?
+}

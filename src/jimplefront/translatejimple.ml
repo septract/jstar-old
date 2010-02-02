@@ -126,12 +126,12 @@ let rec translate_assign_stmt  (v:Jparsetree.variable) (e:Jparsetree.expression)
       let spec=Specification.mk_spec pre post Specification.ClassMap.empty in
       Assignment_core ([variable2var (Var_name v)],spec,[])
   | Var_name n, New_simple_exp ty ->
-      (* execute x=new(ty) --> x:=null 
-	 We treat it as just assigning null to x. This should have the effect
-	 to substitute the occurrences of x with a fresh variable. 
+      (* execute x=new(ty)
 	 The rest of the job will be performed by the invocation to specialinvoke <init>
       *)
-      translate_assign_stmt (Var_name(n)) (Immediate_exp(Immediate_constant(Null_const)))	
+			let post = mk_type_all retvar_term ty in
+			let spec = Specification.mk_spec [] post Specification.ClassMap.empty in
+			Assignment_core ([variable2var (Var_name n)],spec,[])
   | Var_name n , Binop_exp(name,x,y)-> 
       let args = Arg_op(Support_syntax.bop_to_prover_arg name, [immediate2args x;immediate2args y]) in
       let post= mkEQ(retvar_term,args) in
