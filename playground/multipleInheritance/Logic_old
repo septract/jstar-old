@@ -8,12 +8,12 @@ if
 rule cc_to_cn_ii:
  | ?x : CCELL * Cc(?x,{val=?v;cnt=?c1}) |- Cn(?x,{cnt=?c2})
 if
- Cn(?x,{cnt=?c1}) | ?x : CCELL * Rest(?x,?v) |- ?c1=?c2
+ Cn(?x,{cnt=?c2}) | ?x : CCELL * Rest(?x,?v) |- ?c1=?c2
 
 rule cc_to_cn_iii:
  | ?x : CCELL * Cc(?x,{val=?v1;cnt=?c}) |- Rest(?x,?v2)
 if
- Rest(?x,?v2) | ?x : CCELL * Cn(?x,{cnt=?c}) |-
+ Rest(?x,?v2) | ?x : CCELL * Cn(?x,{cnt=?c}) |- ?v1=?v2
 
 rule cn_to_cc_i:
  | ?x : CCELL * Cn(?x,{cnt=?c1}) * Rest(?x, ?v1) |- ?x : CCELL
@@ -33,7 +33,7 @@ if
 rule cc_to_cell_ii:
  | ?x : CCELL * Cc(?x,{val=?v1;cnt=?c1}) |- Cell(?x,{val=?v2;cnt=?c2})
 if
- Cell(?x,{val=?v2;cnt=?c2}) | ?x : CCELL |- 
+ Cell(?x,{val=?v2;cnt=?c2}) | ?x : CCELL |- ?v1=?v2 * ?c1=?c2 
 
 /////////////////////////////////////
 

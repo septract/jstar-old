@@ -100,7 +100,7 @@ let logic_with_where_pred_defs exportLocal_predicates logic =
 			let (name, args, body) = where_pred_def in
 			let sub = List.fold_left (fun sub argname -> add argname (Arg_var (Vars.fresha ())) sub) empty args in
 			let pred = P_SPred(name,List.map (fun argname -> Pterm.find argname sub) args) in
-			let defn = subst_pform sub body in
+			let defn = try subst_pform sub body with Contradiction -> mkFalse in
 			let parvars = Plogic.fv_form [pred] VarSet.empty in
 			let defvars = Plogic.fv_form defn VarSet.empty in
 			let sparevars = VarSet.diff defvars parvars in  
@@ -121,7 +121,57 @@ let logic_with_where_pred_defs exportLocal_predicates logic =
 			in
 			(rules,rm,f)
 		) logic exportLocal_predicates
-	
+
+let rules_for_implication imp : Prover.sequent_rule list =
+	let name,antecedent,consequent = imp in
+	(* imp is assumed to contain only program variables and existential variables *)
+	(* to build a rule, we substitute all program variables (but no existentials) with fresh anyvars *)
+	let free_vars = Plogic.fv_form (Plogic.pconjunction antecedent consequent) VarSet.empty in
+	let free_prog_vars = VarSet.filter (fun var -> match var with PVar _ -> true | _ -> false) free_vars in
+	let sub = VarSet.fold (fun var sub -> add var (Arg_var (Vars.fresha ())) sub) free_prog_vars empty in
+	let antecedent : Plogic.pform = try subst_pform sub antecedent with Contradiction -> mkFalse in
+	let consequent = try subst_pform sub consequent with Contradiction -> mkFalse in
+	(* General idea: for P ==> (Q1 * Q2 * ... * Qn), we build n rules of the form *)
+	(*  | P |- Qi *)
+	(* if *)
+	(*  Qi | Q1 * ... * Qi-1 * Qi+1 * ... * Qn |- *)
+	(* Should Qi be a P_SPred, then we substitute the anyvars occurring in its 2nd, 3rd etc. arguments with fresh anyvars in the rule's conclusion, *)
+	(* and make the anyvar equalities proof obligations in the rule's premise. *)
+	let split conjuncts =
+		let rec split_inner list others =
+			match list with
+				| [] -> []
+				| x :: xs -> (x, xs@others) :: split_inner xs (x::others)
+		in
+		split_inner conjuncts [] in
+	let rules = List.map (fun ((conjunct : Plogic.pform_at),(others : Plogic.pform)) ->
+			let qi,eqs = match conjunct with
+				| P_SPred (pred_name,first_arg :: other_args) -> 
+						let freevars = fv_args_list other_args VarSet.empty in
+						let free_anyvars = VarSet.filter (fun var -> match var with AnyVar _ -> true | _ -> false) freevars in
+						let var_newvar_pairs = VarSet.fold (fun var pairs -> (var,Vars.fresha ()) :: pairs) free_anyvars [] in
+						let sub = List.fold_left (fun sub (var,newvar) -> add var (Arg_var newvar) sub) empty var_newvar_pairs in
+						let new_other_args = List.map (subst_args sub) other_args in
+						let equalities : Plogic.pform =
+                                                        List.map (fun
+                                                                (var,newvar) -> P_EQ(Arg_var var,Arg_var newvar)) var_newvar_pairs in
+						(P_SPred(pred_name,first_arg :: new_other_args),equalities)
+				| _ -> (conjunct,[])
+			in
+			mk_seq_rule (([],antecedent,[qi]),
+				[[[conjunct],others,eqs]], (* Note the use of conjunct here and not qi. *)
+				name)
+		) (split consequent) in
+	(* Finally, adjust the sequent rule names *)
+	let _,rules = List.fold_right (fun (a,b,name,d,e) (counter,list) ->
+		(counter-1,(a,b,name^(string_of_int counter),d,e)::list)
+	) rules (List.length rules,[]) in
+	rules
+
+let add_implications_to_logic (logic : Prover.logic) imps : Prover.logic =
+	let new_rules = List.flatten (List.map (fun imp -> rules_for_implication imp) imps) in
+	let rules,rm,f = logic in
+	(rules @ new_rules,rm,f)
 
 let logic_and_implications_for_exports_verification class_name spec_list logic =
 	let (_,_,exports_clause,_) = List.find (fun (cn,apf,exports_clause,specs) -> cn=class_name) spec_list in
@@ -130,6 +180,14 @@ let logic_and_implications_for_exports_verification class_name spec_list logic =
 		| Some (exported_implications,exportLocal_predicates) ->
 			let logic = logic_with_where_pred_defs exportLocal_predicates logic in
 			(logic,exported_implications) 
+			
+let add_exported_implications_to_logic spec_list logic : Prover.logic =
+	let exported_implications = List.fold_left (fun imps (cn,apf,exports_clause,specs) ->
+		match exports_clause with
+			| None -> imps
+			| Some (exported_implications,_) -> exported_implications @ imps
+		) [] spec_list in
+	add_implications_to_logic logic exported_implications
 			
 (* Specs to verification *)
 

@@ -71,8 +71,11 @@ let string_psr ppf (sr :sequent_rule) : unit =
 	  string_form without2
 	  (Debug.list_format_optional "where" ";" string_where) where
 	  
+let pprint_sequent_rules logic =
+	let (rules,_,_) = logic in
+	List.iter (fun rule -> Format.printf "%a\n\n" string_psr rule) rules
 
-let mk_seq_rule (mat_seq,premises,name) = 
+let mk_seq_rule (mat_seq,premises,name) : sequent_rule = 
   mat_seq,premises,name,([],[]),[]
 
 

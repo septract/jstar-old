@@ -1,4 +1,7 @@
 
+rewrite zero_plus_ten:
+ builtin_plus(numeric_const(0),numeric_const(10)) = numeric_const(10)
+
 rule cn_counter_equal:
  | Cn$COUNTER(?x,{cnt=?c1}) |- Cn$COUNTER(?x,{cnt=?c2})
 if

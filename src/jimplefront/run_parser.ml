@@ -145,7 +145,8 @@ let main () =
 	 			(*let _ = Prover.pprint_sequent_rules logic_with_where_pred_defs in*)
 	 let _ = Classverification.verify_exports_implications implications logic_with_where_pred_defs in
 				(* Since where predicates are local to the exports clause, we discard them after exports clause verification *)
-	 (* Build rules from the exported implications and augment the logic *)
+	 let logic = Javaspecs.add_exported_implications_to_logic spec_list logic in
+	 			(*let _ = Prover.pprint_sequent_rules logic in*)
 	 (* End of exports clause treatment *)
 	
 	 let (static_method_specs,dynamic_method_specs) = Javaspecs.spec_file_to_method_specs spec_list in
