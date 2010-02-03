@@ -543,10 +543,12 @@ let get_frame (stmts : stmt_core list) (pre : Plogic.pform) (lo : logic) (abs_ru
   match stmts with 
     [] -> assert false
   | s::stmts -> 
-      let id = add_good_node ("Start") in  
+		  let id = add_good_node ("Start") in  
       make_start_node id;
       let rlogic_pre = Rlogic.convert pre in
-			(* an old expression is guaranteed to have only one exit point *)
-      let [post] = execute_core_stmt s (rlogic_pre, id) in 
+      let post = match execute_core_stmt s (rlogic_pre, id) with
+				| [p] -> p
+				| _ -> assert false  (* an old expression is guaranteed to have only one exit point *) 
+			in 
       let id_exit = add_good_node ("Exit") in 
       check_and_get_frame (rlogic_pre,id_exit) post
