@@ -34,6 +34,15 @@ let method_set_for_class  classname jfile  =
   let msigs = List.map (fun m -> Methdec.get_msig m classname) mdl in 
   msigs
 
+let verify_exports_implications implications logic_with_where_pred_defs =
+	List.iter (fun implication ->
+		let name,antecedent,consequent = implication in
+		if Prover.check_implication logic_with_where_pred_defs (Rlogic.convert antecedent) (Rlogic.convert consequent) then
+			(good(); if Config.symb_debug() then Printf.printf "\n\nVerification of exported implication %s succeeded!\n" name; reset();)
+		else
+			(warning(); if Config.symb_debug() then Printf.printf "\n\nVerification of exported implication %s failed!\n" name; reset();)
+	) implications
+
 let verify_class 
     jimple_file
     static_method_specs 

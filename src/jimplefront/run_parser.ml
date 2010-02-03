@@ -139,6 +139,15 @@ let main () =
 	
 	 let logic = Javaspecs.augmented_logic_for_class class_name spec_list logic in
 	
+	 (* Exports clause treatment *)
+	 let (logic_with_where_pred_defs,implications) = Javaspecs.logic_and_implications_for_exports_verification class_name spec_list logic in
+				(*Inspect the augmented logic as follows:*)
+	 			(*let _ = Prover.pprint_sequent_rules logic_with_where_pred_defs in*)
+	 let _ = Classverification.verify_exports_implications implications logic_with_where_pred_defs in
+				(* Since where predicates are local to the exports clause, we discard them after exports clause verification *)
+	 (* Build rules from the exported implications and augment the logic *)
+	 (* End of exports clause treatment *)
+	
 	 let (static_method_specs,dynamic_method_specs) = Javaspecs.spec_file_to_method_specs spec_list in
 	 
 	 if Config.symb_debug() then Printf.printf "\n\n Starting symbolic execution...";

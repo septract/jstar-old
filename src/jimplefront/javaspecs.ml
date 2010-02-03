@@ -95,9 +95,43 @@ let add_apf_to_logic logic apfdefines classname : Prover.logic =
   let rules = inner apfdefines rules in 
   (rules,rm,f)
 
-(* Specs to verification  *)
+let logic_with_where_pred_defs exportLocal_predicates logic =
+	List.fold_left (fun logic where_pred_def ->
+			let (name, args, body) = where_pred_def in
+			let sub = List.fold_left (fun sub argname -> add argname (Arg_var (Vars.fresha ())) sub) empty args in
+			let pred = P_SPred(name,List.map (fun argname -> Pterm.find argname sub) args) in
+			let defn = subst_pform sub body in
+			let parvars = Plogic.fv_form [pred] VarSet.empty in
+			let defvars = Plogic.fv_form defn VarSet.empty in
+			let sparevars = VarSet.diff defvars parvars in  
+			let pvarsubst = subst_kill_vars_to_fresh_prog sparevars in 
+			let evarsubst = subst_kill_vars_to_fresh_exist sparevars in 
+			let pdefinition = try subst_pform pvarsubst defn with Contradiction -> mkFalse in 
+			let edefinition = try subst_pform evarsubst defn with Contradiction -> mkFalse in
+			let rules,rm,f = logic in
+			let rules = rules @
+				(mk_seq_rule (([],[pred],[]),
+					[[[],pdefinition,([])]],
+					("exports_body_left_" ^ name))
+				::
+				mk_seq_rule (([],[],[pred]),
+					[[[],[],edefinition]],
+					("exports_body_right_" ^ name))
+				:: [])
+			in
+			(rules,rm,f)
+		) logic exportLocal_predicates
+	
 
-
+let logic_and_implications_for_exports_verification class_name spec_list logic =
+	let (_,_,exports_clause,_) = List.find (fun (cn,apf,exports_clause,specs) -> cn=class_name) spec_list in
+	match exports_clause with
+		| None -> (logic,[])
+		| Some (exported_implications,exportLocal_predicates) ->
+			let logic = logic_with_where_pred_defs exportLocal_predicates logic in
+			(logic,exported_implications) 
+			
+(* Specs to verification *)
 
 module MethodMap = 
   Map.Make(struct

@@ -1,0 +1,75 @@
+///////// View shifts ///////////////
+
+rule cc_to_cn_i:
+ | ?x : CCELL * Cc(?x,{val=?v;cnt=?c}) |- ?x : CCELL
+if
+ type(?x,"CCELL") | Cn(?x,{cnt=?c}) * Rest(?x,?v) |- 
+
+rule cc_to_cn_ii:
+ | ?x : CCELL * Cc(?x,{val=?v;cnt=?c1}) |- Cn(?x,{cnt=?c2})
+if
+ Cn(?x,{cnt=?c1}) | ?x : CCELL * Rest(?x,?v) |- ?c1=?c2
+
+rule cc_to_cn_iii:
+ | ?x : CCELL * Cc(?x,{val=?v1;cnt=?c}) |- Rest(?x,?v2)
+if
+ Rest(?x,?v2) | ?x : CCELL * Cn(?x,{cnt=?c}) |-
+
+rule cn_to_cc_i:
+ | ?x : CCELL * Cn(?x,{cnt=?c1}) * Rest(?x, ?v1) |- ?x : CCELL
+if
+ type(?x,"CCELL") | Cc(?x,{cnt=?c1;val=?v1}) |-
+
+rule cn_to_cc_ii:
+ | ?x : CCELL * Cn(?x,{cnt=?c1}) * Rest(?x, ?v1) |- Cc(?x,{val=?v2;cnt=?c2})
+if
+ Cc(?x,{val=?v1;cnt=?c1}) | ?x : CCELL |- ?c1=?c2 * ?v1=?v2
+
+rule cc_to_cell_i:
+ | ?x : CCELL * Cc(?x,{val=?v1;cnt=?c1}) |- ?x : CCELL
+if
+ type(?x,"CCELL") | Cell(?x,{val=?v1;cnt=?c1}) |-
+
+rule cc_to_cell_ii:
+ | ?x : CCELL * Cc(?x,{val=?v1;cnt=?c1}) |- Cell(?x,{val=?v2;cnt=?c2})
+if
+ Cell(?x,{val=?v2;cnt=?c2}) | ?x : CCELL |- 
+
+/////////////////////////////////////
+
+rewrite zero_plus_ten:
+ builtin_plus(numeric_const(0),numeric_const(10)) = numeric_const(10)
+
+/////////////////////////////////////
+
+
+
+rule cn_counter_equal:
+ | Cn$COUNTER(?x,{cnt=?c1}) |- Cn$COUNTER(?x,{cnt=?c2})
+if
+ Cn$COUNTER(?x,{cnt=?c1}) | |- ?c1=?c2
+
+rule cell_cell_equal:
+ | Cell$CELL(?x,{val=?v1}) |- Cell$CELL(?x,{val=?v2})
+if
+ Cell$CELL(?x,{val=?v1}) | |- ?v1=?v2
+
+rule sub_eq_hack:
+ | |- subeq({cnt=?c1},{cnt=?c2})
+if
+ | |- ?c1=?c2
+
+rule sub_eq_hack3:
+ | |- subeq({val=?v1;cnt=?c1},{val=?v2;cnt=?c2})
+if
+ | |- ?v1=?v2 * ?c1=?c2
+
+rule sub_eq_hack1:
+ | |- subeq({val=?v1;cnt=?c1},{val=?v2})
+if
+ | |- ?v1=?v2
+
+rule sub_eq_hack2:
+ | |- subeq({val=?v2},{val=?v1;cnt=?c1})
+if
+ | |- ?v1=?v2
