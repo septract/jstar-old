@@ -21,13 +21,15 @@ type apf_define = (string * var * fldlist * Plogic.pform * bool)
 
 type apf_defines = apf_define list
 
-type exported_implication = (string * Plogic.pform * Plogic.pform)
+type named_implication = (string * Plogic.pform * Plogic.pform)
 
 type exportLocal_predicate = (string * var list * Plogic.pform)
 
-type exports_clause = (exported_implication list * exportLocal_predicate list) option
+type exports_clause = (named_implication list * exportLocal_predicate list) option
 
-type class_spec = (class_name * apf_defines * exports_clause * methodspecs)
+type axioms_clause = named_implication list option
+
+type class_spec = (class_name * apf_defines * exports_clause * axioms_clause * methodspecs)
 
 
 

@@ -312,7 +312,7 @@ spec_file:
    | classspec spec_file { (NormalEntry $1) :: $2 }
 
 classspec: 
-   | file_type class_name L_BRACE apf_defines exports_clause methods_specs R_BRACE  { ($2,$4,$5,$6) }
+   | file_type class_name L_BRACE apf_defines exports_clause axioms_clause methods_specs R_BRACE  { ($2,$4,$5,$6,$7) }
 
 
 apf_defines: 
@@ -330,14 +330,18 @@ apf_define:
        { let a=match $5 with | Some b -> b | None -> [] in ($2,$4,a,$8,false) }
 			
 exports_clause:
-   | EXPORTS L_BRACE exported_implication_star R_BRACE WHERE L_BRACE exportLocal_predicate_def_star R_BRACE { Some ($3,$7) }
+   | EXPORTS L_BRACE named_implication_star R_BRACE WHERE L_BRACE exportLocal_predicate_def_star R_BRACE { Some ($3,$7) }
 	 | /*empty*/ {None}
 
-exported_implication_star:
-   | exported_implication exported_implication_star { $1 @ $2 }
+axioms_clause:
+	 | AXIOMS L_BRACE named_implication_star R_BRACE { Some $3 }
+	 | /*empty*/ {None}
+
+named_implication_star:
+   | named_implication named_implication_star { $1 @ $2 }
    | /*empty*/ { [] }
 
-exported_implication:
+named_implication:
    | identifier COLON formula IMP formula SEMICOLON { [($1,$3,$5)] }
    | identifier COLON formula BIMP formula SEMICOLON { [($1^"_forwards",$3,$5); ($1^"_backwards",$5,$3)] }
 

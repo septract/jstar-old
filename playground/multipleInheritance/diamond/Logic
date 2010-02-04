@@ -1,0 +1,10 @@
+rule sm_smusician_equal:
+ | SM$SMUSICIAN(?x,{age=?a1;exm=?e1;pfm=?p1}) |- SM$SMUSICIAN(?x,{age=?a2;exm=?e2;pfm=?p2})
+if
+ SM$SMUSICIAN(?x,{age=?a1;exm=?e1;pfm=?p1}) | |- ?a1=?a2 * ?e1=?e2 * ?p1=?p2
+
+rule sm_equal:
+ | SM(?x,{age=?a1;exm=?e1;pfm=?p1}) |- SM(?x,{age=?a2;exm=?e2;pfm=?p2})
+if
+ SM(?x,{age=?a1;exm=?e1;pfm=?p1}) | |- ?a1=?a2 * ?e1=?e2 * ?p1=?p2
+

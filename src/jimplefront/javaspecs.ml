@@ -174,7 +174,7 @@ let add_implications_to_logic (logic : Prover.logic) imps : Prover.logic =
 	(rules @ new_rules,rm,f)
 
 let logic_and_implications_for_exports_verification class_name spec_list logic =
-	let (_,_,exports_clause,_) = List.find (fun (cn,apf,exports_clause,specs) -> cn=class_name) spec_list in
+	let (_,_,exports_clause,_,_) = List.find (fun (cn,apf,exports_clause,axioms_clause,specs) -> cn=class_name) spec_list in
 	match exports_clause with
 		| None -> (logic,[])
 		| Some (exported_implications,exportLocal_predicates) ->
@@ -182,7 +182,7 @@ let logic_and_implications_for_exports_verification class_name spec_list logic =
 			(logic,exported_implications) 
 			
 let add_exported_implications_to_logic spec_list logic : Prover.logic =
-	let exported_implications = List.fold_left (fun imps (cn,apf,exports_clause,specs) ->
+	let exported_implications = List.fold_left (fun imps (cn,apf,exports_clause,axioms_clause,specs) ->
 		match exports_clause with
 			| None -> imps
 			| Some (exported_implications,_) -> exported_implications @ imps
@@ -217,7 +217,7 @@ let rec spec_list_to_spec specs =
        spec_conjunction spec (spec_list_to_spec specs)
  
 let class_spec_to_ms cs (smmap,dmmap) =
-  let (classname,apf,exports_clause,specs) = cs in 
+  let (classname,apf,exports_clause,axioms_clause,specs) = cs in 
   let cn = (*Pprinter.class_name2str*) classname in
   List.fold_left 
     (fun (smmap,dmmap) pre_spec
@@ -329,7 +329,7 @@ let spec_file_to_method_specs sf =
 let augmented_logic_for_class class_name sf logic =
   let rec add_globals_and_apf_info sf logic = 
     match sf with
-      (cn,apf,exports_clause,specs)::sf ->
+      (cn,apf,exports_clause,axioms_clause,specs)::sf ->
 				let apfs_to_add = if class_name=cn then apf else (List.filter (fun (a,b,x,y,w) -> w) apf) in
 				let logic = add_apf_to_logic logic apfs_to_add (Pprinter.class_name2str cn) in 
 				add_globals_and_apf_info sf logic
