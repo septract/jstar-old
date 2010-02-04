@@ -188,7 +188,14 @@ let add_exported_implications_to_logic spec_list logic : Prover.logic =
 			| Some (exported_implications,_) -> exported_implications @ imps
 		) [] spec_list in
 	add_implications_to_logic logic exported_implications
-			
+
+
+let implications_for_axioms_verification class_name spec_list =
+	let (_,_,_,axioms_clause,_) = List.find (fun (cn,apf,exports_clause,axioms_clause,specs) -> cn=class_name) spec_list in
+	match axioms_clause with
+		| None -> []
+		| Some named_implications -> named_implications
+
 (* Specs to verification *)
 
 module MethodMap = 

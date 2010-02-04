@@ -150,6 +150,11 @@ let main () =
 	 			(*let _ = Prover.pprint_sequent_rules logic in*)
 	 (* End of exports clause treatment *)
 	
+	 (* Axioms clause treatment *)
+	 let implications = Javaspecs.implications_for_axioms_verification class_name spec_list in
+	 let _ = Classverification.verify_axioms_implications class_name program implications logic in
+	 (* End of axioms clause treatment *)
+	
 	 let (static_method_specs,dynamic_method_specs) = Javaspecs.spec_file_to_method_specs spec_list in
 	 
 	 if Config.symb_debug() then Printf.printf "\n\n Starting symbolic execution...";
