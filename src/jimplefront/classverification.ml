@@ -43,6 +43,18 @@ let is_interface jimple_file =
 		| Jimple_global_types.JFile(_,Jparsetree.InterfaceFile,_,_,_,_) -> true
 		| _ -> false
 
+let parent_classes_and_interfaces (jfile : Jimple_global_types.jimple_file) =
+	let Jimple_global_types.JFile(_,_,_,parent_classes_opt,parent_interfaces_opt,_) = jfile in
+	let parent_classes = match parent_classes_opt with
+		| None -> []
+		| Some p_classes -> p_classes
+	in
+	let parent_interfaces = match parent_interfaces_opt with
+		| None -> []
+		| Some p_interfaces -> p_interfaces
+	in
+	parent_classes @ parent_interfaces
+
 let verify_exports_implications implications logic_with_where_pred_defs =
 	List.iter (fun implication ->
 		let name,antecedent,consequent = implication in
@@ -51,9 +63,11 @@ let verify_exports_implications implications logic_with_where_pred_defs =
 		else
 			(warning(); if Config.symb_debug() then Printf.printf "\n\nVerification of exported implication %s failed!\n" name; reset();)
 	) implications
-	
-let verify_axioms_implications class_name jimple_file implications logic =
+
+(* Check both proof obligations (Implication and Parent consistency) for each axiom in 'implications'. *)
+let verify_axioms_implications class_name jimple_file implications axiom_map logic =
 	let abstract_class_or_interface = is_class_abstract jimple_file || is_interface jimple_file in
+	let parents = parent_classes_and_interfaces jimple_file in
 	let conjunct = Jlogic.mk_type (Pterm.Arg_var Support_syntax.this_var) class_name in 
 	List.iter (fun implication ->
 		let name,antecedent,consequent = implication in
@@ -67,7 +81,26 @@ let verify_axioms_implications class_name jimple_file implications logic =
 				(warning(); if Config.symb_debug() then Printf.printf "\n\nImplication verification of axiom %s failed!\n" name; reset();)
 		;
 		(* Then we tackle the Parent consistency proof obligation *)
-		()
+		List.iter (fun parent ->
+			let parent_name = (Pprinter.class_name2str parent) in
+			try
+				let p_antecedent,p_consequent = AxiomMap.find (parent,name) axiom_map in
+				(* We must verify (antecedent=>consequent) => (p_antecedent=>p_consequent) *)
+				(* Since (a=>b) => (c=>d) is equivalent to *)
+				(* (c=>d) \/ [(c=>a) /\ (b=>d)], we do the following: *)
+				let c = Rlogic.convert p_antecedent in
+				let d = Rlogic.convert p_consequent in
+				if Prover.check_implication logic c d then
+					(good(); if Config.symb_debug() then Printf.printf "\n\nParent consistency verification of axiom %s succeeded w.r.t. %s!\n" name parent_name; reset();)
+				else
+					let a = Rlogic.convert antecedent in
+					let b = Rlogic.convert consequent in
+					if Prover.check_implication logic c a && Prover.check_implication logic b d then
+						(good(); if Config.symb_debug() then Printf.printf "\n\nParent consistency verification of axiom %s succeeded w.r.t. %s!\n" name parent_name; reset();)
+					else
+						(warning(); if Config.symb_debug() then Printf.printf "\n\nParent consistency verification of axiom %s failed w.r.t. %s!\n" name parent_name; reset();)
+			with Not_found -> ()
+		) parents
 	) implications
 
 let verify_class 

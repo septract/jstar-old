@@ -196,6 +196,26 @@ let implications_for_axioms_verification class_name spec_list =
 		| None -> []
 		| Some named_implications -> named_implications
 
+module AxiomMap =
+	Map.Make (struct
+		type t = class_name * string  (* the class name and axiom name *)
+		let compare = compare
+	end)
+	
+type axiom_map = (Plogic.pform * Plogic.pform) AxiomMap.t
+
+let spec_file_to_axiom_map spec_list =
+	let axiommap = ref (AxiomMap.empty) in
+	let _ = List.iter (fun (cn,_,_,axioms_clause,_) ->
+		match axioms_clause with
+			| None -> ()
+			| Some imps ->
+					List.iter (fun (name,antecedent,consequent) -> 
+						axiommap := AxiomMap.add (cn,name) (antecedent,consequent) (!axiommap)
+					) imps
+	) spec_list in
+	!axiommap
+
 (* Specs to verification *)
 
 module MethodMap = 
