@@ -1,0 +1,19 @@
+/*
+Implication:  
+  field(x,f,y) * list(y,f,z) |- list(x,f,z)  
+? True
+*/
+
+Implication:  
+  field(x,f,y) |- x!=nil()  
+? True
+
+Implication:  
+  list(x,f,y) |- x!=nil()  
+? True
+
+/*
+Implication:  
+  list(x,f,y) * list(y,f,z) |- list(x,f,z)  
+? True
+*/

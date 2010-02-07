@@ -1,0 +1,27 @@
+import "field_logic";
+
+
+rule list_base:
+ |  |- list(x, f, y)
+without
+  |- 
+if
+   |  |- field(x, f, y)
+
+/*
+rule list_case:
+ | list(v_3, v_2, v_1) |- 
+without
+  |-  
+if
+ | v_3 = x * v_2 = f * v_1 = y * field(x, f, y) |- 
+;  | v_3 = x * v_2 = f * v_1 = z * field(x, f, y) * list(y, f, z) |- 
+*/
+
+rule list_case:
+| list(v_3, v_2, v_1) |-
+without
+ |-
+if
+| field(v_3, v_2, v_1) |-
+;  | field(v_3, v_2, y) * list(y, v_2, v_1) |-

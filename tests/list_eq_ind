@@ -1,0 +1,5 @@
+import "field_logic";
+
+inductive list(x, f, y):
+  base: field(x, f, y)  |-  list(x,f,y);
+  conc: field(x, f, y) * list(y,f,z)  |-  list(x,f,z)

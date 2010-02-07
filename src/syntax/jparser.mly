@@ -1037,9 +1037,14 @@ inductive_file:
 ;
 
 /* Definitions for tactics file */
+
+rule_name_list_ne:
+   |  identifier { [$1] }
+   |  identifier COMMA rule_name_list_ne  { $1 :: $3 }
+
 rule_name_list:
-   |   {[]}
-   | identifier COMMA rule_name_list { $1::$3 }
+   |  {[]}
+   | rule_name_list_ne { $1 }
 
 tactic:
    | L_BRACKET rule_name_list R_BRACKET {Rule_names $2}

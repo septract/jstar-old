@@ -1,1 +1,1 @@
-for file in `ls *_test | sed "s/_test//"` ; do echo "Testing" $file; testharness  -f $file\_test -l $file\_logic; done
+for file in `ls *_test | sed "s/_test//"` ; do echo "Testing" $file; ../bin/testharness  -f $file\_test -l $file\_logic; done

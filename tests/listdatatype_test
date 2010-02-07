@@ -13,7 +13,7 @@ Implication:
 */
 
 Implication: 
-  | |- len(cons(_x,empty())) = builtin_plus(numeric_const("1"),numeric_const("0")) * _x = "a" |
+  |- len(cons(_x,empty())) = builtin_plus(numeric_const("1"),numeric_const("0")) * _x = "a"
 ? True
 
 /*
