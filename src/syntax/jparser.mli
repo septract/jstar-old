@@ -150,3 +150,5 @@ val test_file :
   (Lexing.lexbuf  -> token) -> Lexing.lexbuf -> Global_types.test list
 val inductive_file :
   (Lexing.lexbuf  -> token) -> Lexing.lexbuf -> Global_types.inductive_stmt list
+val tactic_file :
+  (Lexing.lexbuf  -> token) -> Lexing.lexbuf -> Global_types.tactic_spec

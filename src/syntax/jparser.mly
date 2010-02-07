@@ -298,6 +298,9 @@ let field_signature2str fs =
 %start inductive_file
 %type <Global_types.inductive_stmt list> inductive_file
 
+%start tactic_file
+%type <Global_types.tactic_spec> tactic_file
+
 %% /* rules */
 
 file:
@@ -1002,8 +1005,7 @@ test_file:
    | test test_file  {$1 :: $2}
 
 
-
-
+/* Definitions for inductive file */
 ind_impl:
    | formula VDASH identifier L_PAREN jargument_list R_PAREN /* consider formula_npv*/
        {
@@ -1032,6 +1034,19 @@ inductive:
 inductive_file: 
    | EOF  { [] }
    | inductive inductive_file  {$1 :: $2}
+;
 
+/* Definitions for tactics file */
+rule_name_list:
+   |   {[]}
+   | identifier COMMA rule_name_list { $1::$3 }
+
+tactic:
+   | L_BRACKET rule_name_list R_BRACKET {Rule_names $2}
+	 | L_PAREN tactic R_PAREN MULT {Repeat_spec $2}
+	 | CMPLT tactic QUESTIONMARK tactic COLON tactic CMPGT {IfMatch_spec ($2, $4, $6)}
+
+tactic_file:
+   | tactic EOF {$1}
 
 %% (* trailer *)

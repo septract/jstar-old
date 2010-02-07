@@ -96,3 +96,8 @@ type inductive_stmt = IndImport of string | IndDef of inductive
 (***************************************************
  end from inductive
 ***************************************************)
+
+type tactic_spec =
+	| Rule_names of string list
+	| Repeat_spec of tactic_spec
+	| IfMatch_spec of tactic_spec * tactic_spec * tactic_spec
