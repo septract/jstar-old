@@ -239,6 +239,7 @@ let field_signature2str fs =
 %token GARBAGE
 %token IMPORT 
 
+%token INDUCTIVE
 
 
 /* ============================================================= */
@@ -293,6 +294,9 @@ let field_signature2str fs =
 
 %start test_file
 %type <Global_types.test list> test_file
+
+%start inductive_file
+%type <Global_types.inductive_stmt list> inductive_file
 
 %% /* rules */
 
@@ -997,6 +1001,37 @@ test_file:
    | EOF  { [] }
    | test test_file  {$1 :: $2}
 
+
+
+
+ind_impl:
+   | formula VDASH identifier L_PAREN jargument_list R_PAREN /* consider formula_npv*/
+       {
+	 if List.length $5 = 1
+	 then ($1, $3,$5 @ [mkArgRecord []])
+	 else ($1, $3,$5)
+       }
+
+ind_con:
+   | identifier COLON ind_impl { {con_name = $1; con_def =$3} }
+
+ind_con_list:
+   |  /* empty */ { [] }
+   | ind_con {[$1]}
+   | ind_con SEMICOLON ind_con_list { $1::$3 }
+
+inductive:
+   | IMPORT STRING_CONSTANT SEMICOLON { IndImport($2) }
+   | INDUCTIVE identifier L_PAREN jargument_list R_PAREN COLON ind_con_list 
+       { 
+	 let con_args = if List.length $4 = 1
+	 then $4 @ [mkArgRecord []] else $4 in
+	 IndDef{ind_name = $2; ind_args = con_args; ind_cons = $7} 
+       }
+
+inductive_file: 
+   | EOF  { [] }
+   | inductive inductive_file  {$1 :: $2}
 
 
 %% (* trailer *)

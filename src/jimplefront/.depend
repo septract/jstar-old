@@ -1,0 +1,10 @@
+classverification.cmo: translatejimple.cmo support_symex.cmo methdec.cmo \
+    javaspecs.cmo 
+classverification.cmx: translatejimple.cmx support_symex.cmx methdec.cmx \
+    javaspecs.cmx 
+javaspecs.cmo: jlogic.cmo 
+javaspecs.cmx: jlogic.cmx 
+run_parser.cmo: support_symex.cmo javaspecs.cmo classverification.cmo 
+run_parser.cmx: support_symex.cmx javaspecs.cmx classverification.cmx 
+translatejimple.cmo: support_symex.cmo methdec.cmo jlogic.cmo javaspecs.cmo 
+translatejimple.cmx: support_symex.cmx methdec.cmx jlogic.cmx javaspecs.cmx 

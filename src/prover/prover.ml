@@ -886,18 +886,8 @@ let apply_contradiction seq =
   let _,(_,(_,_,cl),_) = seq in 
   if List.exists (fun c -> c=False) cl then None else Some seq
   
-(*  Refactor for frame inference *)
-let rec apply_rule_list logic (sequents : ts_sequent list) find_frame abs : ts_sequent list 
-    =
-(* Clear pretty print buffer *)
-  Buffer.clear buffer_dump;
-  let plain_rules = [] in 
-  let rules,(*emps,plain_rules,*)rwm,ep = logic in 
-  let n = 0 in
-  if true || !(Debug.debug_ref) then
-    (List.iter (fun seq -> Format.fprintf !dump "Goal@ %a@\n@\n" string_ts_seq seq) sequents;
-     Format.fprintf !dump "Start time :%f @\n" (Sys.time ()));
-  let rec apply_rule_list_inner sequents n : ts_sequent list = 
+let tidy_sequents logic sequents =
+  let rules,rwm,ep = logic in 
   (* Collapse Form in combined construct *)
   let sequents : ts_sequent list = List.map apply_rule_flatten sequents in
   (* substitute away equalities *)
@@ -926,7 +916,22 @@ let rec apply_rule_list logic (sequents : ts_sequent list) find_frame abs : ts_s
   (*  Apply subtarction *)
   let sequents : ts_sequent list = sequents_subtract sequents in
 (*  List.iter (fun seq -> Printf.printf "%s> %s\n" (String.make n '-') (string_ts_seq seq)) sequents;*)
-  (* Apply rules lots *)
+	sequents		
+	
+(*  Refactor for frame inference *)
+let rec apply_rule_list logic (sequents : ts_sequent list) find_frame abs : ts_sequent list 
+    =
+(* Clear pretty print buffer *)
+  Buffer.clear buffer_dump;
+  let plain_rules = [] in 
+  let rules,(*emps,plain_rules,*)rwm,ep = logic in 
+  let n = 0 in
+  if true || !(Debug.debug_ref) then
+    (List.iter (fun seq -> Format.fprintf !dump "Goal@ %a@\n@\n" string_ts_seq seq) sequents;
+     Format.fprintf !dump "Start time :%f @\n" (Sys.time ()));
+  let rec apply_rule_list_inner sequents n : ts_sequent list = 
+		let sequents = tidy_sequents logic sequents in 
+	  (* Apply rules lots *)
     List.flatten 
       (List.map 
 	 (fun seq -> 

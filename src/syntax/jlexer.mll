@@ -128,6 +128,7 @@ let keyword_al = [
   ("or",ORTEXT);
   ("abstraction",ABSRULE);
   ("equiv",EQUIV);
+  ( "inductive" , INDUCTIVE );
 ]
 
 

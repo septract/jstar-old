@@ -3,7 +3,7 @@ open Prover
 open System
 open Global_types
 
-let import_flatten dirs filename fileparser= 
+let import_flatten_extra_rules dirs filename extra_rules fileparser = 
   let rec import_flatten_inner dirs filename acc already_included = 
     let rel_dir = (Filename.dirname filename) in
     let filename = 
@@ -29,13 +29,15 @@ let import_flatten dirs filename fileparser=
 	    import_flatten_inner (rel_dir::dirs) filen acc already_included
 	| NormalEntry ent -> 
 	    (ent::acc, already_included)	    
-      ) (acc,already_included) file_entry_list 
+      ) (acc,already_included) (extra_rules@file_entry_list)
      )
   in
   fst (import_flatten_inner dirs filename [] [])
 
-let load_logic dirs filename =
-  let fileentrys = import_flatten dirs filename (Jparser.rule_file Jlexer.token) in  
+let import_flatten dirs filename fileparser = import_flatten_extra_rules dirs filename [] fileparser
+
+let load_logic_extra_rules dirs filename extra_rules =
+  let fileentrys = import_flatten_extra_rules dirs filename extra_rules (Jparser.rule_file Jlexer.token) in  
   let rl = expand_equiv_rules fileentrys in 
   let sl,rm = 
     List.fold_left
@@ -55,4 +57,4 @@ let load_logic dirs filename =
   in
   (sl,rm,default_pure_prover)
 
-
+let load_logic dirs filename = load_logic_extra_rules dirs filename []
