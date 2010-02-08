@@ -28,7 +28,8 @@ exception Class_defines_external_spec
 
 let apf name receiver params = [P_SPred(name,[Arg_var receiver; mkArgRecord params])]
 let apf_match name receiver params = [P_SPred(name,[Arg_var receiver; Arg_var params])]
-let not_null name = [P_NEQ(Arg_var name,Arg_op("nil",[]))]
+let not_null1 name = [P_NEQ(name,Arg_op("nil",[]))]
+let not_null name = not_null1 (Arg_var name)
 
 exception BadAPF of string
 (* TODO APF to logic *)
@@ -361,6 +362,10 @@ let augmented_logic_for_class class_name sf logic =
     | [] -> logic
 	in add_globals_and_apf_info sf logic
 
+let append_rules logic rules : Prover.logic = 
+	let old_rules,rm,f = logic in
+	(old_rules @ rules,rm,f)
+	
 
 (*
 For every class C and for each apf predicate P(x,{t1=a1;...;tn=an}) defined in C,
@@ -402,15 +407,88 @@ let add_common_apf_predicate_rules spec_list logic =
 		) apf
 	) spec_list in
 	let rules = List.flatten (List.flatten deep_rules) in
-	let old_rules,rm,f = logic in 
-  let new_rules = old_rules @ rules in 
-  (new_rules,rm,f)
+	append_rules logic rules
 
+(* Returns a list with elements (parent,child) *)
+let parent_relation spec_list =
+	List.fold_left (fun relation (classname,extends,implements,apf,exports,axioms,specs) ->
+		let parents = extends @ implements in
+		List.fold_left (fun rel p -> (p,classname) :: rel) relation parents
+	) [] spec_list
+	
+	
+let remove_duplicates list =
+	List.fold_left (fun rest element -> if List.mem element rest then rest else element :: rest) [] list
+
+let rec transitive_closure relation =
+	match relation with
+		| [] -> []
+		| (ancestor,descendent)::rest ->
+			let tr_close_rest = transitive_closure rest in
+			if List.mem (ancestor,descendent) tr_close_rest then
+				tr_close_rest
+			else
+				let lower = descendent :: List.map (fun (an,de) -> de) (List.filter (fun (an,de) -> descendent=an) tr_close_rest) in
+				let upper = ancestor :: List.map (fun (an,de) -> an) (List.filter (fun (an,de) -> ancestor=de) tr_close_rest) in
+				let new_pairs = List.fold_left (fun pairs an ->
+						List.fold_left (fun pairs de ->
+							(an,de) :: pairs
+						) pairs lower
+					) [] upper in
+				remove_duplicates (new_pairs @ tr_close_rest)
+	
+(*
+Adds a rule containing the transitive subtype relation, as well as one to reason 
+about whether an object is an instance (but not neccessarily a direct instance) of a type.
+
+For the first rule, if C inherits from B, which in turn inherits from A, then the following gets generated:
+
+rule subtype_relation_right:
+ | |- !subtype(?x,?y)
+if
+ | |- ?x=?y
+or
+ | |- ?x="C" * ?y="B"
+or
+ | |- ?x="B" * ?y="A"
+or
+ | |- ?x="C" * ?y="A"
+
+Here is the second rule:
+
+rule objsubtype_right:
+ | |- !objsubtype(?o,?c)
+if
+ | |- !type(?o,?d) * !subtype(?d,?c)
+or
+ | |- ?o!=nil() * !stattype(?o,_e) * !subtype(_e,?c)
+| 
+*)
+let add_subtype_and_objsubtype_rules spec_list logic =
+	let pr = parent_relation spec_list in
+	let tc = transitive_closure pr in
+	let x = Arg_var (Vars.fresha ()) in
+	let y = Arg_var (Vars.fresha ()) in
+	let premise : (Plogic.psequent list list) = 
+		[([],[],mkEQ(x,y))] ::
+		List.map (fun (ancestor,descendent) -> [[],[],[P_EQ(x,Jlogic.class2args descendent);P_EQ(y,Jlogic.class2args ancestor)]]) tc in
+	let subtype_rule = mk_seq_rule (([],[],Jlogic.mk_subtype1 x y),premise,"subtype_relation_right") in
+	let o = Arg_var (Vars.fresha ()) in
+	let c = Arg_var (Vars.fresha ()) in
+	let d = Arg_var (Vars.fresha ()) in
+	let e = Arg_var (Vars.freshe ()) in
+	let objsubtype_rule = mk_seq_rule (
+		([],[],[Jlogic.mk_objsubtyp1 o c]),
+		[[([],[],(Jlogic.mk_type1 o d) @ (Jlogic.mk_subtype1 d c))];
+		 [([],[],(not_null1 o) @ (Jlogic.mk_statictyp1 o e :: Jlogic.mk_subtype1 e c))]],
+		"objsubtype_right"
+	) in
+	append_rules logic [objsubtype_rule;subtype_rule]
+	
 
 (***************************************
    Refinement type stuff 
  ***************************************)
-
 
 
 

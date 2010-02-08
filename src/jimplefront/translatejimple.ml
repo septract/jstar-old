@@ -305,6 +305,60 @@ let get_dyn_spec_for m fields cname =
         in
         logical_vars_to_prog dynspec
 
+
+module LocalMap =
+	Map.Make (struct
+		type t = string
+		let compare = compare
+	end)
+	
+type local_map = Pterm.args list AxiomMap.t
+
+(*
+A jimple method body contains a list of local variable declarations.
+One rule is generated for every type appearing in the list.
+Example: for type T, suppose v1...vn are all the variables declared of type T.
+Then the following rule is generated for T:
+
+rule static_type_T:
+ | |- !statictype(?x,"T")
+if
+ | |- ?x=v1
+or
+ | |- ?x=v2
+...
+or
+ | |- ?x=vn 
+*)
+let jimple_locals2stattype_rules (locals : local_var list) : Prover.sequent_rule list =
+	let localmap = ref (LocalMap.empty) in
+	let _ = List.iter (fun (atype,name) ->
+		match atype with
+			| Some t -> 
+					let var = name2args name in
+					let typ = Pprinter.j_type2str t in
+					(try
+						let vars = LocalMap.find typ (!localmap) in
+						localmap := LocalMap.add typ (var :: vars) (!localmap)
+					with Not_found ->
+						localmap := LocalMap.add typ [var] (!localmap)
+					)
+			| None -> ()
+	) locals in
+	let x = Arg_var (Vars.fresha ()) in
+	LocalMap.fold (fun typ vars rules ->
+		let premise : (Plogic.psequent list list) = List.map (fun var -> [[],[],mkEQ(x,var)]) vars in
+		mk_seq_rule (
+			([],[],[mk_statictyp1 x (Arg_string typ)]),
+			premise,
+			"static_type_"^typ
+		) :: rules
+	) (!localmap) []
+	
+let add_static_type_info logic locals : Prover.logic =
+	let rules = jimple_locals2stattype_rules locals in
+	Javaspecs.append_rules logic rules
+
 (* implements a work-list fidex point algorithm *)
 (* the queue qu is a list of pairs [(node, expression option)...] the expression
 is used to deal with if statement. It is the expression of the if statement is the predecessor
@@ -357,7 +411,9 @@ let compute_fixed_point
                   if Methdec.has_body m then
                           let spec = get_spec_for m fields cname in
                           let body = jimple_stms2core m.bstmts in
-                          Symexec.verify body spec lo abs_rules
+													let l = add_static_type_info lo m.locals in
+													(*let _ = Prover.pprint_sequent_rules l in*)
+                          Symexec.verify body spec l abs_rules
                   else
                           ()
                   ;
@@ -365,17 +421,19 @@ let compute_fixed_point
                   if Methdec.has_requires_clause m then
                           let spec = get_requires_clause_spec_for m fields cname in
                           let body = jimple_stms2core m.req_stmts in
-                          Symexec.verify body spec lo abs_rules
+													let l = add_static_type_info lo m.req_locals in
+                          Symexec.verify body spec l abs_rules
                   else
                           ()
                   ;
                   (* verify the ensures clause if present *)
                   if Methdec.has_ensures_clause m then
                           let spec = get_dyn_spec_for m fields cname in
+													let l = add_static_type_info lo m.ens_locals in
                           let frames = List.map (fun oc -> 
                                 let body = jimple_stms2core oc in
-                                Symexec.get_frame body spec.pre lo abs_rules) m.old_stmts_list in
+                                Symexec.get_frame body spec.pre l abs_rules) m.old_stmts_list in
                           let body = jimple_stms2core m.ens_stmts in
-                          Symexec.verify_ensures body spec.post conjoin_with_res_true frames lo abs_rules
+                          Symexec.verify_ensures body spec.post conjoin_with_res_true frames l abs_rules
             ) mdl
 

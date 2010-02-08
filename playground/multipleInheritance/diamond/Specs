@@ -23,7 +23,7 @@ class PERSON
 		{P(@this:,{age=builtin_plus(_a,numeric_const(1))})};
 }
 
-class STUDENT
+class STUDENT extends PERSON
 {
 	define P(x, {age=a}) = P$PERSON(x,{age=a});
 	define S(x, {age=a;exm=e}) = P$STUDENT(x,{age=a}) * x.<STUDENT: int my_exams> |-> e;
@@ -52,7 +52,7 @@ class STUDENT
 	// And 3 specs from PERSON
 }
 
-class MUSICIAN
+class MUSICIAN extends PERSON
 {
 	define P(x, {age=a}) = P$PERSON(x,{age=a});
 	define M(x, {age=a;pfm=p}) = P$MUSICIAN(x,{age=a}) * x.<MUSICIAN: int my_performances> |-> p;
@@ -81,7 +81,7 @@ class MUSICIAN
 	// And 3 more from PERSON
 }
 
-class SMUSICIAN
+class SMUSICIAN extends STUDENT, MUSICIAN
 {
 	define P(x,{age=a}) = P$PERSON(x,{age=a});
 	define S(x,{age=a;exm=e}) = S$STUDENT(x,{age=a;exm=e});
@@ -104,9 +104,9 @@ class SMUSICIAN
 		{}
 		{SM$(@this:,{age=@parameter0:;exm=@parameter1:;pfm=@parameter2:})};
 
-	void test() :
-		{SM$(@this:,{age=_a;exm=_e;pfm=_p})}
-		{@this:!=nil()};
+//	void test() :
+//		{SM$(@this:,{age=_a;exm=_e;pfm=_p})}
+//		{@this:!=nil()};
 
 	void do_exam_performance() :
 		{SM(@this:,{age=_a;exm=_e;pfm=_p})}

@@ -14,11 +14,11 @@ class SMUSICIAN extends STUDENT, MUSICIAN {
 		specialinvoke r0.<MUSICIAN: void <init>(int,int)>(r1,r3);
 	}
 
-	void test()
-	{
-		SMUSICIAN r0;
-		r0 := @this: SMUSICIAN;
-	}
+//	void test()
+//	{
+//		SMUSICIAN r0;
+//		r0 := @this: SMUSICIAN;
+//	}
 
 	void do_exam_performance()
 	{

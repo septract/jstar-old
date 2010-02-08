@@ -139,6 +139,8 @@ let main () =
 	
 	 let logic = Javaspecs.augmented_logic_for_class class_name spec_list logic in
 	 let logic = Javaspecs.add_common_apf_predicate_rules spec_list logic in
+	 (* Axioms use the "subtype" and "objsubtype" relation - see jlogic.ml *)
+	 let logic = Javaspecs.add_subtype_and_objsubtype_rules spec_list logic in
 	
 	 (* Exports clause treatment *)
 	 let (logic_with_where_pred_defs,implications) = Javaspecs.logic_and_implications_for_exports_verification class_name spec_list logic in
