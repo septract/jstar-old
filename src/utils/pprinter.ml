@@ -247,12 +247,12 @@ let member2str = function
         method_body2str ec ^"\n"^ method_body2str mb
 
 let extends_clause2str = function
-  |None -> ""
-  |Some cl -> "extends "^(list2str class_name2str cl " ")
+  |[] -> ""
+  |cl -> "extends "^(list2str class_name2str cl " ")
 
 let implements_clause2str = function
-  | None -> "" 
-  | Some cl -> "implements "^(list2str class_name2str cl " ")
+  | [] -> "" 
+  | cl -> "implements "^(list2str class_name2str cl " ")
 
 let jimple_file2str = function
   | JFile (ml,j,c,e,i,meml) -> 

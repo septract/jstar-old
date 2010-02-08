@@ -104,6 +104,10 @@ class SMUSICIAN
 		{}
 		{SM$(@this:,{age=@parameter0:;exm=@parameter1:;pfm=@parameter2:})};
 
+	void test() :
+		{SM$(@this:,{age=_a;exm=_e;pfm=_p})}
+		{@this:!=nil()};
+
 	void do_exam_performance() :
 		{SM(@this:,{age=_a;exm=_e;pfm=_p})}
 		{SM(@this:,{age=_a;exm=builtin_plus(_e,numeric_const(1));pfm=builtin_plus(_p,numeric_const(1))})};

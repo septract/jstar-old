@@ -392,12 +392,12 @@ file_type:
    | INTERFACE { InterfaceFile }
        
 extends_clause:
-   | EXTENDS class_name_list {Some $2}
-   | /* empty */ {None}
+   | EXTENDS class_name_list { $2 }
+   | /* empty */ { [] }
 ;
 implements_clause:
-   | IMPLEMENTS class_name_list {Some $2}
-   | /* empty */ { None }
+   | IMPLEMENTS class_name_list { $2 }
+   | /* empty */ { [] }
 ;
 file_body:
    | L_BRACE member_list_star R_BRACE {$2}

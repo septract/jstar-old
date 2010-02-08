@@ -44,15 +44,7 @@ let is_interface jimple_file =
 		| _ -> false
 
 let parent_classes_and_interfaces (jfile : Jimple_global_types.jimple_file) =
-	let Jimple_global_types.JFile(_,_,_,parent_classes_opt,parent_interfaces_opt,_) = jfile in
-	let parent_classes = match parent_classes_opt with
-		| None -> []
-		| Some p_classes -> p_classes
-	in
-	let parent_interfaces = match parent_interfaces_opt with
-		| None -> []
-		| Some p_interfaces -> p_interfaces
-	in
+	let Jimple_global_types.JFile(_,_,_,parent_classes,parent_interfaces,_) = jfile in
 	parent_classes @ parent_interfaces
 
 let verify_exports_implications implications logic_with_where_pred_defs =
@@ -109,7 +101,7 @@ let verify_class
     dynamic_method_specs 
     logic 
     abslogic = 
-  let Jimple_global_types.JFile(modifiers,_,class_name,clpar_opt,implements_opt,_) = jimple_file in
+  let Jimple_global_types.JFile(modifiers,_,class_name,_,_,_) = jimple_file in
 	let abstract_class_or_interface = is_class_abstract jimple_file || is_interface jimple_file in
 (* call symbolic execution for all methods of this class *)
   let _ = Translatejimple.compute_fixed_point jimple_file logic abslogic static_method_specs dynamic_method_specs in 
@@ -134,47 +126,25 @@ let verify_class
 	      else 
 					(warning();Printf.printf "\n\nDynamic spec is not consistent with static for %s!\n" (Pprinter.name2str mname);reset()(*; 
 	         assert false*));
-      (* Check BS *)
+      (* Check Behavioural Subtyping *)
       if Jparsetree.constructor mname then () else
-      ((match clpar_opt with
-      |	None -> assert false
-      |	Some clpars -> 
-					List.iter (fun clpar -> 
+			(List.iter (fun parent -> 
 				  (try 
-				    let par_dyn_spec = MethodMap.find (clpar,rtype,mname,params) dynamic_method_specs in	 
+				    let par_dyn_spec = MethodMap.find (parent,rtype,mname,params) dynamic_method_specs in	 
 				    if refinement logic my_dyn_spec par_dyn_spec  then 
 				      (good();if Config.symb_debug() then Printf.printf "\n\nBehavioural subtyping succeeds for %s in %s w.r.t. %s!\n" 
 					(Pprinter.name2str mname) 
 					(Pprinter.class_name2str class_name)
-					(Pprinter.class_name2str clpar); reset())
+					(Pprinter.class_name2str parent); reset())
 				    else 
 				      (warning();Printf.printf "\n\nBehavioural subtyping fails for %s in %s w.r.t. %s!\n" 
 					(Pprinter.name2str mname) 
 					(Pprinter.class_name2str class_name)
-					(Pprinter.class_name2str clpar); reset();
+					(Pprinter.class_name2str parent); reset();
 				      (*assert false;*))
 				  with Not_found -> ()))
-				    clpars;
-      (match implements_opt with
-	Some interpars -> 
-	  List.iter (fun interpar -> 
-	    (try 
-	    let par_dyn_spec = MethodMap.find (interpar,rtype,mname,params) dynamic_method_specs in	 
-	    if refinement logic my_dyn_spec par_dyn_spec  then 
-	      (if Config.symb_debug() then Printf.printf "\n\nBehavioural subtyping succeeds for %s in %s w.r.t. %s!\n" 
-		(Pprinter.name2str mname) 
-		(Pprinter.class_name2str class_name)
-		(Pprinter.class_name2str interpar))
-	    else 
-	      (Printf.printf "\n\nBehavioural subtyping fails for %s in %s w.r.t. %s!\n" 
-		(Pprinter.name2str mname) 
-		(Pprinter.class_name2str class_name)
-		(Pprinter.class_name2str interpar);
-	      (*assert false;*))
-	  with Not_found -> ()))
-	    interpars
-      | None -> ())));
-
+				    (parent_classes_and_interfaces jimple_file))
+      ;
       match method_type msig with
    (* if new *)
       |	New -> ()

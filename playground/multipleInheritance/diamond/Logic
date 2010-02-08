@@ -1,0 +1,43 @@
+
+rule instance_of:
+ | |- !instance_of(?o,?c)
+if
+ | |- !type(?o,?d) * !inherit(?d,?c)
+or
+ | |- ?o!=nil() * !stattype(?o,_e) * !inherit(_e,?c)
+
+//////////////////////////////////////////////////////////////////////////
+
+// For class SMUSICIAN:
+
+rule SM_S_forward_1:
+ | SM(?x,{age=?a1;exm=?e1;pfm=?p1}) |- S(?x,{age=?a2;exm=?e2})
+if
+ S(?x,{age=?a1;exm=?e1}) | RestSMtoS(?x,{pfm=?p1}) |- !instance_of(?x,"SMUSICIAN") * ?a1=?a2 * ?e1=?e2
+
+rule SM_S_forward_2:
+ | SM(?x,{age=?a1;exm=?e1;pfm=?p1}) |- RestSMtoS(?x,{pfm=?p2})
+if
+ RestSMtoS(?x,{pfm=?p1}) | S(?x,{age=?a1;exm=?e1}) |- !instance_of(?x,"SMUSICIAN") * ?p1=?p2
+
+//////////////////////////////////////////////////////////////////////////
+
+rule inheritance:
+ | |- !inherit(?x,?y)
+if
+ | |- ?x=?y
+or
+ | |- ?x="SMUSICIAN" * ?y="STUDENT"
+or
+ | |- ?x="SMUSICIAN" * ?y="MUSICIAN"
+or
+ | |- ?x="SMUSICIAN" * ?y="PERSON"
+or
+ | |- ?x="STUDENT" * ?y="PERSON"
+or
+ | |- ?x="MUSICIAN" * ?y="PERSON"
+
+rule r0_static_type:
+ | |- !stattype(?x,"SMUSICIAN")
+if
+ | |- ?x=r0
