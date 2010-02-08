@@ -152,9 +152,7 @@ let rules_for_implication imp : Prover.sequent_rule list =
 						let var_newvar_pairs = VarSet.fold (fun var pairs -> (var,Vars.fresha ()) :: pairs) free_anyvars [] in
 						let sub = List.fold_left (fun sub (var,newvar) -> add var (Arg_var newvar) sub) empty var_newvar_pairs in
 						let new_other_args = List.map (subst_args sub) other_args in
-						let equalities : Plogic.pform =
-                                                        List.map (fun
-                                                                (var,newvar) -> P_EQ(Arg_var var,Arg_var newvar)) var_newvar_pairs in
+						let equalities : Plogic.pform = List.map (fun (var,newvar) -> P_EQ(Arg_var var,Arg_var newvar)) var_newvar_pairs in
 						(P_SPred(pred_name,first_arg :: new_other_args),equalities)
 				| _ -> (conjunct,[])
 			in
@@ -174,7 +172,7 @@ let add_implications_to_logic (logic : Prover.logic) imps : Prover.logic =
 	(rules @ new_rules,rm,f)
 
 let logic_and_implications_for_exports_verification class_name spec_list logic =
-	let (_,_,exports_clause,_,_) = List.find (fun (cn,apf,exports_clause,axioms_clause,specs) -> cn=class_name) spec_list in
+	let (_,_,_,_,exports_clause,_,_) = List.find (fun (cn,extends,implements,apf,exports_clause,axioms_clause,specs) -> cn=class_name) spec_list in
 	match exports_clause with
 		| None -> (logic,[])
 		| Some (exported_implications,exportLocal_predicates) ->
@@ -182,7 +180,7 @@ let logic_and_implications_for_exports_verification class_name spec_list logic =
 			(logic,exported_implications) 
 			
 let add_exported_implications_to_logic spec_list logic : Prover.logic =
-	let exported_implications = List.fold_left (fun imps (cn,apf,exports_clause,axioms_clause,specs) ->
+	let exported_implications = List.fold_left (fun imps (cn,extends,implements,apf,exports_clause,axioms_clause,specs) ->
 		match exports_clause with
 			| None -> imps
 			| Some (exported_implications,_) -> exported_implications @ imps
@@ -191,7 +189,7 @@ let add_exported_implications_to_logic spec_list logic : Prover.logic =
 
 
 let implications_for_axioms_verification class_name spec_list =
-	let (_,_,_,axioms_clause,_) = List.find (fun (cn,apf,exports_clause,axioms_clause,specs) -> cn=class_name) spec_list in
+	let (_,_,_,_,_,axioms_clause,_) = List.find (fun (cn,extends,implements,apf,exports_clause,axioms_clause,specs) -> cn=class_name) spec_list in
 	match axioms_clause with
 		| None -> []
 		| Some named_implications -> named_implications
@@ -206,7 +204,7 @@ type axiom_map = (Plogic.pform * Plogic.pform) AxiomMap.t
 
 let spec_file_to_axiom_map spec_list =
 	let axiommap = ref (AxiomMap.empty) in
-	let _ = List.iter (fun (cn,_,_,axioms_clause,_) ->
+	let _ = List.iter (fun (cn,_,_,_,_,axioms_clause,_) ->
 		match axioms_clause with
 			| None -> ()
 			| Some imps ->
@@ -244,7 +242,7 @@ let rec spec_list_to_spec specs =
        spec_conjunction spec (spec_list_to_spec specs)
  
 let class_spec_to_ms cs (smmap,dmmap) =
-  let (classname,apf,exports_clause,axioms_clause,specs) = cs in 
+  let (classname,extends,implements,apf,exports_clause,axioms_clause,specs) = cs in 
   let cn = (*Pprinter.class_name2str*) classname in
   List.fold_left 
     (fun (smmap,dmmap) pre_spec
@@ -356,7 +354,7 @@ let spec_file_to_method_specs sf =
 let augmented_logic_for_class class_name sf logic =
   let rec add_globals_and_apf_info sf logic = 
     match sf with
-      (cn,apf,exports_clause,axioms_clause,specs)::sf ->
+      (cn,extends,implements,apf,exports_clause,axioms_clause,specs)::sf ->
 				let apfs_to_add = if class_name=cn then apf else (List.filter (fun (a,b,x,y,w) -> w) apf) in
 				let logic = add_apf_to_logic logic apfs_to_add (Pprinter.class_name2str cn) in 
 				add_globals_and_apf_info sf logic
@@ -381,7 +379,7 @@ if
 let add_common_apf_predicate_rules spec_list logic =
 	let make_apf = apf in
 	let recvar = Vars.fresha () in
-	let deep_rules = List.map (fun (classname,apf,exports,axioms,specs) ->
+	let deep_rules = List.map (fun (classname,extends,implements,apf,exports,axioms,specs) ->
 		let classname = Pprinter.class_name2str classname in
 		List.map (fun ((name,receiver,parameters, definition, global) : Spec_def.apf_define) ->
 			let args1,args2,eqs = List.fold_right (fun (fld,arg) (args1,args2,eqs) ->

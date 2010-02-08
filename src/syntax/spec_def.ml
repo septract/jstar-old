@@ -29,7 +29,7 @@ type exports_clause = (named_implication list * exportLocal_predicate list) opti
 
 type axioms_clause = named_implication list option
 
-type class_spec = (class_name * apf_defines * exports_clause * axioms_clause * methodspecs)
+type class_spec = (class_name * extends_clause * implements_clause * apf_defines * exports_clause * axioms_clause * methodspecs)
 
 
 
