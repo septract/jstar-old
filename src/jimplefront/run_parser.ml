@@ -156,6 +156,8 @@ let main () =
 	 let implications = Javaspecs.implications_for_axioms_verification class_name spec_list in
 	 let axiom_map = Javaspecs.spec_file_to_axiom_map spec_list in
 	 let _ = Classverification.verify_axioms_implications class_name program implications axiom_map logic in
+	 let logic = Javaspecs.add_axiom_implications_to_logic spec_list logic in
+	 (*let _ = Prover.pprint_sequent_rules logic in*)
 	 (* End of axioms clause treatment *)
 	
 	 let (static_method_specs,dynamic_method_specs) = Javaspecs.spec_file_to_method_specs spec_list in

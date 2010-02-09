@@ -123,21 +123,23 @@ let logic_with_where_pred_defs exportLocal_predicates logic =
 			(rules,rm,f)
 		) logic exportLocal_predicates
 
-let rules_for_implication imp : Prover.sequent_rule list =
+(* The rules for prov => imp, where prov is the implication's proviso *)
+let rules_for_implication imp prov : Prover.sequent_rule list =
 	let name,antecedent,consequent = imp in
 	(* imp is assumed to contain only program variables and existential variables *)
 	(* to build a rule, we substitute all program variables (but no existentials) with fresh anyvars *)
-	let free_vars = Plogic.fv_form (Plogic.pconjunction antecedent consequent) VarSet.empty in
+	let free_vars = Plogic.fv_form (Plogic.pconjunction prov (Plogic.pconjunction antecedent consequent)) VarSet.empty in
 	let free_prog_vars = VarSet.filter (fun var -> match var with PVar _ -> true | _ -> false) free_vars in
 	let sub = VarSet.fold (fun var sub -> add var (Arg_var (Vars.fresha ())) sub) free_prog_vars empty in
+	let proviso : Plogic.pform = try subst_pform sub prov with Contradiction -> mkFalse in
 	let antecedent : Plogic.pform = try subst_pform sub antecedent with Contradiction -> mkFalse in
 	let consequent = try subst_pform sub consequent with Contradiction -> mkFalse in
-	(* General idea: for P ==> (Q1 * Q2 * ... * Qn), we build n rules of the form *)
+	(* General idea: for Prov => (P ==> (Q1 * Q2 * ... * Qn)), we build n rules of the form *)
 	(*  | P |- Qi *)
 	(* if *)
-	(*  Qi | Q1 * ... * Qi-1 * Qi+1 * ... * Qn |- *)
+	(*  Qi | Q1 * ... * Qi-1 * Qi+1 * ... * Qn |- Prov *)
 	(* Should Qi be a P_SPred, then we substitute the anyvars occurring in its 2nd, 3rd etc. arguments with fresh anyvars in the rule's conclusion, *)
-	(* and make the anyvar equalities proof obligations in the rule's premise. *)
+	(* and make the anyvar equalities proof obligations in the rule's premise along with Prov. *)
 	let split conjuncts =
 		let rec split_inner list others =
 			match list with
@@ -158,7 +160,7 @@ let rules_for_implication imp : Prover.sequent_rule list =
 				| _ -> (conjunct,[])
 			in
 			mk_seq_rule (([],antecedent,[qi]),
-				[[[conjunct],others,eqs]], (* Note the use of conjunct here and not qi. *)
+				[[[conjunct],others,Plogic.pconjunction eqs proviso]], (* Note the use of conjunct here and not qi. *)
 				name)
 		) (split consequent) in
 	(* Finally, adjust the sequent rule names *)
@@ -166,11 +168,10 @@ let rules_for_implication imp : Prover.sequent_rule list =
 		(counter-1,(a,b,name^(string_of_int counter),d,e)::list)
 	) rules (List.length rules,[]) in
 	rules
-
-let add_implications_to_logic (logic : Prover.logic) imps : Prover.logic =
-	let new_rules = List.flatten (List.map (fun imp -> rules_for_implication imp) imps) in
-	let rules,rm,f = logic in
-	(rules @ new_rules,rm,f)
+	
+let append_rules logic rules : Prover.logic = 
+	let old_rules,rm,f = logic in
+	(old_rules @ rules,rm,f)
 
 let logic_and_implications_for_exports_verification class_name spec_list logic =
 	let (_,_,_,_,exports_clause,_,_) = List.find (fun (cn,extends,implements,apf,exports_clause,axioms_clause,specs) -> cn=class_name) spec_list in
@@ -186,8 +187,8 @@ let add_exported_implications_to_logic spec_list logic : Prover.logic =
 			| None -> imps
 			| Some (exported_implications,_) -> exported_implications @ imps
 		) [] spec_list in
-	add_implications_to_logic logic exported_implications
-
+	let new_rules = List.flatten (List.map (fun imp -> rules_for_implication imp []) exported_implications) in
+	append_rules logic new_rules
 
 let implications_for_axioms_verification class_name spec_list =
 	let (_,_,_,_,_,axioms_clause,_) = List.find (fun (cn,extends,implements,apf,exports_clause,axioms_clause,specs) -> cn=class_name) spec_list in
@@ -361,10 +362,6 @@ let augmented_logic_for_class class_name sf logic =
 				add_globals_and_apf_info sf logic
     | [] -> logic
 	in add_globals_and_apf_info sf logic
-
-let append_rules logic rules : Prover.logic = 
-	let old_rules,rm,f = logic in
-	(old_rules @ rules,rm,f)
 	
 
 (*
@@ -416,7 +413,6 @@ let parent_relation spec_list =
 		List.fold_left (fun rel p -> (p,classname) :: rel) relation parents
 	) [] spec_list
 	
-	
 let remove_duplicates list =
 	List.fold_left (fun rest element -> if List.mem element rest then rest else element :: rest) [] list
 
@@ -436,7 +432,22 @@ let rec transitive_closure relation =
 						) pairs lower
 					) [] upper in
 				remove_duplicates (new_pairs @ tr_close_rest)
-	
+
+(* Works only if the relation is acyclic, which the inheritance relation should be *)
+let rec topological_sort relation =
+	match relation with
+		| [] -> []
+		| _ ->
+				let ancestors = remove_duplicates (List.map (fun (an,de) -> an) relation) in
+				let no_incoming = List.filter (fun e -> (List.filter (fun (an,de) -> e=de) relation) = []) ancestors in
+				if no_incoming = [] then
+					assert false (* The relation is cyclic *)
+				else
+					let pairs,others = List.partition (fun (an,de) -> List.mem an no_incoming) relation in
+					let rest = List.filter (fun (_,de) -> (List.filter (fun (a,d) -> a=de || d=de) others) = []) pairs in
+					let rest = remove_duplicates (List.map (fun (_,de) -> de) rest) in
+					no_incoming @ rest @ (topological_sort others)
+
 (*
 Adds a rule containing the transitive subtype relation, as well as one to reason 
 about whether an object is an instance (but not neccessarily a direct instance) of a type.
@@ -485,6 +496,37 @@ let add_subtype_and_objsubtype_rules spec_list logic =
 	) in
 	append_rules logic [objsubtype_rule;subtype_rule]
 	
+module AxiomMap2 =
+	Map.Make (struct
+		type t = class_name  (* the class name and axiom name *)
+		let compare = compare
+	end)
+	
+type axiom_map2 = named_implication list AxiomMap2.t
+
+let spec_file_to_axiom_map2 spec_list =
+	let axiommap = ref (AxiomMap2.empty) in
+	let _ = List.iter (fun (cn,_,_,_,_,axioms_clause,_) ->
+		match axioms_clause with
+			| None -> axiommap := AxiomMap2.add cn [] (!axiommap)
+			| Some imps -> axiommap := AxiomMap2.add cn imps (!axiommap)
+	) spec_list in
+	!axiommap
+
+let add_axiom_implications_to_logic spec_list logic : Prover.logic = 
+	let pr = parent_relation spec_list in
+	let ts = topological_sort pr in
+	let axiommap = spec_file_to_axiom_map2 spec_list in
+	let new_rules = List.fold_right (fun cl rules ->
+		try
+			let named_imps : named_implication list = AxiomMap2.find cl axiommap in
+			let proviso = [mk_objsubtyp (Arg_var this_var) cl] in
+			let clname = Pprinter.class_name2str cl in
+			let new_rules = List.fold_right (fun (n,a,c) ruls ->  rules_for_implication ("axiom_"^clname^"_"^n,a,c) proviso @ ruls) named_imps [] in
+			new_rules @ rules
+		with Not_found -> assert false
+	) ts [] in
+	append_rules logic new_rules
 
 (***************************************
    Refinement type stuff 
