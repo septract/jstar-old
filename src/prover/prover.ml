@@ -5,7 +5,7 @@
  
 *******************************************************************)
 
-
+open Prover_types
 
 open Vars
 open Misc
@@ -43,8 +43,6 @@ let filter_eq_eq pl =
   let ret = List.filter (fun x -> match x with EQ(r1,r2) -> not (rep_eq r1 r2) | _ -> true) pl in
   ret
 
-
-type sequent_rule = psequent * (psequent list list) * string * ((* without *) pform * pform) * (where list)
 
 
 (* if sequent matches, then replace with each thing  in the sequent list *)
@@ -92,10 +90,14 @@ let default_pure_prover =
     | _ -> false) , 
   (fun x y -> [])
 
-type logic = sequent_rule list * Rlogic.rewrite_map * external_prover
+type logic = tactical * Rlogic.rewrite_map * external_prover
 
-let empty_logic : logic = [],Rterm.rm_empty, default_pure_prover
+let empty_logic : logic = (Rules []),Rterm.rm_empty, default_pure_prover
 
+(* Running the prover with default_tactical rules *)
+(* should be equivalent to running the old implementation *)
+(* of the prover on rules *)
+let default_tactical rules = Repeat (Rules rules)
 
 let external_proof ep ts pl_assume rs p_goal = 
   false
@@ -767,8 +769,8 @@ let ask_the_audience ep ts p1 rs =
   | _ ->  make_equal ts eqs (empty_subst())
 *)
 
-
-let rec sequents_backtrack  f (seqss : ts_sequent list list) xs
+(* let rec sequents_backtrack  f (seqss : ts_sequent list list) xs *)
+let rec sequents_backtrack  f seqss xs
     =
   match seqss with 
     [] -> raise (Failed_eg xs)
@@ -917,7 +919,110 @@ let tidy_sequents logic sequents =
   let sequents : ts_sequent list = sequents_subtract sequents in
 (*  List.iter (fun seq -> Printf.printf "%s> %s\n" (String.make n '-') (string_ts_seq seq)) sequents;*)
 	sequents		
-	
+
+let rec lifted_apply_tactic_till_fail logic abs failing seqs =
+	let slim f s = let (_,r) = f s in r in
+	let rec apply_tactic_till_fail logic failing seq =
+	  (* check for base sequents *)
+	  if true || !(Debug.debug_ref) then Format.fprintf !dump ">@[%a@]@\n@." string_ts_seq  seq;
+	  match seq with 
+	   | ts,(f,(p1,s1,c1),(p2,[],[Wand(Form(p21,s21,c21),Form(p22,s22,c22))])) (* very simple wand case *)
+		   -> apply_tactic_till_fail logic failing (ts,(f,(p21@p1,s21@s1,c21@c1),(p22@p2,s22,c22)))
+	   | _ ->  
+		let tactic,rwm,ep = logic in
+		match tactic with
+			|	Rules rules -> 
+				Format.printf "Rules: %i@\n" (List.length rules);
+				(
+					try (false, List.flatten (apply_rule_list_once rules seq ep))
+ 	    	  with No_match -> 
+					Format.printf "   No rules match@\n";
+						(true, failing seq)
+				)
+			| Repeat tc ->
+				let (failed,seqss) = apply_tactic_till_fail (tc,rwm,ep) failing seq in
+				Format.printf "Repeat: %a@\n" string_ts_seq (List.hd seqss);
+				if failed then (true, seqss)
+				else (false, sequents_backtrack (slim (apply_tactic_till_fail logic failing)) seqss [])
+			| IfMatch (tc_if,tc_then,tc_else) ->
+					Format.printf "IfMatch";
+				let failing_if = apply_tactic_till_fail (tc_else,rwm,ep) failing in
+				let (failed,seqss) = apply_tactic_till_fail (tc_if,rwm,ep) (slim failing_if) seq in
+				(failed, sequents_backtrack (slim (apply_tactic_till_fail (tc_then,rwm,ep) failing)) seqss [])
+	in
+	let seqs = tidy_sequents logic seqs in
+	let apply = slim (apply_tactic_till_fail logic failing) in
+	List.flatten (List.map apply seqs)
+
+(* same as apply_rule_list *)
+(* but replace calls to apply_rule_list_once *)
+(* with calls to apply_tactic_once *)
+let rec apply_tactic logic (sequents : ts_sequent list) find_frame abs : ts_sequent list =
+(* Clear pretty print buffer *)
+(*  Buffer.clear buffer_dump;	*)
+  let tactic,rwm,ep = logic in
+  if true || !(Debug.debug_ref) then
+    (List.iter (fun seq -> Format.fprintf !dump "Goal@ %a@\n@\n" string_ts_seq seq) sequents;
+     Format.fprintf !dump "Start time :%f @\n" (Sys.time ()));
+	let plain_rules = [] in	
+  	Format.printf "Goals: %i@\n" (List.length sequents);
+	let at_fail seq = match seq with  (* no more rules apply: see if we have a plain contradiction *)  
+		 | ts,(f,(p1,s1,c1),(p2,s2,c2)) -> 
+		     if true || !(Debug.debug_ref) then Format.fprintf !dump "Find plain contradiction:\n";
+		     try apply_plain_prove_contra plain_rules ep (ts,(f,s1,c1)) p1 (* Prove plain thing *)
+		     with Failed -> raise (Failed_eg [seq])
+		 | _ -> raise Failed
+	in
+	let try_right seq =
+		let seqs = apply_rule_or_right seq in
+		let seqs = List.map (List.map apply_rule_flatten) seqs in 
+		sequents_backtrack (lifted_apply_tactic_till_fail logic abs at_fail) seqs []
+	in
+	let try_left seq =
+	  Format.printf "  Trying left@\n";		
+		let seqs = apply_rule_or_left seq in 
+		let seqs = List.map apply_rule_flatten seqs  
+		in lifted_apply_tactic_till_fail logic abs try_right seqs
+	in
+	let check_done seq =
+	  Format.printf "  Checking done@\n";
+		try
+			(
+		match seq with  (* no more rules apply: see if we have done the proof *)  
+		 | ts,(f,(p1,s1,c1),(p2,[],[])) -> 
+			  Format.printf "..almost..@\n";
+		     if find_frame || (s1=[] && c1=[]) then 
+		       try 
+			       let res = apply_plain_prove plain_rules ep (ts,(f,s1,c1)) p1 p2 in (* Prove plain thing *)
+						 Format.printf "...%i@\n" (List.length res);
+						 res
+		       with Failed -> 
+					Format.printf "..plain fail..@\n";
+			 (if (c1=[]) then raise (Failed_eg [seq]) else raise No_match)
+		     else 
+				  (
+					Format.printf "..raise stakes..@\n";
+					raise No_match
+					)
+		 | ts,(f,(p1,s1,c1),f2) ->
+			  Format.printf "..nope, ask friend..@\n";		     
+		     (* ask the audience *)
+	       (try 
+	         let sub = ask_the_audience ep ts p1 (rv_sequent (f,(p1,s1,c1),f2)) in 
+	         lifted_apply_tactic_till_fail logic abs try_left [ts, subst_sequent sub (f,(p1,s1,c1),f2)] 
+	        with Contradiction -> [])
+			)
+		with No_match -> try_left seq
+	in
+	let try_rewrite seq =
+	  Format.printf "  Rewriting@\n";
+		let seq = rewrites_sequent rwm ep abs true seq in
+		lifted_apply_tactic_till_fail logic abs check_done [seq]
+	in
+	let res = lifted_apply_tactic_till_fail logic abs try_rewrite sequents in
+	if true || !(Debug.debug_ref) then Format.fprintf !dump "End time :%f @\n@?" (Sys.time ()); res
+
+			
 (*  Refactor for frame inference *)
 let rec apply_rule_list logic (sequents : ts_sequent list) find_frame abs : ts_sequent list 
     =
@@ -1067,7 +1172,7 @@ let rec get_frames2 (seqs : ts_sequent list)
  *)
 let check_implication_frame_inner logic ts heap1 heap2 =
   try
-     let frames = get_frames (apply_rule_list logic [ts,([],heap1,heap2)] true false) in
+     let frames = get_frames (apply_tactic logic [ts,([],heap1,heap2)] true false) in
      frames
   with 
     Failed -> [] 
@@ -1088,15 +1193,15 @@ let check_implication_frame_pform logic (ts1,heap1) pheap  =
 let abs logic (ts,heap1)  =
   try
     let seqs = 	[ts,([],heap1,([],[],[]))] in 
-    get_frames2 (apply_rule_list logic seqs true true) 
+    get_frames2 (apply_tactic logic seqs true true) 
   with Failed -> []
   | Failed_eg x-> prover_counter_example := x;  []
 
 let check_implication_inner logic ts heap1 heap2 =
 (*  let subs = Logic.concrete_subs() in 
   let heap1 = subst_form subs heap1 in *)
-  try 
-    ignore (get_frames (apply_rule_list logic [ts,([],heap1,heap2)] false false)); true
+  try
+    ignore (get_frames (apply_tactic logic [ts,([],heap1,heap2)] false false)); true
   with Failed -> false
   | Failed_eg x -> prover_counter_example := x ; false
 

@@ -24,7 +24,7 @@ endif
 export LIB
 
 
-CORESOURCE = pterm.ml plogic.ml rterm.ml rlogic.ml prover.ml sepprover.ml
+CORESOURCE = pterm.ml plogic.ml rterm.ml rlogic.ml prover_types.ml prover.ml sepprover.ml
 LIBRARYSOURCE = $(CORESOURCE)
 
 LIBRARY = SOURCES="$(LIBRARYSOURCE)" \

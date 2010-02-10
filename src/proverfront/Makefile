@@ -27,7 +27,7 @@ export LIB
 #external_interface.mli 
 #external_interface.ml  
 
-PROVERSOURCE = run.ml 
+PROVERSOURCE = inductive.ml tactic.ml run.ml 
 
 #TESTPROVERSOURCE = $(CORESOURCE) logic_parser.mly logic_lexer.mll load_logic.ml test.ml
 TESTPROVERSOURCE = inductive.ml tactic.ml test.ml

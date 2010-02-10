@@ -210,10 +210,13 @@ module SepProver = struct
       
 
     let add_sequent_rule (sr : sequent_rule) ((sl,rm,ep) : logic) : logic =
-      let sr = ((sr.conclusion,sr.premises,sr.name,(sr.without,[]),[])) in
+			(sl,rm,ep)
+(* Not sure how to do this with tactics...
+			  let sr = ((sr.conclusion,sr.premises,sr.name,(sr.without,[]),[])) in
 (*      Printf.printf "Adding rule: \n%s" (Prover.string_psr sr) ;*)
       (sl @ [sr] , rm, ep)
-     
+*)
+		     
     (******************************************
        Entailment operations
      ******************************************)

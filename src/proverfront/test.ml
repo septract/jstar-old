@@ -48,13 +48,18 @@ let main () =
   else if !logic_file_name="" then
     Format.printf "Logic file name not specified. Can't continue....@\n %s @\n" usage_msg
   else 
-    let rl = if !inductive_file_name <> "" then Inductive.convert_inductive_file !inductive_file_name else [] in
-    let logic = load_logic_extra_rules (System.getenv_dirlist "JSTAR_LOGIC_LIBRARY") !logic_file_name rl in
+    let rl =
+			if !inductive_file_name <> "" then Inductive.convert_inductive_file !inductive_file_name
+		  else [] in
+    let (rules, rwm) = load_logic_extra_rules (System.getenv_dirlist "JSTAR_LOGIC_LIBRARY") !logic_file_name rl in
 		let tactic = 
-			if !tactic_file_name <> "" then Tactic.load_tactic !tactic_file_name logic
-			else Tactic.logic_to_default_tactical logic in
+			if !tactic_file_name <> "" then Tactic.load_tactic !tactic_file_name rules
+			else 
+				(Format.printf "No tactic file specified, generating default tactic@\n";
+				 Prover.default_tactical rules) in
+		let logic = (tactic, rwm, Prover.default_pure_prover) in
     let s = System.string_of_file !program_file_name  in
-    if !(Debug.debug_ref) then Format.printf "Start parsing tests in %s...@\n" !program_file_name;
+    if true || !(Debug.debug_ref) then Format.printf "Start parsing tests in %s...@\n" !program_file_name;
     let test_list  = Jparser.test_file Jlexer.token (Lexing.from_string s) 
     in if !(Debug.debug_ref) then Format.printf "Parsed %s!@\n" !program_file_name;
     List.iter (

@@ -8,12 +8,21 @@ open Load
 
 let program_file_name = ref "";;
 let logic_file_name = ref "";;
+let inductive_file_name = ref "";;
+let tactic_file_name = ref "";;
  
 let set_file_name n = 
   program_file_name := n 
 
 let set_logic_file_name n = 
   logic_file_name := n 
+
+let set_inductive_file_name n = 
+  inductive_file_name := n 
+
+let set_tactic_file_name n = 
+  tactic_file_name := n 
+
 
 let f = Debug.debug_ref := false
 
@@ -22,20 +31,28 @@ let set_verbose_mode () =
 
 let arg_list =[ ("-f", Arg.String(set_file_name ), "program file name" );
 		("-l", Arg.String(set_logic_file_name ), "logic file name" ); 
+		("-i", Arg.String(set_inductive_file_name ), "inductive file name" );
+		("-t", Arg.String(set_tactic_file_name ), "tactic file name" );
 	        ("-v", Arg.Unit(set_verbose_mode), "Verbose proofs");]
 
 
 
 let main () =
-  let usage_msg="Usage: -f <file_name> -l <logic_file_name>" in 
+  let usage_msg="Usage: -f <file_name> -l <logic_file_name> [-i <inductive_file_name>] [-t <tactic_file_name>]" in 
   Arg.parse arg_list (fun s ->()) usage_msg;
 
   if !program_file_name="" then 
     Printf.printf "File name not specified. Can't continue....\n %s \n" usage_msg
   else if !logic_file_name="" then
     Printf.printf "Logic file name not specified. Can't continue....\n %s \n" usage_msg
-  else 
-    let logic = load_logic (System.getenv_dirlist "JSTAR_LOGIC_LIBRARY") !logic_file_name in
+  else		
+    let rl = if !inductive_file_name <> "" then Inductive.convert_inductive_file !inductive_file_name else [] in
+    let (rules, rwm) = load_logic_extra_rules (System.getenv_dirlist "JSTAR_LOGIC_LIBRARY") !logic_file_name rl in
+		let tactic = 
+			(*if !tactic_file_name <> "" then Tactic.load_tactic !tactic_file_name rules
+			else*) Prover.default_tactical rules in
+		let logic = (tactic, rwm, Prover.default_pure_prover) in
+		
 (*    let s = System.string_of_file !program_file_name  in*)
     let question_list = System.parse_file Jparser.question_file Jlexer.token !program_file_name "Questions" true in
 
@@ -69,5 +86,6 @@ let main () =
 	then Printf.printf("Equal!\n\n") else Printf.printf("Not equal!\n\n")*)
   )
       question_list
+
 
 let _ = main ()

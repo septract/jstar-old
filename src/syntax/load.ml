@@ -55,6 +55,6 @@ let load_logic_extra_rules dirs filename extra_rules =
 	| EquivRule(r) -> assert false
       ) ([],Rterm.rm_empty) rl
   in
-  (sl,rm,default_pure_prover)
+  (sl,rm)
 
 let load_logic dirs filename = load_logic_extra_rules dirs filename []

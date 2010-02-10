@@ -124,12 +124,13 @@ let main () =
 	 (fun s ->  Sys.set_signal s (Sys.Signal_handle (fun x -> Symexec.pp_dotty_transition_system (); exit x)))
 	 [Sys.sigint; Sys.sigquit; Sys.sigterm];
        try 
-	 let logic = 
+	 let rules,rwm = 
 	     Load.load_logic  (System.getenv_dirlist "JSTAR_LOGIC_LIBRARY") !logic_file_name
 	 in 
+   let logic = (Prover.default_tactical rules, rwm, Prover.default_pure_prover) in
+	 let abs_rules,abs_rwm = Load.load_logic  (System.getenv_dirlist "JSTAR_LOGIC_LIBRARY") !absrules_file_name in
+	 let abs_logic = (Prover.default_tactical abs_rules, abs_rwm, Prover.default_pure_prover) in
 	
-	 let abs_rules = Load.load_logic  (System.getenv_dirlist "JSTAR_LOGIC_LIBRARY") !absrules_file_name in
-	 
 	 let spec_list = Load.import_flatten 
 	     (System.getenv_dirlist "JSTAR_SPECS_LIBRARY")
 	     !spec_file_name
@@ -138,7 +139,7 @@ let main () =
 	 let (static_method_specs,dynamic_method_specs) = Javaspecs.spec_file_to_method_specs spec_list apfmap in
 	 
 	 if Config.symb_debug() then Printf.printf "\n\n Starting symbolic execution...";
-	 Classverification.verify_class program static_method_specs dynamic_method_specs apfmap logic abs_rules ;
+	 Classverification.verify_class program static_method_specs dynamic_method_specs apfmap logic abs_logic ;
 	   (*Symexec.compute_fixed_point program apfmap logic abs_rules static_method_specs dynamic_method_specs*)
 	 Symexec.pp_dotty_transition_system () 
        with Assert_failure (e,l,c) -> Printf.printf "Error!!! Assert failure %s line %d character %d\n" e l c

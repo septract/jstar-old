@@ -6,6 +6,7 @@ open Pterm
 open Plogic 
 open Rlogic
 open Prover
+open Prover_types
 
 type 'a importoption =
     ImportEntry of string 

@@ -7,7 +7,7 @@
 *******************************************************************)
 
 
-(* Support functions for simbolic execution and misc conversion facilities *)
+(* Support functions for symbolic execution and misc conversion facilities *)
 
 
 open Vars
@@ -33,7 +33,7 @@ let not_null name = [P_NEQ(Arg_var name,Arg_op("nil",[]))]
 exception BadAPF of string
 (* TODO APF to logic *)
 let add_apf_to_logic logic apfdefines classname : Prover.logic = 
-  let make_rules_from_defs (name,receiver,parameters, definition, global) rules = 
+  let make_rules_from_defs (name,receiver,parameters, definition, global) = 
 (* special variables to match the record as pattern matcher isn't that clever *)
     let recvar = Vars.fresha () in 
     let definition = subst_pform (add receiver (Arg_var recvar) empty)  definition in 
@@ -56,7 +56,6 @@ let add_apf_to_logic logic apfdefines classname : Prover.logic =
     let edefinition = try subst_pform evarsubst definition with Contradiction -> mkFalse in 
     let bodyname = name ^ "$" ^ classname in 
 (* open on left *)
-    rules @ 
     (mk_seq_rule (([],(objtype recvar classname)&&&(apf_match name recvar paramvar),[]),
 		  [[([],((objtype recvar classname)&&&(apf_match bodyname recvar paramvar)),[])]],
 		  ("apf_open_left_" ^ name))
@@ -89,11 +88,11 @@ let add_apf_to_logic logic apfdefines classname : Prover.logic =
   in let rec inner apfdefines rules =
     match apfdefines with
       [] -> rules
-    | apf::apfdefines -> inner apfdefines (make_rules_from_defs apf rules)
+    | apf::apfdefines -> inner apfdefines (make_rules_from_defs apf)@rules
   in 
-  let rules,rm,f = logic in 
-  let rules = inner apfdefines rules in 
-  (rules,rm,f)
+  let tc,rm,f = logic in 
+  let rules = inner apfdefines [] in 
+  (Prover_types.IfMatch ((Prover_types.Rules rules), tc, tc),rm,f)
 
 (* Specs to verification  *)
 
