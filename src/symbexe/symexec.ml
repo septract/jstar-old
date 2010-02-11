@@ -11,6 +11,7 @@ open Pterm
 open Plogic
 open Rlogic
 open Prover
+open Jimple_global_types
 
 
 open Cfg_core

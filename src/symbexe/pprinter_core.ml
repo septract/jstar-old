@@ -3,6 +3,7 @@ open Pterm
 open Plogic
 open Methdec_core
 open Specification
+open Jimple_global_types
 (* =================== PPrinter for core  ============================ *)
 
 let rec args2str  arg = 
@@ -52,6 +53,8 @@ let spec2str ppf (spec: spec)  =
   Format.fprintf ppf "@[{%a}@]@ @[{%a}@]"
     string_form spec.pre
     string_form spec.post
+
+let () = pprinter_core_spec2str := ((Debug.toString spec2str) : (spec -> string))
   
   
 let variable_list2str lv =

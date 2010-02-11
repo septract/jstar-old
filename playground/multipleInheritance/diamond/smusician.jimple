@@ -10,7 +10,13 @@ class SMUSICIAN extends STUDENT, MUSICIAN {
 		r1 := @parameter0: int;
 		r2 := @parameter1: int;
 		r3 := @parameter2: int;
+		// All ancestor attributes jump to life!
+		{} : {} {r0.<PERSON: int my_age> |-> _ * r0.<STUDENT: int my_exams> |-> _ * r0.<MUSICIAN: int my_performances> |-> _};
+		// Consume the attributes used by STUDENT's constructor
+		{} : {r0.<STUDENT: int my_exams> |-> _ * r0.<PERSON: int my_age> |-> _} {};
 		specialinvoke r0.<STUDENT: void <init>(int,int)>(r1,r2);
+		// Consume the attributes used by MUSICIAN's constructor
+		{} : {r0.<MUSICIAN: int my_performances> |-> _ * r0.<PERSON: int my_age> |-> _} {};
 		specialinvoke r0.<MUSICIAN: void <init>(int,int)>(r1,r3);
 	}
 

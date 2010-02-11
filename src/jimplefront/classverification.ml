@@ -11,6 +11,7 @@ open Global_types
 open Specification
 open Javaspecs
 open Support_symex
+open Jimple_global_types
 
 let warning () =
   Printf.printf "%c[%d;%d;%dm"  (Char.chr 0x1B ) 5  (1 + 30) (0 + 40)
@@ -60,7 +61,7 @@ let verify_exports_implications implications logic_with_where_pred_defs =
 let verify_axioms_implications class_name jimple_file implications axiom_map logic =
 	let abstract_class_or_interface = is_class_abstract jimple_file || is_interface jimple_file in
 	let parents = parent_classes_and_interfaces jimple_file in
-	let conjunct = Jlogic.mk_type (Pterm.Arg_var Support_syntax.this_var) class_name in 
+	let conjunct = Jlogic.mk_type (Arg_var Support_syntax.this_var) class_name in 
 	List.iter (fun implication ->
 		let name,antecedent,consequent = implication in
 		(* We first tackle the Implication proof obligation if the class is not abstract or an interface. *)

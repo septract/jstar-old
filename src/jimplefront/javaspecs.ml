@@ -21,6 +21,7 @@ open Jparsetree
 open Prover
 open Support_syntax
 open Specification
+open Jimple_global_types
 
 exception Class_defines_external_spec
 
@@ -522,7 +523,11 @@ let add_axiom_implications_to_logic spec_list logic : Prover.logic =
 			let named_imps : named_implication list = AxiomMap2.find cl axiommap in
 			let proviso = [mk_objsubtyp (Arg_var this_var) cl] in
 			let clname = Pprinter.class_name2str cl in
-			let new_rules = List.fold_right (fun (n,a,c) ruls ->  rules_for_implication ("axiom_"^clname^"_"^n,a,c) proviso @ ruls) named_imps [] in
+			let new_rules = List.fold_right (fun (n,a,c) ruls ->
+				let freevars = Plogic.fv_form (Plogic.pconjunction a c) VarSet.empty in
+				let p = if VarSet.mem this_var freevars then proviso else [] in 
+				rules_for_implication ("axiom_"^clname^"_"^n,a,c) p
+				@ ruls) named_imps [] in
 			new_rules @ rules
 		with Not_found -> assert false
 	) ts [] in

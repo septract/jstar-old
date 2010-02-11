@@ -10,6 +10,7 @@ open Pterm
 open Plogic
 open Pprinter
 open Support_syntax
+open Jimple_global_types
 
 let class2args cl = Arg_string (class_name2str cl)
 

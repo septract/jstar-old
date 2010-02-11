@@ -4,6 +4,7 @@ F#*)
 
 open Debug
 open Rterm
+open Jimple_global_types
 
 module SepProver = struct
 
@@ -33,11 +34,11 @@ module SepProver = struct
 
     type term = Pterm.args
 
-    let mkVar : var -> term = fun x -> Pterm.Arg_var x
+    let mkVar : var -> term = fun x -> Arg_var x
 
-    let mkFun : string -> term list -> term = fun n tl -> Pterm.Arg_op(n, tl)
+    let mkFun : string -> term list -> term = fun n tl -> Arg_op(n, tl)
 
-    let mkString : string -> term = fun n -> Pterm.Arg_string(n)
+    let mkString : string -> term = fun n -> Arg_string(n)
 
     (*************************************
        Syntactic representation of formula

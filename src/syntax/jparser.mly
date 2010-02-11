@@ -36,7 +36,7 @@ let msig_simp (typ,name,args_list) =
 let bind_spec_vars (typ,name,args_list) {pre=pre;post=post;excep=excep} =
   (* Make substitution to normalise names *)
   let subst = Pterm.empty in 
-  let subst = Pterm.add (newPVar("this")) (Pterm.Arg_var(Support_syntax.this_var)) subst in 
+  let subst = Pterm.add (newPVar("this")) (Arg_var(Support_syntax.this_var)) subst in 
   (* For each name that is given convert to normalised param name*)
   let _,subst = 
     List.fold_left 
@@ -47,7 +47,7 @@ let bind_spec_vars (typ,name,args_list) {pre=pre;post=post;excep=excep} =
 	 | ty,Some str -> 
 	     Pterm.add 
 	       (newPVar(str)) 
-	       (Pterm.Arg_var(Support_syntax.parameter_var n)) 
+	       (Arg_var(Support_syntax.parameter_var n)) 
 	       subst
 	)) 
 	  (0,subst) args_list in
@@ -579,6 +579,7 @@ statement:
    | RETURN immediate_question_mark SEMICOLON  {Return_stmt($2)}       
    | THROW immediate SEMICOLON     {Throw_stmt($2)}        
    | invoke_expr SEMICOLON     {Invoke_stmt($1)}       
+	 | L_BRACE lvariable_list R_BRACE COLON spec SEMICOLON {Spec_stmt($2,$5)}
 ;
 immediate_question_mark:
    | immediate {Some $1}
@@ -625,6 +626,10 @@ array_descriptor_list_plus:
 ;
 array_descriptor:
   L_BRACKET immediate_question_mark R_BRACKET { $2 }
+;
+variable_list:
+	 | /*empty*/  {[]}
+	 | variable variable_list { $1 :: $2 } 
 ;
 variable:
    |reference {Var_ref($1)}

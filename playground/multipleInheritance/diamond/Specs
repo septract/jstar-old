@@ -99,6 +99,7 @@ class SMUSICIAN extends STUDENT, MUSICIAN
 		SM_S: SM(@this:,{age=a;exm=e;pfm=p}) <=> S(@this:,{age=a;exm=e}) * RestSMtoS(@this:,{pfm=p});
 		SM_M: SM(@this:,{age=a;exm=e;pfm=p}) <=> M(@this:,{age=a;pfm=p}) * RestSMtoM(@this:,{exm=e});
 		S_M: S(@this:,{age=a;exm=e}) * RestSMtoS(@this:,{pfm=p}) <=> M(@this:,{age=a;pfm=p}) * RestSMtoM(@this:,{exm=e});
+		s_student_to_fields: S$STUDENT(x,{age=a;exm=e}) => x.<PERSON: int my_age> |-> a * RestStoP$STUDENT(x,{exm=e});
 	}
 
 	void <init>(int,int,int) :

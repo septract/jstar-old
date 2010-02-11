@@ -15,20 +15,13 @@ open Rterm
 open Pterm
 open Plogic
 open Prover
+open Jimple_global_types
 
 
+module ClassMap = Jimple_global_types.Specification_ClassMap
 
-module ClassMap =   
-  Map.Make(struct
-    type t = string
-    let compare = compare
-  end)
-
-type excep_post = Plogic.pform ClassMap.t 
-type spec = 
-    { pre : Plogic.pform;
-      post : Plogic.pform;
-      excep : excep_post }
+type excep_post = Jimple_global_types.specification_excep_post
+type spec = Jimple_global_types.specification_spec
 
 let mk_spec  pre post excep = 
     { pre=pre;

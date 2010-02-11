@@ -206,6 +206,7 @@ let jimple_statement2core_statement s : core_statement list =
       if Config.symb_debug() then Printf.printf "\n Translating a jimple Invoke statement %s \n" (Pprinter.statement2str s);      
       let spec,param=get_spec e in
       [Assignment_core ([],spec,List.map immediate2args param)]
+	| Spec_stmt(vars,spec) -> [Assignment_core (vars,spec,[])]
 
 (* ================   ==================  *)
 

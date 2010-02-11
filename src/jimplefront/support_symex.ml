@@ -14,6 +14,7 @@ open Rlogic
 open Config
 open Jparsetree
 open Support_syntax
+open Jimple_global_types
 
 
 let file = ref ""
