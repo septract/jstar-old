@@ -449,6 +449,18 @@ let rec topological_sort relation =
 					let rest = remove_duplicates (List.map (fun (_,de) -> de) rest) in
 					no_incoming @ rest @ (topological_sort others)
 
+(* This returns a list of all classes mentioned in spec_file, including those without parents or children *)
+let a_topological_ordering_of_all_classes spec_file =
+	let pr = parent_relation spec_file in
+	let ts = topological_sort pr in
+	let others = List.fold_right (fun (classname,extends,implements,apf,exports,axioms,specs) classlist ->
+		if List.mem classname ts then
+			classlist
+		else
+			classname :: classlist
+		) spec_file [] in
+	ts @ others
+
 (*
 Adds a rule containing the transitive subtype relation, as well as one to reason 
 about whether an object is an instance (but not neccessarily a direct instance) of a type.
@@ -515,8 +527,7 @@ let spec_file_to_axiom_map2 spec_list =
 	!axiommap
 
 let add_axiom_implications_to_logic spec_list logic : Prover.logic = 
-	let pr = parent_relation spec_list in
-	let ts = topological_sort pr in
+	let classlist = a_topological_ordering_of_all_classes spec_list in
 	let axiommap = spec_file_to_axiom_map2 spec_list in
 	let new_rules = List.fold_right (fun cl rules ->
 		try
@@ -530,7 +541,7 @@ let add_axiom_implications_to_logic spec_list logic : Prover.logic =
 				@ ruls) named_imps [] in
 			new_rules @ rules
 		with Not_found -> assert false
-	) ts [] in
+	) classlist [] in
 	append_rules logic new_rules
 
 (***************************************
