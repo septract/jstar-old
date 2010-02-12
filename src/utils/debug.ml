@@ -57,3 +57,13 @@ let rec list_format_optional start sep f ppf list =
 
 let toString  f a : string = 
   Format.fprintf (Format.str_formatter) "%a" f a ; Format.flush_str_formatter ()
+	
+
+let warning () =
+  Printf.printf "%c[%d;%d;%dm"  (Char.chr 0x1B ) 5  (1 + 30) (0 + 40)
+
+let good () =
+  Printf.printf "%c[%d;%d;%dm"  (Char.chr 0x1B ) 1  (2 + 30) (0 + 40)
+
+let reset () =
+  Printf.printf "%c[%d;%d;%dm" (Char.chr 0x1B) 0 (7 + 30) (0 + 40)

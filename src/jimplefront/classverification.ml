@@ -12,15 +12,7 @@ open Specification
 open Javaspecs
 open Support_symex
 open Jimple_global_types
-
-let warning () =
-  Printf.printf "%c[%d;%d;%dm"  (Char.chr 0x1B ) 5  (1 + 30) (0 + 40)
-
-let good () =
-  Printf.printf "%c[%d;%d;%dm"  (Char.chr 0x1B ) 1  (2 + 30) (0 + 40)
-
-let reset () =
-  Printf.printf "%c[%d;%d;%dm" (Char.chr 0x1B) 0 (7 + 30) (0 + 40)
+open Debug
 
 type methodType = 
     Overridden

@@ -22,6 +22,7 @@ open Prover
 open Support_syntax
 open Specification
 open Jimple_global_types
+open Debug
 
 exception Class_defines_external_spec
 
@@ -191,11 +192,59 @@ let add_exported_implications_to_logic spec_list logic : Prover.logic =
 	let new_rules = List.flatten (List.map (fun imp -> rules_for_implication imp []) exported_implications) in
 	append_rules logic new_rules
 
-let implications_for_axioms_verification class_name spec_list =
-	let (_,_,_,_,_,axioms_clause,_) = List.find (fun (cn,extends,implements,apf,exports_clause,axioms_clause,specs) -> cn=class_name) spec_list in
-	match axioms_clause with
-		| None -> []
-		| Some named_implications -> named_implications
+(* Returns a list with elements (parent,child) *)
+let parent_relation spec_list =
+	List.fold_left (fun relation (classname,extends,implements,apf,exports,axioms,specs) ->
+		let parents = extends @ implements in
+		List.fold_left (fun rel p -> (p,classname) :: rel) relation parents
+	) [] spec_list
+	
+let remove_duplicates list =
+	List.fold_left (fun rest element -> if List.mem element rest then rest else element :: rest) [] list
+
+let rec transitive_closure relation =
+	match relation with
+		| [] -> []
+		| (ancestor,descendent)::rest ->
+			let tr_close_rest = transitive_closure rest in
+			if List.mem (ancestor,descendent) tr_close_rest then
+				tr_close_rest
+			else
+				let lower = descendent :: List.map (fun (an,de) -> de) (List.filter (fun (an,de) -> descendent=an) tr_close_rest) in
+				let upper = ancestor :: List.map (fun (an,de) -> an) (List.filter (fun (an,de) -> ancestor=de) tr_close_rest) in
+				let new_pairs = List.fold_left (fun pairs an ->
+						List.fold_left (fun pairs de ->
+							(an,de) :: pairs
+						) pairs lower
+					) [] upper in
+				remove_duplicates (new_pairs @ tr_close_rest)
+
+(* Works only if the relation is acyclic, which the inheritance relation should be *)
+let rec topological_sort relation =
+	match relation with
+		| [] -> []
+		| _ ->
+				let ancestors = remove_duplicates (List.map (fun (an,de) -> an) relation) in
+				let no_incoming = List.filter (fun e -> (List.filter (fun (an,de) -> e=de) relation) = []) ancestors in
+				if no_incoming = [] then
+					assert false (* The relation is cyclic *)
+				else
+					let pairs,others = List.partition (fun (an,de) -> List.mem an no_incoming) relation in
+					let rest = List.filter (fun (_,de) -> (List.filter (fun (a,d) -> a=de || d=de) others) = []) pairs in
+					let rest = remove_duplicates (List.map (fun (_,de) -> de) rest) in
+					no_incoming @ rest @ (topological_sort others)
+
+(* This returns a list of all classes mentioned in spec_file, including those without parents or children *)
+let a_topological_ordering_of_all_classes spec_file =
+	let pr = parent_relation spec_file in
+	let ts = topological_sort pr in
+	let others = List.fold_right (fun (classname,extends,implements,apf,exports,axioms,specs) classlist ->
+		if List.mem classname ts then
+			classlist
+		else
+			classname :: classlist
+		) spec_file [] in
+	ts @ others
 
 module AxiomMap =
 	Map.Make (struct
@@ -204,6 +253,25 @@ module AxiomMap =
 	end)
 	
 type axiom_map = (Plogic.pform * Plogic.pform) AxiomMap.t
+
+let filtermap filterfun mapfun list =
+	List.map mapfun (List.filter filterfun list)
+
+let rec same_elements list =
+	match list with
+		| [] -> true
+		| [_] -> true
+		| x::y::zs -> if x=y then same_elements (y::zs) else false  
+
+let parent_classes_and_interfaces classname spec_list =
+	let (cn,extends,implements,apf,exports_clause,axioms_clause,specs) = List.find (fun (cn,_,_,_,_,_,_) -> cn=classname) spec_list in
+	extends @ implements
+	
+let axiommap_filter p axiommap =
+	AxiomMap.fold (fun key value result -> if p key value then AxiomMap.add key value result else result) axiommap AxiomMap.empty
+	
+let axiommap2list f axiommap =
+	AxiomMap.fold (fun key value list -> f key value :: list) axiommap []
 
 let spec_file_to_axiom_map spec_list =
 	let axiommap = ref (AxiomMap.empty) in
@@ -215,7 +283,33 @@ let spec_file_to_axiom_map spec_list =
 						axiommap := AxiomMap.add (cn,name) (antecedent,consequent) (!axiommap)
 					) imps
 	) spec_list in
+	(* Add inherited axioms *)
+	let pr = parent_relation spec_list in
+	let ts = topological_sort pr in
+	let _ = List.iter (fun classname ->
+		let parents = parent_classes_and_interfaces classname spec_list in
+		let parent_axiom_map = axiommap_filter (fun (cn,an) imp -> List.mem cn parents) (!axiommap) in
+		let parent_axiom_names = remove_duplicates (axiommap2list (fun (cn,an) _ -> an) parent_axiom_map) in
+		List.iter (fun axiom_name ->
+			try
+				let _ = AxiomMap.find (classname,axiom_name) (!axiommap) in ()
+			with Not_found ->
+				let parent_axioms_with_same_name = axiommap2list (fun k imp -> imp) (axiommap_filter (fun (cn,an) ni -> an = axiom_name) parent_axiom_map) in
+				if same_elements parent_axioms_with_same_name then
+					()
+				else
+					(warning(); if Config.symb_debug() then Printf.printf "\n\n%s does not list axiom %s and its parents do not have the same spec for it!\n" (Pprinter.class_name2str classname) axiom_name; reset();)
+				;
+				match parent_axioms_with_same_name with
+					| x :: xs -> axiommap := AxiomMap.add (classname,axiom_name) x (!axiommap)
+					| _ -> assert false
+		) parent_axiom_names
+	) ts in
 	!axiommap
+
+let implications_for_axioms_verification class_name axiom_map : named_implication list =
+	let axioms = axiommap_filter (fun (cn,an) imp -> cn=class_name) axiom_map in
+	axiommap2list (fun (cn,an) (ant,con) -> (an,ant,con)) axioms
 
 (* Specs to verification *)
 
@@ -406,60 +500,6 @@ let add_common_apf_predicate_rules spec_list logic =
 	) spec_list in
 	let rules = List.flatten (List.flatten deep_rules) in
 	append_rules logic rules
-
-(* Returns a list with elements (parent,child) *)
-let parent_relation spec_list =
-	List.fold_left (fun relation (classname,extends,implements,apf,exports,axioms,specs) ->
-		let parents = extends @ implements in
-		List.fold_left (fun rel p -> (p,classname) :: rel) relation parents
-	) [] spec_list
-	
-let remove_duplicates list =
-	List.fold_left (fun rest element -> if List.mem element rest then rest else element :: rest) [] list
-
-let rec transitive_closure relation =
-	match relation with
-		| [] -> []
-		| (ancestor,descendent)::rest ->
-			let tr_close_rest = transitive_closure rest in
-			if List.mem (ancestor,descendent) tr_close_rest then
-				tr_close_rest
-			else
-				let lower = descendent :: List.map (fun (an,de) -> de) (List.filter (fun (an,de) -> descendent=an) tr_close_rest) in
-				let upper = ancestor :: List.map (fun (an,de) -> an) (List.filter (fun (an,de) -> ancestor=de) tr_close_rest) in
-				let new_pairs = List.fold_left (fun pairs an ->
-						List.fold_left (fun pairs de ->
-							(an,de) :: pairs
-						) pairs lower
-					) [] upper in
-				remove_duplicates (new_pairs @ tr_close_rest)
-
-(* Works only if the relation is acyclic, which the inheritance relation should be *)
-let rec topological_sort relation =
-	match relation with
-		| [] -> []
-		| _ ->
-				let ancestors = remove_duplicates (List.map (fun (an,de) -> an) relation) in
-				let no_incoming = List.filter (fun e -> (List.filter (fun (an,de) -> e=de) relation) = []) ancestors in
-				if no_incoming = [] then
-					assert false (* The relation is cyclic *)
-				else
-					let pairs,others = List.partition (fun (an,de) -> List.mem an no_incoming) relation in
-					let rest = List.filter (fun (_,de) -> (List.filter (fun (a,d) -> a=de || d=de) others) = []) pairs in
-					let rest = remove_duplicates (List.map (fun (_,de) -> de) rest) in
-					no_incoming @ rest @ (topological_sort others)
-
-(* This returns a list of all classes mentioned in spec_file, including those without parents or children *)
-let a_topological_ordering_of_all_classes spec_file =
-	let pr = parent_relation spec_file in
-	let ts = topological_sort pr in
-	let others = List.fold_right (fun (classname,extends,implements,apf,exports,axioms,specs) classlist ->
-		if List.mem classname ts then
-			classlist
-		else
-			classname :: classlist
-		) spec_file [] in
-	ts @ others
 
 (*
 Adds a rule containing the transitive subtype relation, as well as one to reason 
