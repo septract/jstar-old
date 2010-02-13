@@ -769,8 +769,8 @@ let ask_the_audience ep ts p1 rs =
   | _ ->  make_equal ts eqs (empty_subst())
 *)
 
-(* let rec sequents_backtrack  f (seqss : ts_sequent list list) xs *)
-let rec sequents_backtrack  f seqss xs
+let rec sequents_backtrack  f (seqss : ts_sequent list list) xs
+(*let rec sequents_backtrack  f seqss xs *)
     =
   match seqss with 
     [] -> raise (Failed_eg xs)
@@ -920,6 +920,57 @@ let tidy_sequents logic sequents =
 (*  List.iter (fun seq -> Printf.printf "%s> %s\n" (String.make n '-') (string_ts_seq seq)) sequents;*)
 	sequents		
 
+(*
+(* pure version *)
+let rec apply_tactic_till_nomatch tactic ep seq =
+	match tactic with
+		| Rules rules -> List.flatten (apply_rule_list_once rules seq ep)
+		| Repeat tc ->
+			let seqs = apply_tactic_till_nomatch tc ep seq in
+			sequents_backtrack (apply_tactic_till_nomatch tactic ep) seqs []
+	  |	IfMatch (tc_if,tc_then,tc_else) ->
+			try
+				let seqs = apply_tactic_till_nomatch tc_if ep seq in
+				sequents_backtrack (apply_tactic_till_nomatch tc_then ep) seqs [] (* this might throw No_match*)
+			with No_match -> apply_tactic_till_nomatch tc_else ep seq
+*)
+
+(*
+(* success failure version *)
+let rec apply_tactic_till_nomatch tactic success fail seq =
+	match tactic with
+		| Rules rules ->
+			try
+				let seqs = apply_rule_list_once rules seq ep in
+				success seqs
+			with No_match -> fail seq	
+		| Repeat tc ->
+			let seqs = apply_tactic_till_nomatch tc seq in
+			sequents_backtrack (apply_tactic_till_nomatch tactic success fail) seqs
+	  |	IfMatch (tc_if,tc_then,tc_else) ->
+			try
+				let seqs = apply_tactic_till_nomatch tc_if seq in
+				sequents_backtrack (apply_tactic_till_nomatch tc_then) seqs (* this might throw No_match*)
+			with No_match -> apply_tactic_till_nomatch tc_else seq
+
+(* lifted version *)
+let rec apply_tactic_till_nomatch tactic seqs =
+	match tactic with
+		| Rules rules ->
+			try 
+			  let apply_one seq = apply_rule_list_once rules seq ep in
+			  List.flatten (List.flatten (List.map apply one seqs))
+			with No_match -> raise Failed	
+		| Repeat tc ->
+			let seqs = apply_tactic_till_nomatch tc seq in
+			sequents_backtrack (apply_tactic_till_nomatch tactic) seqs
+	  |	IfMatch (tc_if,tc_then,tc_else) ->
+			try
+				let seqs = apply_tactic_till_nomatch tc_if seq in
+				sequents_backtrack (apply_tactic_till_nomatch tc_then) seqs (* this might throw No_match*)
+			with No_match -> apply_tactic_till_nomatch tc_else seq
+*)
+(*
 let rec lifted_apply_tactic_till_fail logic abs failing seqs =
 	let slim f s = let (_,r) = f s in r in
 	let rec apply_tactic_till_fail logic failing seq =
@@ -942,8 +993,9 @@ let rec lifted_apply_tactic_till_fail logic abs failing seqs =
 			| Repeat tc ->
 				let (failed,seqss) = apply_tactic_till_fail (tc,rwm,ep) failing seq in
 				Format.printf "Repeat: %a@\n" string_ts_seq (List.hd seqss);
-				if failed then (true, seqss)
-				else (false, sequents_backtrack (slim (apply_tactic_till_fail logic failing)) seqss [])
+				if failed then (true, failing seq)
+(*				else (false, sequents_backtrack (slim (apply_tactic_till_fail logic failing)) seqss []) *)
+				else (false, lifted_apply_tactic_till_fail logic abs failing seqss [])
 			| IfMatch (tc_if,tc_then,tc_else) ->
 					Format.printf "IfMatch";
 				let failing_if = apply_tactic_till_fail (tc_else,rwm,ep) failing in
@@ -1021,8 +1073,128 @@ let rec apply_tactic logic (sequents : ts_sequent list) find_frame abs : ts_sequ
 	in
 	let res = lifted_apply_tactic_till_fail logic abs try_rewrite sequents in
 	if true || !(Debug.debug_ref) then Format.fprintf !dump "End time :%f @\n@?" (Sys.time ()); res
+*)
 
-			
+
+(* same as apply_rule_list *)
+(* but replace calls to apply_rule_list_once *)
+(* with calls to apply_tactic_once *)
+let rec apply_tactic logic (sequents : ts_sequent list) find_frame abs : ts_sequent list =	
+(* Clear pretty print buffer *)
+  Buffer.clear buffer_dump;
+  let plain_rules = [] in 
+  let tactic,(*emps,plain_rules,*)rwm,ep = logic in 
+  let n = 0 in
+  if true || !(Debug.debug_ref) then
+    (List.iter (fun seq -> Format.fprintf !dump "Goal@ %a@\n@\n" string_ts_seq seq) sequents;
+     Format.fprintf !dump "Start time :%f @\n" (Sys.time ()));
+  let rec apply_tactic_inner tactic sequents n : ts_sequent list = 
+		let rec apply_tactic_once (tactic : tactical) (seq : ts_sequent) ep : tactical * ts_sequent list list
+    	=
+			if true || !(Debug.debug_ref) then Format.printf "Trying tactic: %a\n" print_tactical tactic;
+  		match tactic with
+				| Rules rules -> (Rules [], apply_rule_list_once rules seq ep)
+				| Repeat tc ->  
+				let (_, seqss) = apply_tactic_once tc seq ep in
+					(tactic, seqss)
+				| IfMatch (tc_if, tc_then, tc_else) -> 
+					try
+						let (_, seqss) = apply_tactic_once tc_if seq ep in
+						let seqs = sequents_backtrack (fun seqs->apply_tactic_inner tc_then seqs (n+1)) seqss [] in
+						(Rules [], [seqs])
+					with No_match -> apply_tactic_once tc_else seq ep
+		in
+		let sequents = tidy_sequents logic sequents in 
+	  (* Apply tactic lots *)
+    List.flatten 
+      (List.map 
+	 (fun seq -> 
+	   try 
+	     (* check for base sequents *)
+	     if true || !(Debug.debug_ref) then Format.fprintf !dump "%s>@[%a@]@\n@." (String.make n '-') string_ts_seq  seq;
+	     match seq with 
+	     | ts,(f,(p1,s1,c1),(p2,[],[Wand(Form(p21,s21,c21),Form(p22,s22,c22))])) (* very simple wand case *)
+		   -> apply_tactic_inner tactic [ts,(f,(p21@p1,s21@s1,c21@c1),(p22@p2,s22,c22))] (n+1)
+	     | _ ->  
+		 let (tactic,seqss) = apply_tactic_once tactic seq ep
+		 in sequents_backtrack (fun seqs->apply_tactic_inner tactic seqs (n+1)) seqss []
+	   with No_match -> 
+	     (* Do expensive rewrites and try again *)
+	     let seq = rewrites_sequent rwm ep abs true seq in 
+	     try 
+	       let (tactic,seqss) = apply_tactic_once tactic seq ep
+	       in sequents_backtrack (fun seqs->apply_tactic_inner tactic seqs (n+1)) seqss []
+	     with No_match -> 
+	       try 
+		 match seq with  (* no more tactic apply: see if we have done the proof *)  
+		 | ts,(f,(p1,s1,c1),(p2,[],[])) -> 
+		     if find_frame || (s1=[] && c1=[]) then 
+		       try 
+			 apply_plain_prove plain_rules ep (ts,(f,s1,c1)) p1 p2 (* Prove plain thing *)
+		       with Failed -> 
+			 (if (c1=[]) then raise (Failed_eg [seq]) else raise No_match)
+		     else raise No_match
+(* TODO:  This match is disabled, should be enabled once SMT integration is complete*)
+(*		 | ts,(f,(p1,s1,c1),(p2,[],c2)) ->
+		     let interp = (Rhash_args.create 30) in 
+		     let hash = (rao_create ()) in 
+		     let rs = rv_trans_set (rv_form (p1,s1,c1) (rv_spat_list f Rset.empty)) in 
+		     let x = composite_list_is_plain interp rs hash ts c2 in 
+		     (match x with 
+		       None -> 
+			 (try 
+			   let sub = ask_the_audience ep ts p1 (rv_sequent (f,(p1,s1,c1),(p2,[],c2))) in 
+			   apply_tactic_inner tactic [ts, subst_sequent sub (f,(p1,s1,c1),(p2,[],c2))] (n+1) 
+			 with Contradiction -> [])
+	             | Some p_goal -> 
+			 try (* If pure prover complete can raise Failed *)
+			   apply_plain_prove_2 plain_rules ep (ts,(f,s1,c1)) p1 p2 p_goal c2 interp hash(* Prove plain thing *) 
+			 with Failed -> raise No_match
+	             )    *) 
+		 | ts,(f,(p1,s1,c1),f2) ->
+		     
+		     (* ask the audience *)
+	       (try 
+	         let sub = ask_the_audience ep ts p1 (rv_sequent (f,(p1,s1,c1),f2)) in 
+	         apply_tactic_inner tactic [ts, subst_sequent sub (f,(p1,s1,c1),f2)] (n+1) 
+	        with Contradiction -> [])
+		 with No_match -> 
+		 try (* deal with or on left *)
+		   let seqs = apply_rule_or_left seq in 
+		   let seqs = List.map apply_rule_flatten seqs  
+		   in apply_tactic_inner tactic seqs (n+1)
+		 with No_match ->  (* Very niave deal with or on right *)
+		   try
+		     let seqs = apply_rule_or_right seq in
+		     let seqs = List.map (List.map apply_rule_flatten) seqs in 
+		     sequents_backtrack (fun seqs->apply_tactic_inner tactic seqs (n+1)) seqs []
+		     (*in let rec f seqs =  back tracking is done by this function 
+					    match seqs with 
+					    | [] ->
+		       if true || !(Debug.debug_ref) then Printf.printf "Failed to prove:\n%s > %s\n\n" (String.make n '-') (string_seq seq);
+		       [seq]
+		   | seq::seqs -> 
+		       try 
+			 (let seqs_res =  apply_tactic_inner tactic [seq] (n+1) in
+			 if List.for_all (fun (f,(p1,s1),(p2,s2)) -> (p2=[] && s2 =[] && (s1=[] || find_frame))) seqs_res
+			 then seqs_res
+			 else f seqs)
+		       with Failed -> f seqs
+		 in f seqs *)
+	       with No_match -> (
+		 (* try and find plain contradiction *)
+		 match seq with  (* no more rules apply: see if we have a plain contradiction *)  
+		 | ts,(f,(p1,s1,c1),(p2,s2,c2)) -> 
+		     if true || !(Debug.debug_ref) then Format.fprintf !dump "Find plain contradiction:\n";
+		     try apply_plain_prove_contra plain_rules ep (ts,(f,s1,c1)) p1 (* Prove plain thing *)
+		     with Failed -> raise (Failed_eg [seq])
+		 | _ -> raise Failed)
+	 ) sequents 
+      )
+  in let res = apply_tactic_inner tactic sequents n in 
+  if true || !(Debug.debug_ref) then Format.fprintf !dump "End time :%f @\n@?" (Sys.time ()); res
+
+					
 (*  Refactor for frame inference *)
 let rec apply_rule_list logic (sequents : ts_sequent list) find_frame abs : ts_sequent list 
     =

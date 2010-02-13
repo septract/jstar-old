@@ -13,7 +13,7 @@ let rec print_rule_list rules = function
 
 
 type tactical =
-	| Rules of sequent_rule list          (* try rules in order *)
+	| Rules of sequent_rule list                 (* try rules in order *)
 	| Repeat of tactical                         (* repeat until fail *)
 	| IfMatch of tactical * tactical * tactical  (* conditional *)
 
