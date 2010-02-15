@@ -22,7 +22,7 @@ open Prover
 open Support_syntax
 open Specification
 open Jimple_global_types
-open Debug
+open System
 
 exception Class_defines_external_spec
 

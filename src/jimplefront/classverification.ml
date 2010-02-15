@@ -12,7 +12,7 @@ open Specification
 open Javaspecs
 open Support_symex
 open Jimple_global_types
-open Debug
+open System
 
 type methodType = 
     Overridden
