@@ -130,7 +130,7 @@ let main () =
 	
 	 let abs_rules = Load.load_logic  (System.getenv_dirlist "JSTAR_LOGIC_LIBRARY") !absrules_file_name in
 	 
-	 let spec_list = Load.import_flatten 
+	 let spec_list : (Spec_def.class_spec list) = Load.import_flatten 
 	     (System.getenv_dirlist "JSTAR_SPECS_LIBRARY")
 	     !spec_file_name
 	     (Jparser.spec_file Jlexer.token) in

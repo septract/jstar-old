@@ -176,16 +176,16 @@ let append_rules logic rules : Prover.logic =
 	(old_rules @ rules,rm,f)
 
 let logic_and_implications_for_exports_verification class_name spec_list logic =
-	let (_,_,_,_,exports_clause,_,_) = List.find (fun (cn,extends,implements,apf,exports_clause,axioms_clause,specs) -> cn=class_name) spec_list in
-	match exports_clause with
+	let cs = List.find (fun cs -> cs.classname=class_name) spec_list in
+	match cs.exports with
 		| None -> (logic,[])
 		| Some (exported_implications,exportLocal_predicates) ->
 			let logic = logic_with_where_pred_defs exportLocal_predicates logic in
 			(logic,exported_implications) 
 			
 let add_exported_implications_to_logic spec_list logic : Prover.logic =
-	let exported_implications = List.fold_left (fun imps (cn,extends,implements,apf,exports_clause,axioms_clause,specs) ->
-		match exports_clause with
+	let exported_implications = List.fold_left (fun imps cs ->
+		match cs.exports with
 			| None -> imps
 			| Some (exported_implications,_) -> exported_implications @ imps
 		) [] spec_list in
@@ -194,9 +194,9 @@ let add_exported_implications_to_logic spec_list logic : Prover.logic =
 
 (* Returns a list with elements (parent,child) *)
 let parent_relation spec_list =
-	List.fold_left (fun relation (classname,extends,implements,apf,exports,axioms,specs) ->
-		let parents = extends @ implements in
-		List.fold_left (fun rel p -> (p,classname) :: rel) relation parents
+	List.fold_left (fun relation cs ->
+		let parents = cs.extends @ cs.implements in
+		List.fold_left (fun rel p -> (p,cs.classname) :: rel) relation parents
 	) [] spec_list
 	
 let remove_duplicates list =
@@ -238,11 +238,11 @@ let rec topological_sort relation =
 let a_topological_ordering_of_all_classes spec_file =
 	let pr = parent_relation spec_file in
 	let ts = topological_sort pr in
-	let others = List.fold_right (fun (classname,extends,implements,apf,exports,axioms,specs) classlist ->
-		if List.mem classname ts then
+	let others = List.fold_right (fun cs classlist ->
+		if List.mem cs.classname ts then
 			classlist
 		else
-			classname :: classlist
+			cs.classname :: classlist
 		) spec_file [] in
 	ts @ others
 
@@ -264,8 +264,8 @@ let rec same_elements list =
 		| x::y::zs -> if x=y then same_elements (y::zs) else false  
 
 let parent_classes_and_interfaces classname spec_list =
-	let (cn,extends,implements,apf,exports_clause,axioms_clause,specs) = List.find (fun (cn,_,_,_,_,_,_) -> cn=classname) spec_list in
-	extends @ implements
+	let cs = List.find (fun cs -> cs.classname=classname) spec_list in
+	cs.extends @ cs.implements
 	
 let axiommap_filter p axiommap =
 	AxiomMap.fold (fun key value result -> if p key value then AxiomMap.add key value result else result) axiommap AxiomMap.empty
@@ -275,12 +275,12 @@ let axiommap2list f axiommap =
 
 let spec_file_to_axiom_map spec_list =
 	let axiommap = ref (AxiomMap.empty) in
-	let _ = List.iter (fun (cn,_,_,_,_,axioms_clause,_) ->
-		match axioms_clause with
+	let _ = List.iter (fun cs ->
+		match cs.axioms with
 			| None -> ()
 			| Some imps ->
 					List.iter (fun (name,antecedent,consequent) -> 
-						axiommap := AxiomMap.add (cn,name) (antecedent,consequent) (!axiommap)
+						axiommap := AxiomMap.add (cs.classname,name) (antecedent,consequent) (!axiommap)
 					) imps
 	) spec_list in
 	(* Add inherited axioms *)
@@ -339,8 +339,7 @@ let rec spec_list_to_spec specs =
        spec_conjunction spec (spec_list_to_spec specs)
  
 let class_spec_to_ms cs (smmap,dmmap) =
-  let (classname,extends,implements,apf,exports_clause,axioms_clause,specs) = cs in 
-  let cn = (*Pprinter.class_name2str*) classname in
+  let cn = (*Pprinter.class_name2str*) cs.classname in
   List.fold_left 
     (fun (smmap,dmmap) pre_spec
       -> 
@@ -356,7 +355,7 @@ let class_spec_to_ms cs (smmap,dmmap) =
 		(addMSpecs (cn,a,b,c) (spec_list_to_spec spec) smmap,dmmap)
 	    )
     ) 
-    (smmap,dmmap) specs 
+    (smmap,dmmap) cs.methodspecs 
 
 
 let remove_this_type_info prepure = 
@@ -451,9 +450,9 @@ let spec_file_to_method_specs sf =
 let augmented_logic_for_class class_name sf logic =
   let rec add_globals_and_apf_info sf logic = 
     match sf with
-      (cn,extends,implements,apf,exports_clause,axioms_clause,specs)::sf ->
-				let apfs_to_add = if class_name=cn then apf else (List.filter (fun (a,b,x,y,w) -> w) apf) in
-				let logic = add_apf_to_logic logic apfs_to_add (Pprinter.class_name2str cn) in 
+      cs::sf ->
+				let apfs_to_add = if class_name=cs.classname then cs.apf else (List.filter (fun (a,b,x,y,w) -> w) cs.apf) in
+				let logic = add_apf_to_logic logic apfs_to_add (Pprinter.class_name2str cs.classname) in 
 				add_globals_and_apf_info sf logic
     | [] -> logic
 	in add_globals_and_apf_info sf logic
@@ -476,8 +475,8 @@ if
 let add_common_apf_predicate_rules spec_list logic =
 	let make_apf = apf in
 	let recvar = Vars.fresha () in
-	let deep_rules = List.map (fun (classname,extends,implements,apf,exports,axioms,specs) ->
-		let classname = Pprinter.class_name2str classname in
+	let deep_rules = List.map (fun cs ->
+		let classname = Pprinter.class_name2str cs.classname in
 		List.map (fun ((name,receiver,parameters, definition, global) : Spec_def.apf_define) ->
 			let args1,args2,eqs = List.fold_right (fun (fld,arg) (args1,args2,eqs) ->
 				let arg1 = Arg_var (Vars.fresha ()) in
@@ -496,7 +495,7 @@ let add_common_apf_predicate_rules spec_list logic =
 				[[apf_entry1,[],eqs]],
 				(name^"_"^classname^"_same"))
 			 :: [])
-		) apf
+		) cs.apf
 	) spec_list in
 	let rules = List.flatten (List.flatten deep_rules) in
 	append_rules logic rules
@@ -559,10 +558,10 @@ type axiom_map2 = named_implication list AxiomMap2.t
 
 let spec_file_to_axiom_map2 spec_list =
 	let axiommap = ref (AxiomMap2.empty) in
-	let _ = List.iter (fun (cn,_,_,_,_,axioms_clause,_) ->
-		match axioms_clause with
-			| None -> axiommap := AxiomMap2.add cn [] (!axiommap)
-			| Some imps -> axiommap := AxiomMap2.add cn imps (!axiommap)
+	let _ = List.iter (fun cs ->
+		match cs.axioms with
+			| None -> axiommap := AxiomMap2.add cs.classname [] (!axiommap)
+			| Some imps -> axiommap := AxiomMap2.add cs.classname imps (!axiommap)
 	) spec_list in
 	!axiommap
 
