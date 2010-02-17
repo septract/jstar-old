@@ -88,7 +88,7 @@ let verify_axioms_implications class_name jimple_file implications axiom_map log
 		) parents
 	) implications
 
-let verify_class 
+let verify_methods
     jimple_file
     static_method_specs 
     dynamic_method_specs 

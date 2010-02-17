@@ -267,6 +267,12 @@ let parent_classes_and_interfaces classname spec_list =
 	let cs = List.find (fun cs -> cs.classname=classname) spec_list in
 	cs.extends @ cs.implements
 	
+let is_interface classname spec_list =
+	let cs = List.find (fun cs -> cs.classname=classname) spec_list in
+	match cs.class_or_interface with
+		| InterfaceFile -> true
+		| ClassFile -> false
+	
 let axiommap_filter p axiommap =
 	AxiomMap.fold (fun key value result -> if p key value then AxiomMap.add key value result else result) axiommap AxiomMap.empty
 	

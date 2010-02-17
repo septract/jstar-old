@@ -312,7 +312,7 @@ spec_file:
    | classspec spec_file { (NormalEntry $1) :: $2 }
 
 classspec: 
-   | file_type class_name extends_clause implements_clause L_BRACE apf_defines exports_clause axioms_clause methods_specs R_BRACE  { {classname=$2;extends=$3;implements=$4;apf=$6;exports=$7;axioms=$8;methodspecs=$9} }
+   | file_type class_name extends_clause implements_clause L_BRACE apf_defines exports_clause axioms_clause methods_specs R_BRACE  { {class_or_interface=$1;classname=$2;extends=$3;implements=$4;apf=$6;exports=$7;axioms=$8;methodspecs=$9} }
 
 
 apf_defines: 

@@ -30,6 +30,7 @@ type exports_clause = (named_implication list * exportLocal_predicate list) opti
 type axioms_clause = named_implication list option
 
 type class_spec = {
+	class_or_interface: j_file_type;
 	classname: class_name;
 	extends: extends_clause;
 	implements: implements_clause;
