@@ -82,11 +82,11 @@ let add_apf_to_logic logic apfdefines classname : Prover.logic =
 		    ("apf_body_right_" ^ name))
      ::
        mk_seq_rule (([],apf_match name recvar paramvar, apf_match name recvar paramvar'),
-		    [[apf_match name recvar paramvar,[],[P_SPred("subeq",[Arg_var paramvar;Arg_var paramvar'])]]],
+		    [[apf_match name recvar paramvar,[],[P_PPred("subeq",[Arg_var paramvar;Arg_var paramvar'])]]],
 		    ("apf_match_" ^ name))
      ::
        mk_seq_rule (([],apf_match bodyname recvar paramvar, apf_match bodyname recvar paramvar'),
-		    [[apf_match bodyname recvar paramvar,[],[P_SPred("subeq",[Arg_var paramvar;Arg_var paramvar'])]]],
+		    [[apf_match bodyname recvar paramvar,[],[P_PPred("subeq",[Arg_var paramvar;Arg_var paramvar'])]]],
 		    ("apf_match_" ^ name))
       ::[])
   in let rec inner apfdefines rules =

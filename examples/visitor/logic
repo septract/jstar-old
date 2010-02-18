@@ -26,7 +26,7 @@ import "plus_const_datatype.logic";
  ********************************************/
 
 rule sub_eq_hack : 
-| | |- | subeq({content=?x},{content=?y})
+| | |- | !subeq({content=?x},{content=?y})
 if
 | | |- ?x=?y| 
 
@@ -37,7 +37,7 @@ if
 |||- ?t=?s * ?x=?y|
 
 rule subeq_forget :
-|||- |subeq(?x,?y) 
+|||- |!subeq(?x,?y) 
 if
 |||- ?x=?y |
 

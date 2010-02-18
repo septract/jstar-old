@@ -184,17 +184,17 @@ if
  *****************************/
 
 rule sub_eq_hack : 
-| | |- | subeq({content=?x; oldcon=?z},{content=?y})
+| | |- | !subeq({content=?x; oldcon=?z},{content=?y})
 if
 | | |- ?x=?y| 
 
 rule sub_eq_hack : 
-| | |- | subeq({content=?x},{content=?y})
+| | |- | !subeq({content=?x},{content=?y})
 if
 | | |- ?x=?y| 
 
 rule sub_eq_hack2 : 
-| | |- | subeq({content=?x},{content=?y; oldcon=_z})
+| | |- | !subeq({content=?x},{content=?y; oldcon=_z})
 if
 | | |- ?x=?y| 
 
@@ -652,7 +652,7 @@ if
 SubjectObs(?s,?f) | | |- ?f=?f2 |
 
 rule subeq_hack:
-| | |- | subeq(?f,?f2) 
+| | |- | !subeq(?f,?f2) 
 if
 | | |- ?f=?f2 |
 
