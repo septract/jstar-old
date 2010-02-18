@@ -1,11 +1,11 @@
 class java.lang.Object
 {
-  static void <init>() : { } { };
+  void <init>() static: { } { };
 }
 
 class java.util.LinkedList
 {
-  static void <init>() : { } { ls(@this:,nil(), empty()) };
+  void <init>() static: { } { ls(@this:,nil(), empty()) };
 
   boolean add(java.lang.Object) : 
     { ls(@this:,nil(),_s) }
@@ -22,14 +22,14 @@ class java.util.LinkedList
 
 class java.sql.DriverManager 
 {
-  static java.sql.Connection getConnection(java.lang.String, java.lang.String, java.lang.String) :
+  java.sql.Connection getConnection(java.lang.String, java.lang.String, java.lang.String) static:
     { }
     { DBConnection($ret_var, {connection=sql(@parameter0:,@parameter1:,@parameter2:)})}; 
 }
 
 class java.sql.Connection
 {
-  static void close() : 
+  void close() static: 
     { } { };
 }
 

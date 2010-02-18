@@ -1,30 +1,30 @@
 class OLIST
 {
-	void init() :
+	abstract void init() :
 		{ }
 		{ OL(@this:,{l=empty()}) };
-	void insert(int) :
+	abstract void insert(int) :
 		{ OL(@this:,{l=_a}) }
 		{ OL(@this:,{l=app(_c,cons(@parameter0:,_d))}) * _a=app(_c,_d) };
-	void remove_first() :
+	abstract void remove_first() :
 		{ OL(@this:,{l=cons(_e,_a)}) }
 		{ OL(@this:,{l=_a}) };
-	int first() :
+	abstract int first() :
 		{ OL(@this:,{l=cons(_e,_a)}) }
 		{ OL(@this:,{l=cons(_e,_a)}) * $ret_var=_e };
-	int has(int) :
+	abstract int has(int) :
 		{ OL(@this:,{l=_a}) }
 		{ OL(@this:,{l=_a}) * $ret_var=elem(@parameter0:,_a) };
-	int count() :
+	abstract int count() :
 		{ OL(@this:,{l=_a}) }
 		{ OL(@this:,{l=_a}) * $ret_var=len(_a) };
-	int is_empty() :
+	abstract int is_empty() :
 		{ OL(@this:,{l=_a}) }
 		{ OL(@this:,{l=_a}) * $ret_var=builtin_eq(_a,empty()) };
-	void count_non_negative() :
+	abstract void count_non_negative() :
 		{ OL(@this:,{l=_a}) }
 		{ OL(@this:,{l=_a}) };
-	void empty_definition() :
+	abstract void empty_definition() :
 		{ OL(@this:,{l=_a}) }
 		{ OL(@this:,{l=_a}) };
 }

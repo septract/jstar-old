@@ -14,19 +14,6 @@ open Support_symex
 open Jimple_global_types
 open System
 
-type methodType = 
-    Overridden
-  | Inherited
-  | New
-
-
-let method_type msig : methodType = New  (* do something more here *)
-
-let method_set_for_class  classname jfile  =
-  let mdl =  Methdec.make_methdecs_of_list classname (Methdec.get_list_methods jfile) in
-  let msigs = List.map (fun m -> Methdec.get_msig m classname) mdl in 
-  msigs
-
 let is_class_abstract jimple_file =
 	let Jimple_global_types.JFile(modifiers,_,_,_,_,_) = jimple_file in
 	List.mem Jparsetree.Abstract modifiers
@@ -87,69 +74,73 @@ let verify_axioms_implications class_name jimple_file implications axiom_map log
 			with Not_found -> ()
 		) parents
 	) implications
-
+	
 let verify_methods
-    jimple_file
-    static_method_specs 
-    dynamic_method_specs 
-    logic 
-    abslogic = 
-  let Jimple_global_types.JFile(modifiers,_,class_name,_,_,_) = jimple_file in
-	let abstract_class_or_interface = is_class_abstract jimple_file || is_interface jimple_file in
-(* call symbolic execution for all methods of this class *)
-  let _ = Translatejimple.compute_fixed_point jimple_file logic abslogic static_method_specs dynamic_method_specs in 
-(* Find method set for this class *)
-  let mset = method_set_for_class class_name jimple_file in 
-(* For each method: *)
-  List.iter 
-    (fun msig ->
-      let (cl,rtype,mname,params)  =  msig in
-(*      assert cl=class_name;*)
-      let my_sta_spec = try MethodMap.find msig static_method_specs with Not_found -> assert false in
-      let my_dyn_spec = 
-	try MethodMap.find msig dynamic_method_specs 
-	with Not_found -> Printf.printf "\n\n Using static spec for %s" (Pprinter.name2str mname) ; my_sta_spec 
-      in
-			(* Check Dynamic Dispatch only if the class is not abstract or an interface *)
-			if abstract_class_or_interface then
-				()
-			else
-	      if refinement_this logic my_sta_spec my_dyn_spec (class_name) then 	
-					(good();if Config.symb_debug() then Printf.printf "\n\nDynamic spec is consistent with static for %s!\n" (Pprinter.name2str mname); reset())
-	      else 
-					(warning();Printf.printf "\n\nDynamic spec is not consistent with static for %s!\n" (Pprinter.name2str mname);reset()(*; 
-	         assert false*));
-      (* Check Behavioural Subtyping *)
-      if Jparsetree.constructor mname then () else
-			(List.iter (fun parent -> 
-				  (try 
-				    let par_dyn_spec = MethodMap.find (parent,rtype,mname,params) dynamic_method_specs in	 
-				    if refinement logic my_dyn_spec par_dyn_spec  then 
-				      (good();if Config.symb_debug() then Printf.printf "\n\nBehavioural subtyping succeeds for %s in %s w.r.t. %s!\n" 
-					(Pprinter.name2str mname) 
-					(Pprinter.class_name2str class_name)
-					(Pprinter.class_name2str parent); reset())
-				    else 
-				      (warning();Printf.printf "\n\nBehavioural subtyping fails for %s in %s w.r.t. %s!\n" 
-					(Pprinter.name2str mname) 
-					(Pprinter.class_name2str class_name)
-					(Pprinter.class_name2str parent); reset();
-				      (*assert false;*))
-				  with Not_found -> ()))
-				    (parent_classes_and_interfaces jimple_file))
-      ;
-      match method_type msig with
-   (* if new *)
-      |	New -> ()
-	   (*dino does already*) (* verify static spec against code *)
-	    (* verify dynamic spec is implied by static spec *)
-   (* if overridden *)
-      |	Overridden -> ()
-		
-   (* if inherited *) 
-      |	Inherited -> ()    
-	    (* verify static spec is implied by static spec *)
-	    (* verify behaviroual subtying *)
-	    (* verify static spec is a refinement of parent's *)
-    )
-    mset 
+		jimple_file
+		static_method_specs
+		dynamic_method_specs
+		logic
+		abslogic =
+	let Jimple_global_types.JFile(_,_,class_name,_,_,_) = jimple_file in
+	let parents = parent_classes_and_interfaces jimple_file in
+	let static_specs = MethodMap.fold (fun (cn,a,b,c) spec list -> if cn=class_name then ((cn,a,b,c),spec)::list else list) static_method_specs [] in
+	(* Body verification - call symbolic execution for all methods in the jimple file *)
+		let _ = Translatejimple.compute_fixed_point jimple_file logic abslogic static_method_specs dynamic_method_specs in
+	(* Dynamic dispatch *)
+		let _ = if is_class_abstract jimple_file || is_interface jimple_file then
+							()
+						else
+							List.iter (fun (msig,static_spec) ->
+								try
+									let _,_,mname,_ = msig in
+									let dynamic_spec = MethodMap.find msig dynamic_method_specs in
+									if refinement_this logic static_spec dynamic_spec class_name then
+										(good();if Config.symb_debug() then Printf.printf "\n\nDynamic spec is consistent with static for %s!\n" (Pprinter.name2str mname); reset())
+									else
+										(warning();Printf.printf "\n\nDynamic spec is not consistent with static for %s!\n" (Pprinter.name2str mname);reset())
+								with Not_found -> assert false
+							) static_specs
+		in
+	(* Behavioural subtyping of non-constructor methods *)
+		let dynamic_specs = MethodMap.fold (fun (cn,a,b,c) spec list -> if cn=class_name && not (Jparsetree.constructor b) then ((cn,a,b,c),spec)::list else list) dynamic_method_specs [] in
+		let _ = List.iter (fun ((cn,a,mname,c),dynamic_spec) ->
+			List.iter (fun parent ->
+				try
+					let parent_dynamic_spec = MethodMap.find (parent,a,mname,c) dynamic_method_specs in
+					(*let _ = Printf.printf "\n\nMy spec: %s" ((Debug.toString Pprinter_core.spec2str) dynamic_spec) in
+					let _ = Printf.printf "\n\nParent spec: %s" ((Debug.toString Pprinter_core.spec2str) parent_dynamic_spec) in*)
+					if refinement logic dynamic_spec parent_dynamic_spec then
+						(good();if Config.symb_debug() then Printf.printf "\n\nBehavioural subtyping succeeds for %s in %s w.r.t. %s!\n"
+						(Pprinter.name2str mname) 
+						(Pprinter.class_name2str class_name)
+						(Pprinter.class_name2str parent); reset())
+				  else 
+				  	(warning();Printf.printf "\n\nBehavioural subtyping fails for %s in %s w.r.t. %s!\n" 
+						(Pprinter.name2str mname) 
+						(Pprinter.class_name2str class_name)
+						(Pprinter.class_name2str parent); reset())
+				with Not_found -> ()
+			) parents
+		) dynamic_specs in
+	(* Inheritance *)
+		let mdl =  Methdec.make_methdecs_of_list class_name (Methdec.get_list_methods jimple_file) in
+		let sigs_of_methods_with_bodies = List.fold_left (fun list m -> if Methdec.has_body m then (class_name,m.ret_type,m.name_m,m.params)::list else list) [] mdl in 
+		let static_specs_of_methods_without_bodies = List.filter (fun (msig,_) -> not (List.mem msig sigs_of_methods_with_bodies)) static_specs in
+		let _ = List.iter (fun ((_,a,mname,c),static_spec) ->
+			let parent_static_specs = List.fold_left (fun list parent ->
+				try
+					MethodMap.find (parent,a,mname,c) static_method_specs :: list
+				with Not_found -> list
+			) [] parents in
+			match parent_static_specs with
+				| [] -> (warning();if Config.symb_debug() then Printf.printf "\n\nMethod %s has a static spec and no body, and no parent appears to list a static spec for it. Maybe it is abstract and not declared as such in the spec file." (Pprinter.name2str mname);reset())
+				| _ ->
+					let ancestor_static_spec = spec_list_to_spec parent_static_specs in
+					(*let _ = Printf.printf "\n\nMy spec: %s" ((Debug.toString Pprinter_core.spec2str) static_spec) in
+					let _ = Printf.printf "\n\nAncestor spec: %s" ((Debug.toString Pprinter_core.spec2str) ancestor_static_spec) in*)					
+					if refinement logic ancestor_static_spec static_spec then
+						(good();if Config.symb_debug() then Printf.printf "\n\nInheritance checking succeeds for %s!" (Pprinter.name2str mname);reset())
+					else
+						(warning();if Config.symb_debug() then Printf.printf "\n\nInheritance checking fails for %s!" (Pprinter.name2str mname);reset())
+		) static_specs_of_methods_without_bodies in
+	()

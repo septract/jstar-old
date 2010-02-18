@@ -272,6 +272,27 @@ let is_interface classname spec_list =
 	match cs.class_or_interface with
 		| InterfaceFile -> true
 		| ClassFile -> false
+
+let is_method_abstract (method_signature : method_signature) spec_list =
+	let cn,rt,name,params = method_signature in
+	let cs = List.find (fun cs -> cs.classname=cn) spec_list in
+	try
+		let _ = List.find (fun ms ->
+			match ms with
+				| Spec_def.Static ((_,ty,mn,ps),_) -> ty=rt && mn=name && ps=params
+				| _ -> false
+		) cs.methodspecs in
+		false
+	with Not_found ->
+		try
+			let _ = List.find (fun ms ->
+				match ms with
+					| Spec_def.Dynamic ((mods,ty,mn,ps),_) -> ty=rt && mn=name && ps=params && List.mem Jparsetree.Abstract mods
+					| _ -> false
+			) cs.methodspecs in
+			true
+		with Not_found -> false (* By default, a method is non-abstract *)
+			
 	
 let axiommap_filter p axiommap =
 	AxiomMap.fold (fun key value result -> if p key value then AxiomMap.add key value result else result) axiommap AxiomMap.empty
@@ -352,12 +373,12 @@ let class_spec_to_ms cs (smmap,dmmap) =
 	match pre_spec with 
 	  Dynamic (ms,spec) -> 
 	    (match ms with 
-	      (a,b,c) -> 
+	      (mods,a,b,c) -> 
 		(smmap,addMSpecs (cn,a,b,c) (spec_list_to_spec spec) dmmap)
 	    )
 	| Spec_def.Static (ms,spec) -> 
 	    (match ms with 
-	      (a,b,c) -> 
+	      (mods,a,b,c) -> 
 		(addMSpecs (cn,a,b,c) (spec_list_to_spec spec) smmap,dmmap)
 	    )
     ) 
@@ -429,7 +450,38 @@ let filter_dollar_spec spec =
 	  post=filterdollar f2; 
 	  excep=ClassMap.map filterdollar excep}
 
-let fix_gaps (smmap,dmmap) =
+let fix_spec_inheritance_gaps classes mmap spec_file exclude_function spec_type =
+	let mmapr = ref mmap in
+	let rec propagate_specs cn specs_parents =
+		match specs_parents with
+			| [] -> ()
+			| (rt,name,params,spec)::others ->
+					let samesig,othersigs = List.partition (fun (a,b,c,d) -> rt=a && name=b && params=c) ((rt,name,params,spec)::others) in
+					let msig = (cn,rt,name,params) in
+					let _ = if MethodMap.mem msig (!mmapr) || Jparsetree.constructor name || exclude_function msig then
+										()
+									else
+										if same_elements samesig then
+											mmapr := MethodMap.add msig spec (!mmapr)
+										else
+											(warning(); if Config.symb_debug() then Printf.printf "\n\nThere is no %s spec listed for %s, and its parents do not agree on one!\n" spec_type (Pprinter.signature2str (Method_signature msig)); reset();)
+					in
+					propagate_specs cn othersigs  
+	in
+	let rec fix_inner classes =
+		match classes with
+			| [] -> ()
+			| cn :: classes ->
+					let parents = parent_classes_and_interfaces cn spec_file in
+					let specs_parents = MethodMap.fold (fun (classname,a,b,c) spec list -> if List.mem classname parents then (a,b,c,spec)::list else list) (!mmapr) [] in
+					let _ = propagate_specs cn specs_parents in  
+					fix_inner classes
+	in
+	let _ = fix_inner classes in
+	!mmapr
+
+let fix_gaps (smmap,dmmap) spec_file =
+	(* Firstly, we derive dynamic from static specs and vice versa. *)
   let dmmapr = ref dmmap in 
   let smmapr = ref smmap in 
   let _ = MethodMap.iter 
@@ -438,10 +490,15 @@ let fix_gaps (smmap,dmmap) =
       ) smmap in
   let _ = MethodMap.iter 
       (fun (cn,a,b,c) spec -> 
-	if MethodMap.mem (cn,a,b,c) (!smmapr) then () 
-	else smmapr := MethodMap.add (cn,a,b,c) (dynamic_to_static (Pprinter.class_name2str cn) spec) (!smmapr);
-	dmmapr := MethodMap.add (cn,a,b,c) (filter_dollar_spec spec) !dmmapr
-      ) dmmap in
+	if MethodMap.mem (cn,a,b,c) (!smmapr) || is_interface cn spec_file || is_method_abstract (cn,a,b,c) spec_file then () 
+	else
+		smmapr := MethodMap.add (cn,a,b,c) (dynamic_to_static (Pprinter.class_name2str cn) spec) (!smmapr);
+		dmmapr := MethodMap.add (cn,a,b,c) (filter_dollar_spec spec) !dmmapr
+  ) dmmap in
+	(* Secondly, we fix the gaps created by inheritance *)
+	let classes = topological_sort (parent_relation spec_file) in
+	let _ = dmmapr := fix_spec_inheritance_gaps classes (!dmmapr) spec_file (fun _ -> false) "dynamic" in
+	let _ = smmapr := fix_spec_inheritance_gaps classes (!smmapr) spec_file (fun msig -> is_method_abstract msig spec_file) "static" in
   (!smmapr,!dmmapr)
 
 
@@ -450,7 +507,7 @@ let spec_file_to_method_specs sf =
     match sf with 
       [] -> pairmmap
     | cs::sf -> sf_2_ms_inner sf (class_spec_to_ms cs pairmmap)
-  in fix_gaps (sf_2_ms_inner sf (emptyMSpecs,emptyMSpecs))
+  in fix_gaps (sf_2_ms_inner sf (emptyMSpecs,emptyMSpecs)) sf
 
 
 let augmented_logic_for_class class_name sf logic =

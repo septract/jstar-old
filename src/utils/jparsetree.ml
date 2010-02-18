@@ -124,7 +124,7 @@ type declaration = Declaration of j_type option *  name list
 
 type case_statement = Case_stmt of  case_label *  label_name
 
-type method_signature_short = j_type *  name *  parameter list
+type method_signature_short = modifier list * j_type *  name *  parameter list
 type method_signature = class_name * j_type *  name *  parameter list
 type field_signature = class_name * j_type *  name
 

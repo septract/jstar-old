@@ -29,11 +29,11 @@ let newVar x =
   else newPVar x
 
 
-let msig_simp (typ,name,args_list) =
+let msig_simp (mods,typ,name,args_list) =
   let args_list = List.map fst args_list in
-  (typ,name,args_list) 
+  (mods,typ,name,args_list) 
 
-let bind_spec_vars (typ,name,args_list) {pre=pre;post=post;excep=excep} =
+let bind_spec_vars (mods,typ,name,args_list) {pre=pre;post=post;excep=excep} =
   (* Make substitution to normalise names *)
   let subst = Pterm.empty in 
   let subst = Pterm.add (newPVar("this")) (Arg_var(Support_syntax.this_var)) subst in 
@@ -364,9 +364,9 @@ specs:
 
 method_spec:
    | method_signature_short COLON specs  SEMICOLON  { mkDynamic($1, $3) }
-   | STATIC method_signature_short COLON specs SEMICOLON  { mkStatic($2, $4) }
+   | method_signature_short STATIC COLON specs SEMICOLON  { mkStatic($1, $4) }
    | method_signature_short COLON specs   { mkDynamic($1, $3) }
-   | STATIC method_signature_short COLON specs  { mkStatic($2, $4) }
+   | method_signature_short STATIC COLON specs  { mkStatic($1, $4) }
 
 exp_posts:
    | L_BRACE identifier COLON formula R_BRACE exp_posts { ClassMap.add $2 $4 $6 }
@@ -673,8 +673,8 @@ method_signature:
        {Method_signature($2,$4,$5,$7)}
 ;
 method_signature_short:
-   | jtype name L_PAREN parameter_args_opt_list_question_mark R_PAREN
-       { $1,$2,$4 }
+   | modifier_list_star jtype name L_PAREN parameter_args_opt_list_question_mark R_PAREN
+       { $1,$2,$3,$5 }
 ;
 reference:
    |array_ref  {$1} 
