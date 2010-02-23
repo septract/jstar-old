@@ -408,13 +408,14 @@ let compute_fixed_point
   Cfg_core.print_icfg_dotty xs (!file);
   (* now verify each method *)
   List.iter (fun m ->
+									let meth_sig_str = methdec2signature_str m in
                   (* verify the body only if the method is non-abstract *)
                   if Methdec.has_body m then
                           let spec = get_spec_for m fields cname in
                           let body = jimple_stms2core m.bstmts in
 													let l = add_static_type_info lo m.locals in
 													(*let _ = Prover.pprint_sequent_rules l in*)
-                          Symexec.verify body spec l abs_rules
+                          Symexec.verify meth_sig_str body spec l abs_rules
                   else
                           ()
                   ;
@@ -423,7 +424,7 @@ let compute_fixed_point
                           let spec = get_requires_clause_spec_for m fields cname in
                           let body = jimple_stms2core m.req_stmts in
 													let l = add_static_type_info lo m.req_locals in
-                          Symexec.verify body spec l abs_rules
+                          Symexec.verify (meth_sig_str^" requires clause") body spec l abs_rules
                   else
                           ()
                   ;
@@ -435,6 +436,6 @@ let compute_fixed_point
                                 let body = jimple_stms2core oc in
                                 Symexec.get_frame body spec.pre l abs_rules) m.old_stmts_list in
                           let body = jimple_stms2core m.ens_stmts in
-                          Symexec.verify_ensures body spec.post conjoin_with_res_true frames l abs_rules
+                          Symexec.verify_ensures (meth_sig_str^" ensures clause") body spec.post conjoin_with_res_true frames l abs_rules
             ) mdl
 

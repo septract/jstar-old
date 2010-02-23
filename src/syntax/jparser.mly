@@ -392,7 +392,7 @@ file_type:
    | INTERFACE { InterfaceFile }
        
 extends_clause:
-   | EXTENDS class_name_list { $2 }
+   | EXTENDS class_name_list { $2 } /* stephan mult inh */ 
    | /* empty */ { [] }
 ;
 implements_clause:

@@ -182,7 +182,7 @@ let add_exported_implications_to_logic spec_list logic : Prover.logic =
 (* Returns a list with elements (parent,child) *)
 let parent_relation spec_list =
 	List.fold_left (fun relation cs ->
-		let parents = cs.extends @ cs.implements in
+		let parents = cs.extends @ cs.implements in (* stephan mult inh *)
 		List.fold_left (fun rel p -> (p,cs.classname) :: rel) relation parents
 	) [] spec_list
 	
@@ -221,7 +221,7 @@ let rec topological_sort relation =
 					let rest = remove_duplicates (List.map (fun (_,de) -> de) rest) in
 					no_incoming @ rest @ (topological_sort others)
 
-(* This returns a list of all classes mentioned in spec_file, including those without parents or children *)
+(* This returns a list of all classes and interfaces mentioned in spec_file, including those without parents or children *)
 let a_topological_ordering_of_all_classes spec_file =
 	let pr = parent_relation spec_file in
 	let ts = topological_sort pr in
@@ -252,7 +252,7 @@ let rec same_elements list =
 
 let parent_classes_and_interfaces classname spec_list =
 	let cs = List.find (fun cs -> cs.classname=classname) spec_list in
-	cs.extends @ cs.implements
+	cs.extends @ cs.implements  (* stephan mult inh *)
 	
 let is_interface classname spec_list =
 	let cs = List.find (fun cs -> cs.classname=classname) spec_list in

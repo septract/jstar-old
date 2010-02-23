@@ -25,7 +25,7 @@ let is_interface jimple_file =
 
 let parent_classes_and_interfaces (jfile : Jimple_global_types.jimple_file) =
 	let Jimple_global_types.JFile(_,_,_,parent_classes,parent_interfaces,_) = jfile in
-	parent_classes @ parent_interfaces
+	parent_classes @ parent_interfaces  (* stephan mult inh *)
 
 let verify_exports_implications implications logic_with_where_pred_defs =
 	List.iter (fun implication ->
@@ -127,6 +127,7 @@ let verify_methods
 		let sigs_of_methods_with_bodies = List.fold_left (fun list m -> if Methdec.has_body m then (class_name,m.ret_type,m.name_m,m.params)::list else list) [] mdl in 
 		let static_specs_of_methods_without_bodies = List.filter (fun (msig,_) -> not (List.mem msig sigs_of_methods_with_bodies)) static_specs in
 		let _ = List.iter (fun ((_,a,mname,c),static_spec) ->
+			(* stephan mult inh *) (* In the single inheritance case, a lookup can be made for the static spec in the single parent class, resulting in parent_static_specs being [spec] if spec was found, and [] otherwise *)
 			let parent_static_specs = List.fold_left (fun list parent ->
 				try
 					MethodMap.find (parent,a,mname,c) static_method_specs :: list
