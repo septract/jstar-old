@@ -170,7 +170,7 @@ type  catch_clause = Catch_clause of class_name * label_name * label_name * labe
 
 (*type  method_body = (declaration list * statement list * catch_clause list) option  *)
 
-type extends_clause = class_name list
+type extends_clause = class_name list (* stephan mult inh *)
 
 type implements_clause = class_name list
 
