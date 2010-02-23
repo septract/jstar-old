@@ -68,8 +68,6 @@ let expand_equiv_rules rules =
   in
   List.fold_right equiv_rule_to_seq_rule rules []
 
-
-
 (***************************************************
  end from prover
 ***************************************************)
@@ -98,7 +96,29 @@ type inductive_stmt = IndImport of string | IndDef of inductive
  end from inductive
 ***************************************************)
 
+
+(***************************************************
+ from tactic
+***************************************************)
+
 type tactic_spec =
 	| Rule_names of string list
 	| Repeat_spec of tactic_spec
 	| IfMatch_spec of tactic_spec * tactic_spec * tactic_spec
+
+(***************************************************
+ end from tactic
+***************************************************)
+
+
+(***************************************************
+ from prompt
+***************************************************)
+
+type prompt_command =
+	| Quit_prompt
+	| Clear_tactic
+
+(***************************************************
+ end from prompt
+***************************************************)

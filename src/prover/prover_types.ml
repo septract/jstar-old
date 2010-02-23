@@ -26,4 +26,4 @@ let rec print_tactical f = function
 			print_tactical t_then
 			print_tactical t_else
 
-let print_tactic t = Format.printf "Tactic: %a\n" print_tactical t
+let print_tactic t = Format.printf "Tactic: %a\n@?" print_tactical t

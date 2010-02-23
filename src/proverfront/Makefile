@@ -32,6 +32,8 @@ PROVERSOURCE = inductive.ml tactic.ml run.ml
 #TESTPROVERSOURCE = $(CORESOURCE) logic_parser.mly logic_lexer.mll load_logic.ml test.ml
 TESTPROVERSOURCE = inductive.ml tactic.ml test.ml
 
+PROMPTPROVERSOURCE = inductive.ml tactic.ml prompt.ml
+
 
 DEFAULT_ARGS = LIBS="str utils sepprover symbexe parser" \
        OCAMLLDFLAGS="-g -I $(LIB)" \
@@ -51,33 +53,46 @@ TMAIN = $(DEFAULT_ARGS) SOURCES="$(TESTPROVERSOURCE)" \
 TMAINOPT = $(DEFAULT_ARGS) SOURCES="$(TESTPROVERSOURCE)" \
        RESULT=$(BIN)/testharness 
 
+PROMPT = $(DEFAULT_ARGS) SOURCES="$(PROMTPPROVERSOURCE)" \
+       RESULT=$(BIN)/prompt.byte 
+
+PROMPTOPT = $(DEFAULT_ARGS) SOURCES="$(PROMPTPROVERSOURCE)" \
+       RESULT=$(BIN)/prompt
+
 #       LIBS="str" \
 
-default: toplevel testharness
+default: toplevel testharness prompt
 
 prebuild: 
 	@(cd ../prover; make)
 
-all: toplevel testharness
+all: toplevel testharness prompt
 
 .PHONY: toplevel.byte
 toplevel.byte: prebuild
 	@$(MAKE) -f $(OCAMLMAKEFILE) $(MAIN) byte-code
 
-
 .PHONY: toplevel
 toplevel: prebuild
 	@$(MAKE) -f $(OCAMLMAKEFILE) $(MAINOPT) native-code
+
 
 .PHONY: testharness.byte
 testharness.byte: prebuild
 	@$(MAKE) -f $(OCAMLMAKEFILE) $(TMAIN) byte-code
 
-
 .PHONY: testharness
 testharness: prebuild
 	@$(MAKE) -f $(OCAMLMAKEFILE) $(TMAINOPT) native-code
 
+
+.PHONY: prompt.byte
+promtp.byte: prebuild
+	@$(MAKE) -f $(OCAMLMAKEFILE) $(PROMPT) byte-code
+
+.PHONY: prompt
+prompt: prebuild
+	@$(MAKE) -f $(OCAMLMAKEFILE) $(PROMPTOPT) native-code
 
 
 clean:
@@ -85,6 +100,8 @@ clean:
 	$(MAKE) -f $(OCAMLMAKEFILE) $(MAINOPT) clean
 	$(MAKE) -f $(OCAMLMAKEFILE) $(TMAIN) clean
 	$(MAKE) -f $(OCAMLMAKEFILE) $(TMAINOPT) clean
+	$(MAKE) -f $(OCAMLMAKEFILE) $(PROMPT) clean
+	$(MAKE) -f $(OCAMLMAKEFILE) $(PROMPTOPT) clean
 	rm -f *.annot doc/*.html doc/*.css doc/test.odoc logic_parser.output *~ *.dll *.exe *.cmi *.cmx *.o logic_parser.ml logic_lexer.ml logic_parser.mli logic_lexer.mli
 
 prover.dll: $(CORESOURCE)

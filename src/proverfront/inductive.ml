@@ -30,7 +30,7 @@ let convert_inductive_con inductive_con =
 
 let convert_inductive inductive =
 	let con_rules = List.map convert_inductive_con inductive.ind_cons in
-	let collect_fresh_var l _ = (Pterm.Arg_var (Vars.freshp ())):: l in
+	let collect_fresh_var l _ = (Pterm.Arg_var (Vars.fresha ())):: l in
 	let fresh_args = List.fold_left collect_fresh_var [] inductive.ind_args in
 	let extract_premise inductive_con = (* handle substituting equalitites *)
 		let (heap, name, args) = inductive_con.con_def in

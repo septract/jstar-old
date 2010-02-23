@@ -1091,7 +1091,8 @@ let rec apply_tactic logic (sequents : ts_sequent list) find_frame abs : ts_sequ
   let rec apply_tactic_inner tactic sequents n : ts_sequent list = 
 		let rec apply_tactic_once (tactic : tactical) (seq : ts_sequent) ep : tactical * ts_sequent list list
     	=
-			if true || !(Debug.debug_ref) then Format.printf "Trying tactic: %a\n" print_tactical tactic;
+			if true || !(Debug.debug_ref) then Format.printf "Sequent [%i]: %a\n" n string_ts_seq seq;
+			if true || !(Debug.debug_ref) then Format.printf "Trying tactic: %a\n@?" print_tactical tactic;
   		match tactic with
 				| Rules rules -> (Rules [], apply_rule_list_once rules seq ep)
 				| Repeat tc ->  
