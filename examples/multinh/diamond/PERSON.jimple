@@ -1,0 +1,74 @@
+class PERSON extends ANY {
+
+	int my_age;
+
+	void <init>(int, int, int)
+	{
+		// Declaration of registers, locals, and temporaries
+		PERSON Current;
+		int r1;
+		int r2;
+		int r3;
+
+		// Initialization of registers and locals
+		Current := @this: PERSON;
+		r1 := @parameter0: int;
+		r2 := @parameter1: int;
+		r3 := @parameter2: int;
+
+		// The routine body
+		{} : {} {};
+		Current.<PERSON: int my_age> = r1;
+		return;
+	}
+
+	void celebrate_birthday()
+	{
+		// Declaration of registers, locals, and temporaries
+		PERSON Current;
+		int t1;
+		int t2;
+
+		// Initialization of registers and locals
+		Current := @this: PERSON;
+
+		// The routine body
+		t1 = virtualinvoke Current.<PERSON: int age()>();
+		t2 = t1 + 1;
+		virtualinvoke Current.<PERSON: void set_age(int)>(t2);
+		return;
+	}
+
+	int age()
+	{
+		// Declaration of registers, locals, and temporaries
+		PERSON Current;
+		int Result;
+		int t1;
+
+		// Initialization of registers and locals
+		Current := @this: PERSON;
+		Result = 0;
+
+		// The routine body
+		t1 = Current.<PERSON: int my_age>;
+		Result = t1;
+		return Result;
+	}
+
+	void set_age(int)
+	{
+		// Declaration of registers, locals, and temporaries
+		PERSON Current;
+		int r1;
+
+		// Initialization of registers and locals
+		Current := @this: PERSON;
+		r1 := @parameter0: int;
+
+		// The routine body
+		Current.<PERSON: int my_age> = r1;
+		return;
+	}
+
+}

@@ -1,0 +1,61 @@
+class STUDENT extends PERSON {
+
+	int my_exams;
+
+	void <init>(int, int, int)
+	{
+		// Declaration of registers, locals, and temporaries
+		STUDENT Current;
+		int r1;
+		int r2;
+		int r3;
+
+		// Initialization of registers and locals
+		Current := @this: STUDENT;
+		r1 := @parameter0: int;
+		r2 := @parameter1: int;
+		r3 := @parameter2: int;
+
+		// The routine body
+		{} : {} {Current.<PERSON: int my_age> |-> _};
+		{} : {Current.<PERSON: int my_age> |-> _} {};
+		specialinvoke Current.<PERSON: void <init>(int, int, int)>(r1, 1, 2);
+		Current.<STUDENT: int my_exams> = r2;
+		return;
+	}
+
+	void take_exam()
+	{
+		// Declaration of registers, locals, and temporaries
+		STUDENT Current;
+		int t1;
+		int t2;
+
+		// Initialization of registers and locals
+		Current := @this: STUDENT;
+
+		// The routine body
+		t1 = Current.<STUDENT: int my_exams>;
+		t2 = t1 + 1;
+		Current.<STUDENT: int my_exams> = t2;
+		return;
+	}
+
+	int exams()
+	{
+		// Declaration of registers, locals, and temporaries
+		STUDENT Current;
+		int Result;
+		int t1;
+
+		// Initialization of registers and locals
+		Current := @this: STUDENT;
+		Result = 0;
+
+		// The routine body
+		t1 = Current.<STUDENT: int my_exams>;
+		Result = t1;
+		return Result;
+	}
+
+}

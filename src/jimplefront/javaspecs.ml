@@ -27,6 +27,20 @@ open System
 exception Class_defines_external_spec
 
 
+(* ================ General stuff =================== *)
+
+let append_rules logic rules : Prover.logic = 
+	let old_rules,rm,f = logic in
+	(old_rules @ rules,rm,f)
+	
+let rec same_elements list =
+	match list with
+		| [] -> true
+		| [_] -> true
+		| x::y::zs -> if x=y then same_elements (y::zs) else false  
+
+
+(* ===================== Augment the logic with apf stuff of a class and exported apfs of other classes  ====================== *)
 
 let apf name receiver params = [P_SPred(name,[Arg_var receiver; mkArgRecord params])]
 let apf_match name receiver params = [P_SPred(name,[Arg_var receiver; Arg_var params])]
@@ -34,7 +48,8 @@ let not_null1 name = [P_NEQ(name,Arg_op("nil",[]))]
 let not_null name = not_null1 (Arg_var name)
 
 exception BadAPF of string
-(* TODO APF to logic *)
+
+(* Add rules for the relationship between an apf and apf entry, as well as the apf entry and the body *)
 let add_apf_to_logic logic apfdefines classname : Prover.logic = 
   let make_rules_from_defs (name,receiver,parameters, definition, global) rules = 
 (* special variables to match the record as pattern matcher isn't that clever *)
@@ -85,99 +100,18 @@ let add_apf_to_logic logic apfdefines classname : Prover.logic =
   let rules = inner apfdefines rules in 
   (rules,rm,f)
 
-let logic_with_where_pred_defs exportLocal_predicates logic =
-	List.fold_left (fun logic where_pred_def ->
-			let (name, args, body) = where_pred_def in
-			let sub = List.fold_left (fun sub argname -> add argname (Arg_var (Vars.fresha ())) sub) empty args in
-			let pred = P_SPred(name,List.map (fun argname -> Pterm.find argname sub) args) in
-			let defn = try subst_pform sub body with Contradiction -> mkFalse in
-			let parvars = Plogic.fv_form [pred] VarSet.empty in
-			let defvars = Plogic.fv_form defn VarSet.empty in
-			let sparevars = VarSet.diff defvars parvars in  
-			let pvarsubst = subst_kill_vars_to_fresh_prog sparevars in 
-			let evarsubst = subst_kill_vars_to_fresh_exist sparevars in 
-			let pdefinition = try subst_pform pvarsubst defn with Contradiction -> mkFalse in 
-			let edefinition = try subst_pform evarsubst defn with Contradiction -> mkFalse in
-			let rules,rm,f = logic in
-			let rules = rules @
-				(mk_seq_rule (([],[pred],[]),
-					[[[],pdefinition,([])]],
-					("exports_body_left_" ^ name))
-				::
-				mk_seq_rule (([],[],[pred]),
-					[[[],[],edefinition]],
-					("exports_body_right_" ^ name))
-				:: [])
-			in
-			(rules,rm,f)
-		) logic exportLocal_predicates
+let augmented_logic_for_class class_name sf logic =
+  let rec add_globals_and_apf_info sf logic = 
+    match sf with
+      cs::sf ->
+				let apfs_to_add = if class_name=cs.classname then cs.apf else (List.filter (fun (a,b,x,y,w) -> w) cs.apf) in
+				let logic = add_apf_to_logic logic apfs_to_add (Pprinter.class_name2str cs.classname) in 
+				add_globals_and_apf_info sf logic
+    | [] -> logic
+	in add_globals_and_apf_info sf logic
 
-(* The rules for prov => imp, where prov is the implication's proviso *)
-let rules_for_implication imp prov : Prover.sequent_rule list =
-	let name,antecedent,consequent = imp in
-	(* imp is assumed to contain only program variables and existential variables *)
-	(* to build a rule, we substitute all program variables (but no existentials) with fresh anyvars *)
-	let free_vars = Plogic.fv_form (Plogic.pconjunction prov (Plogic.pconjunction antecedent consequent)) VarSet.empty in
-	let free_prog_vars = VarSet.filter (fun var -> match var with PVar _ -> true | _ -> false) free_vars in
-	let sub = VarSet.fold (fun var sub -> add var (Arg_var (Vars.fresha ())) sub) free_prog_vars empty in
-	let proviso : Plogic.pform = try subst_pform sub prov with Contradiction -> mkFalse in
-	let antecedent : Plogic.pform = try subst_pform sub antecedent with Contradiction -> mkFalse in
-	let consequent = try subst_pform sub consequent with Contradiction -> mkFalse in
-	(* General idea: for Prov => (P ==> (Q1 * Q2 * ... * Qn)), we build n rules of the form *)
-	(*  | P |- Qi *)
-	(* if *)
-	(*  Qi | Q1 * ... * Qi-1 * Qi+1 * ... * Qn |- Prov *)
-	(* Should Qi be a P_SPred, then we substitute the anyvars occurring in its 2nd, 3rd etc. arguments with fresh anyvars in the rule's conclusion, *)
-	(* and make the anyvar equalities proof obligations in the rule's premise along with Prov. *)
-	let split conjuncts =
-		let rec split_inner list others =
-			match list with
-				| [] -> []
-				| x :: xs -> (x, xs@others) :: split_inner xs (x::others)
-		in
-		split_inner conjuncts [] in
-	let rules = List.map (fun ((conjunct : Plogic.pform_at),(others : Plogic.pform)) ->
-			let qi,eqs = match conjunct with
-				| P_SPred (pred_name,first_arg :: other_args) -> 
-						let freevars = fv_args_list other_args VarSet.empty in
-						let free_anyvars = VarSet.filter (fun var -> match var with AnyVar _ -> true | _ -> false) freevars in
-						let var_newvar_pairs = VarSet.fold (fun var pairs -> (var,Vars.fresha ()) :: pairs) free_anyvars [] in
-						let sub = List.fold_left (fun sub (var,newvar) -> add var (Arg_var newvar) sub) empty var_newvar_pairs in
-						let new_other_args = List.map (subst_args sub) other_args in
-						let equalities : Plogic.pform = List.map (fun (var,newvar) -> P_EQ(Arg_var var,Arg_var newvar)) var_newvar_pairs in
-						(P_SPred(pred_name,first_arg :: new_other_args),equalities)
-				| _ -> (conjunct,[])
-			in
-			mk_seq_rule (([],antecedent,[qi]),
-				[[[conjunct],others,Plogic.pconjunction eqs proviso]], (* Note the use of conjunct here and not qi. *)
-				name)
-		) (split consequent) in
-	(* Finally, adjust the sequent rule names *)
-	let _,rules = List.fold_right (fun (a,b,name,d,e) (counter,list) ->
-		(counter-1,(a,b,name^(string_of_int counter),d,e)::list)
-	) rules (List.length rules,[]) in
-	rules
-	
-let append_rules logic rules : Prover.logic = 
-	let old_rules,rm,f = logic in
-	(old_rules @ rules,rm,f)
 
-let logic_and_implications_for_exports_verification class_name spec_list logic =
-	let cs = List.find (fun cs -> cs.classname=class_name) spec_list in
-	match cs.exports with
-		| None -> (logic,[])
-		| Some (exported_implications,exportLocal_predicates) ->
-			let logic = logic_with_where_pred_defs exportLocal_predicates logic in
-			(logic,exported_implications) 
-			
-let add_exported_implications_to_logic spec_list logic : Prover.logic =
-	let exported_implications = List.fold_left (fun imps cs ->
-		match cs.exports with
-			| None -> imps
-			| Some (exported_implications,_) -> exported_implications @ imps
-		) [] spec_list in
-	let new_rules = List.flatten (List.map (fun imp -> rules_for_implication imp []) exported_implications) in
-	append_rules logic new_rules
+(* =================== Inheritance relation stuff (classes+interfaces) =================================== *)
 
 (* Returns a list with elements (parent,child) *)
 let parent_relation spec_list =
@@ -232,6 +166,112 @@ let a_topological_ordering_of_all_classes spec_file =
 			cs.classname :: classlist
 		) spec_file [] in
 	ts @ others
+	
+let parent_classes_and_interfaces classname spec_list =
+	let cs = List.find (fun cs -> cs.classname=classname) spec_list in
+	cs.extends @ cs.implements  (* stephan mult inh *)
+	
+		
+
+(* =================== Stuff exports and axioms both use ======================== *)
+
+(* The rules for prov => imp, where prov is the implication's proviso *)
+let rules_for_implication imp prov : Prover.sequent_rule list =
+	let name,antecedent,consequent = imp in
+	(* imp is assumed to contain only program variables and existential variables *)
+	(* to build a rule, we substitute all program variables (but no existentials) with fresh anyvars *)
+	let free_vars = Plogic.fv_form (Plogic.pconjunction prov (Plogic.pconjunction antecedent consequent)) VarSet.empty in
+	let free_prog_vars = VarSet.filter (fun var -> match var with PVar _ -> true | _ -> false) free_vars in
+	let sub = VarSet.fold (fun var sub -> add var (Arg_var (Vars.fresha ())) sub) free_prog_vars empty in
+	let proviso : Plogic.pform = try subst_pform sub prov with Contradiction -> mkFalse in
+	let antecedent : Plogic.pform = try subst_pform sub antecedent with Contradiction -> mkFalse in
+	let consequent = try subst_pform sub consequent with Contradiction -> mkFalse in
+	(* General idea: for Prov => (P ==> (Q1 * Q2 * ... * Qn)), we build n rules of the form *)
+	(*  | P |- Qi *)
+	(* if *)
+	(*  Qi | Q1 * ... * Qi-1 * Qi+1 * ... * Qn |- Prov *)
+	(* Should Qi be a P_SPred, then we substitute the anyvars occurring in its 2nd, 3rd etc. arguments with fresh anyvars in the rule's conclusion, *)
+	(* and make the anyvar equalities proof obligations in the rule's premise along with Prov. *)
+	let split conjuncts =
+		let rec split_inner list others =
+			match list with
+				| [] -> []
+				| x :: xs -> (x, xs@others) :: split_inner xs (x::others)
+		in
+		split_inner conjuncts [] in
+	let rules = List.map (fun ((conjunct : Plogic.pform_at),(others : Plogic.pform)) ->
+			let qi,eqs = match conjunct with
+				| P_SPred (pred_name,first_arg :: other_args) -> 
+						let freevars = fv_args_list other_args VarSet.empty in
+						let free_anyvars = VarSet.filter (fun var -> match var with AnyVar _ -> true | _ -> false) freevars in
+						let var_newvar_pairs = VarSet.fold (fun var pairs -> (var,Vars.fresha ()) :: pairs) free_anyvars [] in
+						let sub = List.fold_left (fun sub (var,newvar) -> add var (Arg_var newvar) sub) empty var_newvar_pairs in
+						let new_other_args = List.map (subst_args sub) other_args in
+						let equalities : Plogic.pform = List.map (fun (var,newvar) -> P_EQ(Arg_var var,Arg_var newvar)) var_newvar_pairs in
+						(P_SPred(pred_name,first_arg :: new_other_args),equalities)
+				| _ -> (conjunct,[])
+			in
+			mk_seq_rule (([],antecedent,[qi]),
+				[[[conjunct],others,Plogic.pconjunction eqs proviso]], (* Note the use of conjunct here and not qi. *)
+				name)
+		) (split consequent) in
+	(* Finally, adjust the sequent rule names *)
+	let _,rules = List.fold_right (fun (a,b,name,d,e) (counter,list) ->
+		(counter-1,(a,b,name^(string_of_int counter),d,e)::list)
+	) rules (List.length rules,[]) in
+	rules
+	
+
+(* =================== Exports clause stuff =============================*)
+
+(* Augment the logic with definitions of the secret 'where' predicates. See paper on exports. *)
+let logic_with_where_pred_defs exportLocal_predicates logic =
+	List.fold_left (fun logic where_pred_def ->
+			let (name, args, body) = where_pred_def in
+			let sub = List.fold_left (fun sub argname -> add argname (Arg_var (Vars.fresha ())) sub) empty args in
+			let pred = P_SPred(name,List.map (fun argname -> Pterm.find argname sub) args) in
+			let defn = try subst_pform sub body with Contradiction -> mkFalse in
+			let parvars = Plogic.fv_form [pred] VarSet.empty in
+			let defvars = Plogic.fv_form defn VarSet.empty in
+			let sparevars = VarSet.diff defvars parvars in  
+			let pvarsubst = subst_kill_vars_to_fresh_prog sparevars in 
+			let evarsubst = subst_kill_vars_to_fresh_exist sparevars in 
+			let pdefinition = try subst_pform pvarsubst defn with Contradiction -> mkFalse in 
+			let edefinition = try subst_pform evarsubst defn with Contradiction -> mkFalse in
+			let rules,rm,f = logic in
+			let rules = rules @
+				(mk_seq_rule (([],[pred],[]),
+					[[[],pdefinition,([])]],
+					("exports_body_left_" ^ name))
+				::
+				mk_seq_rule (([],[],[pred]),
+					[[[],[],edefinition]],
+					("exports_body_right_" ^ name))
+				:: [])
+			in
+			(rules,rm,f)
+		) logic exportLocal_predicates
+	
+(* Yields the logic augmented with 'where' predicate defs and the implications which are to be checked. *)
+let logic_and_implications_for_exports_verification class_name spec_list logic =
+	let cs = List.find (fun cs -> cs.classname=class_name) spec_list in
+	match cs.exports with
+		| None -> (logic,[])
+		| Some (exported_implications,exportLocal_predicates) ->
+			let logic = logic_with_where_pred_defs exportLocal_predicates logic in
+			(logic,exported_implications) 
+		
+(* After exports verification, the exported implications of all classes in the spec file are added to the logic *)
+let add_exported_implications_to_logic spec_list logic : Prover.logic =
+	let exported_implications = List.fold_left (fun imps cs ->
+		match cs.exports with
+			| None -> imps
+			| Some (exported_implications,_) -> exported_implications @ imps
+		) [] spec_list in
+	let new_rules = List.flatten (List.map (fun imp -> rules_for_implication imp []) exported_implications) in
+	append_rules logic new_rules
+
+(* ============================= Axioms clause stuff ================================ *)
 
 module AxiomMap =
 	Map.Make (struct
@@ -243,43 +283,6 @@ type axiom_map = (Plogic.pform * Plogic.pform) AxiomMap.t
 
 let filtermap filterfun mapfun list =
 	List.map mapfun (List.filter filterfun list)
-
-let rec same_elements list =
-	match list with
-		| [] -> true
-		| [_] -> true
-		| x::y::zs -> if x=y then same_elements (y::zs) else false  
-
-let parent_classes_and_interfaces classname spec_list =
-	let cs = List.find (fun cs -> cs.classname=classname) spec_list in
-	cs.extends @ cs.implements  (* stephan mult inh *)
-	
-let is_interface classname spec_list =
-	let cs = List.find (fun cs -> cs.classname=classname) spec_list in
-	match cs.class_or_interface with
-		| InterfaceFile -> true
-		| ClassFile -> false
-
-let is_method_abstract (method_signature : method_signature) spec_list =
-	let cn,rt,name,params = method_signature in
-	let cs = List.find (fun cs -> cs.classname=cn) spec_list in
-	try
-		let _ = List.find (fun ms ->
-			match ms with
-				| Spec_def.Static ((_,ty,mn,ps),_) -> ty=rt && mn=name && ps=params
-				| _ -> false
-		) cs.methodspecs in
-		false
-	with Not_found ->
-		try
-			let _ = List.find (fun ms ->
-				match ms with
-					| Spec_def.Dynamic ((mods,ty,mn,ps),_) -> ty=rt && mn=name && ps=params && List.mem Jparsetree.Abstract mods
-					| _ -> false
-			) cs.methodspecs in
-			true
-		with Not_found -> false (* By default, a method is non-abstract *)
-			
 	
 let axiommap_filter p axiommap =
 	AxiomMap.fold (fun key value result -> if p key value then AxiomMap.add key value result else result) axiommap AxiomMap.empty
@@ -325,7 +328,70 @@ let implications_for_axioms_verification class_name axiom_map : named_implicatio
 	let axioms = axiommap_filter (fun (cn,an) imp -> cn=class_name) axiom_map in
 	axiommap2list (fun (cn,an) (ant,con) -> (an,ant,con)) axioms
 
-(* Specs to verification *)
+module AxiomMap2 =
+	Map.Make (struct
+		type t = class_name
+		let compare = compare
+	end)
+	
+type axiom_map2 = named_implication list AxiomMap2.t
+
+let spec_file_to_axiom_map2 spec_list =
+	let axiommap = ref (AxiomMap2.empty) in
+	let _ = List.iter (fun cs ->
+		match cs.axioms with
+			| None -> axiommap := AxiomMap2.add cs.classname [] (!axiommap)
+			| Some imps -> axiommap := AxiomMap2.add cs.classname imps (!axiommap)
+	) spec_list in
+	!axiommap
+
+(* Add the axioms of all classes in the spec file to the logic *)
+let add_axiom_implications_to_logic spec_list logic : Prover.logic = 
+	let classlist = a_topological_ordering_of_all_classes spec_list in
+	let axiommap = spec_file_to_axiom_map2 spec_list in
+	let new_rules = List.fold_right (fun cl rules ->
+		try
+			let named_imps : named_implication list = AxiomMap2.find cl axiommap in
+			let proviso = [mk_objsubtyp (Arg_var this_var) cl] in
+			let clname = Pprinter.class_name2str cl in
+			let new_rules = List.fold_right (fun (n,a,c) ruls ->
+				let freevars = Plogic.fv_form (Plogic.pconjunction a c) VarSet.empty in
+				let p = if VarSet.mem this_var freevars then proviso else [] in 
+				rules_for_implication ("axiom_"^clname^"_"^n,a,c) p
+				@ ruls) named_imps [] in
+			new_rules @ rules
+		with Not_found -> assert false
+	) classlist [] in
+	append_rules logic new_rules
+	
+
+(* ====================== Method spec manipulation and completion ====================================== *)
+
+let is_interface classname spec_list =
+	let cs = List.find (fun cs -> cs.classname=classname) spec_list in
+	match cs.class_or_interface with
+		| InterfaceFile -> true
+		| ClassFile -> false
+
+let is_method_abstract (method_signature : method_signature) spec_list =
+	let cn,rt,name,params = method_signature in
+	let cs = List.find (fun cs -> cs.classname=cn) spec_list in
+	try
+		let _ = List.find (fun ms ->
+			match ms with
+				| Spec_def.Static ((_,ty,mn,ps),_) -> ty=rt && mn=name && ps=params
+				| _ -> false
+		) cs.methodspecs in
+		false
+	with Not_found ->
+		try
+			let _ = List.find (fun ms ->
+				match ms with
+					| Spec_def.Dynamic ((mods,ty,mn,ps),_) -> ty=rt && mn=name && ps=params && List.mem Jparsetree.Abstract mods
+					| _ -> false
+			) cs.methodspecs in
+			true
+		with Not_found -> false (* By default, a method is non-abstract *)
 
 module MethodMap = 
   Map.Make(struct
@@ -338,7 +404,6 @@ module MethodSet =
     type t = method_signature
     let compare = compare
   end)
-
 
 type methodSpecs = spec MethodMap.t
 
@@ -497,16 +562,8 @@ let spec_file_to_method_specs sf =
   in fix_gaps (sf_2_ms_inner sf (emptyMSpecs,emptyMSpecs)) sf
 
 
-let augmented_logic_for_class class_name sf logic =
-  let rec add_globals_and_apf_info sf logic = 
-    match sf with
-      cs::sf ->
-				let apfs_to_add = if class_name=cs.classname then cs.apf else (List.filter (fun (a,b,x,y,w) -> w) cs.apf) in
-				let logic = add_apf_to_logic logic apfs_to_add (Pprinter.class_name2str cs.classname) in 
-				add_globals_and_apf_info sf logic
-    | [] -> logic
-	in add_globals_and_apf_info sf logic
-	
+(* ========================== Common/useful rules ================================ *)
+
 	
 let mk_subeq (var1,var2) = [P_PPred("subeq",[Arg_var var1;Arg_var var2])]
 let mk_sub (var1,var2) = [P_PPred("sub",[Arg_var var1;Arg_var var2])]
@@ -622,45 +679,9 @@ let add_subtype_and_objsubtype_rules spec_list logic =
 	) in
 	append_rules logic [objsubtype_rule;subtype_rule]
 	
-module AxiomMap2 =
-	Map.Make (struct
-		type t = class_name  (* the class name and axiom name *)
-		let compare = compare
-	end)
-	
-type axiom_map2 = named_implication list AxiomMap2.t
 
-let spec_file_to_axiom_map2 spec_list =
-	let axiommap = ref (AxiomMap2.empty) in
-	let _ = List.iter (fun cs ->
-		match cs.axioms with
-			| None -> axiommap := AxiomMap2.add cs.classname [] (!axiommap)
-			| Some imps -> axiommap := AxiomMap2.add cs.classname imps (!axiommap)
-	) spec_list in
-	!axiommap
 
-let add_axiom_implications_to_logic spec_list logic : Prover.logic = 
-	let classlist = a_topological_ordering_of_all_classes spec_list in
-	let axiommap = spec_file_to_axiom_map2 spec_list in
-	let new_rules = List.fold_right (fun cl rules ->
-		try
-			let named_imps : named_implication list = AxiomMap2.find cl axiommap in
-			let proviso = [mk_objsubtyp (Arg_var this_var) cl] in
-			let clname = Pprinter.class_name2str cl in
-			let new_rules = List.fold_right (fun (n,a,c) ruls ->
-				let freevars = Plogic.fv_form (Plogic.pconjunction a c) VarSet.empty in
-				let p = if VarSet.mem this_var freevars then proviso else [] in 
-				rules_for_implication ("axiom_"^clname^"_"^n,a,c) p
-				@ ruls) named_imps [] in
-			new_rules @ rules
-		with Not_found -> assert false
-	) classlist [] in
-	append_rules logic new_rules
-
-(***************************************
-   Refinement type stuff 
- ***************************************)
-
+(* ====================== Refinement type stuff ================================= *)
 
 
 let refinement_this (logic : logic) (spec1 : spec) (spec2 : spec) (cname : class_name): bool =

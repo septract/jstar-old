@@ -1,0 +1,53 @@
+class CEL extends ANY {
+
+	int my_value;
+
+	void <init>(int)
+	{
+		// Declaration of registers, locals, and temporaries
+		CEL Current;
+		int r1;
+
+		// Initialization of registers and locals
+		Current := @this: CEL;
+		r1 := @parameter0: int;
+
+		// The routine body
+		{} : {} {};
+		Current.<CEL: int my_value> = r1;
+		return;
+	}
+
+	void set_value(int)
+	{
+		// Declaration of registers, locals, and temporaries
+		CEL Current;
+		int r1;
+
+		// Initialization of registers and locals
+		Current := @this: CEL;
+		r1 := @parameter0: int;
+
+		// The routine body
+		Current.<CEL: int my_value> = r1;
+		return;
+	}
+
+	int value()
+	{
+		// Declaration of registers, locals, and temporaries
+		CEL Current;
+		int Result;
+		int t1;
+
+		// Initialization of registers and locals
+		Current := @this: CEL;
+		Result = 0;
+
+		// The routine body
+		t1 = Current.<CEL: int my_value>;
+		Result = t1;
+		return Result;
+	}
+
+}

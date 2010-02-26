@@ -1,0 +1,112 @@
+class PERSON
+{
+	define P(x, {age=a}) = x.<PERSON: int my_age> |-> a;
+
+	exports {
+		P_PERSON_def: P$PERSON(x, {age=a}) <=> x.<PERSON: int my_age> |-> a;
+	} where {
+	}
+
+	void <init>(int, int, int) :
+		{ }
+		{P$(@this:, {age=@parameter0:})};
+	void celebrate_birthday() static:
+		{P(@this:, {age=_a})}
+		{P(@this:, {age=builtin_plus(_a, numeric_const(1))})};
+	int age() :
+		{P$(@this:, {age=_a})}
+		{P$(@this:, {age=_a}) * $ret_var = _a};
+	void set_age(int) :
+		{P$(@this:, {age=_a})}
+		{P$(@this:, {age=@parameter0:})};
+}
+
+class MUSICIAN extends PERSON
+{
+	define P(x, {age=a}) = P$PERSON(x, {age=a});
+
+	define M(x, {age=a;pfm=p}) = P$MUSICIAN(x, {age=a}) * x.<MUSICIAN: int my_performances> |-> p;
+
+	define RestMtoP(x, {pfm=p}) = x.<MUSICIAN: int my_performances> |-> p;
+
+	exports {
+		m_musician: M$MUSICIAN(x, {age=a;pfm=p}) <=> P$PERSON(x, {age=a}) * RestMtoP$MUSICIAN(x, {pfm=p});
+	} where {
+	}
+
+	axioms {
+		M_P: M(@this:, {age=a;pfm=p}) <=> P(@this:, {age=a}) * RestMtoP(@this:, {pfm=p});
+	}
+
+	void <init>(int, int, int) :
+		{ }
+		{M$(@this:, {age=@parameter0:;pfm=@parameter1:})};
+	void perform() :
+		{M$(@this:, {age=_a;pfm=_p})}
+		{M$(@this:, {age=_a;pfm=builtin_plus(_p, numeric_const(1))})};
+	int performances() :
+		{M$(@this:, {age=_a;pfm=_p})}
+		{M$(@this:, {age=_a;pfm=_p}) * $ret_var = _p};
+}
+
+class STUDENT extends PERSON
+{
+	define P(x, {age=a}) = P$PERSON(x, {age=a});
+
+	define S(x, {age=a;exm=e}) = P$STUDENT(x, {age=a}) * x.<STUDENT: int my_exams> |-> e;
+
+	define RestStoP(x, {exm=e}) = x.<STUDENT: int my_exams> |-> e;
+
+	exports {
+		s_student: S$STUDENT(x, {age=a;exm=e}) <=> P$PERSON(x, {age=a}) * RestStoP$STUDENT(x, {exm=e});
+	} where {
+	}
+
+	axioms {
+		S_P: S(@this:, {age=a;exm=e}) <=> P(@this:, {age=a}) * RestStoP(@this:, {exm=e});
+	}
+
+	void <init>(int, int, int) :
+		{ }
+		{S$(@this:, {age=@parameter0:;exm=@parameter1:})};
+	void take_exam() :
+		{S$(@this:, {age=_a;exm=_e})}
+		{S$(@this:, {age=_a;exm=builtin_plus(_e, numeric_const(1))})};
+	int exams() :
+		{S$(@this:, {age=_a;exm=_e})}
+		{S$(@this:, {age=_a;exm=_e}) * $ret_var = _e};
+}
+
+class SMUSICIAN extends STUDENT, MUSICIAN
+{
+	define P(x, {age=a}) = P$PERSON(x, {age=a});
+
+	define S(x, {age=a;exm=e}) = S$STUDENT(x, {age=a;exm=e});
+
+	define M(x, {age=a;pfm=p}) = M$MUSICIAN(x, {age=a;pfm=p});
+
+	define SM(x, {age=a;exm=e;pfm=p}) = P$PERSON(x, {age=a}) * RestStoP$STUDENT(x, {exm=e}) * RestMtoP$MUSICIAN(x, {pfm=p});
+
+	define RestStoP(x, {exm=e}) = RestStoP$STUDENT(x, {exm=e});
+
+	define RestMtoP(x, {pfm=p}) = RestMtoP$MUSICIAN(x, {pfm=p});
+
+	define RestSMtoS(x, {pfm=p}) = RestMtoP$MUSICIAN(x, {pfm=p});
+
+	define RestSMtoM(x, {exm=e}) = RestStoP$STUDENT(x, {exm=e});
+
+	axioms {
+		SM_S: SM(@this:, {age=a;exm=e;pfm=p}) <=> S(@this:, {age=a;exm=e}) * RestSMtoS(@this:, {pfm=p});
+		SM_M: SM(@this:, {age=a;exm=e;pfm=p}) <=> M(@this:, {age=a;pfm=p}) * RestSMtoM(@this:, {exm=e});
+		S_M: S(@this:, {age=a;exm=e}) * RestSMtoS(@this:, {pfm=p}) <=> M(@this:, {age=a;pfm=p}) * RestSMtoM(@this:, {exm=e});
+		s_student_to_person_field: S$STUDENT(x, {age=a;exm=e}) => x.<PERSON: int my_age> |-> a * RestStoP$STUDENT(x, {exm=e});
+	}
+
+	void <init>(int, int, int) :
+		{ }
+		{SM$(@this:, {age=@parameter0:;exm=@parameter1:;pfm=@parameter2:})};
+	void do_exam_performance() static:
+		{SM(@this:, {age=_a;exm=_e;pfm=_p})}
+		{SM(@this:, {age=_a;exm=builtin_plus(_e, numeric_const(1));pfm=builtin_plus(_p, numeric_const(1))})};
+}
+
