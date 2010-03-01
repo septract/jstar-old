@@ -242,18 +242,23 @@ Distefano {\em et al}~\cite{DOY:tacas06}.
 
 \section{Basics}
 \label{sec:basics}
-\jStar's internal structure is depicted in
-Figure~\ref{fig:architecture}. \dinocomment{The picture should now be changed} It is composed by two main
+\jStar \ is implemented in OCaml and its internal structure is depicted in
+Figure~\ref{fig:architecture}.  It is composed by two main
 components: a theorem prover and the symbolic execution module. The
 prover is called by the symbolic execution during the verification
 process to decide implications.  The symbolic execution module is
 responsible for the fixed point computation of invariants.
 
-\jStar \ accepts programs written in Jimple which is one of the Soot
+\jStar \ has a small core language which is executed by the symbolic execution module.
+Different languages can be verified by \jStar \ once a front-end translator module is provided.
+The current distribution contains a Jimple front end.
+Jimple is one of the Soot
 toolkit intermediate representations~\cite{vall99soot} designed to
 analyze Java programs. We use Soot for parsing Java into
-Jimple, the latter is then parsed by \jStar \ into its internal data
-structures. \jStar \ is implemented in OCaml.
+Jimple. Other languages can be verified by adding other front ends specific to a particular language.
+We encourage writing new front-ends, and if you write one and like to have it included in the official 
+\jStar \ distribution, please contact us.
+
 %
 \begin{figure}[t]
   \centering
@@ -287,9 +292,6 @@ program are:
 \end{description}
 
 \newcommand{\linkedlist}{\texttt{LinkedList.java} }
-\subsection{Let's start}
-
-Cell example
 
 
 
@@ -452,8 +454,8 @@ Pure part | Spatial Part
 An example specification for the constructor of class {\tt NodeLL} is
 \begin{verbatim}
   static void <init>() : 
-    { | } 
-    { | field(@this:,<NodeLL: NodeLL next>,_x) * 
+    {  } 
+    {  field(@this:,<NodeLL: NodeLL next>,_x) * 
         field(@this:,<NodeLL: java.lang.String content>,_y) };
 \end{verbatim}
 \dinocomment{Update notation and spec as in example}
@@ -524,8 +526,8 @@ class LinkedList {
 ......
 
   void reverseList() : 
-   { | LL$(@this:) } 
-   { | LL$(@this:) };
+   {  LL$(@this:) } 
+   {  LL$(@this:) };
 
  ....
 }
@@ -537,13 +539,13 @@ are quantified variables. More precisely, if a variable {\tt \_x}
 occurs in both pre and post-condition then it is {\em universally}
 quantified (as in Hoare's logic). For example the specification:
 \begin{verbatim}
-{ | Val$(@this:, {content=_X})} 
+{ Val$(@this:, {content=_X})} 
   get()
-{ _X=$ret_var | Val$(@this:, {content=_X}) };
+{ _X=$ret_var * Val$(@this:, {content=_X}) };
 \end{verbatim}
 corresponds to the Hoare triple:
 \[
-\forall \_X. \{ \ | \ Val(\this,\_X) \} get() \{ \_X=ret\_var \ |\  Val(\this, \_X)\}
+\forall \_X. \{ \ Val(\this,\_X) \} get() \{ \_X=ret\_var *  Val(\this, \_X)\}
 \]
 If a logical variable occurs only in a formula  e.g., a precondition or a postcondition, 
 then it is {\em existentially} quantified in the formula.
@@ -553,10 +555,233 @@ Every specification file must contain a specification for the {\tt <init>} metho
 \begin{verbatim}
 class java.lang.Object 
 {
-static void <init>(): { | } { | };
+static void <init>(): {  } {  };
 }
 \end{verbatim}
-\dinocomment{notation}
+
+\subsection{Advanced specification using inheritance}
+We illustrate how inheritance can be dealt with in \jStar \ by mean of the following classes
+\J~Cell~ and \J~Recell~:
+\[\begin{tabular}{@{}ll@{}}\begin{lstlisting}
+class Cell {
+    int val;
+
+    void set(int x) {
+	val=x;
+    }
+
+    int get() {
+	return val;
+    }
+}
+\end{lstlisting}&\hspace{1em}
+\begin{lstlisting}
+class Recell extends Cell {
+    int bak;
+
+    void set(int x) {
+	bak=super.get(); super.set(x);
+    }
+
+    int get() {
+	return super.get();
+    }
+}
+\end{lstlisting}
+\end{tabular}
+\]
+The \J~Cell~ class has a \J~val~ field, which is updated by the
+\J~set~ method and its value is returned by the \J~get~ method.  The
+subclass \J~Recell~ has an additional field \J~bak~, which stores the
+previous value the object was set with. 
+
+To specify the \J~Cell~ class, we define a property \JS{Val} describing a \J~Cell~'s contents.  This is done by  the following 
+specification defined inside \J~Cell~:
+%
+\begin{equation}
+\label{eq:val}
+  \define \Val(x,\content y ) = \symbolicheap{\true}{ x.val \mapsto y} \  ;
+\end{equation}
+%
+%
+This definition defines $\Val(x,\content y)$ to mean that the
+field \JS{val} of object $x$ has contents $y$, provided $x$ is
+precisely of dynamic type \J~Cell~.  If $x$ is not of this type,
+then this definition does not constrain the meaning of the property,
+called \emph{abstract predicate family}~\cite{parkinson05} (recall that $\Val$ is defined within \J~Cell~'s scope).  One can
+view this like a method definition: a method definition specifies the
+behaviour of a method for a single class, not for all classes.
+
+Definition (\ref{eq:val}) also (implicitly) defines another concept 
+\[
+\Val\J~@Cell~(x,\content y)
+\]
+which  is visible (and therefore can be used) not only inside \J~Cell~ but in any of \J~Cell~'s subclasses.
+Since its scope comprehends  \J~Cell~ and its subclasses, the property $\Val\J~@Cell~(x,\content y)$
+is independent of the actual dynamic type of \JS{x}. That is, it always asserts \JS{x}'s
+\JS{val} field contains \JS{y} no mater the type of \JS{x} (either \J~Cell~ or a subtype).  
+We refer
+to this second property as the \emph{internal property} as it
+corresponds precisely to the body of the definition for a particular
+class. Formally, we have the following two axioms:
+\[
+\begin{array}{@{}r@{\;}c@{\;}l@{}}
+\begin{array}[b]{@{}l@{}}
+\J~type~(x, \J~Cell~) \Longrightarrow \\
+\mbox{}\qquad(\Val(x,\content y)
+\end{array} & \iff & \Val\J~@Cell~(x,\content y))
+\\[1em]
+\Val\J~@Cell~(x,\content y) &\iff& \symbolicheap{\true}{ x.val \mapsto y}
+\end{array}
+\]
+where $\J~type~(x, \J~Cell~)$ means $x$ is precisely of dynamic type
+\J~Cell~.
+%
+The first relates the internal property to the general property.  Note
+that, this does not specify the meaning of $\Val(x,\content y)$ if $x$
+is not of dynamic type \J~Cell~.  The second specifies the internal
+property.  This can be used to verify the class, but is not available
+when verifying other classes.  That is, other classes (including
+subclasses) must be independent of the specific internal definition of
+the predicate, but may mention the predicate abstractly.
+
+
+
+For each method, in \jStar \ we need to provide two types of specifications: {\em static}
+and {\em dynamic}~\cite{PB08,chin08}.  The static specification is
+used to give a precise specification of the code's behaviour, while the
+dynamic is used to give a more abstract view of how the method
+behaves.  More specifically, the static specification is used for
+\J~super~ and private calls and for verifying it is sound to inherit a
+method.  The dynamic specification is used for dynamic dispatch
+and hence must be implemented by all subclasses (behavioural
+subtyping~\cite{liskov94}).
+
+We can  specify the behaviour of the \J~get~ method by:
+\begin{lstlisting}
+  int get():
+  static
+    pre:  $\{\this.val \mapsto X \}$
+    post: $ \{ X=\return * \this.val \mapsto X  \}$;
+  dynamic 
+    pre: $\{ \Val(\this,\content X) \} $
+    post:$\{ X= \return * \Val(\this,\content X) \}$;
+\end{lstlisting}
+%
+The first specification, the static specification, describes precisely
+how the method updates the \JS{val} field.\footnote{In this case, the
+  update of the method get() is the identity function.}  It has the
+precondition $$\this.val \mapsto X$$ that specifies that the \JS{val}
+field of $\this$ has the value \JS{X} (a logical
+variable), and
+the postcondition $$X=\return * \this.val \mapsto X$$ specifies that the
+field still has the same value, and this value is returned,
+$X=\return$.
+
+The second specification, the dynamic specification, describes how the
+method alters the more abstract \J~Val~ property, rather than the
+concrete fields.  This enables subclasses to satisfy this
+specification while changing the concrete behaviour, that is,
+modifying different fields.
+
+\begin{notation}
+In \jStar \ only the {\bf static}
+  qualifier needs to be explicitly stated. If it is not indicated 
+  a method specification is assumed to be dynamic.
+  \end{notation}
+
+
+The static specification is very concrete since it is expressed in terms of the 
+$val$ fields.  It can be stated more abstractly so that is could be used by \JS~Cell~ 
+subclasses  by using the \JS{Val}\J~@Cell~ property.
+\begin{lstlisting}
+   int get() static: 
+  { $\Val\mbox{\$Cell}(\this,\content{\ex X})$ }
+  { $ \ex{X}=\return * \Val\mbox{\$Cell}(\this, \content{\ex X}) $ };
+\end{lstlisting}
+This describes for all subclasses precisely what this method body
+does, but it does not reveal the fields that are actually modified.
+
+As this pattern of specification is common, \jStar \ provides a shorthand,
+which defines the dynamic specification given above, and the second
+static specification, with the single specification.
+%
+\begin{lstlisting}
+  int get(): 
+  { $\Val\dollar(\this,\content{\ex X})$ } 
+  { $\ex X = \return * \Val\dollar(\this,\content{\ex X})$ };
+\end{lstlisting}
+By postfixing a \J~@~ onto a property it is interpret by \jStar \ as the
+standard property in the dynamic specification, that is without the
+\J~@~, and as the internal property for the current class in the
+static specification, in this case \JS{Val}\J~@Cell~.
+%
+Hence, both static and dynamic specifications for \J~set~  can be provided with only the following: 
+\begin{lstlisting}
+  void set(int x): 
+  { $\Val\dollar(\this,\content{\ex X})$ } 
+  { $\Val\dollar(\this, \content{\textrm{x}})$ };
+\end{lstlisting}
+Remember that the behaviour of the constructor must be specified:
+%
+\begin{lstlisting}
+  void <init>(): 
+  {  } { $\Val\dollar(\this,\content{\ex X})$ }
+\end{lstlisting}
+This specification stipulates that constructing an object gives
+$\Val(\this,\content{\ex X})$, and from a subclass's \J~super~
+constructor call results in the internal property
+$\Val\mbox{\$Cell}(\this,\content{\ex X})$.  This enables subclasses
+to use this property without knowing its meaning.
+
+\paragraph{Recell.}
+Now, let's consider the \J~Recell~ subclass.  First of all, we must 
+define what the \JS{Val} property means for the \J~Recell~ class.
+%
+\begin{lstlisting}
+$\define  \Val(x,\contentOld y z ) = $
+     $\Val\mbox{\$Cell}(x,\content y) * x.bak \mapsto z$  ;
+\end{lstlisting}
+If \JS{x} is of type \J~Recell~, this defines
+$\Val(x,\contentOld y z)$ as the property associated to \JS{Val} from
+the superclass \J~Cell~ and the additional \JS{bak} field has value
+\JS{z}.  As we have defined the property with an additional labelled
+parameter, \J~old~, we must also provide a meaning to the property
+with only the \JS~content~ parameter.  In effect, we have width
+subtyping on the labelled parameters, where missing parameters are
+existentially quantified.  Hence, this defines $\Val(x,\content y)$
+for the \J~Recell~ class as
+%
+%\begin{center}
+%\J~Val@Cell(x,{content=y}) * x.bak |-> _z~
+%\end{center}
+\[
+\Val\mbox{\$Cell}(x,\content y ) * x.bak \mapsto \ex z
+\]
+%
+where $\ex z$ is an existentially quantified variable.  
+Importantly, by containing the \JS{Val}\J~@Cell~ property it allows the
+\J~Recell~ to make super calls to the \J~Cell~'s methods, and also
+inherit methods, as the precondition of \JS{Val}\J~@Cell~ can be
+provided for the calls.
+%
+The specifications for \J~Recell~ is the following:
+%
+\begin{lstlisting}
+  void <init>(): {  } { $\Val\dollar(x,\contentOld y z )$ };
+  
+  int get(): 
+  { $\Val\dollar(\this,\contentOld{\ex X}{\ex Y})$ } 
+  { $\ex X= \return *\Val\dollar(\this,\contentOld{\ex X}{\ex Y})$ };
+
+  void set(int x): 
+  { $\Val\dollar(\this,\contentOld{\ex X}{\ex Y})$ } 
+  { $\Val\dollar(\this,\contentOld{\textrm{x}}{\ex X})$ };
+\end{lstlisting}
+We must verify that these specifications are valid behavioural
+subtypes, which follows from width subtyping of labelled
+parameters.~\jStarQED
+
 
 
 \section{Logic Rules}
