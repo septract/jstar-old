@@ -1,9 +1,7 @@
-open Pprinter
 open Pterm
 open Plogic
 open Methdec_core
-open Specification
-open Jimple_global_types
+open Spec
 (* =================== PPrinter for core  ============================ *)
 
 let rec args2str  arg = 
@@ -49,13 +47,6 @@ and list_form2str  list =
 
 
 
-let spec2str ppf (spec: spec)  = 
-  Format.fprintf ppf "@[{%a}@]@ @[{%a}@]"
-    string_form spec.pre
-    string_form spec.post
-
-let () = pprinter_core_spec2str := ((Debug.toString spec2str) : (spec -> string))
-  
   
 let variable_list2str lv =
   Debug.list_format "," Vars.pp_var lv
@@ -65,7 +56,7 @@ let pp_stmt_core ppf =
   | Nop_stmt_core -> 
       Format.fprintf ppf "nop;"
   | Label_stmt_core l ->  
-      Format.fprintf ppf "%s:" (label_name2str l) 
+      Format.fprintf ppf "%s:" l 
   | Assignment_core (v,spec,e)-> 
       Format.fprintf ppf "%a@ @[%a@]@[(%a)@];"
 	(fun ppf v -> match v with [] -> () | _ -> Format.fprintf ppf "%a@ :=@ " variable_list2str v) v	

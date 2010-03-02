@@ -24,35 +24,35 @@ endif
 export LIB
 
 
-CORESOURCE = rterm.ml rlogic.ml prover.ml sepprover.ml
+CORESOURCE = jparsetree.ml jimple_global_types.ml spec_def.ml pprinter.ml
 LIBRARYSOURCE = $(CORESOURCE)
 
 LIBRARY = SOURCES="$(LIBRARYSOURCE)" \
        OCAMLLDFLAGS="-g -a" \
-       INCDIRS="../utils ../prover_syntax" \
+       INCDIRS="../utils ../prover_syntax ../symbexe_syntax" \
        OCAMLFLAGS="-g" \
-       RESULT="$(LIB)/sepprover.cmxa" \
+       RESULT="$(LIB)/jimple_syntax.cmxa" \
        TRASH=""
 BLIBRARY = SOURCES="$(LIBRARYSOURCE)" \
        OCAMLLDFLAGS="-g -a" \
-       INCDIRS="../utils ../prover_syntax" \
+       INCDIRS="../utils ../prover_syntax ../symbexe_syntax" \
        OCAMLFLAGS="-g" \
-       RESULT="$(LIB)/sepprover.cma" \
+       RESULT="$(LIB)/jimple_syntax.cma" \
        TRASH=""
 
 default: sepprover.cmxa
 
 prebuild: 
-	(cd ../prover_syntax; make)
+	@(cd ../utils; make)
 
 all: default
 
 
 sepprover.cmxa: prebuild
-	$(MAKE) -f $(OCAMLMAKEFILE) $(LIBRARY) native-code
+	@$(MAKE) -f $(OCAMLMAKEFILE) $(LIBRARY) native-code
 
 ssepprover.cma: prebuild
-	$(MAKE) -f $(OCAMLMAKEFILE) $(BLIBRARY) byte-code
+	@$(MAKE) -f $(OCAMLMAKEFILE) $(BLIBRARY) byte-code
 
 clean:
 	$(MAKE) -f $(OCAMLMAKEFILE) $(LIBRARY) clean

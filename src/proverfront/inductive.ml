@@ -1,8 +1,10 @@
 (* File to read an inductive file (and later its imports). *)
 open Prover
+open Plogic
+open Pterm
 open System
 open Global_types
-open Jimple_global_types
+open Load
 
 let print_inductive_con inductive_con =
   let (heap, name, args) = inductive_con.con_def in

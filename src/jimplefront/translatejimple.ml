@@ -11,6 +11,7 @@ open Plogic
 open Rlogic
 open Jlogic
 open Jimple_global_types
+open Global_types
 open Jparsetree
 open Spec_def
 open Prover
@@ -20,6 +21,7 @@ open Support_symex
 open Symexec
 open Methdec_core
 open Javaspecs
+open Spec
 
 (* global variables *)
 let curr_static_methodSpecs: Javaspecs.methodSpecs ref = ref Javaspecs.emptyMSpecs
@@ -108,12 +110,12 @@ let rec translate_assign_stmt  (v:Jparsetree.variable) (e:Jparsetree.expression)
       let p1 = immediate2args e' in
       let pre=mk_pointsto p0 (signature2args si) pointed_to_var in
       let post=mk_pointsto p0 (signature2args si) p1 in
-      let spec=Specification.mk_spec pre post Specification.ClassMap.empty in
+      let spec=mk_spec pre post ClassMap.empty in
       Assignment_core ([],spec,[])	
   | Var_name n, Immediate_exp e' -> 
       (* execute  v=e' --> v:={emp}{return=param0}(e') *)
       let post= mkEQ(retvar_term,immediate2args e') in
-      let spec=Specification.mk_spec [] post Specification.ClassMap.empty in
+      let spec=mk_spec [] post ClassMap.empty in
       Assignment_core  ([variable2var (Var_name(n))],spec,[])
 
   | Var_name v, Reference_exp (Field_local_ref (n,si))  -> 
@@ -123,19 +125,19 @@ let rec translate_assign_stmt  (v:Jparsetree.variable) (e:Jparsetree.expression)
       let x = (immediate2args (Immediate_local_name(n))) in 
       let pre=mk_pointsto x (signature2args si) pointed_to_var in
       let post=pconjunction (mkEQ(retvar_term,pointed_to_var)) (mk_pointsto x (signature2args si) pointed_to_var) in
-      let spec=Specification.mk_spec pre post Specification.ClassMap.empty in
+      let spec=mk_spec pre post ClassMap.empty in
       Assignment_core ([variable2var (Var_name v)],spec,[])
   | Var_name n, New_simple_exp ty ->
       (* execute x=new(ty)
 	 The rest of the job will be performed by the invocation to specialinvoke <init>
       *)
 			let post = mk_type_all retvar_term ty in
-			let spec = Specification.mk_spec [] post Specification.ClassMap.empty in
+			let spec = mk_spec [] post ClassMap.empty in
 			Assignment_core ([variable2var (Var_name n)],spec,[])
   | Var_name n , Binop_exp(name,x,y)-> 
       let args = Arg_op(Support_syntax.bop_to_prover_arg name, [immediate2args x;immediate2args y]) in
       let post= mkEQ(retvar_term,args) in
-      let spec=Specification.mk_spec [] post Specification.ClassMap.empty in
+      let spec=mk_spec [] post ClassMap.empty in
       Assignment_core  ([variable2var (Var_name(n))],spec,[])
   | Var_name n , Cast_exp (_,e') -> (* TODO : needs something for the cast *) 
       translate_assign_stmt (Var_name n) (Immediate_exp(e'))
@@ -149,7 +151,7 @@ let assert_core b =
   | Binop_exp (op,i1,i2) -> 
       let b_pred = Support_syntax.bop_to_prover_pred op (immediate2args i1) (immediate2args i2) in
       Assignment_core([], 
-		      Specification.mk_spec [] b_pred Specification.ClassMap.empty, 
+		      mk_spec [] b_pred ClassMap.empty, 
 		      []) 
   | _ -> assert false
   
@@ -168,7 +170,7 @@ let jimple_statement2core_statement s : core_statement list =
 	Printf.printf "\n Translating a jimple identity statement \n  %s\n" (Pprinter.statement2str s);
       let id'=Immediate_local_name(Identifier_name(id)) in 
       let post= mkEQ(retvar_term,immediate2args id') in
-      let spec=Specification.mk_spec [] post Specification.ClassMap.empty in
+      let spec=mk_spec [] post ClassMap.empty in
       [Assignment_core  ([variable2var (Var_name(nn))],spec,[]) ]
   | Identity_no_type_stmt(n,i) -> assert false
   | Assign_stmt(v,e) -> 
@@ -196,7 +198,7 @@ let jimple_statement2core_statement s : core_statement list =
        | Some e' -> 
 	 let p0 = Arg_var(mk_parameter 0) in (* ddino: should it be a fresh program variable? *)
 	 let post= mkEQ(retvar_term,p0) in
-	 let spec=Specification.mk_spec [] post Specification.ClassMap.empty in
+	 let spec=mk_spec [] post ClassMap.empty in
 	 [Assignment_core  ([],spec,[immediate2args e']) ]
       )
   | Throw_stmt(i) ->
@@ -331,7 +333,7 @@ or
 or
  | |- ?x=vn 
 *)
-let jimple_locals2stattype_rules (locals : local_var list) : Prover.sequent_rule list =
+let jimple_locals2stattype_rules (locals : local_var list) : sequent_rule list =
 	let localmap = ref (LocalMap.empty) in
 	let _ = List.iter (fun (atype,name) ->
 		match atype with

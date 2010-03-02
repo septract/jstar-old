@@ -18,15 +18,15 @@ export LIB
 
 INCLUDES = 
 
-SYMBEXE_SOURCES = support_symex.ml jlogic.ml javaspecs.ml methdec.ml translatejimple.ml classverification.ml run_parser.ml
+SYMBEXE_SOURCES = support_symex.ml jlogic.ml javaspecs.ml methdec.ml translatejimple.ml classverification.ml mkspecs.ml run_parser.ml
 
 
 TOPLEVEL_SOURCES = $(SYMBEXE_SOURCES)
 
 DEFAULT_ARGS = SOURCES="$(TOPLEVEL_SOURCES)" \
-       LIBS="str unix utils sepprover symbexe parser" \
+       LIBS="str unix utils prover_syntax symbexe_syntax jimple_syntax sepprover symbexe parser" \
        OCAMLLDFLAGS="-g -I $(LIB)" \
-       INCDIRS="../prover ../utils ../syntax ../symbexe" \
+       INCDIRS="../prover ../prover_syntax ../parsing ../symbexe_syntax ../utils ../jimple_syntax ../symbexe" \
        OCAMLFLAGS="-g" \
        TRASH=""
 
@@ -40,7 +40,7 @@ all: jstar
 
 prebuild: 
 	@(cd ../prover; make)
-	@(cd ../syntax; make)
+	@(cd ../jimple_syntax; make)
 	@(cd ../symbexe; make)
 
 .PHONY: jstar.byte  

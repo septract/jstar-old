@@ -16,7 +16,8 @@ open Pterm
 open Plogic
 open Printf 
 open Misc
-open Jimple_global_types
+open Global_types 
+
 exception Contradiction
 exception No_match
 
@@ -1355,28 +1356,6 @@ let unifies_eq ts rs a1 a2 interp cont =
 
 
 
-
-
-type 'a rewrite_entry =  (args list * args * 'a * string * bool) list
-
-(* substitution *)
-(*IF-OCAML*)
-module RewriteMap =
-  Map.Make(struct
-    type t = string
-    let compare = compare
-  end)
-type 'a rewrite_map =  'a rewrite_entry RewriteMap.t 
-(*ENDIF-OCAML*)
-
-(*F#
-module RewriteMap = Map
-type 'a rewrite_map =  RewriteMap.t<string,'a rewrite_entry> 
-F#*)
-
-let rm_empty = RewriteMap.empty
-let rm_add = RewriteMap.add
-let rm_find = RewriteMap.find
 
 
 exception Done

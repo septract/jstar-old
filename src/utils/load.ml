@@ -1,7 +1,10 @@
 (* File to read a logic file and its imports. *)
-open Prover
 open System
-open Global_types
+
+type 'a importoption =
+    ImportEntry of string 
+  | NormalEntry of 'a
+
 
 let import_flatten_extra_rules dirs filename extra_rules fileparser = 
   let rec import_flatten_inner dirs filename acc already_included = 
@@ -35,26 +38,3 @@ let import_flatten_extra_rules dirs filename extra_rules fileparser =
   fst (import_flatten_inner dirs filename [] [])
 
 let import_flatten dirs filename fileparser = import_flatten_extra_rules dirs filename [] fileparser
-
-let load_logic_extra_rules dirs filename extra_rules =
-  let fileentrys = import_flatten_extra_rules dirs filename extra_rules (Jparser.rule_file Jlexer.token) in  
-  let rl = expand_equiv_rules fileentrys in 
-  let sl,rm = 
-    List.fold_left
-      (fun (sl,rm) rule ->
-	match rule with
-	| SeqRule(r) -> 
-	    if !(Debug.debug_ref) 
-	    then 
-	      Format.printf "Loaded rule:@\n%a@\n" 
-		Prover.string_psr r; 
-	    (r::sl,rm)
-	| RewriteRule(r) -> 
-	    (match r with 
-	      (fn,a,b,c,d,e,f,g) -> (sl,Rterm.rm_add fn ((a,b,(c,d,e),f,g)::(try Rterm.rm_find fn rm with Not_found -> [])) rm))
-	| EquivRule(r) -> assert false
-      ) ([],Rterm.rm_empty) rl
-  in
-  (sl,rm,default_pure_prover)
-
-let load_logic dirs filename = load_logic_extra_rules dirs filename []

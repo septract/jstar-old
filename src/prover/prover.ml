@@ -14,7 +14,7 @@ open Rterm
 open Rlogic
 open Plogic
 open Debug
-open Jimple_global_types
+open Global_types
 
 
 let prover_counter_example : ts_sequent list ref = ref []
@@ -45,7 +45,6 @@ let filter_eq_eq pl =
   ret
 
 
-type sequent_rule = psequent * (psequent list list) * string * ((* without *) pform * pform) * (where list)
 
 
 (* if sequent matches, then replace with each thing  in the sequent list *)
@@ -53,24 +52,6 @@ type sequent_rule = psequent * (psequent list list) * string * ((* without *) pf
 type sequent_rule = representative psequent * (representative psequent list list) * string * (representative pform) * (where list)
 *)
 
-
-let string_pseq ppf (g,l,r) = 
-  Format.fprintf ppf "%a@ | %a@ |- %a" 
-    Plogic.string_form g 
-    Plogic.string_form l
-    Plogic.string_form r
-
-let string_psr ppf (sr :sequent_rule) : unit = 
-    match sr with 
-      (conclusion, premises, name, (without1,without2), where) ->
-	Format.fprintf ppf 
-	  "rule %s:@\n%a@\n%a@\nwithout@\n %a@ |- %a@\n%a"
-	  name
-	  string_pseq conclusion
-	  (Debug.list_format_optional "if\n " " or " (Debug.list_format ";" string_pseq)) premises
-	  string_form without1
-	  string_form without2
-	  (Debug.list_format_optional "where" ";" string_where) where
 	  
 let pprint_sequent_rules logic =
 	let (rules,_,_) = logic in
@@ -98,7 +79,7 @@ let default_pure_prover =
 
 type logic = sequent_rule list * Rlogic.rewrite_map * external_prover
 
-let empty_logic : logic = [],Rterm.rm_empty, default_pure_prover
+let empty_logic : logic = [],Global_types.rm_empty, default_pure_prover
 
 
 let external_proof ep ts pl_assume rs p_goal = 

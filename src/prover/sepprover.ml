@@ -4,7 +4,9 @@ F#*)
 
 open Debug
 open Rterm
-open Jimple_global_types
+open Global_types
+open Pterm
+open Plogic
 
 module SepProver = struct
 
@@ -204,8 +206,8 @@ module SepProver = struct
 
     let add_rewrite_rule (rr : rewrite_rule) ((sl,rm,ep) : logic) : logic = 
       (sl,
-       Rterm.rm_add rr.op ((rr.arguments,rr.new_term,([],[],[]),rr.rule_name,false)
-			   ::(try Rterm.rm_find rr.op rm with Not_found -> [])) 
+       Global_types.rm_add rr.op ((rr.arguments,rr.new_term,([],[],[]),rr.rule_name,false)
+			   ::(try Global_types.rm_find rr.op rm with Not_found -> [])) 
 	 rm,
        ep)
       

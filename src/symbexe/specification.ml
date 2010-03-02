@@ -15,19 +15,9 @@ open Rterm
 open Pterm
 open Plogic
 open Prover
-open Jimple_global_types
+open Spec
 
 
-module ClassMap = Jimple_global_types.Specification_ClassMap
-
-type excep_post = Jimple_global_types.specification_excep_post
-type spec = Jimple_global_types.specification_spec
-
-let mk_spec  pre post excep = 
-    { pre=pre;
-      post=post;
-      excep=excep
-    }
 
 
 

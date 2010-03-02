@@ -10,7 +10,7 @@ open Vars
 open Pterm
 open Rterm
 open Plogic
-open Jimple_global_types
+open Global_types
 
 type plain =
   | EQ of representative * representative
@@ -238,25 +238,6 @@ type sequent = spatial list * form * form
 
 type ts_sequent = term_structure * sequent
 
-type varterm = 
-    Var of varset
-
-type where = 
-  | NotInContext of varterm
-  | NotInTerm of varterm * args
-
-let string_vs ppf vs =
-  vs_iter (fun v -> Format.fprintf ppf "%s" (string_var v)) vs
-
-let string_where ppf where = 
-  match where with 
-    NotInContext (Var vs) -> 
-      Format.fprintf ppf "%a notincontext" 
-	string_vs vs
-  | NotInTerm (Var vs, args) -> 
-      Format.fprintf ppf "%a notin %a" 
-	string_vs vs 
-	string_args args
 
 (*type varterm = 
     Var of varset
@@ -309,7 +290,7 @@ type rewrite_entry_arg =  (Plogic.pform * (where list) * Plogic.pform)
 
 type rewrite_entry_2 = rewrite_entry_arg rewrite_entry
 
-type rewrite_map =  rewrite_entry_arg Rterm.rewrite_map
+type rewrite_map =  rewrite_entry_arg Global_types.rewrite_map
 
 (* subst on a sequent *)
 let f_false = ([],[],[False])

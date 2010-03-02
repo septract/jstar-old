@@ -18,13 +18,13 @@ export LIB
 
 INCLUDES = 
 
-SYMBEXE_SOURCES = specification.ml methdec_core.ml pprinter_core.ml cfg_core.ml symexec.ml mkspecs.ml
+SYMBEXE_SOURCES = specification.ml methdec_core.ml pprinter_core.ml cfg_core.ml symexec.ml
 
 TOPLEVEL_SOURCES = $(SYMBEXE_SOURCES)
 
 DEFAULT_ARGS = SOURCES="$(TOPLEVEL_SOURCES)" \
        OCAMLLDFLAGS="-g -a " \
-       INCDIRS="../prover ../utils" \
+       INCDIRS="../prover ../prover_syntax ../symbexe_syntax ../utils" \
        OCAMLFLAGS="-g" \
        TRASH=""
 

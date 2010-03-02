@@ -7,6 +7,7 @@
 *******************************************************************)
 
 open Spec_def
+open Pterm
 open Global_types
 open Specification
 open Javaspecs

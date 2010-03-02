@@ -8,11 +8,11 @@ open Jparsetree
 open Vars
 open Pterm 
 open Plogic
-open Rlogic 
 open Lexing
 open Parsing 
 open Jimple_global_types
-open Specification
+open Spec
+open Load
 open Spec_def
 open Global_types
 
@@ -284,10 +284,10 @@ let field_signature2str fs =
 %type <Jimple_global_types.jimple_file> file
 
 %start spec_file
-%type <Global_types.spec_file> spec_file
+%type <Spec_def.class_spec Load.importoption list> spec_file
 
 %start rule_file
-%type <Global_types.rules Global_types.importoption list> rule_file
+%type <Global_types.rules Load.importoption list> rule_file
 
 
 %start question_file

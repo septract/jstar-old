@@ -23,6 +23,7 @@ open Support_syntax
 open Specification
 open Jimple_global_types
 open System
+open Spec 
 
 exception Class_defines_external_spec
 
@@ -176,7 +177,7 @@ let parent_classes_and_interfaces classname spec_list =
 (* =================== Stuff exports and axioms both use ======================== *)
 
 (* The rules for prov => imp, where prov is the implication's proviso *)
-let rules_for_implication imp prov : Prover.sequent_rule list =
+let rules_for_implication imp prov : sequent_rule list =
 	let name,antecedent,consequent = imp in
 	(* imp is assumed to contain only program variables and existential variables *)
 	(* to build a rule, we substitute all program variables (but no existentials) with fresh anyvars *)

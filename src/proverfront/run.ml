@@ -4,7 +4,7 @@
     Copyright Matthew Parkinson & Dino Distefano
  
 *******************************************************************)
-open Load
+open Load_logic
 
 let program_file_name = ref "";;
 let logic_file_name = ref "";;
@@ -35,7 +35,8 @@ let main () =
   else if !logic_file_name="" then
     Printf.printf "Logic file name not specified. Can't continue....\n %s \n" usage_msg
   else 
-    let logic = load_logic (System.getenv_dirlist "JSTAR_LOGIC_LIBRARY") !logic_file_name in
+    let l1,l2 = (load_logic (System.getenv_dirlist "JSTAR_LOGIC_LIBRARY") !logic_file_name) in 
+    let logic = l1,l2, Prover.default_pure_prover in
 (*    let s = System.string_of_file !program_file_name  in*)
     let question_list = System.parse_file Jparser.question_file Jlexer.token !program_file_name "Questions" true in
 

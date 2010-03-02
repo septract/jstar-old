@@ -9,8 +9,7 @@
 
 (* Manage methdec infos for a file *) 
 
-open Jparsetree
-open Specification
+open Spec
 
 type core_statement = 
   | Nop_stmt_core
