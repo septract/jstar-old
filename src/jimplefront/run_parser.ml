@@ -130,7 +130,7 @@ let main () =
 	
 	 let abs_rules = Load.load_logic  (System.getenv_dirlist "JSTAR_LOGIC_LIBRARY") !absrules_file_name in
 	 
-	 let spec_list = Load.import_flatten 
+	 let spec_list : (Spec_def.class_spec list) = Load.import_flatten 
 	     (System.getenv_dirlist "JSTAR_SPECS_LIBRARY")
 	     !spec_file_name
 	     (Jparser.spec_file Jlexer.token) in
@@ -138,6 +138,9 @@ let main () =
 	 let Jimple_global_types.JFile(_,_,class_name,_,_,_) = program in
 	
 	 let logic = Javaspecs.augmented_logic_for_class class_name spec_list logic in
+	 let logic = Javaspecs.add_common_apf_predicate_rules spec_list logic in
+	 (* Axioms use the "subtype" and "objsubtype" relation - see jlogic.ml *)
+	 let logic = Javaspecs.add_subtype_and_objsubtype_rules spec_list logic in
 	
 	 (* Exports clause treatment *)
 	 let (logic_with_where_pred_defs,implications) = Javaspecs.logic_and_implications_for_exports_verification class_name spec_list logic in
@@ -149,10 +152,18 @@ let main () =
 	 			(*let _ = Prover.pprint_sequent_rules logic in*)
 	 (* End of exports clause treatment *)
 	
+	 (* Axioms clause treatment *)
+	 let axiom_map = Javaspecs.spec_file_to_axiom_map spec_list in
+	 let implications = Javaspecs.implications_for_axioms_verification class_name axiom_map in
+	 let _ = Classverification.verify_axioms_implications class_name program implications axiom_map logic in
+	 let logic = Javaspecs.add_axiom_implications_to_logic spec_list logic in
+	 (*let _ = Prover.pprint_sequent_rules logic in*)
+	 (* End of axioms clause treatment *)
+	
 	 let (static_method_specs,dynamic_method_specs) = Javaspecs.spec_file_to_method_specs spec_list in
 	 
 	 if Config.symb_debug() then Printf.printf "\n\n Starting symbolic execution...";
-	 Classverification.verify_class program static_method_specs dynamic_method_specs logic abs_rules ;
+	 Classverification.verify_methods program static_method_specs dynamic_method_specs logic abs_rules ;
 	   (*Symexec.compute_fixed_point program apfmap logic abs_rules static_method_specs dynamic_method_specs*)
 	 Symexec.pp_dotty_transition_system () 
        with Assert_failure (e,l,c) -> Printf.printf "Error!!! Assert failure %s line %d character %d\n" e l c

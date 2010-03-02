@@ -13,7 +13,8 @@ open Pterm
 open Rterm
 open Rlogic
 open Plogic
-open Debug 
+open Debug
+open Jimple_global_types
 
 
 let prover_counter_example : ts_sequent list ref = ref []

@@ -11,17 +11,13 @@
 *************************************************************)
 open Debug
 open Vars
+open Jimple_global_types
 (*F#
 open Microsoft.FSharp.Compatibility
 F#*)
 
 (* Main terms *)
-type args = 
-  | Arg_var of Vars.var
-  | Arg_string of string
-  | Arg_op of string * args list
-  | Arg_cons of string * args list  (* Do not use *)
-  | Arg_record of (string *  args) list (* Do not use *)
+type args = pterm_args
 
 let mkArgRecord fldlist =
   Arg_record (List.sort (fun (a1,b1) (a2,b2) -> compare a1 a2) fldlist)

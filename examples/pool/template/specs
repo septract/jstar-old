@@ -1,11 +1,11 @@
 class java.lang.Object
 {
-  static void <init>() : { } { };
+  void <init>() static: { } { };
 }
 
 class java.util.LinkedList
 {
-  static void <init>() : { } { ls(@this:,nil(), empty()) };
+  void <init>() static: { } { ls(@this:,nil(), empty()) };
 
   boolean add(java.lang.Object) : 
     { ls(@this:,nil(),_s) }
@@ -22,14 +22,14 @@ class java.util.LinkedList
 
 class java.sql.DriverManager 
 {
-  static java.sql.Connection getConnection(java.lang.String, java.lang.String, java.lang.String) :
+  java.sql.Connection getConnection(java.lang.String, java.lang.String, java.lang.String) static:
     { }
     { DBConnection($ret_var, {connection=sql(@parameter0:,@parameter1:,@parameter2:)})}; 
 }
 
 class java.sql.Connection
 {
-  static void close() : 
+  void close() static: 
     { } { };
 }
 
@@ -54,11 +54,11 @@ class ResourcePool
 
   void <init>() : {  } {  PoolInternalEmpty$(@this:,{}) };
 
-  java.lang.Object makeResource() : 
+  abstract java.lang.Object makeResource() : 
     { PoolData(@this:, {type=_t}) } 
     { Resource(@this:, { handle=$ret_var; type=_t }) * PoolData(@this:,{type=_t}) };
 
-  void destructResource(java.lang.Object) : 
+  abstract void destructResource(java.lang.Object) : 
     { PoolData(@this:, {type=_t}) * Resource(@this:, {handle=@parameter0:; type=_t}) } 
     { PoolData(@this:, {type=_t}) };
 
@@ -85,7 +85,7 @@ class ConnectionPool
 	    field(x, <ConnectionPool: java.lang.String user>, _user) *
 	    field(x, <ConnectionPool: java.lang.String password>, _password); 
 
-  static void <init>(java.lang.String,java.lang.String,java.lang.String) :
+  void <init>(java.lang.String,java.lang.String,java.lang.String) static:
     { } 
     { PoolInternalEmpty$ResourcePool(@this:,{})
        * PoolData$ConnectionPool(@this:,{type=sql(@parameter0:,@parameter1:,@parameter2:)}) };
@@ -121,11 +121,11 @@ class ConnectionPool
     { Pool(@this:, {type=_t}) } 
     { Pool(@this:, {type=_t}) * DBConnection($ret_var, {connection=_t})  };
 
-  static java.sql.Connection getResource() : 
+  java.sql.Connection getResource() static: 
     { Pool$ResourcePool(@this:, {type=_t}) } 
     { Pool$ResourcePool(@this:, {type=_t}) * Resource(@this:, { handle=$ret_var; type=_t })  };
 
-  static java.lang.Object getResource() : 
+  java.lang.Object getResource() static: 
     { Pool(@this:, {type=_t}) } 
     { Pool(@this:, {type=_t}) * DBConnection($ret_var, {connection=_t})  };
 
@@ -139,12 +139,12 @@ class ConnectionPool
 ;
 
 
-  static void freeResource(java.sql.Connection) : 
+  void freeResource(java.sql.Connection) static: 
     { Pool$ResourcePool(@this:, {type=_t}) * Resource(@this:, {handle=@parameter0:;type=_t})  }
     { Pool$ResourcePool(@this:, {type=_t}) }
   ;
 
-  static void freeResource(java.lang.Object) : 
+  void freeResource(java.lang.Object) static: 
     { Pool$ResourcePool(@this:, {type=_t}) * Resource(@this:, {handle=@parameter0:;type=_t})  }
     { Pool$ResourcePool(@this:, {type=_t}) }
   ;

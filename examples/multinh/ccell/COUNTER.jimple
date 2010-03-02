@@ -1,0 +1,71 @@
+class COUNTER extends ANY {
+
+	int my_count;
+
+	void <init>(int)
+	{
+		// Declaration of registers, locals, and temporaries
+		COUNTER Current;
+		int r1;
+
+		// Initialization of registers and locals
+		Current := @this: COUNTER;
+		r1 := @parameter0: int;
+
+		// The routine body
+		{} : {} {};
+		return;
+	}
+
+	void increment()
+	{
+		// Declaration of registers, locals, and temporaries
+		COUNTER Current;
+		int t1;
+		int t2;
+
+		// Initialization of registers and locals
+		Current := @this: COUNTER;
+
+		// The routine body
+		t1 = Current.<COUNTER: int my_count>;
+		t2 = t1 + 1;
+		Current.<COUNTER: int my_count> = t2;
+		return;
+	}
+
+	int count()
+	{
+		// Declaration of registers, locals, and temporaries
+		COUNTER Current;
+		int Result;
+		int t1;
+
+		// Initialization of registers and locals
+		Current := @this: COUNTER;
+		Result = 0;
+
+		// The routine body
+		t1 = Current.<COUNTER: int my_count>;
+		Result = t1;
+		return Result;
+	}
+
+	void increment_helper()
+	{
+		// Declaration of registers, locals, and temporaries
+		COUNTER Current;
+		int t1;
+		int t2;
+
+		// Initialization of registers and locals
+		Current := @this: COUNTER;
+
+		// The routine body
+		t1 = Current.<COUNTER: int my_count>;
+		t2 = t1 + 1;
+		Current.<COUNTER: int my_count> = t2;
+		return;
+	}
+
+}

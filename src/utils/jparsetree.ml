@@ -124,7 +124,7 @@ type declaration = Declaration of j_type option *  name list
 
 type case_statement = Case_stmt of  case_label *  label_name
 
-type method_signature_short = j_type *  name *  parameter list
+type method_signature_short = modifier list * j_type *  name *  parameter list
 type method_signature = class_name * j_type *  name *  parameter list
 type field_signature = class_name * j_type *  name
 
@@ -170,9 +170,9 @@ type  catch_clause = Catch_clause of class_name * label_name * label_name * labe
 
 (*type  method_body = (declaration list * statement list * catch_clause list) option  *)
 
-type extends_clause = (class_name list) option
+type extends_clause = class_name list (* stephan mult inh *)
 
-type implements_clause = (class_name list) option
+type implements_clause = class_name list
 
 
 type list_class_file = 

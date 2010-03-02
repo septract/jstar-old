@@ -1,11 +1,11 @@
 class java.lang.Object
 {
-  static void <init>() : { } { };
+  void <init>() static: { } { };
 }
 
 class java.util.Iterator
 {
-static void <init>() : { } { };
+void <init>() static: { } { };
 
 // Anyhow, I assume that the given iterator is pointing to the beginning of a segment.
 // What we have already traversed is not shown in the pre. 
@@ -27,7 +27,7 @@ java.lang.Object next() :
 
 class java.util.LinkedList
 {
-static void <init>() : { } { @this: = nil() };
+void <init>() static: { } { @this: = nil() };
 
  boolean add(java.lang.Object) : 
   { lspe(@this:,nil(),_s1) }
@@ -68,9 +68,9 @@ void update(Subject) :
 
 class Driver
 {
-static void <init>() : { } { };
+void <init>() static: { } { };
 
-static void main(java.lang.String[]) : { } { };
+void main(java.lang.String[]) static: { } { };
 
 }
 
@@ -81,7 +81,7 @@ define Observer(x, vals=V; subject=s) =
 	   s : IntegerDataBag * field(x,"<IntegerSize: int size>", length(V))
 	   * field(x,"<IntegerSize: IntegerDataBag bag>", s);
 
-static void <init>(IntegerDataBag) : 
+void <init>(IntegerDataBag) static: 
        { @this: : IntegerSize * @parameter0: : IntegerDataBag * SubjectObs(@parameter0:,{obs=_O;vals=_V})} 
        { SubjectObs(@parameter0:, {obs=add(@this:,_O);vals=_V}) };
 
@@ -128,7 +128,7 @@ void <init>() :
 { } 
 { Subject$(@this:, {obs=empty(); vals=empty()}) };
 
-static void <init>() : 
+void <init>() static: 
 { } 
 { SubjectData$IntegerDataBag(@this:, {vals=empty()}) * SubjectInternal$IntegerDataBag(@this:, {obs=empty()}) };
 
@@ -158,9 +158,9 @@ void notifyObservers() :
 
 class IntegerPrinter
 {
-static void <init>(IntegerDataBag) : { } { };
+void <init>(IntegerDataBag) static: { } { };
 
-static void update(Subject) :
+void update(Subject) static:
   { Observer(@this:,{vals=_v; subject=@parameter0:}) * SubjectData(@parameter0:, {vals=_v2}) } 
   { Observer(@this:,{vals=_v2; subject=@parameter0:}) * SubjectData(@parameter0:, {vals=_v2}) } ;
 

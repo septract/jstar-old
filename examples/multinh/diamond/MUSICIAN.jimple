@@ -1,0 +1,61 @@
+class MUSICIAN extends PERSON {
+
+	int my_performances;
+
+	void <init>(int, int, int)
+	{
+		// Declaration of registers, locals, and temporaries
+		MUSICIAN Current;
+		int r1;
+		int r2;
+		int r3;
+
+		// Initialization of registers and locals
+		Current := @this: MUSICIAN;
+		r1 := @parameter0: int;
+		r2 := @parameter1: int;
+		r3 := @parameter2: int;
+
+		// The routine body
+		{} : {} {Current.<PERSON: int my_age> |-> _};
+		{} : {Current.<PERSON: int my_age> |-> _} {};
+		specialinvoke Current.<PERSON: void <init>(int, int, int)>(r1, 1, 2);
+		Current.<MUSICIAN: int my_performances> = r2;
+		return;
+	}
+
+	void perform()
+	{
+		// Declaration of registers, locals, and temporaries
+		MUSICIAN Current;
+		int t1;
+		int t2;
+
+		// Initialization of registers and locals
+		Current := @this: MUSICIAN;
+
+		// The routine body
+		t1 = Current.<MUSICIAN: int my_performances>;
+		t2 = t1 + 1;
+		Current.<MUSICIAN: int my_performances> = t2;
+		return;
+	}
+
+	int performances()
+	{
+		// Declaration of registers, locals, and temporaries
+		MUSICIAN Current;
+		int Result;
+		int t1;
+
+		// Initialization of registers and locals
+		Current := @this: MUSICIAN;
+		Result = 0;
+
+		// The routine body
+		t1 = Current.<MUSICIAN: int my_performances>;
+		Result = t1;
+		return Result;
+	}
+
+}

@@ -1,5 +1,6 @@
 open Jparsetree
 open Plogic
+open Jimple_global_types
 
 let bop_to_prover_arg = function
       |	And -> "builtin_and"

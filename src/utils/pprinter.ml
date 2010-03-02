@@ -200,6 +200,8 @@ let bool_expr2str = function
   | True -> "true"
   | False -> "false"
 
+let pprinter_core_spec2str = ref (fun _ -> assert false) (* To be defined in pprinter_core *)
+
 let statement2str = function
    | Label_stmt l ->  label_name2str l ^":"
    | Breakpoint_stmt -> "breakpoint"
@@ -221,6 +223,7 @@ let statement2str = function
    | Return_stmt (None) -> "return;"
    | Throw_stmt i -> "throw "^immediate2str i^";"
    | Invoke_stmt e -> invoke_expr2str e^";"       
+	 | Spec_stmt (vars,spec) -> (list2str Vars.string_var vars ", ")^" : "^ (!pprinter_core_spec2str) spec ^";"
 
 let declaration_or_statement2str =function
   |  DOS_dec d -> declaration2str d
@@ -247,12 +250,12 @@ let member2str = function
         method_body2str ec ^"\n"^ method_body2str mb
 
 let extends_clause2str = function
-  |None -> ""
-  |Some cl -> "extends "^(list2str class_name2str cl " ")
+  |[] -> ""
+  |cl -> "extends "^(list2str class_name2str cl " ")
 
 let implements_clause2str = function
-  | None -> "" 
-  | Some cl -> "implements "^(list2str class_name2str cl " ")
+  | [] -> "" 
+  | cl -> "implements "^(list2str class_name2str cl " ")
 
 let jimple_file2str = function
   | JFile (ml,j,c,e,i,meml) -> 

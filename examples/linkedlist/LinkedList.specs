@@ -1,11 +1,11 @@
 class java.lang.Object 
 {
-static void <init>(): { } { };
+void <init>() static: { } { };
 }
 
 class NodeLL
 {
-  static void <init>() : 
+  void <init>() static: 
     { } 
     { field(@this:,<NodeLL: NodeLL next>,nil()) * 
         field(@this:,<NodeLL: java.lang.String content>,nil())  };

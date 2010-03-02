@@ -16,6 +16,7 @@ open Pterm
 open Plogic
 open Printf 
 open Misc
+open Jimple_global_types
 exception Contradiction
 exception No_match
 

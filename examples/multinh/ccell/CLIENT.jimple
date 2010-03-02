@@ -1,0 +1,25 @@
+class CLIENT extends ANY {
+
+
+	CCELL code(LIBRARY)
+	{
+		// Declaration of registers, locals, and temporaries
+		CLIENT Current;
+		LIBRARY r1;
+		CCELL Result;
+		CCELL t1;
+
+		// Initialization of registers and locals
+		Current := @this: CLIENT;
+		r1 := @parameter0: LIBRARY;
+		Result = null;
+
+		// The routine body
+		t1 = new CCELL;
+		specialinvoke t1.<CCELL: void <init>(int)>(5);
+		Result = t1;
+		virtualinvoke r1.<LIBRARY: void use_counter(COUNTER)>(Result);
+		return Result;
+	}
+
+}

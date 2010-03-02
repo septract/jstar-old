@@ -29,14 +29,14 @@ let newVar x =
   else newPVar x
 
 
-let msig_simp (typ,name,args_list) =
+let msig_simp (mods,typ,name,args_list) =
   let args_list = List.map fst args_list in
-  (typ,name,args_list) 
+  (mods,typ,name,args_list) 
 
-let bind_spec_vars (typ,name,args_list) {pre=pre;post=post;excep=excep} =
+let bind_spec_vars (mods,typ,name,args_list) {pre=pre;post=post;excep=excep} =
   (* Make substitution to normalise names *)
   let subst = Pterm.empty in 
-  let subst = Pterm.add (newPVar("this")) (Pterm.Arg_var(Support_syntax.this_var)) subst in 
+  let subst = Pterm.add (newPVar("this")) (Arg_var(Support_syntax.this_var)) subst in 
   (* For each name that is given convert to normalised param name*)
   let _,subst = 
     List.fold_left 
@@ -47,7 +47,7 @@ let bind_spec_vars (typ,name,args_list) {pre=pre;post=post;excep=excep} =
 	 | ty,Some str -> 
 	     Pterm.add 
 	       (newPVar(str)) 
-	       (Pterm.Arg_var(Support_syntax.parameter_var n)) 
+	       (Arg_var(Support_syntax.parameter_var n)) 
 	       subst
 	)) 
 	  (0,subst) args_list in
@@ -312,7 +312,7 @@ spec_file:
    | classspec spec_file { (NormalEntry $1) :: $2 }
 
 classspec: 
-   | file_type class_name L_BRACE apf_defines exports_clause methods_specs R_BRACE  { ($2,$4,$5,$6) }
+   | file_type class_name extends_clause implements_clause L_BRACE apf_defines exports_clause axioms_clause methods_specs R_BRACE  { {class_or_interface=$1;classname=$2;extends=$3;implements=$4;apf=$6;exports=$7;axioms=$8;methodspecs=$9} }
 
 
 apf_defines: 
@@ -330,14 +330,18 @@ apf_define:
        { let a=match $5 with | Some b -> b | None -> [] in ($2,$4,a,$8,false) }
 			
 exports_clause:
-   | EXPORTS L_BRACE exported_implication_star R_BRACE WHERE L_BRACE exportLocal_predicate_def_star R_BRACE { Some ($3,$7) }
+   | EXPORTS L_BRACE named_implication_star R_BRACE WHERE L_BRACE exportLocal_predicate_def_star R_BRACE { Some ($3,$7) }
 	 | /*empty*/ {None}
 
-exported_implication_star:
-   | exported_implication exported_implication_star { $1 @ $2 }
+axioms_clause:
+	 | AXIOMS L_BRACE named_implication_star R_BRACE { Some $3 }
+	 | /*empty*/ {None}
+
+named_implication_star:
+   | named_implication named_implication_star { $1 @ $2 }
    | /*empty*/ { [] }
 
-exported_implication:
+named_implication:
    | identifier COLON formula IMP formula SEMICOLON { [($1,$3,$5)] }
    | identifier COLON formula BIMP formula SEMICOLON { [($1^"_forwards",$3,$5); ($1^"_backwards",$5,$3)] }
 
@@ -360,9 +364,9 @@ specs:
 
 method_spec:
    | method_signature_short COLON specs  SEMICOLON  { mkDynamic($1, $3) }
-   | STATIC method_signature_short COLON specs SEMICOLON  { mkStatic($2, $4) }
+   | method_signature_short STATIC COLON specs SEMICOLON  { mkStatic($1, $4) }
    | method_signature_short COLON specs   { mkDynamic($1, $3) }
-   | STATIC method_signature_short COLON specs  { mkStatic($2, $4) }
+   | method_signature_short STATIC COLON specs  { mkStatic($1, $4) }
 
 exp_posts:
    | L_BRACE identifier COLON formula R_BRACE exp_posts { ClassMap.add $2 $4 $6 }
@@ -388,12 +392,12 @@ file_type:
    | INTERFACE { InterfaceFile }
        
 extends_clause:
-   | EXTENDS class_name_list {Some $2}
-   | /* empty */ {None}
+   | EXTENDS class_name_list { $2 } /* stephan mult inh */ 
+   | /* empty */ { [] }
 ;
 implements_clause:
-   | IMPLEMENTS class_name_list {Some $2}
-   | /* empty */ { None }
+   | IMPLEMENTS class_name_list { $2 }
+   | /* empty */ { [] }
 ;
 file_body:
    | L_BRACE member_list_star R_BRACE {$2}
@@ -575,6 +579,7 @@ statement:
    | RETURN immediate_question_mark SEMICOLON  {Return_stmt($2)}       
    | THROW immediate SEMICOLON     {Throw_stmt($2)}        
    | invoke_expr SEMICOLON     {Invoke_stmt($1)}       
+	 | L_BRACE lvariable_list R_BRACE COLON spec SEMICOLON {Spec_stmt($2,$5)}
 ;
 immediate_question_mark:
    | immediate {Some $1}
@@ -622,6 +627,10 @@ array_descriptor_list_plus:
 array_descriptor:
   L_BRACKET immediate_question_mark R_BRACKET { $2 }
 ;
+variable_list:
+	 | /*empty*/  {[]}
+	 | variable variable_list { $1 :: $2 } 
+;
 variable:
    |reference {Var_ref($1)}
    |local_name {Var_name($1)}
@@ -664,8 +673,8 @@ method_signature:
        {Method_signature($2,$4,$5,$7)}
 ;
 method_signature_short:
-   | jtype name L_PAREN parameter_args_opt_list_question_mark R_PAREN
-       { $1,$2,$4 }
+   | modifier_list_star jtype name L_PAREN parameter_args_opt_list_question_mark R_PAREN
+       { $1,$2,$3,$5 }
 ;
 reference:
    |array_ref  {$1} 

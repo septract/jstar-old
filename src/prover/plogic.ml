@@ -1,19 +1,13 @@
 open Debug
 open Vars
 open Pterm
+open Jimple_global_types
 
 
-type pform_at =
-  | P_EQ of args * args
-  | P_NEQ of args * args
-  | P_PPred of string * args list
-  | P_SPred of string * args list 
-  | P_Wand of pform * pform
-  | P_Or of pform * pform
-  | P_Septract of pform * pform
-  | P_Garbage
-  | P_False
-and pform = pform_at list
+type pform_at = plogic_pform_at
+
+
+type pform = plogic_pform
 
 
 let mkFalse = [P_False]

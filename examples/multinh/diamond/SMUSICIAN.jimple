@@ -1,0 +1,41 @@
+class SMUSICIAN extends STUDENT, MUSICIAN {
+
+
+	void <init>(int, int, int)
+	{
+		// Declaration of registers, locals, and temporaries
+		SMUSICIAN Current;
+		int r1;
+		int r2;
+		int r3;
+
+		// Initialization of registers and locals
+		Current := @this: SMUSICIAN;
+		r1 := @parameter0: int;
+		r2 := @parameter1: int;
+		r3 := @parameter2: int;
+
+		// The routine body
+		{} : {} {Current.<PERSON: int my_age> |-> _ * Current.<STUDENT: int my_exams> |-> _ * Current.<MUSICIAN: int my_performances> |-> _};
+		{} : {Current.<PERSON: int my_age> |-> _ * Current.<STUDENT: int my_exams> |-> _} {};
+		specialinvoke Current.<STUDENT: void <init>(int, int, int)>(r1, r2, 34);
+		{} : {Current.<MUSICIAN: int my_performances> |-> _ * Current.<PERSON: int my_age> |-> _} {};
+		specialinvoke Current.<MUSICIAN: void <init>(int, int, int)>(r1, r3, 34);
+		return;
+	}
+
+	void do_exam_performance()
+	{
+		// Declaration of registers, locals, and temporaries
+		SMUSICIAN Current;
+
+		// Initialization of registers and locals
+		Current := @this: SMUSICIAN;
+
+		// The routine body
+		virtualinvoke Current.<STUDENT: void take_exam()>();
+		virtualinvoke Current.<MUSICIAN: void perform()>();
+		return;
+	}
+
+}

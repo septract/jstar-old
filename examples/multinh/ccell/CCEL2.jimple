@@ -1,0 +1,73 @@
+class CCEL2 extends CEL, COUNTER {
+
+
+	void <init>(int)
+	{
+		// Declaration of registers, locals, and temporaries
+		CCEL2 Current;
+		int r1;
+
+		// Initialization of registers and locals
+		Current := @this: CCEL2;
+		r1 := @parameter0: int;
+
+		// The routine body
+		{} : {} {Current.<CEL: int my_value> |-> _ * Current.<COUNTER: int my_count> |-> _};
+		{} : {Current.<CEL: int my_value> |-> _} {};
+		specialinvoke Current.<CEL: void <init>(int)>(r1);
+		{} : {Current.<COUNTER: int my_count> |-> _} {};
+		specialinvoke Current.<COUNTER: void <init>(int)>(12345);
+		return;
+	}
+
+	int count()
+	{
+		// Declaration of registers, locals, and temporaries
+		CCEL2 Current;
+		int Result;
+		int t1;
+
+		// Initialization of registers and locals
+		Current := @this: CCEL2;
+		Result = 0;
+
+		// The routine body
+		t1 = specialinvoke Current.<COUNTER: int count()>();
+		Result = t1;
+		return Result;
+	}
+
+	void set_value(int)
+	{
+		// Declaration of registers, locals, and temporaries
+		CCEL2 Current;
+		int r1;
+
+		// Initialization of registers and locals
+		Current := @this: CCEL2;
+		r1 := @parameter0: int;
+
+		// The routine body
+		virtualinvoke Current.<COUNTER: void increment_helper()>();
+		specialinvoke Current.<CEL: void set_value(int)>(r1);
+		return;
+	}
+
+	int value()
+	{
+		// Declaration of registers, locals, and temporaries
+		CCEL2 Current;
+		int Result;
+		int t1;
+
+		// Initialization of registers and locals
+		Current := @this: CCEL2;
+		Result = 0;
+
+		// The routine body
+		t1 = specialinvoke Current.<CEL: int value()>();
+		Result = t1;
+		return Result;
+	}
+
+}

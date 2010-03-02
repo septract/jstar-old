@@ -11,6 +11,7 @@ open Pterm
 open Plogic
 open Rlogic
 open Prover
+open Jimple_global_types
 
 
 open Cfg_core
@@ -461,7 +462,7 @@ and execute_core_stmt n (sheap : formset_entry) : formset_entry list =
 (* the queue qu is a list of pairs [(node, expression option)...] the expression
 is used to deal with if statement. It is the expression of the if statement is the predecessor
 of the node is a if_stmt otherwise is None. In the beginning is always None for each node *)
-let verify (stmts : stmt_core list)  (spec : Specification.spec) (lo : logic) (abs_rules : logic) =
+let verify (mname : string) (stmts : stmt_core list)  (spec : Specification.spec) (lo : logic) (abs_rules : logic) =
 
   (* remove methods that are declared abstraction *)
   curr_logic:= lo;
@@ -471,7 +472,7 @@ let verify (stmts : stmt_core list)  (spec : Specification.spec) (lo : logic) (a
   match stmts with 
     [] -> assert false
   | s::stmts -> 
-      let id = add_good_node ("Start") in  
+      let id = add_good_node ("Start "^mname) in  
       make_start_node id;
       let post = execute_core_stmt s (Rlogic.convert (spec.pre), id) in 
       let id_exit = add_good_node ("Exit") in 
@@ -480,7 +481,7 @@ let verify (stmts : stmt_core list)  (spec : Specification.spec) (lo : logic) (a
 	  check_postcondition [(Rlogic.convert spec.post,id_exit)] post) post
 
 
-let verify_ensures (stmts: stmt_core list) (post : Plogic.pform) conjoin_with_res_true (oldexp_frames : Rlogic.ts_form list list) lo abs_rules =
+let verify_ensures (name : string) (stmts: stmt_core list) (post : Plogic.pform) conjoin_with_res_true (oldexp_frames : Rlogic.ts_form list list) lo abs_rules =
   (* construct the specification of the ensures clause *)
 	let rec conjoin_disjunctions (d1 : Rlogic.ts_form list) (d2 : Rlogic.ts_form list) : Rlogic.ts_form list =
 		match d1 with
@@ -502,7 +503,7 @@ let verify_ensures (stmts: stmt_core list) (post : Plogic.pform) conjoin_with_re
   match stmts with 
     [] -> assert false
   | s::stmts ->
-      let id = add_good_node ("Start") in  
+      let id = add_good_node ("Start "^name) in  
       make_start_node id;
       let post = execs s (List.map (fun pre -> (pre,id)) ensures_preconds) in
       let id_exit = add_good_node ("Exit") in

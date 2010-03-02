@@ -19,16 +19,16 @@ class SEQUENCE
 
 class OLIST
 {
-	SEQUENCE model() :
+	abstract SEQUENCE model() :
 		{ OL(@this:,{l=_a}) }
 		{ OL(@this:,{l=_a}) * SEQ($ret_var,{s=_a}) };
-	void remove_first() :
+	abstract void remove_first() :
 		{ OL(@this:,{l=cons(_e,_a)}) }
 		{ OL(@this:,{l=_a}) };
-	int is_empty() :
+	abstract int is_empty() :
 		{ OL(@this:,{l=_a}) }
 		{ OL(@this:,{l=_a}) * $ret_var=builtin_eq(_a,empty()) };
-	void empty_inv() :
+	abstract void empty_inv() :
 		{ OL(@this:,{l=_a}) }
 		{ OL(@this:,{l=_a}) };
 }

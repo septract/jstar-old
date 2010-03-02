@@ -1,0 +1,119 @@
+class LIBRARY
+{
+	abstract void use_counter(COUNTER) :
+		{Cn(@parameter0:, {cnt=_v})}
+		{Cn(@parameter0:, {cnt=builtin_plus(_v, numeric_const(10))})};
+	abstract void use_cell(CEL, int) :
+		{Cell(@parameter0:, {val=_v})}
+		{Cell(@parameter0:, {val=@parameter1:})};
+}
+
+class CEL
+{
+	define Cell(x, {val=v}) = x.<CEL: int my_value> |-> v;
+
+	void <init>(int) :
+		{ }
+		{Cell$(@this:, {val=@parameter0:})};
+	void set_value(int) :
+		{Cell$(@this:, {val=_v})}
+		{Cell$(@this:, {val=@parameter0:})};
+	int value() :
+		{Cell$(@this:, {val=_v})}
+		{Cell$(@this:, {val=_v}) * $ret_var = _v};
+}
+
+class COUNTER
+{
+	define Cn(x, {cnt=c}) = x.<COUNTER: int my_count> |-> c;
+
+	void <init>(int) :
+		{ }
+		{Cn$(@this:, {cnt=numeric_const(0)})};
+	void increment() :
+		{Cn$(@this:, {cnt=_c})}
+		{Cn$(@this:, {cnt=builtin_plus(_c, numeric_const(1))})};
+	int count() :
+		{Cn$(@this:, {cnt=_c})}
+		{Cn$(@this:, {cnt=_c}) * $ret_var = _c};
+	void increment_helper() static:
+		{Cn$COUNTER(@this:, {cnt=_c})}
+		{Cn$COUNTER(@this:, {cnt=builtin_plus(_c, numeric_const(1))})};
+}
+
+class CCELL extends CEL, COUNTER
+{
+	define Cell(x, {val=v;cnt=c}) = Cc$CCELL(x, {val=v;cnt=c});
+
+	define Cn(x, {cnt=c}) = Cn$COUNTER(x, {cnt=c});
+
+	define Cc(x, {val=v;cnt=c}) = Cell$CEL(x, {val=v}) * Cn$COUNTER(x, {cnt=c});
+
+	exports {
+		cc_cn: x : CCELL * Cc(x, {val=v;cnt=c}) <=> x : CCELL * Cn(x, {cnt=c}) * Rest(x, v);
+		cc_cell: x : CCELL * Cc(x, {val=v;cnt=c}) <=> x : CCELL * Cell(x, {val=v;cnt=c});
+		cell_cn: x : CCELL * Cell(x, {val=v;cnt=c}) <=> x : CCELL * Cn(x, {cnt=c}) * Rest(x, v);
+	} where {
+		Rest(x,v) = Cell$CEL(x, {val=v});
+	}
+
+	void <init>(int) :
+		{ }
+		{Cc$(@this:, {val=@parameter0:;cnt=numeric_const(0)})};
+	void increment() :
+		{Cc$(@this:, {val=_v;cnt=_c})}
+		{Cc$(@this:, {val=_v;cnt=builtin_plus(_c, numeric_const(1))})}
+		andalso {Cn$(@this:, {cnt=_c})}
+		{Cn$(@this:, {cnt=builtin_plus(_c, numeric_const(1))})};
+	int count() :
+		{Cc$(@this:, {val=_v;cnt=_c})}
+		{Cc$(@this:, {val=_v;cnt=_c}) * $ret_var = _c}
+		andalso {Cn$(@this:, {cnt=_c})}
+		{Cn$(@this:, {cnt=_c}) * $ret_var = _c};
+	void set_value(int) :
+		{Cc$(@this:, {val=_v;cnt=_c})}
+		{Cc$(@this:, {val=@parameter0:;cnt=builtin_plus(_c, numeric_const(1))})}
+		andalso {Cell$(@this:, {val=_v;cnt=_c})}
+		{Cell$(@this:, {val=@parameter0:;cnt=builtin_plus(_c, numeric_const(1))})};
+	int value() :
+		{Cc$(@this:, {val=_v;cnt=_c})}
+		{Cc$(@this:, {val=_v;cnt=_c}) * $ret_var = _v}
+		andalso {Cell$(@this:, {val=_v;cnt=_c})}
+		{Cell$(@this:, {val=_v;cnt=_c}) * $ret_var = _v};
+}
+
+class CCEL2 extends CEL, COUNTER
+{
+	define Cell(x, {val=v;cnt=c}) = Cell$CEL(x, {val=v}) * Cn$COUNTER(x, {cnt=c});
+
+	define Cn(x, {cnt=c}) = Cn$COUNTER(x, {cnt=c});
+
+	exports {
+		cell2cn: x : CCEL2 * Cell(x, {val=v;cnt=c}) => x : CCEL2 * Dummy(x, v) * Cn(x, {cnt=c});
+	} where {
+		Dummy(x,v) = Cell$CEL(x, {val=v});
+	}
+
+	void <init>(int) :
+		{ }
+		{Cell$(@this:, {val=@parameter0:;cnt=numeric_const(0)})};
+	int count() :
+		{Cell$(@this:, {val=_v;cnt=_c})}
+		{Cell$(@this:, {val=_v;cnt=_c}) * $ret_var = _c}
+		andalso {Cn$(@this:, {cnt=_c})}
+		{Cn$(@this:, {cnt=_c}) * $ret_var = _c};
+	void set_value(int) :
+		{Cell$(@this:, {val=_v;cnt=_c})}
+		{Cell$(@this:, {val=@parameter0:;cnt=builtin_plus(_c, numeric_const(1))})};
+	int value() :
+		{Cell$(@this:, {val=_v;cnt=_c})}
+		{Cell$(@this:, {val=_v;cnt=_c}) * $ret_var = _v};
+}
+
+class CLIENT
+{
+	CCELL code(LIBRARY) :
+		{ }
+		{Cc($ret_var, {val=numeric_const(5);cnt=numeric_const(10)})};
+}
+

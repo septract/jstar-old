@@ -10,6 +10,7 @@ open Vars
 open Pterm
 open Rterm
 open Plogic
+open Jimple_global_types
 
 type plain =
   | EQ of representative * representative

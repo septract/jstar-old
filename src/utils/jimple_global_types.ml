@@ -4,6 +4,36 @@ open Jparsetree
  from jparsetree
 ***************************************************)
 
+type pterm_args = 
+  | Arg_var of Vars.var
+  | Arg_string of string
+  | Arg_op of string * pterm_args list
+  | Arg_cons of string * pterm_args list  (* Do not use *)
+  | Arg_record of (string *  pterm_args) list (* Do not use *)
+
+type plogic_pform_at =
+  | P_EQ of pterm_args * pterm_args
+  | P_NEQ of pterm_args * pterm_args
+  | P_PPred of string * pterm_args list
+  | P_SPred of string * pterm_args list 
+  | P_Wand of plogic_pform * plogic_pform
+  | P_Or of plogic_pform * plogic_pform
+  | P_Septract of plogic_pform * plogic_pform
+  | P_Garbage
+  | P_False
+and plogic_pform = plogic_pform_at list
+
+module Specification_ClassMap =   
+  Map.Make(struct
+    type t = string
+    let compare = compare
+  end)
+
+type specification_excep_post = plogic_pform Specification_ClassMap.t 
+type specification_spec = 
+    { pre : plogic_pform;
+      post : plogic_pform;
+      excep : specification_excep_post }
 
 type statement = 
    | Label_stmt of  label_name 
@@ -21,7 +51,8 @@ type statement =
    | Ret_stmt of immediate option
    | Return_stmt of immediate option
    | Throw_stmt of immediate
-   | Invoke_stmt of invoke_expr       
+   | Invoke_stmt of invoke_expr   
+	 | Spec_stmt of Vars.var list * specification_spec
 
 type declaration_or_statement =
   |  DOS_dec of declaration

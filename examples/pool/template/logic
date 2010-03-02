@@ -98,11 +98,11 @@ if
 
 
 rule subeq_hack :
-  | | |- | subeq({handle=?x; type=?t}, {handle=?y; type=?s})
+  | | |- | !subeq({handle=?x; type=?t}, {handle=?y; type=?s})
 if
   | | |- ?x=?y * ?t =?s | 
 
 rule subeq_hack :
-  | | |- | subeq({type=?t}, {type=?s})
+  | | |- | !subeq({type=?t}, {type=?s})
 if
   | | |- ?t =?s | 
