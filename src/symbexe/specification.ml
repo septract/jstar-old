@@ -109,8 +109,8 @@ let ev_spec spec =
   match spec with
     {pre=spec_pre; post=spec_post; excep =spec_excep} -> 
       let ev = ev_form spec_pre in 
-      let ev = ev_form ~acc:ev spec_post in 
-      let ev = ClassMap.fold (fun key ex vs -> ev_form ~acc:vs ex) spec_excep ev in 
+      let ev = ev_form_acc spec_post ev in 
+      let ev = ClassMap.fold (fun key ex vs -> ev_form_acc ex vs) spec_excep ev in 
       ev
 
 let ev_spec_pre spec = 

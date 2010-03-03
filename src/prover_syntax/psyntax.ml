@@ -587,10 +587,13 @@ type inductive_stmt = IndImport of string | IndDef of inductive
     
 
     (* returns the set of free variables  in the term *)
-    let fv_form ?acc:(acc=vs_empty) f = fv_form f acc
+    let fv_form_acc f acc = fv_form f acc
+    let fv_form f = fv_form f vs_empty
+
 
     (* returns the set of existential variables in the term *)
-    let ev_form ?acc:(acc=vs_empty) f = ev_form f acc
+    let ev_form_acc f acc= ev_form f acc
+    let ev_form f = ev_form f vs_empty
 
 
 
