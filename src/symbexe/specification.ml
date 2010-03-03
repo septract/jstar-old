@@ -108,15 +108,15 @@ let sub_spec  sub spec =
 let ev_spec spec = 
   match spec with
     {pre=spec_pre; post=spec_post; excep =spec_excep} -> 
-      let ev = ev_form spec_pre VarSet.empty in 
-      let ev = ev_form spec_post ev in 
-      let ev = ClassMap.fold (fun key ex vs -> ev_form ex vs) spec_excep ev in 
+      let ev = ev_form spec_pre in 
+      let ev = ev_form ~acc:ev spec_post in 
+      let ev = ClassMap.fold (fun key ex vs -> ev_form ~acc:vs ex) spec_excep ev in 
       ev
 
 let ev_spec_pre spec = 
   match spec with
     {pre=spec_pre; post=spec_post; excep =spec_excep} -> 
-      let ev = ev_form spec_pre VarSet.empty in 
+      let ev = ev_form spec_pre in 
       ev
 
 let jsr logic (pre : Rlogic.ts_form) (spec : spec)  : (Rlogic.ts_form  list * ts_excep_post list) option  = 

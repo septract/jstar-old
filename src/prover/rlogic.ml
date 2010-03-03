@@ -18,16 +18,16 @@ type spatial =
   | SPred of string * representative list 
 
 type composite =
-  | Form of form
+  | Form of rform
   | Wand of composite * composite
   | Or of composite * composite 
   | Septract of composite * composite
   | Garbage
   | False
 
-and form = plain list * spatial list * (composite list)
+and rform = plain list * spatial list * (composite list)
 
-type ts_form = term_structure * form
+type ts_form = term_structure * rform
 
 let spat_eq s1 s2 =
   match s1 ,s2 with 
@@ -55,7 +55,7 @@ let rfalse = ([], [], [False])
 
 let wand (p1,s1,c1) (p2,s2,c2) = ([], [], [Wand(Form(p1,s1,c1),Form(p2,s2,c2))])
   
-let (@@@) : form -> form -> form = conjunction
+let (@@@) : rform -> rform -> rform = conjunction
 
 
 
@@ -94,7 +94,7 @@ let subst_spatial_list subs sl =
 
 let rec subst_composite subs (c : composite) : composite = 
   match c with 
-  | Form f -> (try Form (subst_form subs f) with Contradiction -> False)
+  | Form f -> (try Form (subst_rform subs f) with Contradiction -> False)
   | Or (f1,f2) -> 
       (let f1 = (subst_composite subs f1) in 
       let f2 =(subst_composite subs f2) in
@@ -121,7 +121,7 @@ let rec subst_composite subs (c : composite) : composite =
 and subst_composite_list subs cl =
   List.map (subst_composite subs) cl
 
-and subst_form subs ((pf,sf,cf) : form) : form =
+and subst_rform subs ((pf,sf,cf) : rform) : rform =
   let pform = subst_plain_list subs pf in
   let sform = subst_spatial_list subs sf in 
   let cform = subst_composite_list subs cf in  
@@ -173,7 +173,7 @@ and string_spatial_list_nl sl =
     (String.concat " *\n " (List.map string_spatial sl))
 *)
 
-and string_form ppf ((pl,sl,cl) : form) = 
+and string_form ppf ((pl,sl,cl) : rform) = 
   Format.fprintf ppf "@[%a@]@ | @[%a@]@ @[%a@]"
     string_plain_list  pl
     string_spatial_list sl
@@ -222,7 +222,7 @@ and rv_comp_list cl set =
   match cl with 
     [] -> set
   | c::cl -> rv_comp_list cl (rv_comp c set)
-and rv_form ((pl,sl,cl):form) set =
+and rv_form ((pl,sl,cl):rform) set =
  rv_spat_list sl (rv_plain_list pl (rv_comp_list cl set))
 
 
@@ -231,7 +231,7 @@ and rv_form ((pl,sl,cl):form) set =
 (* Second type of axiom *)
 
 (* frame, P,S |- P',S' *)
-type sequent = spatial list * form * form
+type sequent = spatial list * rform * rform
 
 type ts_sequent = term_structure * sequent
 
@@ -299,8 +299,8 @@ let subst_sequent subs (seq : sequent) : sequent =
   match seq with
     framed,left,right ->
       let sf = subst_spatial_list subs framed in 
-      let left = try subst_form subs left with Contradiction -> raise Success in
-      let right = try subst_form subs right with Contradiction -> f_false in 
+      let left = try subst_rform subs left with Contradiction -> raise Success in
+      let right = try subst_rform subs right with Contradiction -> f_false in 
       (sf, left, right)
     
 let sequent_join (seq1 : sequent) (seq2 : sequent) : sequent =
@@ -369,7 +369,7 @@ let string_ts_seq ppf (ts,s) =
 
 (*   CONVERSION from plogic to rlogic representation *)
 
-let rec pform_at_convert ts (interp : var_subst) (rhs : bool) (p : pform_at) ((pl,sl,cl) : form) : form * var_subst=
+let rec pform_at_convert ts (interp : var_subst) (rhs : bool) (p : pform_at) ((pl,sl,cl) : rform) : rform * var_subst=
  match p with 
  |  P_EQ (a1,a2) -> 
      let r1,interp = add_term ts interp a1 false rhs in 
@@ -399,7 +399,7 @@ let rec pform_at_convert ts (interp : var_subst) (rhs : bool) (p : pform_at) ((p
       (pl,sl,Septract(Form(f1), Form(f2))::cl), interp
   | P_Garbage -> (pl,sl,Garbage::cl), interp 
   | P_False  ->  ([],[],[False]), interp
-and pform_convert ts (interp : var_subst) (pf : pform) (rhs : bool) : form * var_subst=
+and pform_convert ts (interp : var_subst) (pf : pform) (rhs : bool) : rform * var_subst=
   List.fold_left (fun (pf,interp) pa -> pform_at_convert ts interp rhs pa pf) (([],[],[]),interp) pf
 
 
@@ -442,7 +442,7 @@ let update_var_to v e (form : ts_form) : ts_form =
 (*  assert(subs=Rterm.empty);*)
 (*  assert(subs=Rterm.empty);*)
   let subs = add_equal ts r2 r1 in
-  (ts,subst_form subs f)
+  (ts,subst_rform subs f)
   (* Check no updates necessary *)
 
 let form_clone ((ts,form) : ts_form)  abs
@@ -450,7 +450,7 @@ let form_clone ((ts,form) : ts_form)  abs
 (*  if ts_debug then Printf.printf "Cloning: \n%s\n" (string_ts_form (ts,form));  *)
   let ts,subs = clone ts (rv_form form Rset.empty) abs in 
   try 
-    let res = (ts,subst_form subs form) in
+    let res = (ts,subst_rform subs form) in
 (*    if ts_debug then Printf.printf "Results in: \n%s\n" (string_ts_form res); *)
     res
   with Contradiction ->
@@ -523,7 +523,7 @@ let closes vs p =
 let tsform_conjunction (ts1,heap1) (ts2,heap2)  =
   (* Do some kind of merge of ts2 and ts1 *)
   let eqs,subst = ts_to_eqs ts2 ts1 (rv_form heap2 Rset.empty) in
-  let pl,sl,cl = (subst_form subst heap2) in
+  let pl,sl,cl = (subst_rform subst heap2) in
   let pl = (List.map (fun (x,y) -> EQ(x,y)) eqs) @ pl in
   (ts1, conjunction heap1 (pl,sl,cl))
 

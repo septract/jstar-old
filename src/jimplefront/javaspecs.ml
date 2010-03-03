@@ -60,7 +60,7 @@ let add_apf_to_logic logic apfdefines classname : Prover.logic =
     let definition = param_eq&&&definition in
 (*    let parvars = VarSet.add receiver (Plogic.fv_fld_list parameters VarSet.empty) in*)
     let parvars = VarSet.add recvar (VarSet.add paramvar VarSet.empty) in
-    let defvars = Psyntax.fv_form definition VarSet.empty in 
+    let defvars = Psyntax.fv_form definition in 
     let sparevars = VarSet.diff defvars parvars in  
 (*TODO: The following sanity checks need rewriting to deal with the new rule form *)
 (*    let _ = if VarSet.for_all (fun x-> match x with EVar _ -> true | _ -> false) sparevars then () else raise ( BadAPF("Variable escape")) in 
@@ -179,7 +179,7 @@ let rules_for_implication imp prov : sequent_rule list =
 	let name,antecedent,consequent = imp in
 	(* imp is assumed to contain only program variables and existential variables *)
 	(* to build a rule, we substitute all program variables (but no existentials) with fresh anyvars *)
-	let free_vars = Psyntax.fv_form (Psyntax.pconjunction prov (Psyntax.pconjunction antecedent consequent)) VarSet.empty in
+	let free_vars = Psyntax.fv_form (Psyntax.pconjunction prov (Psyntax.pconjunction antecedent consequent)) in
 	let free_prog_vars = VarSet.filter (fun var -> match var with PVar _ -> true | _ -> false) free_vars in
 	let sub = VarSet.fold (fun var sub -> add var (Arg_var (Vars.fresha ())) sub) free_prog_vars empty in
 	let proviso : Psyntax.pform = try subst_pform sub prov with Contradiction -> mkFalse in
@@ -230,8 +230,8 @@ let logic_with_where_pred_defs exportLocal_predicates logic =
 			let sub = List.fold_left (fun sub argname -> add argname (Arg_var (Vars.fresha ())) sub) empty args in
 			let pred = P_SPred(name,List.map (fun argname -> Psyntax.find argname sub) args) in
 			let defn = try subst_pform sub body with Contradiction -> mkFalse in
-			let parvars = Psyntax.fv_form [pred] VarSet.empty in
-			let defvars = Psyntax.fv_form defn VarSet.empty in
+			let parvars = Psyntax.fv_form [pred] in
+			let defvars = Psyntax.fv_form defn  in
 			let sparevars = VarSet.diff defvars parvars in  
 			let pvarsubst = subst_kill_vars_to_fresh_prog sparevars in 
 			let evarsubst = subst_kill_vars_to_fresh_exist sparevars in 
@@ -354,7 +354,7 @@ let add_axiom_implications_to_logic spec_list logic : Prover.logic =
 			let proviso = [mk_objsubtyp (Arg_var this_var) cl] in
 			let clname = Pprinter.class_name2str cl in
 			let new_rules = List.fold_right (fun (n,a,c) ruls ->
-				let freevars = Psyntax.fv_form (Psyntax.pconjunction a c) VarSet.empty in
+				let freevars = Psyntax.fv_form (Psyntax.pconjunction a c) in
 				let p = if VarSet.mem this_var freevars then proviso else [] in 
 				rules_for_implication ("axiom_"^clname^"_"^n,a,c) p
 				@ ruls) named_imps [] in

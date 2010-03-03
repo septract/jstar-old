@@ -1,5 +1,7 @@
+open Psyntax
 module SepProver :
   sig
+(*
     val debug : bool -> unit
     type var 
     val prog_var : string -> var
@@ -42,6 +44,7 @@ module SepProver :
     val subst_kill_vars_to_fresh_exist : varset -> var_subst
     val subst_freshen_vars : varset -> var_subst
     val subst_form : var_subst -> form -> form
+*)
     type rform 
     val convert : form -> rform
     val conjoin : form -> rform -> rform

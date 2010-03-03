@@ -7,7 +7,7 @@ open Rterm
 open Psyntax
 
 module SepProver = struct
-
+(*
     (*************************************
        Syntactic representation of terms
     **************************************)
@@ -154,7 +154,7 @@ module SepProver = struct
     (* Use a substitution on a formula *)
     let subst_form : var_subst -> form -> form =
       fun vs form -> Psyntax.subst_pform vs form      
-
+*)
     (*****************************************
        Internal formula operations
      *****************************************)

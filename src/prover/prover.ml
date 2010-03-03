@@ -109,9 +109,9 @@ let rec find_no_match f l =
   | x::l -> try f x (r@l) with No_match -> fnm_inner f (x::r) l
   in fnm_inner f [] l 
 
-let rec unify_form_at ts (pa : pform_at) (f : form) (use_ep) (interp : var_subst) 
+let rec unify_form_at ts (pa : pform_at) (f : rform) (use_ep) (interp : var_subst) 
     (remove : bool)
-    (cont : var_subst * form -> 'a) : 'a =
+    (cont : var_subst * rform -> 'a) : 'a =
   let  pl,sl,cl = f in 
   let rs = rv_form f  Rset.empty in 
   match pa with 
@@ -215,7 +215,7 @@ let rec unify_form_at ts (pa : pform_at) (f : form) (use_ep) (interp : var_subst
   | _ -> unsupported ()
 
 
-and match_form ts (pattern : pform) (target : form) (use_ep) (interp : var_subst) remove (cont : var_subst * form -> 'a) : 'a = 
+and match_form ts (pattern : pform) (target : rform) (use_ep) (interp : var_subst) remove (cont : var_subst * rform -> 'a) : 'a = 
   match pattern with 
     [] -> cont (interp,target)
   | pa::pf -> 
@@ -224,7 +224,7 @@ and match_form ts (pattern : pform) (target : form) (use_ep) (interp : var_subst
  
 
 (* assumes pattern is already ground.  Probably should fix this*)
-let rec contains ts (pattern : pform)  (target : form) use_ep interp : (var_subst option)
+let rec contains ts (pattern : pform)  (target : rform) use_ep interp : (var_subst option)
     =  
   try 
     if Rterm.ts_debug then Format.fprintf !dump "Contains:@ %a@\n" Psyntax.string_form pattern; 
@@ -447,7 +447,7 @@ let mkOrLazy cp1 cp2 =
     with Contradiction -> p1
   with Contradiction -> cp2 ()
 
-let use_neq ((pl,sl,cl) : form) neqs : form =
+let use_neq ((pl,sl,cl) : rform) neqs : rform =
   match cl with 
   | [] -> (pl,sl,cl) 
   | _ -> 
@@ -781,7 +781,7 @@ let eqs_elim (ts_seq : ts_sequent) : ts_sequent =
   if !debug_ref && eqs != [] then Format.fprintf !dump "Elim eqs : %a@\n" string_plain_list eqs;
   let eqs = List.map (fun p -> match p with EQ(x,y) -> (x,y) | _ -> unsupported ()) eqs in
   try 
-    let subst = make_equal ts eqs (empty_subst ()) in 
+    let subst = make_equal ts eqs (Rterm.empty_subst ()) in 
     
     let rhs = 
       try 
@@ -855,7 +855,7 @@ let exists_elim_simple (ts_seq : ts_sequent) : ts_sequent =
 	     let subst = try_equal ts r1 r2 left_reps in
 	     ees_inner (subst_plain_list subst eqs)
 	       (subst_spatial_list subst f)
-	       (subst_form subst f1)
+	       (subst_rform subst f1)
 	       (subst_plain_list subst (EQ(r1,r2)::pl))
 	       (subst_spatial_list subst sl)
 	       (subst_composite_list subst cl)
@@ -1054,7 +1054,7 @@ let check_implication_frame_inner logic ts heap1 heap2 =
 let check_implication_frame logic (ts1,heap1) (ts2,heap2)  =
   (* Do some kind of merge of ts2 and ts1 *)
   let eqs,subst = ts_to_eqs ts2 ts1 (rv_form heap2 Rset.empty) in 
-  let pl,sl,cl = (subst_form subst heap2) in
+  let pl,sl,cl = (subst_rform subst heap2) in
   let pl = (List.map (fun (x,y) -> EQ(x,y)) eqs) @ pl in 
   check_implication_frame_inner logic ts1 heap1 (pl,sl,cl)
 
@@ -1082,7 +1082,7 @@ let check_implication_inner logic ts heap1 heap2 =
 let check_implication logic (ts1,heap1) (ts2,heap2)  =
   (* Do some kind of merge of ts2 and ts1 *)
   let eqs,subst = ts_to_eqs ts2 ts1 (rv_form heap2 Rset.empty) in 
-  let pl,sl,cl = try (subst_form subst heap2) with Contradiction -> ([],[],[False]) in
+  let pl,sl,cl = try (subst_rform subst heap2) with Contradiction -> ([],[],[False]) in
   let pl = (List.map (fun (x,y) -> EQ(x,y)) eqs) @ pl in 
   check_implication_inner logic ts1 heap1 (pl,sl,cl)
 

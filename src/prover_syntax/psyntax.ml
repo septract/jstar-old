@@ -160,6 +160,7 @@ let rec string_args ppf arg =
   | Arg_var v -> Format.fprintf ppf "%s" (string_var v)
   | Arg_string s -> Format.fprintf ppf "\"%s\""  s 
   | Arg_op ("builtin_plus",[a1;a2]) -> Format.fprintf ppf "(%a+%a)" string_args a1 string_args a2
+  | Arg_op ("tuple",al) -> Format.fprintf ppf "(%a)" string_args_list al
   | Arg_op (name,args) -> Format.fprintf ppf "%s(%a)" name string_args_list args 
   | Arg_cons (name,args) -> Format.fprintf ppf "%s(%a)" name string_args_list args 
   | Arg_record fldlist -> 
@@ -519,3 +520,124 @@ type inductive_stmt = IndImport of string | IndDef of inductive
 (***************************************************
  end from inductive
 ***************************************************)
+
+
+    (*************************************
+       Syntactic representation of terms
+    **************************************)
+    let debug f = Debug.debug_ref := f
+    
+    type var = Vars.var
+
+    let prog_var (n : string) : var = (Vars.concretep_str n)
+
+    let exists_var (n : string) : var = (Vars.concretee_str n)
+  
+    let fresh_exists_var () : var = (Vars.freshe ()) 
+
+    let fresh_unify_var () : var = (Vars.fresha ()) 
+
+    let fresh_prog_var () : var = (Vars.freshp ()) 
+
+    let fresh_exists_var_str s : var = (Vars.freshe_str s) 
+
+    let fresh_prog_var_str s : var = (Vars.freshp_str s) 
+    
+    (* Used in rules for pattern matching *)
+    let unify_var (n : string) : var = (Vars.fresha_str n)
+
+    type term = args
+
+    let mkVar : var -> term = fun x -> Arg_var x
+
+    let mkFun : string -> term list -> term = fun n tl -> Arg_op(n, tl)
+
+    let mkString : string -> term = fun n -> Arg_string(n)
+
+    (*************************************
+       Syntactic representation of formula
+    **************************************)
+    type form  = pform
+
+    (* False *)
+    let mkFalse : form = mkFalse
+
+    (* Inequality between two terms *)
+    let mkNEQ : term * term -> form = fun (a1,a2) ->  mkNEQ(a1,a2)
+
+    (* Equality between two terms *)
+    let mkEQ : term * term -> form = fun (a1,a2) -> mkEQ(a1,a2)
+
+    (* A pure predicate *)
+    let mkPPred : string * term list -> form 
+        = fun (n,al) -> mkPPred(n, al)
+
+    (* A spatial predicate *)
+    let mkSPred : string * term list -> form 
+        = fun (n,al) ->  mkSPred(n, al)
+
+    (* Disjunction of two formula *)
+    let mkOr : form * form -> form  = fun (f1, f2) -> mkOr(f1,f2)
+
+    (* Star conjunction of two formula *)
+    let mkStar : form -> form -> form = fun f1 f2 -> pconjunction f1 f2
+
+    (* Empty formula/heap*)
+    let mkEmpty : form = mkEmpty
+    
+
+    (* returns the set of free variables  in the term *)
+    let fv_form ?acc:(acc=vs_empty) f = fv_form f acc
+
+    (* returns the set of existential variables in the term *)
+    let ev_form ?acc:(acc=vs_empty) f = ev_form f acc
+
+
+
+    (***************************************
+     *  Pretty print functions
+     ***************************************)
+
+    let string_form : Format.formatter -> form -> unit 
+	= fun ppf form -> string_form ppf form 
+    
+    
+    (***************************************
+     Substitution on formula 
+     ***************************************)
+
+    (* Substitution on terms *)
+    type variable_subst 
+      = varmap
+
+    (* Creates the empty variable substitution *)
+    let empty_subst : variable_subst 
+      = empty
+
+    (* Adds a variable to a substitution *)
+    let add_subst : var -> term -> variable_subst -> variable_subst 
+      = fun  v t vs -> add v t vs
+     
+    (* Makes a substitution freshen all variables it 
+       does have a substitution for *)
+    let freshening_subst : variable_subst -> variable_subst = fun vs -> freshening_subs vs
+
+
+    (* Builds a substitution which replaces each variable 
+       in the supplied set with a fresh program variable *)
+    let subst_kill_vars_to_fresh_prog : varset -> variable_subst
+      = fun vs -> subst_kill_vars_to_fresh_prog vs
+      
+    (* Builds a substitution which replaces each variable 
+       in the supplied set with a fresh exists variable *)      
+    let subst_kill_vars_to_fresh_exist : varset -> variable_subst  
+      = fun vs -> subst_kill_vars_to_fresh_exist vs
+
+    (* Builds a substitution which replaces each variable 
+       in the supplied set with a fresh variable of the same sort*)          
+    let subst_freshen_vars : varset -> variable_subst 
+      = fun vs -> subst_freshen_vars vs
+    
+    (* Use a substitution on a formula *)
+    let subst_form : variable_subst -> form -> form =
+      fun vs form -> subst_pform vs form      
