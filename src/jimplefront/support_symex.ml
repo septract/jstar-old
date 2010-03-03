@@ -17,7 +17,7 @@ open Support_syntax
 open Jimple_global_types
 
 
-let file = ref ""
+let file = Symexec.file
 
 (* given a variable it returns its key to use in the table *)
 let variable2key v = Pprinter.variable2str v
