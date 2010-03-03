@@ -24,7 +24,7 @@ endif
 export LIB
 
 
-CORESOURCE = pterm.ml plogic.ml global_types.ml
+CORESOURCE = psyntax.ml
 LIBRARYSOURCE = $(CORESOURCE)
 
 LIBRARY = SOURCES="$(LIBRARYSOURCE)" \

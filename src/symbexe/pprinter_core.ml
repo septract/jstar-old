@@ -1,5 +1,4 @@
-open Pterm
-open Plogic
+open Psyntax
 open Methdec_core
 open Spec
 (* =================== PPrinter for core  ============================ *)

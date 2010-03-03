@@ -12,11 +12,9 @@
   equalities.
 *************************************************************)
 open Debug
-open Pterm
-open Plogic
+open Psyntax
 open Printf 
 open Misc
-open Global_types 
 
 exception Contradiction
 exception No_match
@@ -650,9 +648,9 @@ let is_existential (ts: term_structure) (r : representative) : bool =
 
 (*   substitution stuff *)
 (*type varhashrep = representative VarHash.t*)
-type varhashrep = representative Pterm.varhash_t
+type varhashrep = representative varhash_t
 
-type varmaprep = representative Pterm.varmap_t
+type varmaprep = representative varmap_t
 
 type var_subst = 
     Plain_VS of varmaprep 
@@ -688,7 +686,7 @@ let freshening_vs subs : var_subst =
 
 
 
-let add_flat_term (ts : term_structure) (ft : flattened_term) (pt : Pterm.args option)
+let add_flat_term (ts : term_structure) (ft : flattened_term) (pt : args option)
     (sub_uses : representative list) (redun : bool) (rhs : bool)
     : representative * (term, flattened_term) sum =
   try 

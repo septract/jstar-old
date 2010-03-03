@@ -6,15 +6,13 @@ exception Give_up
 open Jparsetree
 
 open Vars
-open Pterm 
-open Plogic
 open Lexing
 open Parsing 
 open Jimple_global_types
 open Spec
 open Load
 open Spec_def
-open Global_types
+open Psyntax
 
 
 let newPVar x = concretep_str x
@@ -35,8 +33,8 @@ let msig_simp (mods,typ,name,args_list) =
 
 let bind_spec_vars (mods,typ,name,args_list) {pre=pre;post=post;excep=excep} =
   (* Make substitution to normalise names *)
-  let subst = Pterm.empty in 
-  let subst = Pterm.add (newPVar("this")) (Arg_var(Support_syntax.this_var)) subst in 
+  let subst = Psyntax.empty in 
+  let subst = Psyntax.add (newPVar("this")) (Arg_var(Support_syntax.this_var)) subst in 
   (* For each name that is given convert to normalised param name*)
   let _,subst = 
     List.fold_left 
@@ -45,7 +43,7 @@ let bind_spec_vars (mods,typ,name,args_list) {pre=pre;post=post;excep=excep} =
 	 match arg_opt with 
 	   ty,None -> subst 
 	 | ty,Some str -> 
-	     Pterm.add 
+	     Psyntax.add 
 	       (newPVar(str)) 
 	       (Arg_var(Support_syntax.parameter_var n)) 
 	       subst
@@ -287,17 +285,17 @@ let field_signature2str fs =
 %type <Spec_def.class_spec Load.importoption list> spec_file
 
 %start rule_file
-%type <Global_types.rules Load.importoption list> rule_file
+%type <Psyntax.rules Load.importoption list> rule_file
 
 
 %start question_file
-%type <Global_types.question list> question_file
+%type <Psyntax.question list> question_file
 
 %start test_file
-%type <Global_types.test list> test_file
+%type <Psyntax.test list> test_file
 
 %start inductive_file
-%type <Global_types.inductive_stmt list> inductive_file
+%type <Psyntax.inductive_stmt list> inductive_file
 
 %% /* rules */
 

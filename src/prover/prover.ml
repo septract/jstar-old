@@ -9,12 +9,10 @@
 
 open Vars
 open Misc
-open Pterm
 open Rterm
 open Rlogic
-open Plogic
 open Debug
-open Global_types
+open Psyntax
 
 
 let prover_counter_example : ts_sequent list ref = ref []
@@ -79,7 +77,7 @@ let default_pure_prover =
 
 type logic = sequent_rule list * Rlogic.rewrite_map * external_prover
 
-let empty_logic : logic = [],Global_types.rm_empty, default_pure_prover
+let empty_logic : logic = [],Psyntax.rm_empty, default_pure_prover
 
 
 let external_proof ep ts pl_assume rs p_goal = 
@@ -91,7 +89,7 @@ let external_proof ep ts pl_assume rs p_goal =
   let out_form = ts_form_plain_pform_rs interpr hash (ts,pl_assume) rs in
   let evs = ev_form out_form vs_empty in
   let subst = subst_kill_vars_to_fresh_prog evs in 
-  let out_form = Plogic.subst_pform subst out_form in 
+  let out_form = Psyntax.subst_pform subst out_form in 
   let query = (fst ep) out_form in 		
   let (pl,sl,cl),interp = p_goal in
   if sl != [] || cl != [] then raise No_match else ();
@@ -229,7 +227,7 @@ and match_form ts (pattern : pform) (target : form) (use_ep) (interp : var_subst
 let rec contains ts (pattern : pform)  (target : form) use_ep interp : (var_subst option)
     =  
   try 
-    if Rterm.ts_debug then Format.fprintf !dump "Contains:@ %a@\n" Plogic.string_form pattern; 
+    if Rterm.ts_debug then Format.fprintf !dump "Contains:@ %a@\n" Psyntax.string_form pattern; 
     match_form ts pattern target use_ep interp false (fun (interp,_) -> if Rterm.ts_debug then Format.fprintf !dump "Match@\n"; (Some interp))
   with No_match -> if Rterm.ts_debug then Format.fprintf !dump "No Match@\n" ; None
 
@@ -321,7 +319,7 @@ let apply_rule (rule : sequent_rule) (seq : ts_sequent)  ep : ts_sequent list li
 			      let premise = subst_psequent subst premise in 
 			      let premise : sequent = psequent_convert ts interp premise in 
 			      let sequent = Rlogic.sequent_join premise (ff, fl, fr) in
-			      vs_iter (fun nv -> Rterm.kill_var ts (match Pterm.subst_var subst nv with Arg_var(v) -> v | _ -> unsupported ())) newvars;
+			      vs_iter (fun nv -> Rterm.kill_var ts (match subst_var subst nv with Arg_var(v) -> v | _ -> unsupported ())) newvars;
 			      if !debug_ref then Format.fprintf !dump "Rule: %s@\n@." name else ();  
 			      [[ts,sequent]]
 			  | _ ->

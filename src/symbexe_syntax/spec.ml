@@ -5,11 +5,11 @@ module ClassMap =
   end)
 
 
-type excep_post = Plogic.pform ClassMap.t 
+type excep_post = Psyntax.pform ClassMap.t 
 
 type spec = 
-    { pre : Plogic.pform;
-      post : Plogic.pform;
+    { pre : Psyntax.pform;
+      post : Psyntax.pform;
       excep : excep_post }
 
 
@@ -19,11 +19,10 @@ let mk_spec  pre post excep =
       excep=excep
     }
 
-
 let spec2str ppf (spec: spec)  = 
   Format.fprintf ppf "@[{%a}@]@ @[{%a}@]"
-    Plogic.string_form spec.pre
-    Plogic.string_form spec.post
+    Psyntax.string_form spec.pre
+    Psyntax.string_form spec.post
 
 let pprinter_core_spec2str = ((Debug.toString spec2str) : (spec -> string))
   

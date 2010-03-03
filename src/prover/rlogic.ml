@@ -7,11 +7,8 @@
 open Debug
 open Misc
 open Vars
-open Pterm
 open Rterm
-open Plogic
-open Global_types
-
+open Psyntax 
 type plain =
   | EQ of representative * representative
   | NEQ of representative * representative
@@ -286,11 +283,11 @@ type rewrite_map =  rewrite_entry RewriteMap.t
 *)
 (* rules for simplifying septraction need defining as well *)
 
-type rewrite_entry_arg =  (Plogic.pform * (where list) * Plogic.pform) 
+type rewrite_entry_arg =  (pform * (where list) * pform) 
 
 type rewrite_entry_2 = rewrite_entry_arg rewrite_entry
 
-type rewrite_map =  rewrite_entry_arg Global_types.rewrite_map
+type rewrite_map =  rewrite_entry_arg Psyntax.rewrite_map
 
 (* subst on a sequent *)
 let f_false = ([],[],[False])

@@ -7,8 +7,7 @@
 *******************************************************************)
 
 open Spec_def
-open Pterm
-open Global_types
+open Psyntax
 open Specification
 open Javaspecs
 open Support_symex
@@ -48,7 +47,7 @@ let verify_axioms_implications class_name jimple_file implications axiom_map log
 		if abstract_class_or_interface then
 			()
 		else
-			if Prover.check_implication logic (Rlogic.convert (Plogic.pconjunction conjunct antecedent)) (Rlogic.convert consequent) then
+			if Prover.check_implication logic (Rlogic.convert (Psyntax.pconjunction conjunct antecedent)) (Rlogic.convert consequent) then
 				(good(); if Config.symb_debug() then Printf.printf "\n\nImplication verification of axiom %s succeeded!\n" name; reset();)
 			else
 				(warning(); if Config.symb_debug() then Printf.printf "\n\nImplication verification of axiom %s failed!\n" name; reset();)

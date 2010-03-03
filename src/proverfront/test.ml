@@ -53,55 +53,55 @@ let main () =
     List.iter (
     fun test ->
       match test with 
-    | Global_types.TImplication (heap1,heap2,result) ->
+    | Psyntax.TImplication (heap1,heap2,result) ->
 	(*Format.printf "Check implication\n %s\n ===> \n %s\n" (Plogic.string_form heap1) (Plogic.string_form heap2);*)
 	(match (Prover.check_implication logic (Rlogic.convert heap1) (Rlogic.convert heap2)), result with 
 	  true,true | false,false -> ()
 	| true,false -> Format.printf "Test failed! Unsound as proved @\n@ %a@\n@ ===> @\n%a@\n " 
-	      Plogic.string_form heap1 
-	      Plogic.string_form heap2
+	      Psyntax.string_form heap1 
+	      Psyntax.string_form heap2
 	| false,true -> Format.printf "Test@ failed!@ Could@ not@ prove@ @\n@ %a@\n ===> @\n%a@\n " 
-	      Plogic.string_form heap1 
-	      Plogic.string_form heap2
+	      Psyntax.string_form heap1 
+	      Psyntax.string_form heap2
 	)
 (*	if !(Debug.debug_ref) then Prover.pprint_proof stdout*)
 	  
-    | Global_types.TFrame (heap1, heap2, result)  -> 
-(*	Format.printf "Find frame for\n %s\n ===> \n %s\n" (Plogic.string_form heap1) (Plogic.string_form heap2);*)
+    | Psyntax.TFrame (heap1, heap2, result)  -> 
+(*	Format.printf "Find frame for\n %s\n ===> \n %s\n" (Psyntax.string_form heap1) (Psyntax.string_form heap2);*)
 	let x = Prover.check_implication_frame logic 
 	    (Rlogic.convert heap1) (Rlogic.convert heap2) in 
 	if Prover.check_equiv x [(Rlogic.convert result)] then ()
 	else (
 	  Format.printf "Incorrect frame for:@\n%a@\n ===> @\n%a@\n"
-	      Plogic.string_form heap1 
-	      Plogic.string_form heap2;
+	      Psyntax.string_form heap1 
+	      Psyntax.string_form heap2;
 	  List.iter 
 	      (fun form -> 
 		Format.printf "Resulted in frames:@\n %a@\n" Rlogic.string_ts_form form) x;
-	  Format.printf "Was expecting:@\n%a@\n" Plogic.string_form result
+	  Format.printf "Was expecting:@\n%a@\n" Psyntax.string_form result
 	 )
-    | Global_types.TAbs (heap1,result)  ->
+    | Psyntax.TAbs (heap1,result)  ->
 	let x = Prover.abs logic (Rlogic.convert heap1) in
 	if Prover.check_equiv x [(Rlogic.convert result)] then ()
 	else (
 	  Format.printf "Incorrect Abstraction for:@\n%a@\n "
-	      Plogic.string_form heap1;
+	      Psyntax.string_form heap1;
 	  List.iter 
 	      (fun form -> 
 		Format.printf "Resulted in forms:@\n %a@\n" Rlogic.string_ts_form form) x;
-	  Format.printf "Was expecting:@\n%a@\n" Plogic.string_form result
+	  Format.printf "Was expecting:@\n%a@\n" Psyntax.string_form result
 	 )	
-    | Global_types.TInconsistency (heap1,result) ->
+    | Psyntax.TInconsistency (heap1,result) ->
 	(match Prover.check_inconsistency logic (Rlogic.convert heap1), result with 
 	  true, true 
 	| false,false -> ()
 	| true,false -> Format.printf "Test failed! Prover found@ %a@ inconsistent, test said consistent.@\n" 
-	      Plogic.string_form heap1
+	      Psyntax.string_form heap1
 	| false,true -> Format.printf "Test failed! Prover could not prove@ %a@ inconsistent.@\n" 
-	      Plogic.string_form heap1
+	      Psyntax.string_form heap1
 	);
 (*	if !(Debug.debug_ref) then Prover.pprint_proof stdout*)
-    | Global_types.TEqual (heap,arg1,arg2,result) -> ()
+    | Psyntax.TEqual (heap,arg1,arg2,result) -> ()
 (*	if Prover.check_equal logic heap arg1 arg2 
 	then Format.printf("Equal!\n\n") else Format.printf("Not equal!\n\n")*)
   )

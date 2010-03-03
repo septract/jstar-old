@@ -1,8 +1,7 @@
 open Jparsetree
 open Vars
 (*open Rterm *)
-open Pterm
-open Plogic 
+open Psyntax
 open Spec
 
 
@@ -14,13 +13,13 @@ type methodspec =
 type methodspecs =
     methodspec list
 
-type apf_define = (string * var * fldlist * Plogic.pform * bool)
+type apf_define = (string * var * fldlist * Psyntax.pform * bool)
 
 type apf_defines = apf_define list
 
-type named_implication = (string * Plogic.pform * Plogic.pform)
+type named_implication = (string * Psyntax.pform * Psyntax.pform)
 
-type exportLocal_predicate = (string * var list * Plogic.pform)
+type exportLocal_predicate = (string * var list * Psyntax.pform)
 
 type exports_clause = (named_implication list * exportLocal_predicate list) option
 

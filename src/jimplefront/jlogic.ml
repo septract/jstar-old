@@ -6,8 +6,7 @@
  All rights reserved. 
 *******************************************************************)
 
-open Pterm
-open Plogic
+open Psyntax
 open Pprinter
 open Support_syntax
 open Jimple_global_types

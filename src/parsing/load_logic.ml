@@ -1,5 +1,5 @@
 (* File to read a logic file and its imports. *)
-open Global_types
+open Psyntax
 open System
 open Load
 
@@ -14,7 +14,7 @@ let load_logic_extra_rules dirs filename extra_rules =
 	    if !(Debug.debug_ref) 
 	    then 
 	      Format.printf "Loaded rule:@\n%a@\n" 
-		Global_types.string_psr r; 
+		string_psr r; 
 	    (r::sl,rm)
 	| RewriteRule(r) -> 
 	    (match r with 

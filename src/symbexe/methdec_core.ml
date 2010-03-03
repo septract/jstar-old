@@ -14,9 +14,9 @@ open Spec
 type core_statement = 
   | Nop_stmt_core
   | Label_stmt_core of  string 
-  | Assignment_core of Vars.var list * spec * Pterm.args list
+  | Assignment_core of Vars.var list * spec * Psyntax.args list
   | Goto_stmt_core of string list  
-  | Throw_stmt_core of Pterm.args
+  | Throw_stmt_core of Psyntax.args
 
 
 

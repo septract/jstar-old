@@ -1,14 +1,12 @@
 (* File to read an inductive file (and later its imports). *)
 open Prover
-open Plogic
-open Pterm
+open Psyntax
 open System
-open Global_types
 open Load
 
 let print_inductive_con inductive_con =
   let (heap, name, args) = inductive_con.con_def in
-  Format.printf "\t%s: %a => %s\n" inductive_con.con_name Plogic.string_form heap name
+  Format.printf "\t%s: %a => %s\n" inductive_con.con_name Psyntax.string_form heap name
 
 let print_inductive inductive =
   Printf.printf "Inductive(%s):\n" inductive.ind_name;

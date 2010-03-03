@@ -1,5 +1,5 @@
 open Jparsetree
-open Plogic
+open Psyntax
 open Jimple_global_types
 
 let bop_to_prover_arg = function

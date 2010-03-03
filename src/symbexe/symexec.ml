@@ -7,8 +7,7 @@
 *******************************************************************)
 
 open Vars
-open Pterm
-open Plogic
+open Psyntax
 open Rlogic
 open Prover
 
@@ -481,7 +480,7 @@ let verify (mname : string) (stmts : stmt_core list)  (spec : spec) (lo : logic)
 	  check_postcondition [(Rlogic.convert spec.post,id_exit)] post) post
 
 
-let verify_ensures (name : string) (stmts: stmt_core list) (post : Plogic.pform) conjoin_with_res_true (oldexp_frames : Rlogic.ts_form list list) lo abs_rules =
+let verify_ensures (name : string) (stmts: stmt_core list) (post : Psyntax.pform) conjoin_with_res_true (oldexp_frames : Rlogic.ts_form list list) lo abs_rules =
   (* construct the specification of the ensures clause *)
 	let rec conjoin_disjunctions (d1 : Rlogic.ts_form list) (d2 : Rlogic.ts_form list) : Rlogic.ts_form list =
 		match d1 with
@@ -536,7 +535,7 @@ let check_and_get_frame (heap,id) sheap =
                  frame)
 
 
-let get_frame (stmts : stmt_core list) (pre : Plogic.pform) (lo : logic) (abs_rules : logic) = 
+let get_frame (stmts : stmt_core list) (pre : Psyntax.pform) (lo : logic) (abs_rules : logic) = 
   curr_logic:= lo;
   curr_abs_rules:=abs_rules;
  

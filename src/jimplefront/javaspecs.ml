@@ -12,10 +12,8 @@
 
 open Vars
 open Rterm
-open Pterm
-open Plogic
+open Psyntax
 open Spec_def
-open Global_types
 open Jlogic
 open Jparsetree
 open Prover
@@ -62,7 +60,7 @@ let add_apf_to_logic logic apfdefines classname : Prover.logic =
     let definition = param_eq&&&definition in
 (*    let parvars = VarSet.add receiver (Plogic.fv_fld_list parameters VarSet.empty) in*)
     let parvars = VarSet.add recvar (VarSet.add paramvar VarSet.empty) in
-    let defvars = Plogic.fv_form definition VarSet.empty in 
+    let defvars = Psyntax.fv_form definition VarSet.empty in 
     let sparevars = VarSet.diff defvars parvars in  
 (*TODO: The following sanity checks need rewriting to deal with the new rule form *)
 (*    let _ = if VarSet.for_all (fun x-> match x with EVar _ -> true | _ -> false) sparevars then () else raise ( BadAPF("Variable escape")) in 
@@ -181,11 +179,11 @@ let rules_for_implication imp prov : sequent_rule list =
 	let name,antecedent,consequent = imp in
 	(* imp is assumed to contain only program variables and existential variables *)
 	(* to build a rule, we substitute all program variables (but no existentials) with fresh anyvars *)
-	let free_vars = Plogic.fv_form (Plogic.pconjunction prov (Plogic.pconjunction antecedent consequent)) VarSet.empty in
+	let free_vars = Psyntax.fv_form (Psyntax.pconjunction prov (Psyntax.pconjunction antecedent consequent)) VarSet.empty in
 	let free_prog_vars = VarSet.filter (fun var -> match var with PVar _ -> true | _ -> false) free_vars in
 	let sub = VarSet.fold (fun var sub -> add var (Arg_var (Vars.fresha ())) sub) free_prog_vars empty in
-	let proviso : Plogic.pform = try subst_pform sub prov with Contradiction -> mkFalse in
-	let antecedent : Plogic.pform = try subst_pform sub antecedent with Contradiction -> mkFalse in
+	let proviso : Psyntax.pform = try subst_pform sub prov with Contradiction -> mkFalse in
+	let antecedent : Psyntax.pform = try subst_pform sub antecedent with Contradiction -> mkFalse in
 	let consequent = try subst_pform sub consequent with Contradiction -> mkFalse in
 	(* General idea: for Prov => (P ==> (Q1 * Q2 * ... * Qn)), we build n rules of the form *)
 	(*  | P |- Qi *)
@@ -200,7 +198,7 @@ let rules_for_implication imp prov : sequent_rule list =
 				| x :: xs -> (x, xs@others) :: split_inner xs (x::others)
 		in
 		split_inner conjuncts [] in
-	let rules = List.map (fun ((conjunct : Plogic.pform_at),(others : Plogic.pform)) ->
+	let rules = List.map (fun ((conjunct : Psyntax.pform_at),(others : Psyntax.pform)) ->
 			let qi,eqs = match conjunct with
 				| P_SPred (pred_name,first_arg :: other_args) -> 
 						let freevars = fv_args_list other_args VarSet.empty in
@@ -208,12 +206,12 @@ let rules_for_implication imp prov : sequent_rule list =
 						let var_newvar_pairs = VarSet.fold (fun var pairs -> (var,Vars.fresha ()) :: pairs) free_anyvars [] in
 						let sub = List.fold_left (fun sub (var,newvar) -> add var (Arg_var newvar) sub) empty var_newvar_pairs in
 						let new_other_args = List.map (subst_args sub) other_args in
-						let equalities : Plogic.pform = List.map (fun (var,newvar) -> P_EQ(Arg_var var,Arg_var newvar)) var_newvar_pairs in
+						let equalities : Psyntax.pform = List.map (fun (var,newvar) -> P_EQ(Arg_var var,Arg_var newvar)) var_newvar_pairs in
 						(P_SPred(pred_name,first_arg :: new_other_args),equalities)
 				| _ -> (conjunct,[])
 			in
 			mk_seq_rule (([],antecedent,[qi]),
-				[[[conjunct],others,Plogic.pconjunction eqs proviso]], (* Note the use of conjunct here and not qi. *)
+				[[[conjunct],others,Psyntax.pconjunction eqs proviso]], (* Note the use of conjunct here and not qi. *)
 				name)
 		) (split consequent) in
 	(* Finally, adjust the sequent rule names *)
@@ -230,10 +228,10 @@ let logic_with_where_pred_defs exportLocal_predicates logic =
 	List.fold_left (fun logic where_pred_def ->
 			let (name, args, body) = where_pred_def in
 			let sub = List.fold_left (fun sub argname -> add argname (Arg_var (Vars.fresha ())) sub) empty args in
-			let pred = P_SPred(name,List.map (fun argname -> Pterm.find argname sub) args) in
+			let pred = P_SPred(name,List.map (fun argname -> Psyntax.find argname sub) args) in
 			let defn = try subst_pform sub body with Contradiction -> mkFalse in
-			let parvars = Plogic.fv_form [pred] VarSet.empty in
-			let defvars = Plogic.fv_form defn VarSet.empty in
+			let parvars = Psyntax.fv_form [pred] VarSet.empty in
+			let defvars = Psyntax.fv_form defn VarSet.empty in
 			let sparevars = VarSet.diff defvars parvars in  
 			let pvarsubst = subst_kill_vars_to_fresh_prog sparevars in 
 			let evarsubst = subst_kill_vars_to_fresh_exist sparevars in 
@@ -280,7 +278,7 @@ module AxiomMap =
 		let compare = compare
 	end)
 	
-type axiom_map = (Plogic.pform * Plogic.pform) AxiomMap.t
+type axiom_map = (Psyntax.pform * Psyntax.pform) AxiomMap.t
 
 let filtermap filterfun mapfun list =
 	List.map mapfun (List.filter filterfun list)
@@ -356,7 +354,7 @@ let add_axiom_implications_to_logic spec_list logic : Prover.logic =
 			let proviso = [mk_objsubtyp (Arg_var this_var) cl] in
 			let clname = Pprinter.class_name2str cl in
 			let new_rules = List.fold_right (fun (n,a,c) ruls ->
-				let freevars = Plogic.fv_form (Plogic.pconjunction a c) VarSet.empty in
+				let freevars = Psyntax.fv_form (Psyntax.pconjunction a c) VarSet.empty in
 				let p = if VarSet.mem this_var freevars then proviso else [] in 
 				rules_for_implication ("axiom_"^clname^"_"^n,a,c) p
 				@ ruls) named_imps [] in
@@ -664,7 +662,7 @@ let add_subtype_and_objsubtype_rules spec_list logic =
 	let tc = transitive_closure pr in
 	let x = Arg_var (Vars.fresha ()) in
 	let y = Arg_var (Vars.fresha ()) in
-	let premise : (Plogic.psequent list list) = 
+	let premise : (Psyntax.psequent list list) = 
 		[([],[],mkEQ(x,y))] ::
 		List.map (fun (ancestor,descendent) -> [[],[],[P_EQ(x,Jlogic.class2args descendent);P_EQ(y,Jlogic.class2args ancestor)]]) tc in
 	let subtype_rule = mk_seq_rule (([],[],Jlogic.mk_subtype1 x y),premise,"subtype_relation_right") in

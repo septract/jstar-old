@@ -10,7 +10,6 @@
 (* Manage methdec infos for a file *) 
 
 open Jparsetree
-open Global_types 
 open Jimple_global_types
 
 

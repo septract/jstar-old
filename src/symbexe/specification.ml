@@ -12,8 +12,7 @@
 
 open Vars
 open Rterm
-open Pterm
-open Plogic
+open Psyntax
 open Prover
 open Spec
 
@@ -24,7 +23,7 @@ open Spec
 type ts_excep_post = Rlogic.ts_form ClassMap.t 
 
 let conjunction_excep excep_post f1 =
-  ClassMap.map (fun post -> Plogic.pconjunction post f1) excep_post
+  ClassMap.map (fun post -> Psyntax.pconjunction post f1) excep_post
 
 let conjunction_excep_convert excep_post f1 =
   ClassMap.map (fun post -> Rlogic.conj_convert post f1) excep_post
@@ -38,7 +37,7 @@ let disjunction_excep excep_post1 excep_post2 =
 	newClassMap := 
 	  ClassMap.add 
 	    key 
-	    (try Plogic.mkOr(post,(ClassMap.find key excep_post2))
+	    (try Psyntax.mkOr(post,(ClassMap.find key excep_post2))
 	    with Not_found -> post)
 	    !newClassMap 
       ) 
@@ -68,8 +67,8 @@ let spec_conjunction spec1 spec2 =
   match spec1,spec2 with 
     {pre=pre1; post=post1; excep=excep1},
     {pre=pre2; post=post2; excep=excep2} ->
-      {pre= Plogic.mkOr ((Plogic.pconjunction pre1 eq),(Plogic.pconjunction pre2 neq));
-       post= Plogic.mkOr ((Plogic.pconjunction post1 eq),(Plogic.pconjunction post2 neq));
+      {pre= Psyntax.mkOr ((Psyntax.pconjunction pre1 eq),(Psyntax.pconjunction pre2 neq));
+       post= Psyntax.mkOr ((Psyntax.pconjunction post1 eq),(Psyntax.pconjunction post2 neq));
        excep = disjunction_excep (conjunction_excep excep1 eq) (conjunction_excep excep2 neq)
      }
 
@@ -144,7 +143,7 @@ let logical_vars_to_prog spec2 =
  
    {P*extra}{Q} ===> spec1
 *)
-let refinement_extra (logic : logic) (spec1 : spec) (spec2 : spec) (extra : Plogic.pform): bool =
+let refinement_extra (logic : logic) (spec1 : spec) (spec2 : spec) (extra : pform): bool =
   let spec2 = logical_vars_to_prog spec2 in 
   match spec2 with
     {pre=pre; post=post; excep=excep} ->

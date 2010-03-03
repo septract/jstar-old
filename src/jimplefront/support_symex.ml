@@ -8,8 +8,7 @@
 
 
 open Vars
-open Pterm
-open Plogic
+open Psyntax
 open Rlogic
 open Config
 open Jparsetree
@@ -133,7 +132,7 @@ let immediate2var e =
 
 
 (* ==============  printing facilities  ======================= *)
-let form2str f = Plogic.string_form f
+let form2str f = Psyntax.string_form f
 
 let print_formset s fs=  
   Format.printf "@\n%s@  [ @[%a@]@ ]@." 

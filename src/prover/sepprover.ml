@@ -4,9 +4,7 @@ F#*)
 
 open Debug
 open Rterm
-open Global_types
-open Pterm
-open Plogic
+open Psyntax
 
 module SepProver = struct
 
@@ -34,7 +32,7 @@ module SepProver = struct
     (* Used in rules for pattern matching *)
     let unify_var (n : string) : var = (Vars.fresha_str n)
 
-    type term = Pterm.args
+    type term = Psyntax.args
 
     let mkVar : var -> term = fun x -> Arg_var x
 
@@ -45,67 +43,67 @@ module SepProver = struct
     (*************************************
        Syntactic representation of formula
     **************************************)
-    type form  = Plogic.pform
+    type form  = Psyntax.pform
 
     (* False *)
-    let mkFalse : form = Plogic.mkFalse
+    let mkFalse : form = Psyntax.mkFalse
 
     (* Inequality between two terms *)
-    let mkNEQ : term * term -> form = fun (a1,a2) ->  Plogic.mkNEQ(a1,a2)
+    let mkNEQ : term * term -> form = fun (a1,a2) ->  Psyntax.mkNEQ(a1,a2)
 
     (* Equality between two terms *)
-    let mkEQ : term * term -> form = fun (a1,a2) -> Plogic.mkEQ(a1,a2)
+    let mkEQ : term * term -> form = fun (a1,a2) -> Psyntax.mkEQ(a1,a2)
 
     (* A pure predicate *)
     let mkPPred : string * term list -> form 
-        = fun (n,al) -> Plogic.mkPPred(n, al)
+        = fun (n,al) -> Psyntax.mkPPred(n, al)
 
     (* A spatial predicate *)
     let mkSPred : string * term list -> form 
-        = fun (n,al) ->  Plogic.mkSPred(n, al)
+        = fun (n,al) ->  Psyntax.mkSPred(n, al)
 
     (* Disjunction of two formula *)
-    let mkOr : form * form -> form  = fun (f1, f2) ->Plogic.mkOr(f1,f2)
+    let mkOr : form * form -> form  = fun (f1, f2) ->Psyntax.mkOr(f1,f2)
 
     (* Star conjunction of two formula *)
-    let mkStar : form -> form -> form = fun f1 f2 -> Plogic.pconjunction f1 f2
+    let mkStar : form -> form -> form = fun f1 f2 -> Psyntax.pconjunction f1 f2
 
     (* Empty formula/heap*)
-    let mkEmpty : form = Plogic.mkEmpty
+    let mkEmpty : form = Psyntax.mkEmpty
     
     (***************************************
        Free variable functions
      ***************************************)
-    type varset = Pterm.varset
+    type varset = Psyntax.varset
 
     let vs_mem : var -> varset -> bool 
-	= fun v vs -> Pterm.vs_mem v vs
+	= fun v vs -> Psyntax.vs_mem v vs
 
     let vs_add : var -> varset -> varset 
-	= fun v vs -> (Pterm.vs_add v vs)
+	= fun v vs -> (Psyntax.vs_add v vs)
 
     let vs_empty : varset 
-	= Pterm.vs_empty
+	= Psyntax.vs_empty
 
     let vs_fold : (var -> 'a -> 'a) -> varset -> 'a -> 'a 
-      = fun f vs x -> Pterm.vs_fold (fun v x -> f v x) vs x 
+      = fun f vs x -> Psyntax.vs_fold (fun v x -> f v x) vs x 
 
     let vs_iter : (var -> unit) -> varset -> unit 
-      = fun f vs -> Pterm.vs_iter (fun v -> f v) vs
+      = fun f vs -> Psyntax.vs_iter (fun v -> f v) vs
 
     let vs_diff : varset -> varset -> varset 
-      = fun vs1  vs2 -> Pterm.vs_diff vs1 vs2 
+      = fun vs1  vs2 -> Psyntax.vs_diff vs1 vs2 
 
     let vs_exists : (var -> bool) -> varset -> bool 
-      = fun f vs -> Pterm.vs_exists (fun v -> f v) vs 
+      = fun f vs -> Psyntax.vs_exists (fun v -> f v) vs 
 
     (* returns the set of free variables  in the term *)
     let fv_form : form -> varset 
-      = fun f -> Plogic.fv_form f Pterm.vs_empty
+      = fun f -> Psyntax.fv_form f Psyntax.vs_empty
 
     (* returns the set of existential variables in the term *)
     let ev_form : form -> varset 
-      = fun f -> Plogic.ev_form f Pterm.vs_empty
+      = fun f -> Psyntax.ev_form f Psyntax.vs_empty
 
 
 
@@ -114,7 +112,7 @@ module SepProver = struct
      ***************************************)
 
     let string_form : Format.formatter -> form -> unit 
-	= fun ppf form -> Plogic.string_form ppf form 
+	= fun ppf form -> Psyntax.string_form ppf form 
     
     
     (***************************************
@@ -123,39 +121,39 @@ module SepProver = struct
 
     (* Substitution on terms *)
     type var_subst 
-      = Pterm.varmap
+      = Psyntax.varmap
 
     (* Creates the empty variable substitution *)
     let empty_subst : var_subst 
-      = Pterm.empty
+      = Psyntax.empty
 
     (* Adds a variable to a substitution *)
     let add_subst : var -> term -> var_subst -> var_subst 
-      = fun  v t vs -> Pterm.add v t vs
+      = fun  v t vs -> Psyntax.add v t vs
      
     (* Makes a substitution freshen all variables it 
        does have a substitution for *)
-    let freshening_subst : var_subst -> var_subst = fun vs -> Pterm.freshening_subs vs
+    let freshening_subst : var_subst -> var_subst = fun vs -> Psyntax.freshening_subs vs
 
 
     (* Builds a substitution which replaces each variable 
        in the supplied set with a fresh program variable *)
     let subst_kill_vars_to_fresh_prog : varset -> var_subst
-      = fun vs -> Pterm.subst_kill_vars_to_fresh_prog vs
+      = fun vs -> Psyntax.subst_kill_vars_to_fresh_prog vs
       
     (* Builds a substitution which replaces each variable 
        in the supplied set with a fresh exists variable *)      
     let subst_kill_vars_to_fresh_exist : varset -> var_subst  
-      = fun vs -> Pterm.subst_kill_vars_to_fresh_exist vs
+      = fun vs -> Psyntax.subst_kill_vars_to_fresh_exist vs
 
     (* Builds a substitution which replaces each variable 
        in the supplied set with a fresh variable of the same sort*)          
     let subst_freshen_vars : varset -> var_subst 
-      = fun vs -> Pterm.subst_freshen_vars vs
+      = fun vs -> Psyntax.subst_freshen_vars vs
     
     (* Use a substitution on a formula *)
     let subst_form : var_subst -> form -> form =
-      fun vs form -> Plogic.subst_pform vs form      
+      fun vs form -> Psyntax.subst_pform vs form      
 
     (*****************************************
        Internal formula operations
@@ -206,8 +204,8 @@ module SepProver = struct
 
     let add_rewrite_rule (rr : rewrite_rule) ((sl,rm,ep) : logic) : logic = 
       (sl,
-       Global_types.rm_add rr.op ((rr.arguments,rr.new_term,([],[],[]),rr.rule_name,false)
-			   ::(try Global_types.rm_find rr.op rm with Not_found -> [])) 
+       Psyntax.rm_add rr.op ((rr.arguments,rr.new_term,([],[],[]),rr.rule_name,false)
+			   ::(try Psyntax.rm_find rr.op rm with Not_found -> [])) 
 	 rm,
        ep)
       
@@ -256,35 +254,35 @@ Need to do something better here for integration with multiple SMT provers and s
       try let v = Hashtbl.find interp a in v
       with Not_found -> 
       let v = match a with
-        | Pterm.Arg_string n -> String n
-        | Pterm.Arg_op (n,al) -> Fun(n, List.map (conv_t interp) al)
-        | Pterm.Arg_var (Vars.PVar(v,n)) -> PVar (Vars.string_var (Vars.PVar(v,n))) 
-        | Pterm.Arg_var (Vars.EVar(v,n)) -> EVar (Vars.string_var (Vars.EVar(v,n))) 
+        | Psyntax.Arg_string n -> String n
+        | Psyntax.Arg_op (n,al) -> Fun(n, List.map (conv_t interp) al)
+        | Psyntax.Arg_var (Vars.PVar(v,n)) -> PVar (Vars.string_var (Vars.PVar(v,n))) 
+        | Psyntax.Arg_var (Vars.EVar(v,n)) -> EVar (Vars.string_var (Vars.EVar(v,n))) 
         | _ -> Printf.printf "Don't know how to convert this term to external use."; unsupported ()
       in Hashtbl.add interp a v; v
       
-    let rec conv interp (pl : representative Plogic.pform) : out_form = 
+    let rec conv interp (pl : representative Psyntax.pform) : out_form = 
       let conv_t = conv_t interp in 
       match pl with
         [] -> TT 
-      | Plogic.P_EQ(a1,a2)::pl -> And (EQ(conv_t a1, conv_t a2), conv interp pl) 
-      | Plogic.P_NEQ(a1,a2)::pl -> And (NEQ(conv_t a1, conv_t a2), conv interp pl) 
-      | Plogic.P_PPred(name,al)::pl -> And (Pred(name,List.map conv_t al), conv interp pl) 
-      | Plogic.P_Or(p1,p2)::pl -> And(Or(conv interp p1, conv interp p2), conv interp pl)
-      | Plogic.P_False::pl -> FF
+      | Psyntax.P_EQ(a1,a2)::pl -> And (EQ(conv_t a1, conv_t a2), conv interp pl) 
+      | Psyntax.P_NEQ(a1,a2)::pl -> And (NEQ(conv_t a1, conv_t a2), conv interp pl) 
+      | Psyntax.P_PPred(name,al)::pl -> And (Pred(name,List.map conv_t al), conv interp pl) 
+      | Psyntax.P_Or(p1,p2)::pl -> And(Or(conv interp p1, conv interp p2), conv interp pl)
+      | Psyntax.P_False::pl -> FF
       | _ -> Printf.printf "Don't know how to convert this formula to external use.\n"; unsupported ()
 
     let add_external_prover : logic -> (out_form -> out_form -> bool) -> logic =
       fun (Logic (x,y,(ep1,ep2))) z -> Logic (x,y,
-					      ((fun (p1 : representative Plogic.pform) 
-						  (p2 : representative Plogic.pform) 
+					      ((fun (p1 : representative Psyntax.pform) 
+						  (p2 : representative Psyntax.pform) 
 						-> let interp = Hashtbl.create 30 in z (conv interp p1) (conv interp p2))
 						,ep2))
  
     let add_external_congruence : logic -> (out_form -> out_term list -> out_term list list) -> logic
 	=
       fun (Logic (x,y,(ep1,ep2))) z -> Logic (x,y,
-					      (ep1,(fun (p1 : representative Plogic.pform) 
+					      (ep1,(fun (p1 : representative Psyntax.pform) 
 						  ts
 						-> 
 						  let interp = Hashtbl.create 30 in

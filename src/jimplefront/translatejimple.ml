@@ -6,12 +6,10 @@
  All rights reserved. 
 *******************************************************************)
 
-open Pterm
-open Plogic
+open Psyntax
 open Rlogic
 open Jlogic
 open Jimple_global_types
-open Global_types
 open Jparsetree
 open Spec_def
 open Prover
@@ -89,7 +87,7 @@ let get_spec  (iexp: Jparsetree.invoke_expr) =
   | Invoke_nostatic_exp (Interface_invoke,n,_,il) 
   | Invoke_nostatic_exp (Special_invoke,n,_,il) ->
       (* Make "this" be the final parameter, i.e. subst @this: for @parametern: *) 
-      let subst = Pterm.add (mk_this) (Arg_var (mk_parameter (List.length il))) Pterm.empty in 
+      let subst = Psyntax.add (mk_this) (Arg_var (mk_parameter (List.length il))) Psyntax.empty in 
       sub_spec subst spec,(il@[Immediate_local_name(n)])
   | Invoke_static_exp (si,il) -> 
       spec,il
@@ -275,7 +273,7 @@ let get_spec_for m fields cname=
 
 let resvar_term = Arg_var(Support_syntax.res_var)
 
-let conjoin_with_res_true (assertion : Plogic.pform) : Plogic.pform =
+let conjoin_with_res_true (assertion : Psyntax.pform) : Psyntax.pform =
 	 pconjunction assertion (mkEQ(resvar_term,Support_symex.constant2args (Int_const (Positive, 1))))
 
 let get_requires_clause_spec_for m fields cname =
@@ -315,7 +313,7 @@ module LocalMap =
 		let compare = compare
 	end)
 	
-type local_map = Pterm.args list AxiomMap.t
+type local_map = Psyntax.args list AxiomMap.t
 
 (*
 A jimple method body contains a list of local variable declarations.
@@ -350,7 +348,7 @@ let jimple_locals2stattype_rules (locals : local_var list) : sequent_rule list =
 	) locals in
 	let x = Arg_var (Vars.fresha ()) in
 	LocalMap.fold (fun typ vars rules ->
-		let premise : (Plogic.psequent list list) = List.map (fun var -> [[],[],mkEQ(x,var)]) vars in
+		let premise : (Psyntax.psequent list list) = List.map (fun var -> [[],[],mkEQ(x,var)]) vars in
 		mk_seq_rule (
 			([],[],[mk_statictyp1 x (Arg_string typ)]),
 			premise,
