@@ -1116,7 +1116,9 @@ let rec apply_tactic logic (sequents : ts_sequent list) find_frame abs : ts_sequ
 	     match seq with 
 	     | ts,(f,(p1,s1,c1),(p2,[],[Wand(Form(p21,s21,c21),Form(p22,s22,c22))])) (* very simple wand case *)
 		   -> apply_tactic_inner tactic [ts,(f,(p21@p1,s21@s1,c21@c1),(p22@p2,s22,c22))] (n+1)
-	     | _ ->  
+       | ts,(f,form,([],[],[])) when find_frame (* very simple frame inference *)
+		   -> [seq]
+			 | _ ->  
 		 let (tactic,seqss) = apply_tactic_once tactic seq ep
 		 in sequents_backtrack (fun seqs->apply_tactic_inner tactic seqs (n+1)) seqss []
 	   with No_match -> 

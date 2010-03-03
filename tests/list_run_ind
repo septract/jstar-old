@@ -1,18 +1,9 @@
-/*-----------
-Import needed
------------*/
-
-Implication:  
-  field(x,f,y) |- x!=nil()  
-? True
-
 /*--------------
 Case Rule needed
 --------------*/
-
-Implication:  
-  list(x,f,y) |- x!=nil()  
-? True
+Frame:
+  list(x,f,z) |- field(x,f,_y)
+/* list(_y,f,z) or empty */
 
 /*--------------
 Induction needed

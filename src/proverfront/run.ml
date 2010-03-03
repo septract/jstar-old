@@ -49,8 +49,8 @@ let main () =
     let rl = if !inductive_file_name <> "" then Inductive.convert_inductive_file !inductive_file_name else [] in
     let (rules, rwm) = load_logic_extra_rules (System.getenv_dirlist "JSTAR_LOGIC_LIBRARY") !logic_file_name rl in
 		let tactic = 
-			(*if !tactic_file_name <> "" then Tactic.load_tactic !tactic_file_name rules
-			else*) Prover.default_tactical rules in
+			if !tactic_file_name <> "" then Tactic.load_tactic !tactic_file_name rules
+			else Prover.default_tactical rules in
 		let logic = (tactic, rwm, Prover.default_pure_prover) in
 		
 (*    let s = System.string_of_file !program_file_name  in*)

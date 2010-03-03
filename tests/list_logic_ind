@@ -19,9 +19,9 @@ if
 */
 
 rule list_case:
-| list(v_3, v_2, v_1) |-
+| list(?v_3, ?v_2, ?v_1) |-
 without
  |-
 if
-| field(v_3, v_2, v_1) |-
-;  | field(v_3, v_2, y) * list(y, v_2, v_1) |-
+| field(?v_3, ?v_2, ?v_1) |-
+;  | field(?v_3, ?v_2, ?y) * list(?y, ?v_2, ?v_1) |-
