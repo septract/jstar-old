@@ -9,7 +9,6 @@
 
 open Vars
 open Psyntax
-open Rlogic
 open Config
 open Jparsetree
 open Support_syntax
@@ -137,7 +136,7 @@ let form2str f = Psyntax.string_form f
 let print_formset s fs=  
   Format.printf "@\n%s@  [ @[%a@]@ ]@." 
     s  
-    (fun ppf -> List.iter (fun f ->Format.fprintf ppf "@[%a@]@\n " string_ts_form f )) fs
+    (fun ppf -> List.iter (fun f ->Format.fprintf ppf "@[%a@]@\n " Sepprover.string_inner_form f )) fs
 
 
 (* =============   end printing facilities ==================== *)

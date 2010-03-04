@@ -7,12 +7,10 @@
 *******************************************************************)
 
 open Psyntax
-open Rlogic
 open Jlogic
 open Jimple_global_types
 open Jparsetree
 open Spec_def
-open Prover
 open Specification
 open Vars
 open Support_symex
@@ -356,7 +354,7 @@ let jimple_locals2stattype_rules (locals : local_var list) : sequent_rule list =
 		) :: rules
 	) (!localmap) []
 	
-let add_static_type_info logic locals : Prover.logic =
+let add_static_type_info logic locals : Psyntax.logic =
 	let rules = jimple_locals2stattype_rules locals in
 	Javaspecs.append_rules logic rules
 

@@ -18,10 +18,10 @@ let load_logic_extra_rules dirs filename extra_rules =
 	    (r::sl,rm)
 	| RewriteRule(r) -> 
 	    (match r with 
-	      (fn,a,b,c,d,e,f,g) -> (sl,rm_add fn ((a,b,(c,d,e),f,g)::(try rm_find fn rm with Not_found -> [])) rm))
+	      (fn,a,b,(c,d,e),f,g) -> (sl,rm_add fn ((a,b,(c,d,e),f,g)::(try rm_find fn rm with Not_found -> [])) rm))
 	| EquivRule(r) -> assert false
       ) ([], rm_empty) rl
   in
   (sl,rm)
 
-let load_logic dirs filename = load_logic_extra_rules dirs filename []
+let load_logic dirs filename : (sequent_rule list * rewrite_map)= load_logic_extra_rules dirs filename []

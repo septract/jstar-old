@@ -50,36 +50,6 @@ let filter_eq_eq pl =
 type sequent_rule = representative psequent * (representative psequent list list) * string * (representative pform) * (where list)
 *)
 
-	  
-let pprint_sequent_rules logic =
-	let (rules,_,_) = logic in
-	List.iter (fun rule -> Format.printf "%a\n\n" string_psr rule) rules
-
-let mk_seq_rule (mat_seq,premises,name) : sequent_rule = 
-  mat_seq,premises,name,([],[]),[]
-
-
-type rewrite_entry =  (args list * args * (pform) * (where list) * (pform) * string * bool) list
-
-(* rules for simplifying septraction need defining as well *)
-
-
-type external_prover = (pform -> pform -> bool)  * (pform -> args list -> args list list)
-
-let default_pure_prover = 
-  (fun x y -> (*Printf.printf "Assume \n %s \nProve\n %s \n" 
-      (Plogic.string_form x) 
-      (Plogic.string_form y);*)
-    match y with 
-      [P_PPred("true",_)] -> true 
-    | _ -> false) , 
-  (fun x y -> [])
-
-type logic = sequent_rule list * Rlogic.rewrite_map * external_prover
-
-let empty_logic : logic = [],Psyntax.rm_empty, default_pure_prover
-
-
 let external_proof ep ts pl_assume rs p_goal = 
   false
 (*   disabled as going to be part of the rterm world seemlessly.*)
@@ -1046,10 +1016,10 @@ let rec get_frames2 (seqs : ts_sequent list)
 let check_implication_frame_inner logic ts heap1 heap2 =
   try
      let frames = get_frames (apply_rule_list logic [ts,([],heap1,heap2)] true false) in
-     frames
+     Some frames
   with 
-    Failed -> [] 
-  | Failed_eg x -> prover_counter_example := x; []
+    Failed -> None 
+  | Failed_eg x -> prover_counter_example := x; None
 
 let check_implication_frame logic (ts1,heap1) (ts2,heap2)  =
   (* Do some kind of merge of ts2 and ts1 *)
@@ -1095,7 +1065,7 @@ let check_inconsistency logic ((ts,heap1) : ts_form)  =
 (* This is inefficient, but save writing a new interface *)
 let check_equal logic (f : ts_form) (a1 : args) (a2 : args)  = 
     match check_implication_frame logic f (Rlogic.convert (mkEQ(a1,a2))) with
-      [] -> false
+      None -> false
     | _ -> true
 
 

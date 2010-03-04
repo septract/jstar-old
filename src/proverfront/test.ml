@@ -45,7 +45,7 @@ let main () =
   else 
     let rl = if !inductive_file_name <> "" then Inductive.convert_inductive_file !inductive_file_name else [] in
     let l1,l2 = load_logic_extra_rules (System.getenv_dirlist "JSTAR_LOGIC_LIBRARY") !logic_file_name rl in
-    let logic = l1,l2, Prover.default_pure_prover in
+    let logic = l1,l2, Psyntax.default_pure_prover in
     let s = System.string_of_file !program_file_name  in
     if !(Debug.debug_ref) then Format.printf "Start parsing tests in %s...@\n" !program_file_name;
     let test_list  = Jparser.test_file Jlexer.token (Lexing.from_string s) 
@@ -70,6 +70,10 @@ let main () =
 (*	Format.printf "Find frame for\n %s\n ===> \n %s\n" (Psyntax.string_form heap1) (Psyntax.string_form heap2);*)
 	let x = Prover.check_implication_frame logic 
 	    (Rlogic.convert heap1) (Rlogic.convert heap2) in 
+	begin 
+	  match x with 
+	  None -> Format.printf "Incorrect: cannot find frame. @\n%a@\n ===> @\n%a@\n" Psyntax.string_form heap1  Psyntax.string_form heap2
+	| Some x -> 
 	if Prover.check_equiv x [(Rlogic.convert result)] then ()
 	else (
 	  Format.printf "Incorrect frame for:@\n%a@\n ===> @\n%a@\n"
@@ -80,6 +84,7 @@ let main () =
 		Format.printf "Resulted in frames:@\n %a@\n" Rlogic.string_ts_form form) x;
 	  Format.printf "Was expecting:@\n%a@\n" Psyntax.string_form result
 	 )
+	end
     | Psyntax.TAbs (heap1,result)  ->
 	let x = Prover.abs logic (Rlogic.convert heap1) in
 	if Prover.check_equiv x [(Rlogic.convert result)] then ()

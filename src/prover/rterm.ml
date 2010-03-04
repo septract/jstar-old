@@ -1358,7 +1358,7 @@ let unifies_eq ts rs a1 a2 interp cont =
 
 exception Done
 
-let rewrite_ts (ts : term_structure) (rm : 'a rewrite_map) dtref rs (query : var_subst * 'a * term-> var_subst option) redun = 
+let rewrite_ts (ts : term_structure) (rm : rewrite_map) dtref rs (query : var_subst * 'a * term-> var_subst option) redun = 
   let x = ref true in
   let subst = ref (empty_subst () )in
   if ts_debug then Format.fprintf !dump  "Trying to rewrite stuff!\n";
@@ -1378,7 +1378,7 @@ let rewrite_ts (ts : term_structure) (rm : 'a rewrite_map) dtref rs (query : var
 	     let rws = rm_find name rm in
 	     List.iter 
 	       (
-		fun (al,a,extra,rule,redundant) ->
+		fun (al,a,(extra1,extra2,extra3),rule,redundant) ->
 		  (* should we use redundant rules; outer call says no, then yes, makes simplification happen first *)
 		  if (redun || !tid.righthand || not redundant) then 
 		  try
@@ -1398,7 +1398,7 @@ let rewrite_ts (ts : term_structure) (rm : 'a rewrite_map) dtref rs (query : var
 				rl al) 
 			  then raise No_match; 
 			  (* end Hack *)
-			  let interp = match query (interp,extra,tid) with None ->  raise No_match | Some interp -> interp in 
+			  let interp = match query (interp,(extra1,extra2,extra3),tid) with None ->  raise No_match | Some interp -> interp in 
 			  let r,i,t = add_term_id ts interp a (redundant || !tid.redundant) !tid.righthand in 
 			  if (true || !(Debug.debug_ref)) && not(rep_eq r repid) then 
 			    (Format.fprintf !dump "Using rule:@ %s@ gives@ %a@ equal to %a.@\n" rule 

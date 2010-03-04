@@ -11,12 +11,11 @@
 
 
 open Vars
-open Rterm
 open Psyntax
 open Spec_def
 open Jlogic
+open Sepprover
 open Jparsetree
-open Prover
 open Support_syntax
 open Specification
 open Jimple_global_types
@@ -28,7 +27,7 @@ exception Class_defines_external_spec
 
 (* ================ General stuff =================== *)
 
-let append_rules logic rules : Prover.logic = 
+let append_rules logic rules : Psyntax.logic = 
 	let old_rules,rm,f = logic in
 	(old_rules @ rules,rm,f)
 	
@@ -49,7 +48,7 @@ let not_null name = not_null1 (Arg_var name)
 exception BadAPF of string
 
 (* Add rules for the relationship between an apf and apf entry, as well as the apf entry and the body *)
-let add_apf_to_logic logic apfdefines classname : Prover.logic = 
+let add_apf_to_logic logic apfdefines classname : Psyntax.logic = 
   let make_rules_from_defs (name,receiver,parameters, definition, global) rules = 
 (* special variables to match the record as pattern matcher isn't that clever *)
     let recvar = Vars.fresha () in 
@@ -68,8 +67,8 @@ let add_apf_to_logic logic apfdefines classname : Prover.logic =
     (*Printf.printf "\n\nAdding a pair of apf rules for %s in class %s.\n" name classname;*)
     let pvarsubst = subst_kill_vars_to_fresh_prog sparevars in 
     let evarsubst = subst_kill_vars_to_fresh_exist sparevars in 
-    let pdefinition = try subst_pform pvarsubst definition with Contradiction -> mkFalse in 
-    let edefinition = try subst_pform evarsubst definition with Contradiction -> mkFalse in 
+    let pdefinition = subst_pform pvarsubst definition in 
+    let edefinition = subst_pform evarsubst definition in 
     let bodyname = name ^ "$" ^ classname in 
 (* open on left *)
     rules @ 
@@ -182,9 +181,9 @@ let rules_for_implication imp prov : sequent_rule list =
 	let free_vars = Psyntax.fv_form (Psyntax.pconjunction prov (Psyntax.pconjunction antecedent consequent)) in
 	let free_prog_vars = VarSet.filter (fun var -> match var with PVar _ -> true | _ -> false) free_vars in
 	let sub = VarSet.fold (fun var sub -> add var (Arg_var (Vars.fresha ())) sub) free_prog_vars empty in
-	let proviso : Psyntax.pform = try subst_pform sub prov with Contradiction -> mkFalse in
-	let antecedent : Psyntax.pform = try subst_pform sub antecedent with Contradiction -> mkFalse in
-	let consequent = try subst_pform sub consequent with Contradiction -> mkFalse in
+	let proviso : Psyntax.pform = subst_pform sub prov in
+	let antecedent : Psyntax.pform = subst_pform sub antecedent in
+	let consequent = subst_pform sub consequent in
 	(* General idea: for Prov => (P ==> (Q1 * Q2 * ... * Qn)), we build n rules of the form *)
 	(*  | P |- Qi *)
 	(* if *)
@@ -229,14 +228,14 @@ let logic_with_where_pred_defs exportLocal_predicates logic =
 			let (name, args, body) = where_pred_def in
 			let sub = List.fold_left (fun sub argname -> add argname (Arg_var (Vars.fresha ())) sub) empty args in
 			let pred = P_SPred(name,List.map (fun argname -> Psyntax.find argname sub) args) in
-			let defn = try subst_pform sub body with Contradiction -> mkFalse in
+			let defn = subst_pform sub body in
 			let parvars = Psyntax.fv_form [pred] in
 			let defvars = Psyntax.fv_form defn  in
 			let sparevars = VarSet.diff defvars parvars in  
 			let pvarsubst = subst_kill_vars_to_fresh_prog sparevars in 
 			let evarsubst = subst_kill_vars_to_fresh_exist sparevars in 
-			let pdefinition = try subst_pform pvarsubst defn with Contradiction -> mkFalse in 
-			let edefinition = try subst_pform evarsubst defn with Contradiction -> mkFalse in
+			let pdefinition = subst_pform pvarsubst defn in 
+			let edefinition = subst_pform evarsubst defn in
 			let rules,rm,f = logic in
 			let rules = rules @
 				(mk_seq_rule (([],[pred],[]),
@@ -261,7 +260,7 @@ let logic_and_implications_for_exports_verification class_name spec_list logic =
 			(logic,exported_implications) 
 		
 (* After exports verification, the exported implications of all classes in the spec file are added to the logic *)
-let add_exported_implications_to_logic spec_list logic : Prover.logic =
+let add_exported_implications_to_logic spec_list logic : Psyntax.logic =
 	let exported_implications = List.fold_left (fun imps cs ->
 		match cs.exports with
 			| None -> imps
@@ -345,7 +344,7 @@ let spec_file_to_axiom_map2 spec_list =
 	!axiommap
 
 (* Add the axioms of all classes in the spec file to the logic *)
-let add_axiom_implications_to_logic spec_list logic : Prover.logic = 
+let add_axiom_implications_to_logic spec_list logic : Psyntax.logic = 
 	let classlist = a_topological_ordering_of_all_classes spec_list in
 	let axiommap = spec_file_to_axiom_map2 spec_list in
 	let new_rules = List.fold_right (fun cl rules ->

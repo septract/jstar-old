@@ -427,8 +427,7 @@ let string_psr ppf (sr :sequent_rule) : unit =
 
 
 
-
-type 'a rewrite_entry =  (args list * args * 'a * string * bool) list
+type rewrite_entry =  (args list * args * ((pform) * (where list) * (pform)) * string * bool) list
 
 (* substitution *)
 (*IF-OCAML*)
@@ -437,12 +436,12 @@ module RewriteMap =
     type t = string
     let compare = compare
   end)
-type 'a rewrite_map =  'a rewrite_entry RewriteMap.t 
+type rewrite_map =  rewrite_entry RewriteMap.t 
 (*ENDIF-OCAML*)
 
 (*F#
 module RewriteMap = Map
-type 'a rewrite_map =  RewriteMap.t<string,'a rewrite_entry> 
+type rewrite_map =  RewriteMap.t<string,rewrite_entry> 
 F#*)
 
 let rm_empty = RewriteMap.empty
@@ -451,7 +450,7 @@ let rm_find = RewriteMap.find
 
 
 
-type rewrite_rule = string * args list * args * (pform) * (where list) * (pform) (* if *) * string * bool
+type rewrite_rule = string * args list * args * ((pform) * (where list) * (pform)) (* if *) * string * bool
 
 type equiv_rule = string * (pform) * (pform) * (pform) * (pform)
 
@@ -644,3 +643,72 @@ type inductive_stmt = IndImport of string | IndDef of inductive
     (* Use a substitution on a formula *)
     let subst_form : variable_subst -> form -> form =
       fun vs form -> subst_pform vs form      
+
+
+
+    (*******************************************
+        Logic operations
+     ******************************************)
+
+	  
+let mk_seq_rule (mat_seq,premises,name) : sequent_rule = 
+  mat_seq,premises,name,([],[]),[]
+
+
+
+(* rules for simplifying septraction need defining as well *)
+
+
+type external_prover = (pform -> pform -> bool)  * (pform -> args list -> args list list)
+
+let default_pure_prover : external_prover = 
+  (fun x y -> (*Printf.printf "Assume \n %s \nProve\n %s \n" 
+      (Plogic.string_form x) 
+      (Plogic.string_form y);*)
+    match y with 
+      [P_PPred("true",_)] -> true 
+    | _ -> false) , 
+  (fun x y -> [])
+
+type logic = sequent_rule list * rewrite_map * external_prover
+
+let empty_logic : logic = [],rm_empty, default_pure_prover
+
+let pprint_sequent_rules logic =
+	let (rules,_,_) = logic in
+	List.iter (fun rule -> Format.printf "%a\n\n" string_psr rule) rules
+
+
+(*
+    type sequent = form * form * form
+
+    type rewrite_rule = { 
+        op : string;
+        arguments : term list;
+        new_term : term;
+        rule_name : string;
+     }
+
+    type sequent_rule = {
+        conclusion : sequent;
+        premises : sequent list list;
+        name : string;
+        without : form;
+      }
+
+  
+    let add_rewrite_rule (rr : rewrite_rule) ((sl,rm,ep) : logic) : logic = 
+      (sl,
+       rm_add rr.op ((rr.arguments,rr.new_term,([],[],[]),rr.rule_name,false)
+			   ::(try rm_find rr.op rm with Not_found -> [])) 
+	 rm,
+       ep)
+      
+
+    let add_sequent_rule (sr : sequent_rule) ((sl,rm,ep) : logic) : logic =
+      let sr = ((sr.conclusion,sr.premises,sr.name,(sr.without,[]),[])) in
+(*      Printf.printf "Adding rule: \n%s" (Prover.string_psr sr) ;*)
+      (sl @ [sr] , rm, ep)
+
+*)
+

@@ -8,8 +8,7 @@
 
 open Vars
 open Psyntax
-open Rlogic
-open Prover
+open Sepprover
 
 
 open Spec
@@ -18,8 +17,8 @@ open Specification
 open Methdec_core
 (* global variables *)
 
-let curr_logic: Prover.logic ref = ref Prover.empty_logic
-let curr_abs_rules: Prover.logic ref = ref Prover.empty_logic
+let curr_logic : Psyntax.logic ref = ref Psyntax.empty_logic
+let curr_abs_rules : Psyntax.logic ref = ref Psyntax.empty_logic
 
 
 
@@ -145,16 +144,16 @@ let add_node label cfg = add_node label UnExplored (Some cfg)
 
 let explore_node src = if src.ntype = UnExplored then src.ntype <- Plain
 
-let add_abs_heap_node (heap : Rlogic.ts_form) cfg= 
-  (Format.fprintf (Format.str_formatter) "%a" string_ts_form heap);
+let add_abs_heap_node (heap : Sepprover.inner_form) cfg= 
+  (Format.fprintf (Format.str_formatter) "%a" Sepprover.string_inner_form heap);
   add_abs_node (Format.flush_str_formatter ()) cfg
 
-let add_heap_node (heap : Rlogic.ts_form) cfg = 
-  (Format.fprintf (Format.str_formatter) "%a" string_ts_form heap);
+let add_heap_node (heap : inner_form) cfg = 
+  (Format.fprintf (Format.str_formatter) "%a" Sepprover.string_inner_form heap);
   add_node (Format.flush_str_formatter ()) cfg
 
-let add_error_heap_node (heap : Rlogic.ts_form) = 
-  (Format.fprintf (Format.str_formatter) "%a" string_ts_form heap);
+let add_error_heap_node (heap : inner_form) = 
+  (Format.fprintf (Format.str_formatter) "%a" Sepprover.string_inner_form heap);
   add_error_node (Format.flush_str_formatter ())
 
 let x = ref 0
@@ -171,7 +170,7 @@ let add_edge src dest label =
 let add_edge_with_proof src dest label = 
   let f = fresh_file() in
   let out = open_out f in
-  Prover.pprint_proof out;
+  Sepprover.pprint_proof out;
   close_out out;
   explore_node src;
   let edge = (label, "", src, dest, Some f) in 
@@ -220,7 +219,7 @@ let add_id_abs_formset sheaps cfg =  List.map (add_id_abs_form cfg) sheaps
    (formula, id)
    id is a unique identifier of the formula
  *)
-type formset_entry = Rlogic.ts_form * node
+type formset_entry = inner_form * node
 
 (* eventually this should be a more efficient data structure than list*)
 type formset = formset_entry list 
@@ -271,7 +270,7 @@ let param_sub il =
   
 
 
-let id_clone h = (form_clone (fst h) false, snd h)
+let id_clone h = (form_clone (fst h), snd h)
 
 
 
@@ -287,13 +286,13 @@ let call_jsr_static (sheap,id) spec il node =
 	  (Format.fprintf 
 	     (Format.str_formatter) "%a:@\n %a" 
 	     Pprinter_core.pp_stmt_core node.skind
-	     Prover.pprint_counter_example (); 
+	     Sepprover.pprint_counter_example (); 
 	   Format.flush_str_formatter ());
         System.warning();
 	Format.printf "\n\nERROR: While executing node %d:\n   %a\n"  
 	  (node.sid) 
 	  Pprinter_core.pp_stmt_core node.skind;
-	Prover.print_counter_example ();
+	Sepprover.print_counter_example ();
 	System.reset(); 
 	[]
 	(*assert false*)
@@ -310,7 +309,7 @@ exception Contained
 let check_postcondition heaps sheap =
   let sheap_noid=fst sheap in  
   try 
-    let heap,id = List.find (fun (heap,id) -> (check_implication_frame !curr_logic (form_clone sheap_noid false) heap)!=[]) heaps in
+    let heap,id = List.find (fun (heap,id) -> (frame !curr_logic (form_clone sheap_noid) heap)!=None) heaps in
     if Config.symb_debug() then 
       Printf.printf "\n\nPost okay \n";
     (*	let idd = add_good_node ("EXIT: "^(Pprinter.name2str m.name)) in *)
@@ -319,14 +318,14 @@ let check_postcondition heaps sheap =
   with Not_found -> 
     System.warning();
     let _= Printf.printf "\n\nERROR: cannot prove post\n"  in
-    Prover.print_counter_example ();
+    Sepprover.print_counter_example ();
     System.reset();
     List.iter (fun heap -> 
-		 let idd = add_error_heap_node (fst heap) in 
+		 let idd = add_error_heap_node ((* TODO change this later, inefficient *)Sepprover.convert (fst heap)) in 
 		 add_edge_with_proof (snd sheap) idd 
 		   (Format.fprintf 
 		      (Format.str_formatter) "ERROR EXIT: @\n %a" 
-		      Prover.pprint_counter_example (); 
+		      Sepprover.pprint_counter_example (); 
 		    Format.flush_str_formatter ()))
       heaps
       (*print_formset "\n\n Failed Heap:\n" [sheap]    *)
@@ -336,7 +335,7 @@ let check_postcondition heaps sheap =
 
 let rec exec n sheap = 
   let sheap_noid=fst sheap in
-  Rlogic.kill_all_exists_names sheap_noid;
+  Sepprover.kill_all_exists_names sheap_noid;
 (*  if Config.symb_debug() then 
     Format.printf "Output to %i with heap@\n   %a@\n" (node_get_id n) (string_ts_form (Rterm.rao_create ())) sheap_noid; *)
   execute_core_stmt n sheap 
@@ -363,22 +362,24 @@ and execs n sheaps =
 
 and execute_core_stmt n (sheap : formset_entry) : formset_entry list =
   let sheap_noid=fst sheap in
-  Rlogic.kill_all_exists_names sheap_noid;
+  Sepprover.kill_all_exists_names sheap_noid;
   let stm=n in
   if Config.symb_debug() then 
     Format.printf "@\nExecuting statement:@ %a" Pprinter_core.pp_stmt_core stm.skind; 
   if Config.symb_debug() then 
-    Format.printf "@\nwith heap:@\n    %a@\n@\n@."  string_ts_form  sheap_noid; 
-  if (Prover.check_inconsistency !curr_logic (form_clone sheap_noid false)) then 
+    Format.printf "@\nwith heap:@\n    %a@\n@\n@."  string_inner_form  sheap_noid; 
+(* TODO CHeck this is okay to remove.  Prover should do a frame call and return [] if inconsistent.
+   if (Sepprover.check_inconsistency !curr_logic (form_clone sheap_noid false)) then 
     (if Config.symb_debug() then Printf.printf "\n\nInconsistent heap. Skip it!\n";
      let idd = add_good_node "Inconsistent"  in add_edge_with_proof (snd sheap) idd "proof";
      [])
-  else (
+  else*)
+  (
    if Config.symb_debug() 
    then begin
      Printf.printf "\nStarting execution of node %i \n" (n.sid);
      Format.printf "@\nExecuting statement:@ %a%!" Pprinter_core.pp_stmt_core stm.skind; 
-     Format.printf "@\nwith heap:@\n    %a@\n@\n%!"  string_ts_form sheap_noid; 
+     Format.printf "@\nwith heap:@\n    %a@\n@\n%!"  string_inner_form sheap_noid; 
     end;
     (match stm.skind with 
     | Label_stmt_core l -> 
@@ -386,20 +387,20 @@ and execute_core_stmt n (sheap : formset_entry) : formset_entry list =
 	(let id = n.sid in 
 	try
 	  if Config.symb_debug() 
-	  then Format.printf "@\nPre-abstraction:@\n    %a@."  string_ts_form  sheap_noid; 
-	  let sheap_pre_abs = form_clone sheap_noid true in 
-	  let sheaps_abs = Prover.abs !curr_abs_rules sheap_pre_abs in 
-	  let sheaps_abs = List.map (fun x -> form_clone x true) sheaps_abs in 
+	  then Format.printf "@\nPre-abstraction:@\n    %a@."  string_inner_form  sheap_noid; 
+	  let sheap_pre_abs = form_clone_abs sheap_noid in 
+	  let sheaps_abs = Sepprover.abs !curr_abs_rules sheap_pre_abs in 
+	  let sheaps_abs = List.map (fun x -> form_clone_abs x) sheaps_abs in 
 	  if Config.symb_debug() 
 	  then Format.printf "@\nPost-abstractionc count:@\n    %d@."  (List.length sheaps_abs);
-	  List.iter Rlogic.kill_all_exists_names sheaps_abs;
+	  List.iter Sepprover.kill_all_exists_names sheaps_abs;
 	  if Config.symb_debug() 
-	  then List.iter (fun sheap -> Format.printf "@\nPost-abstraction:@\n    %a@."  string_ts_form sheap) sheaps_abs; 
+	  then List.iter (fun sheap -> Format.printf "@\nPost-abstraction:@\n    %a@."  string_inner_form sheap) sheaps_abs; 
 	  
 	  let formset = (formset_table_find id) in 
 (*		if Config.symb_debug() then (
    Format.printf "Testing inclusion of :@    %a" 
-		    (Debug.list_format "@\n" (string_ts_form (Rterm.rao_create ()))) sheaps_abs;
+		    (Debug.list_format "@\n" (string_inner_form (Rterm.rao_create ()))) sheaps_abs;
    print_formset "in " (remove_id_formset formset)
    ); *)
 	  explore_node (snd sheap);
@@ -418,7 +419,7 @@ and execute_core_stmt n (sheap : formset_entry) : formset_entry list =
 		if  
 		  (List.for_all
 		     (fun (form,id) -> 
-		       if check_implication_frame !curr_logic (form_clone sheap2 false) form  != []then 
+		       if frame_inner !curr_logic (form_clone sheap2) form  != None then 
 			 (add_edge_with_proof id2 id ("Contains@"^(Debug.toString Pprinter_core.pp_stmt_core stm.skind)); false) 
 		       else (s := ("\n---------------------------------------------------------\n" ^ (string_of_proof ())) :: !s; true))
 		     formset)
@@ -473,27 +474,27 @@ let verify (mname : string) (stmts : stmt_core list)  (spec : spec) (lo : logic)
   | s::stmts -> 
       let id = add_good_node ("Start "^mname) in  
       make_start_node id;
-      let post = execute_core_stmt s (Rlogic.convert (spec.pre), id) in 
+      let post = execute_core_stmt s (Sepprover.convert (spec.pre), id) in 
       let id_exit = add_good_node ("Exit") in 
       List.iter 
 	(fun post -> 
-	  check_postcondition [(Rlogic.convert spec.post,id_exit)] post) post
+	  check_postcondition [(spec.post,id_exit)] post) post
 
 
-let verify_ensures (name : string) (stmts: stmt_core list) (post : Psyntax.pform) conjoin_with_res_true (oldexp_frames : Rlogic.ts_form list list) lo abs_rules =
+let verify_ensures (name : string) (stmts: stmt_core list) (post : Psyntax.pform) conjoin_with_res_true (oldexp_frames : inner_form list list) lo abs_rules =
   (* construct the specification of the ensures clause *)
-	let rec conjoin_disjunctions (d1 : Rlogic.ts_form list) (d2 : Rlogic.ts_form list) : Rlogic.ts_form list =
+	let rec conjoin_disjunctions (d1 : inner_form list) (d2 : inner_form list) : inner_form list =
 		match d1 with
 			| [] -> []
 			| d1first::d1rest ->
 				List.append (
-					List.map (fun d -> Rlogic.tsform_conjunction d1first d) d2
+					List.map (fun d -> Sepprover.conjoin_inner d1first d) d2
 				) (conjoin_disjunctions d1rest d2)
 	in
-	let oldexp_results = List.fold_left (fun acc oldexp_res -> conjoin_disjunctions oldexp_res acc) [Rlogic.ts_form_true] oldexp_frames in
+	let oldexp_results = List.fold_left (fun acc oldexp_res -> conjoin_disjunctions oldexp_res acc) [Sepprover.inner_truth] oldexp_frames in
 	  (* substitute $ret_var in the post! *)
 	let post = subst_pform (add ret_var (Arg_var(Vars.concretep_str (name_ret_var^"_post"))) empty) post in
-	let ensures_preconds = List.map (fun oldexp_result -> Rlogic.conj_convert post oldexp_result) oldexp_results in
+	let ensures_preconds = List.map (fun oldexp_result -> Sepprover.conjoin post oldexp_result) oldexp_results in
 	let ensures_postcond = conjoin_with_res_true post in
 	(* now do the verification *)
 	curr_logic:= lo;
@@ -508,31 +509,32 @@ let verify_ensures (name : string) (stmts: stmt_core list) (post : Psyntax.pform
       let id_exit = add_good_node ("Exit") in
       List.iter 
 	(fun post -> 
-	  check_postcondition [(Rlogic.convert ensures_postcond,id_exit)] post) post
+	  check_postcondition [(ensures_postcond,id_exit)] post) post
 
 
 let check_and_get_frame (heap,id) sheap =
   let sheap_noid=fst sheap in  
-  let frame = check_implication_frame !curr_logic (form_clone sheap_noid false) heap in
-  if frame != [] then
+  let frame = frame_inner !curr_logic (form_clone sheap_noid) heap in
+  match frame with 
+    Some frame -> 
                  if Config.symb_debug() then 
                         (Printf.printf "\n\nOld expression okay \n";
                         add_edge_with_proof (snd sheap) id "exit";
                         frame)
                  else
                         frame
-  else
+  | None -> 
                  (System.warning();
                  let _= Printf.printf "\n\nERROR: cannot prove frame for old expression\n"  in
-                 Prover.print_counter_example ();
+                 Sepprover.print_counter_example ();
                  System.reset();
                  let idd = add_error_heap_node heap in 
 		 add_edge_with_proof (snd sheap) idd 
 		   (Format.fprintf 
 		      (Format.str_formatter) "ERROR EXIT: @\n %a" 
-		      Prover.pprint_counter_example (); 
+		      Sepprover.pprint_counter_example (); 
                       Format.flush_str_formatter ());
-                 frame)
+                 [])
 
 
 let get_frame (stmts : stmt_core list) (pre : Psyntax.pform) (lo : logic) (abs_rules : logic) = 
@@ -545,7 +547,7 @@ let get_frame (stmts : stmt_core list) (pre : Psyntax.pform) (lo : logic) (abs_r
   | s::stmts -> 
 		  let id = add_good_node ("Start") in  
       make_start_node id;
-      let rlogic_pre = Rlogic.convert pre in
+      let rlogic_pre = Sepprover.convert pre in
       let post = match execute_core_stmt s (rlogic_pre, id) with
 				| [p] -> p
 				| _ -> assert false  (* an old expression is guaranteed to have only one exit point *) 

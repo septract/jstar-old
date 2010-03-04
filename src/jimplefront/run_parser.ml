@@ -126,10 +126,10 @@ let main () =
        try 
 	 let l1,l2 = Load_logic.load_logic  (System.getenv_dirlist "JSTAR_LOGIC_LIBRARY") !logic_file_name
 	 in 
-	 let logic = (l1,l2,Prover.default_pure_prover) in 
+	 let logic = (l1,l2,Psyntax.default_pure_prover) in 
 	
 	 let l1,l2 = Load_logic.load_logic  (System.getenv_dirlist "JSTAR_LOGIC_LIBRARY") !absrules_file_name in 
-	 let abs_rules = (l1,l2, Prover.default_pure_prover) in
+	 let abs_rules = (l1,l2, Psyntax.default_pure_prover) in
 	 
 	 let spec_list : (Spec_def.class_spec list) = Load.import_flatten 
 	     (System.getenv_dirlist "JSTAR_SPECS_LIBRARY")

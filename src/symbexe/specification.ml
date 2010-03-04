@@ -10,25 +10,22 @@
 (* Support functions for simbolic execution and misc conversion facilities *)
 
 
-open Vars
-open Rterm
 open Psyntax
-open Prover
+open Sepprover
 open Spec
 
 
 
 
 
-type ts_excep_post = Rlogic.ts_form ClassMap.t 
+type ts_excep_post = inner_form ClassMap.t 
 
 let conjunction_excep excep_post f1 =
   ClassMap.map (fun post -> Psyntax.pconjunction post f1) excep_post
 
 let conjunction_excep_convert excep_post f1 =
-  ClassMap.map (fun post -> Rlogic.conj_convert post f1) excep_post
+  ClassMap.map (fun post -> Sepprover.conjoin post f1) excep_post
 
-let convert_excep = ClassMap.map Rlogic.convert
 
 let disjunction_excep excep_post1 excep_post2 =
   let newClassMap = ref ClassMap.empty in 
@@ -92,7 +89,7 @@ let implication_excep logic excep1 excep2 =
   try 
     ClassMap.iter (
     fun exname form -> 
-      if Prover.check_implication logic form (ClassMap.find exname excep2) 
+      if Sepprover.implies logic form (ClassMap.find exname excep2) 
       then ()
       else raise Check_fails
    ) excep1; true
@@ -119,19 +116,19 @@ let ev_spec_pre spec =
       let ev = ev_form spec_pre in 
       ev
 
-let jsr logic (pre : Rlogic.ts_form) (spec : spec)  : (Rlogic.ts_form  list * ts_excep_post list) option  = 
+let jsr logic (pre : inner_form) (spec : spec)  : (inner_form  list * ts_excep_post list) option  = 
   let ev = ev_spec spec in 
   let subst = subst_kill_vars_to_fresh_exist ev in 
   let spec = sub_spec subst spec in 
   match spec with
     {pre=spec_pre; post=spec_post; excep =spec_excep} -> 
-      let frame_list = Prover.check_implication_frame logic pre (Rlogic.convert spec_pre) in 
-      if frame_list = [] then 
-	None
-      else
-	let res = List.map (fun post -> (*Prover.tidy_one*) (Rlogic.conj_convert spec_post post)) frame_list in 
+      let frame_list = Sepprover.frame logic pre spec_pre in 
+      match frame_list with
+	None -> None
+      |	Some frame_list -> 
+	let res = List.map (fun post -> (*Prover.tidy_one*) Sepprover.conjoin spec_post post) frame_list in 
 	let excep_res = List.map (conjunction_excep_convert spec_excep) frame_list in 
-	List.iter (fun (ts,_) -> vs_iter (kill_var ts) ev) res;
+	List.iter (fun ts -> vs_iter (fun e -> kill_var e ts) ev) res;
 	Some (res,excep_res)
 
 let logical_vars_to_prog spec2 = 
@@ -147,11 +144,11 @@ let refinement_extra (logic : logic) (spec1 : spec) (spec2 : spec) (extra : pfor
   let spec2 = logical_vars_to_prog spec2 in 
   match spec2 with
     {pre=pre; post=post; excep=excep} ->
-      match jsr logic (Rlogic.convert (extra&&&pre)) spec1 with 
+      match jsr logic (Sepprover.convert (extra&&&pre)) spec1 with 
 	None -> false
       | Some (newposts, newexcep_posts) ->
-	  let res = List.for_all (fun newpost -> Prover.check_implication logic newpost (Rlogic.convert post)) newposts in 
-	  let res2 = List.for_all (fun newexcep_post -> implication_excep logic newexcep_post (convert_excep excep)) newexcep_posts in 
+	  let res = List.for_all (fun newpost -> Sepprover.implies logic newpost post) newposts in 
+	  let res2 = List.for_all (fun newexcep_post -> implication_excep logic newexcep_post excep) newexcep_posts in 
 	  (res&&res2)
 
 

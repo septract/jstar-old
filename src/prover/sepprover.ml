@@ -6,7 +6,6 @@ open Debug
 open Rterm
 open Psyntax
 
-module SepProver = struct
 (*
     (*************************************
        Syntactic representation of terms
@@ -159,72 +158,61 @@ module SepProver = struct
        Internal formula operations
      *****************************************)
 
-    type rform = Rlogic.ts_form
+    type inner_form = Rlogic.ts_form
 
-    let convert : form -> rform  
+    let inner_truth =  Rlogic.ts_form_true
+
+    let convert : form -> inner_form  
       = fun form -> Rlogic.convert form
 
-    let conjoin : form -> rform -> rform 
-      = fun form rform -> Rlogic.conj_convert form rform
+    let conjoin : form -> inner_form -> inner_form 
+      = fun form inner_form -> Rlogic.conj_convert form inner_form
 
-    let kill_var : var -> rform -> unit 
-      = fun v rform -> Rlogic.kill_var v rform
+    let conjoin_inner : inner_form -> inner_form -> inner_form
+      = fun if1 if2 -> Rlogic.tsform_conjunction if1 if2
 
-    let update_var_to : var -> term -> rform -> unit 
-      = fun x y z -> ignore (Rlogic.update_var_to x y z)
+    let kill_var : var -> inner_form -> unit 
+      = fun v inner_form -> Rlogic.kill_var v inner_form
 
-    let form_clone : rform -> rform 
-      = fun rform -> Rlogic.form_clone rform false
+    let kill_all_exists_names : inner_form -> unit
+	= Rlogic.kill_all_exists_names 
+
+    let update_var_to : var -> term -> inner_form -> inner_form
+      = fun x y z -> Rlogic.update_var_to x y z
+
+    let form_clone : inner_form -> inner_form 
+      = fun inner_form -> Rlogic.form_clone inner_form false
+
+    let form_clone_abs : inner_form -> inner_form 
+      = fun inner_form -> Rlogic.form_clone inner_form true
 
 
-
-    (*******************************************
-        Logic operations
-     ******************************************)
-
-    type logic = Prover.logic
-
-    type sequent = form * form * form
-
-    type rewrite_rule = { 
-        op : string;
-        arguments : term list;
-        new_term : term;
-        rule_name : string;
-     }
-
-    type sequent_rule = {
-        conclusion : sequent;
-        premises : sequent list list;
-        name : string;
-        without : form;
-      }
-
-    let empty_logic = Prover.empty_logic
-
-    let add_rewrite_rule (rr : rewrite_rule) ((sl,rm,ep) : logic) : logic = 
-      (sl,
-       Psyntax.rm_add rr.op ((rr.arguments,rr.new_term,([],[],[]),rr.rule_name,false)
-			   ::(try Psyntax.rm_find rr.op rm with Not_found -> [])) 
-	 rm,
-       ep)
-      
-
-    let add_sequent_rule (sr : sequent_rule) ((sl,rm,ep) : logic) : logic =
-      let sr = ((sr.conclusion,sr.premises,sr.name,(sr.without,[]),[])) in
-(*      Printf.printf "Adding rule: \n%s" (Prover.string_psr sr) ;*)
-      (sl @ [sr] , rm, ep)
+    let string_inner_form : Format.formatter -> inner_form -> unit = 
+      Rlogic.string_ts_form 
      
     (******************************************
        Entailment operations
      ******************************************)
 
-    let implies : logic -> rform -> rform -> bool 
-      = fun logic rform1 rform2 -> Prover.check_implication logic rform1 rform2
+    let implies : logic -> inner_form -> form -> bool 
+      = fun logic inner_form1 form2 -> Prover.check_implication logic inner_form1 (Rlogic.convert form2)
 
-    let frame : logic -> rform -> form -> rform list 
-      = fun logic rform1 form2 -> 
-	Prover.check_implication_frame_pform logic rform1 form2
+    let inconsistent : logic -> inner_form -> bool
+      = fun logic inner_form1 -> Prover.check_implication logic inner_form1 (Rlogic.convert mkFalse)
+
+    let implies_inner : logic -> inner_form -> inner_form -> bool 
+      = fun logic inner_form1 inner_form2 -> Prover.check_implication logic inner_form1 inner_form2
+
+    let frame : logic -> inner_form -> form -> inner_form list option
+      = fun logic inner_form1 form2 -> 
+	Prover.check_implication_frame_pform logic inner_form1 form2
+
+    let frame_inner : logic -> inner_form -> inner_form -> inner_form list option
+      = fun logic inner_form1 inner_form2 -> 
+	Prover.check_implication_frame logic inner_form1 inner_form2
+
+    let abs : logic -> inner_form -> inner_form list 
+      = Prover.abs
 
 (*
 
@@ -293,4 +281,9 @@ Need to do something better here for integration with multiple SMT provers and s
 						)))
  
 *)
-  end
+
+
+   let pprint_proof = Prover.pprint_proof
+   let pprint_counter_example = Prover.pprint_counter_example   
+   let print_counter_example = Prover.print_counter_example   
+   let string_of_proof = Prover.string_of_proof
