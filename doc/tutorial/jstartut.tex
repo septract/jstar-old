@@ -447,40 +447,41 @@ method_name(list parameter types):
    { Precondition formula } 
    { Postcondition formula };
 \end{verbatim}
-A formula is composed by two parts:
-\begin{verbatim}
-Pure part | Spatial Part
-\end{verbatim}
+%A formula is composed by two parts:
+%\begin{verbatim}
+%Pure part * Spatial Part
+%\end{verbatim}
 An example specification for the constructor of class {\tt NodeLL} is
 \begin{verbatim}
   static void <init>() : 
     {  } 
-    {  field(@this:,<NodeLL: NodeLL next>,_x) * 
-        field(@this:,<NodeLL: java.lang.String content>,_y) };
+    {  field(@this:,<NodeLL: NodeLL next>,nil()) * 
+       field(@this:,<NodeLL: java.lang.String content>,nil()) };
 \end{verbatim}
-\dinocomment{Update notation and spec as in example}
+%
 The spec above tells us several syntactic conventions used by \jStar.
 \begin{itemize}
-\item An empty pure part will be understood as $\true$, whereas an empty
-spatial part is a shorthand for the predicate
-$\emp$ (empty heap) in separation logic. 
+\item An empty formula is is a shorthand for $\true \wedge \emp$.
 \item Following the jimple notation, the java special variable {\bf
     this} is written {\tt @this:}
 \item The {\em points-to} predicate of separation logic is expressed by the
-  predicate {\tt field(object, field name, content value)}. So $o.f
-  \psto v$ is written as {\tt field(o,f,v)}.
-\item Existentially quantified variables start with an underscore.
+  predicate {\tt field(object, field name, content value)}. Hence 
+  $o.f\psto v$ is written as {\tt field(o,f,v)}.
+%\item Existentially quantified variables start with an underscore.
 \item Field's names must be written using their complete signature (as
-  it is done by jimple).
+  it is done by jimple). Signatures in Jimple are  written {\tt <ClassName: TypeOfField NameOfField>}.
+  Hence {\tt <NodeLL: java.lang.String content>} stand for the {\tt content} field of class {\tt NodeLL} 
+  which has type {\tt java.lang.String}.
 \end{itemize}
 Intuitively the meaning of the {\tt <init>}'s spec is that given an
 empty heap the init method returns an instance object of the node
 class expressed in terms of the {\tt field} predicate.  In separation
-logic we would write this as
+logic we would write this with the following Hoare triple:
 \[
-\{ true \ | \ \emp \} \texttt{<init>()} \{\exists x',y'.\, (\true \ | \ \this.next \psto x' * \this.content \psto y') \}
+\{ true \wedge \emp \} \ \texttt{<init>()} \ \{ \this.next \psto \nil * \this.content \psto \nil \}
 \]
 
+\paragraph{Predicates definition.}
 When writing specifications it is often useful to define predicates
 which we will use inside speficiations. It is a bit like defining
 objects which will be then used in the program. Predicate's definition
@@ -493,20 +494,16 @@ useful to define a predicate denoting a linked list (after all
 speficications of \linkedlist's class do nothing more than express
 properties on linked lists).
 \begin{verbatim}
-  define LL(x,) =  
-      |  field(x,<LinkedList: NodeLL tail>,_t) 
-       * field(x,<LinkedList: NodeLL head>,_h) 
-       * ( _t = nil() * _h = nil() | 
-        ||  _t!=nil() | lspe(_h,_t) * NodeLL(_t,nil())); 
+  define LL(x) =         field(x,<LinkedList: NodeLL tail>,_t)        * field(x,<LinkedList: NodeLL head>,_h)        * ( _t = nil() * _h = nil()         ||  _t!=nil() * lspe(_h,_t) * NodeLL(_t,nil())); 
 \end{verbatim}
-\dinocomment{notation}
+%
 In separation logic that translates into:
-\[\begin{array}{lll}
- LL(x) & = &  x.tail \psto t' * x.head \psto h' * 
+\[\begin{array}{llll}
+ LL(x) & = &  \exists t',h':  &x.tail \psto t' * x.head \psto h' * 
 \\
-& & (t'=\nil * h'=\nil \ | \ \emp ) 
+& & & (t'=\nil * h'=\nil \wedge \emp ) 
 \vee 
-(t' \neq \nil \ | \ \lseg(h',t') *NodeLL(t',\nil) )  
+(t' \neq \nil \wedge \lseg(h',t') *NodeLL(t',\nil) )  
 \end{array}
 \]
 This specification uses the predicate $NodeLL(a,b)$ denoting an instance of the class {\tt NodeLL}
@@ -532,10 +529,13 @@ class LinkedList {
  ....
 }
 \end{verbatim}
-Here the \dollar \ sign is used to give a specification which stand for both a dynamic an a static specification at the same time (see~\cite{jstar} for details on dynamic and static specifications and the use of \dollar).
+Here the \dollar \ sign is used to give a specification which stand for both a dynamic an a static specification at the same time (see Section~\ref{sec:inheritance} for details on dynamic and static specifications and the use of \dollar).
 \paragraph{On logical variables.}
 Logical variables denoted with the name starting with an underscore
-are quantified variables. More precisely, if a variable {\tt \_x}
+are quantified variables.  Within a formula, a variable  {\tt \_x} is {\em existentially}
+quantified (there is no need to write the quantifier explicitly). For example observe how {\tt \_t, \_h} in the example above  correspond to $t'$ and $h'$ in the separation logic formula.
+
+However, if a variable {\tt \_x}
 occurs in both pre and post-condition then it is {\em universally}
 quantified (as in Hoare's logic). For example the specification:
 \begin{verbatim}
@@ -545,10 +545,9 @@ quantified (as in Hoare's logic). For example the specification:
 \end{verbatim}
 corresponds to the Hoare triple:
 \[
-\forall \_X. \{ \ Val(\this,\_X) \} get() \{ \_X=ret\_var *  Val(\this, \_X)\}
+\forall \_X. \{ \ Val(\this,\_X) \} \ get() \ \{ \_X=ret\_var *  Val(\this, \_X)\}.
 \]
-If a logical variable occurs only in a formula  e.g., a precondition or a postcondition, 
-then it is {\em existentially} quantified in the formula.
+
 
 \paragraph{Remark.} 
 Every specification file must contain a specification for the {\tt <init>} method of the class {\tt java.lang.Object}. Normally this specification has empty pre and post:
@@ -560,6 +559,7 @@ static void <init>(): {  } {  };
 \end{verbatim}
 
 \subsection{Advanced specification using inheritance}
+\label{sec:inheritance}
 We illustrate how inheritance can be dealt with in \jStar \ by mean of the following classes
 \J~Cell~ and \J~Recell~:
 \[\begin{tabular}{@{}ll@{}}\begin{lstlisting}
