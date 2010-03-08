@@ -489,6 +489,11 @@ are of the form:
 \begin{verbatim}
   define name_predicate(parameter_list) = Formula ;
 \end{verbatim}
+An alternative syntax is accepted by \jStar \ replaces the equal sign by the keyword {\tt as}:
+\begin{verbatim}
+  define name_predicate(parameter_list) as Formula ;
+\end{verbatim}
+Both syntaxes can be used interchangeably.
 For example, for writing specifications for the \linkedlist \ class it
 useful to define a predicate denoting a linked list (after all
 speficications of \linkedlist's class do nothing more than express
@@ -596,15 +601,14 @@ subclass \J~Recell~ has an additional field \J~bak~, which stores the
 previous value the object was set with. 
 
 To specify the \J~Cell~ class, we define a property \JS{Val} describing a \J~Cell~'s contents.  This is done by  the following 
-specification defined inside \J~Cell~:
+specification defined inside the class \J~Cell~:
 %
 \begin{equation}
 \label{eq:val}
-  \define \Val(x,\content y ) = \symbolicheap{\true}{ x.val \mapsto y} \  ;
+\texttt{  define Val(x,content=y) as x.<Cell: int val> |-> y ;}
 \end{equation}
 %
-%
-This definition defines $\Val(x,\content y)$ to mean that the
+This definition defines the property $\Val(x,\content y)$ to mean that the
 field \JS{val} of object $x$ has contents $y$, provided $x$ is
 precisely of dynamic type \J~Cell~.  If $x$ is not of this type,
 then this definition does not constrain the meaning of the property,
@@ -619,7 +623,8 @@ Definition (\ref{eq:val}) also (implicitly) defines another concept
 which  is visible (and therefore can be used) not only inside \J~Cell~ but in any of \J~Cell~'s subclasses.
 Since its scope comprehends  \J~Cell~ and its subclasses, the property $\Val\J~@Cell~(x,\content y)$
 is independent of the actual dynamic type of \JS{x}. That is, it always asserts \JS{x}'s
-\JS{val} field contains \JS{y} no mater the type of \JS{x} (either \J~Cell~ or a subtype).  
+\JS{val} field contains \JS{y} no matter where it is used (either \J~Cell~ or a subclass specifications)
+and consequently no matter the type of \JS{x} (either \J~Cell~ or a subtype).  
 We refer
 to this second property as the \emph{internal property} as it
 corresponds precisely to the body of the definition for a particular
@@ -631,7 +636,7 @@ class. Formally, we have the following two axioms:
 \mbox{}\qquad(\Val(x,\content y)
 \end{array} & \iff & \Val\J~@Cell~(x,\content y))
 \\[1em]
-\Val\J~@Cell~(x,\content y) &\iff& \symbolicheap{\true}{ x.val \mapsto y}
+\Val\J~@Cell~(x,\content y) &\iff& x.val \mapsto y
 \end{array}
 \]
 where $\J~type~(x, \J~Cell~)$ means $x$ is precisely of dynamic type
@@ -639,11 +644,12 @@ where $\J~type~(x, \J~Cell~)$ means $x$ is precisely of dynamic type
 %
 The first relates the internal property to the general property.  Note
 that, this does not specify the meaning of $\Val(x,\content y)$ if $x$
-is not of dynamic type \J~Cell~.  The second specifies the internal
-property.  This can be used to verify the class, but is not available
+is not of dynamic type \J~Cell~.  The second axiom specifies the internal
+property.  This can be used to verify the class  \J~Cell~, but is not available
 when verifying other classes.  That is, other classes (including
 subclasses) must be independent of the specific internal definition of
-the predicate, but may mention the predicate abstractly.
+the predicate (i.e., $ x.val \mapsto y$),
+ but may mention the predicate abstractly (i.e., $\Val\J~@Cell~(x,\content y)$).
 
 
 
@@ -658,15 +664,14 @@ and hence must be implemented by all subclasses (behavioural
 subtyping~\cite{liskov94}).
 
 We can  specify the behaviour of the \J~get~ method by:
-\begin{lstlisting}
-  int get():
-  static
-    pre:  $\{\this.val \mapsto X \}$
-    post: $ \{ X=\return * \this.val \mapsto X  \}$;
-  dynamic 
-    pre: $\{ \Val(\this,\content X) \} $
-    post:$\{ X= \return * \Val(\this,\content X) \}$;
-\end{lstlisting}
+\begin{verbatim}
+  static int get():
+    {@this:.val |-> _X }
+    { _X=return * this.val|-> _X  };
+  dynamic int get():
+    { Val$(@this:, {content= _X }) } 
+    { _X= return * Val$(@this:, {content= _X }) };
+\end{verbatim}
 %
 The first specification, the static specification, describes precisely
 how the method updates the \JS{val} field.\footnote{In this case, the
