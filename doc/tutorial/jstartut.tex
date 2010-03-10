@@ -665,10 +665,10 @@ subtyping~\cite{liskov94}).
 
 We can  specify the behaviour of the \J~get~ method by:
 \begin{verbatim}
-  static int get():
+  int get() static:
     {@this:.val |-> _X }
     { _X=return * this.val|-> _X  };
-  dynamic int get():
+  int get() dynamic:
     { Val$(@this:, {content= _X }) } 
     { _X= return * Val$(@this:, {content= _X }) };
 \end{verbatim}
@@ -699,11 +699,9 @@ In \jStar \ only the {\bf static}
 The static specification is very concrete since it is expressed in terms of the 
 $val$ fields.  It can be stated more abstractly so that is could be used by \JS~Cell~ 
 subclasses  by using the \JS{Val}\J~@Cell~ property.
-\begin{lstlisting}
-   int get() static: 
-  { $\Val\mbox{\$Cell}(\this,\content{\ex X})$ }
-  { $ \ex{X}=\return * \Val\mbox{\$Cell}(\this, \content{\ex X}) $ };
-\end{lstlisting}
+\begin{verbatim}
+ int get() static :   { Val$(this, {content=_X})}   { _X=return * Val$(@this:, {content=_X}) };
+ \end{verbatim}
 This describes for all subclasses precisely what this method body
 does, but it does not reveal the fields that are actually modified.
 
@@ -711,33 +709,35 @@ As this pattern of specification is common, \jStar \ provides a shorthand,
 which defines the dynamic specification given above, and the second
 static specification, with the single specification.
 %
-\begin{lstlisting}
-  int get(): 
-  { $\Val\dollar(\this,\content{\ex X})$ } 
-  { $\ex X = \return * \Val\dollar(\this,\content{\ex X})$ };
-\end{lstlisting}
+\begin{verbatim}
+   int get() :      { Val$(this, {content=_X})}      { _X=return * Val$(@this:, {content=_X}) };
+\end{verbatim}
 By postfixing a \J~@~ onto a property it is interpret by \jStar \ as the
 standard property in the dynamic specification, that is without the
 \J~@~, and as the internal property for the current class in the
 static specification, in this case \JS{Val}\J~@Cell~.
 %
 Hence, both static and dynamic specifications for \J~set~  can be provided with only the following: 
-\begin{lstlisting}
-  void set(int x): 
-  { $\Val\dollar(\this,\content{\ex X})$ } 
-  { $\Val\dollar(\this, \content{\textrm{x}})$ };
-\end{lstlisting}
+\begin{verbatim}
+   void set(int x) :      { Val$(this, {content=_})}      { Val$(this, {content=x}) };
+ \end{verbatim}
+ The underscore stand for some value.
 Remember that the behaviour of the constructor must be specified:
 %
-\begin{lstlisting}
-  void <init>(): 
-  {  } { $\Val\dollar(\this,\content{\ex X})$ }
-\end{lstlisting}
+\begin{verbatim}
+ void <init>() : { } { Val$(this,{content=_ }) };
+\end{verbatim}
 This specification stipulates that constructing an object gives
-$\Val(\this,\content{\ex X})$, and from a subclass's \J~super~
+$\exists \ex X.\Val(\this,\content{\ex X})$, and from a subclass's \J~super~
 constructor call results in the internal property
-$\Val\mbox{\$Cell}(\this,\content{\ex X})$.  This enables subclasses
+$\exists \ex X.\Val\mbox{\$Cell}(\this,\content{\ex X})$.  This enables subclasses
 to use this property without knowing its meaning.
+
+We can now give the complete specification of the class \JS~Cell~:
+\begin{verbatim}
+class Cell {  define Val(x,content=y) as x.<Cell: int val> |-> y ;  void <init>() : { } { Val$(this,{content=_ }) };    int get() :     { Val$(this, {content=_X})}     { _X=return * Val$(@this:, {content=_X}) };  void set(int x) :     { Val$(this, {content=_})}     { Val$(this, {content=x}) };}
+\end{verbatim}
+\dinocomment{up to here!}
 
 \paragraph{Recell.}
 Now, let's consider the \J~Recell~ subclass.  First of all, we must 
