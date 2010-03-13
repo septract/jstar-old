@@ -30,7 +30,7 @@ let parent_classes_and_interfaces (jfile : Jimple_global_types.jimple_file) =
 let verify_exports_implications implications logic_with_where_pred_defs =
 	List.iter (fun implication ->
 		let name,antecedent,consequent = implication in
-		if Prover.check_implication logic_with_where_pred_defs (Rlogic.convert antecedent) (Rlogic.convert consequent) then
+		if Sepprover.implies logic_with_where_pred_defs (Sepprover.convert antecedent) consequent then
 			(good(); if Config.symb_debug() then Printf.printf "\n\nVerification of exported implication %s succeeded!\n" name; reset();)
 		else
 			(warning(); if Config.symb_debug() then Printf.printf "\n\nVerification of exported implication %s failed!\n" name; reset();)
@@ -47,7 +47,7 @@ let verify_axioms_implications class_name jimple_file implications axiom_map log
 		if abstract_class_or_interface then
 			()
 		else
-			if Prover.check_implication logic (Rlogic.convert (Psyntax.pconjunction conjunct antecedent)) (Rlogic.convert consequent) then
+			if Sepprover.implies logic (Sepprover.convert (Psyntax.pconjunction conjunct antecedent)) consequent then
 				(good(); if Config.symb_debug() then Printf.printf "\n\nImplication verification of axiom %s succeeded!\n" name; reset();)
 			else
 				(warning(); if Config.symb_debug() then Printf.printf "\n\nImplication verification of axiom %s failed!\n" name; reset();)
@@ -60,14 +60,14 @@ let verify_axioms_implications class_name jimple_file implications axiom_map log
 				(* We must verify (antecedent=>consequent) => (p_antecedent=>p_consequent) *)
 				(* Since (a=>b) => (c=>d) is equivalent to *)
 				(* (c=>d) \/ [(c=>a) /\ (b=>d)], we do the following: *)
-				let c = Rlogic.convert p_antecedent in
-				let d = Rlogic.convert p_consequent in
-				if Prover.check_implication logic c d then
+				let c = Sepprover.convert p_antecedent in
+				let d = p_consequent in
+				if Sepprover.implies logic c d then
 					(good(); if Config.symb_debug() then Printf.printf "\n\nParent consistency verification of axiom %s succeeded w.r.t. %s!\n" name parent_name; reset();)
 				else
-					let a = Rlogic.convert antecedent in
-					let b = Rlogic.convert consequent in
-					if Prover.check_implication logic c a && Prover.check_implication logic b d then
+					let a = antecedent in
+					let b = Sepprover.convert consequent in
+					if Sepprover.implies logic c a && Sepprover.implies logic b d then
 						(good(); if Config.symb_debug() then Printf.printf "\n\nParent consistency verification of axiom %s succeeded w.r.t. %s!\n" name parent_name; reset();)
 					else
 						(warning(); if Config.symb_debug() then Printf.printf "\n\nParent consistency verification of axiom %s failed w.r.t. %s!\n" name parent_name; reset();)

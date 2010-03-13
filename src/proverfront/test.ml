@@ -55,7 +55,7 @@ let main () =
       match test with 
     | Psyntax.TImplication (heap1,heap2,result) ->
 	(*Format.printf "Check implication\n %s\n ===> \n %s\n" (Plogic.string_form heap1) (Plogic.string_form heap2);*)
-	(match (Prover.check_implication logic (Rlogic.convert heap1) (Rlogic.convert heap2)), result with 
+	(match (Sepprover.implies logic (Sepprover.convert heap1) heap2), result with 
 	  true,true | false,false -> ()
 	| true,false -> Format.printf "Test failed! Unsound as proved @\n@ %a@\n@ ===> @\n%a@\n " 
 	      Psyntax.string_form heap1 
@@ -68,36 +68,36 @@ let main () =
 	  
     | Psyntax.TFrame (heap1, heap2, result)  -> 
 (*	Format.printf "Find frame for\n %s\n ===> \n %s\n" (Psyntax.string_form heap1) (Psyntax.string_form heap2);*)
-	let x = Prover.check_implication_frame logic 
-	    (Rlogic.convert heap1) (Rlogic.convert heap2) in 
+	let x = Sepprover.frame logic 
+	    (Sepprover.convert heap1) heap2 in 
 	begin 
 	  match x with 
 	  None -> Format.printf "Incorrect: cannot find frame. @\n%a@\n ===> @\n%a@\n" Psyntax.string_form heap1  Psyntax.string_form heap2
 	| Some x -> 
-	if Prover.check_equiv x [(Rlogic.convert result)] then ()
+	if Sepprover.implies_list x result then ()
 	else (
 	  Format.printf "Incorrect frame for:@\n%a@\n ===> @\n%a@\n"
 	      Psyntax.string_form heap1 
 	      Psyntax.string_form heap2;
 	  List.iter 
 	      (fun form -> 
-		Format.printf "Resulted in frames:@\n %a@\n" Rlogic.string_ts_form form) x;
+		Format.printf "Resulted in frames:@\n %a@\n" Sepprover.string_inner_form form) x;
 	  Format.printf "Was expecting:@\n%a@\n" Psyntax.string_form result
 	 )
 	end
-    | Psyntax.TAbs (heap1,result)  ->
-	let x = Prover.abs logic (Rlogic.convert heap1) in
-	if Prover.check_equiv x [(Rlogic.convert result)] then ()
+    | Psyntax.TAbs (heap1,result)  -> 
+	let x = Sepprover.abs logic (Sepprover.convert heap1) in
+	if Sepprover.implies_list x result then ()
 	else (
 	  Format.printf "Incorrect Abstraction for:@\n%a@\n "
 	      Psyntax.string_form heap1;
 	  List.iter 
 	      (fun form -> 
-		Format.printf "Resulted in forms:@\n %a@\n" Rlogic.string_ts_form form) x;
+		Format.printf "Resulted in forms:@\n %a@\n" Sepprover.string_inner_form form) x;
 	  Format.printf "Was expecting:@\n%a@\n" Psyntax.string_form result
 	 )	
     | Psyntax.TInconsistency (heap1,result) ->
-	(match Prover.check_inconsistency logic (Rlogic.convert heap1), result with 
+	(match Sepprover.inconsistent logic (Sepprover.convert heap1), result with 
 	  true, true 
 	| false,false -> ()
 	| true,false -> Format.printf "Test failed! Prover found@ %a@ inconsistent, test said consistent.@\n" 

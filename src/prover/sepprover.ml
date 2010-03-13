@@ -214,6 +214,9 @@ open Psyntax
     let abs : logic -> inner_form -> inner_form list 
       = Prover.abs
 
+    let implies_list : inner_form list -> form -> bool 
+	= fun iforml form -> Prover.check_equiv iforml [Rlogic.convert form]
+
 (*
 
 Need to do something better here for integration with multiple SMT provers and such like.
