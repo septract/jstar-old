@@ -60,7 +60,7 @@
 \newcommand{\this}{\mathbf{this}}
 \newcommand{\return}{\mathbf{return}}
 \newcommand{\parameter}{\mathbf{param0}}
-\newcommand{\contentOld}[2]{\{\text{content=} \, #1; \  \text{old=} \, #2 \}}
+\newcommand{\contentOld}[2]{\{\text{content=} \, #1; \  \text{oldcon=} \, #2 \}}
 \newcommand{\type}{\mbox{type}}
 \newcommand{\Visitor}{\mathit{Visitor}}
 \newcommand{\Ast}{\mathit{Ast}}
@@ -237,7 +237,8 @@ There are two key technologies undelying \jStar: the modular
 verification technique of {\em abstract predicat families} defined by
 Parkinson and Bierman \cite{Parkinson:popl05,PB:popl08} and the abstraction
 techniques developed for separation logic developed by
-Distefano {\em et al}~\cite{DOY:tacas06}.
+Distefano {\em et al}~\cite{DOY:tacas06}.~\jStarQED
+
 
 
 \section{Basics}
@@ -288,7 +289,8 @@ program are:
   abstraction rules that are an extension of the logical rules. 
   
   Details on abstraction rules are discussed in
-  Section~\ref{sec:abstraction-rules}.
+  Section~\ref{sec:abstraction-rules}.~\jStarQED
+
 \end{description}
 
 \newcommand{\linkedlist}{\texttt{LinkedList.java} }
@@ -332,7 +334,8 @@ that the \linkedlist \ meets the specifications defined in {\tt
   LinkedList.specs}), or reports an error (indicating which methods
 could not be verified), or diverges (in case the abstraction function
 is not strong enough to ensure the termination of the invariant
-computation).
+computation).~\jStarQED
+
 %
 \begin{figure}[t]
   \centering
@@ -499,7 +502,11 @@ useful to define a predicate denoting a linked list (after all
 speficications of \linkedlist's class do nothing more than express
 properties on linked lists).
 \begin{verbatim}
-  define LL(x) =         field(x,<LinkedList: NodeLL tail>,_t)        * field(x,<LinkedList: NodeLL head>,_h)        * ( _t = nil() * _h = nil()         ||  _t!=nil() * lspe(_h,_t) * NodeLL(_t,nil())); 
+  define LL(x) =  
+       field(x,<LinkedList: NodeLL tail>,_t) 
+       * field(x,<LinkedList: NodeLL head>,_h) 
+       * ( _t = nil() * _h = nil() 
+        ||  _t!=nil() * lspe(_h,_t) * NodeLL(_t,nil())); 
 \end{verbatim}
 %
 In separation logic that translates into:
@@ -562,6 +569,7 @@ class java.lang.Object
 static void <init>(): {  } {  };
 }
 \end{verbatim}
+~\jStarQED
 
 \subsection{Advanced specification using inheritance}
 \label{sec:inheritance}
@@ -700,7 +708,9 @@ The static specification is very concrete since it is expressed in terms of the
 $val$ fields.  It can be stated more abstractly so that is could be used by \JS~Cell~ 
 subclasses  by using the \JS{Val}\J~@Cell~ property.
 \begin{verbatim}
- int get() static :   { Val$(this, {content=_X})}   { _X=return * Val$(@this:, {content=_X}) };
+ int get() static : 
+  { Val$(this, {content=_X})} 
+  { _X=return * Val$(@this:, {content=_X}) };
  \end{verbatim}
 This describes for all subclasses precisely what this method body
 does, but it does not reveal the fields that are actually modified.
@@ -710,7 +720,9 @@ which defines the dynamic specification given above, and the second
 static specification, with the single specification.
 %
 \begin{verbatim}
-   int get() :      { Val$(this, {content=_X})}      { _X=return * Val$(@this:, {content=_X}) };
+   int get() : 
+     { Val$(this, {content=_X})} 
+     { _X=return * Val$(@this:, {content=_X}) };
 \end{verbatim}
 By postfixing a \J~@~ onto a property it is interpret by \jStar \ as the
 standard property in the dynamic specification, that is without the
@@ -719,7 +731,9 @@ static specification, in this case \JS{Val}\J~@Cell~.
 %
 Hence, both static and dynamic specifications for \J~set~  can be provided with only the following: 
 \begin{verbatim}
-   void set(int x) :      { Val$(this, {content=_})}      { Val$(this, {content=x}) };
+   void set(int x) : 
+     { Val$(this, {content=_})} 
+     { Val$(this, {content=x}) };
  \end{verbatim}
  The underscore stand for some value.
 Remember that the behaviour of the constructor must be specified:
@@ -735,36 +749,45 @@ to use this property without knowing its meaning.
 
 We can now give the complete specification of the class \JS~Cell~:
 \begin{verbatim}
-class Cell {  define Val(x,content=y) as x.<Cell: int val> |-> y ;  void <init>() : { } { Val$(this,{content=_ }) };    int get() :     { Val$(this, {content=_X})}     { _X=return * Val$(@this:, {content=_X}) };  void set(int x) :     { Val$(this, {content=_})}     { Val$(this, {content=x}) };}
+class Cell {
+  define Val(x,content=y) as x.<Cell: int val> |-> y ;
+
+  void <init>() : { } { Val$(this,{content=_ }) };
+  
+  int get() : 
+    { Val$(this, {content=_X})} 
+    { _X=return * Val$(@this:, {content=_X}) };
+
+  void set(int x) : 
+    { Val$(this, {content=_})} 
+    { Val$(this, {content=x}) };
+}
 \end{verbatim}
-\dinocomment{up to here!}
 
 \paragraph{Recell.}
 Now, let's consider the \J~Recell~ subclass.  First of all, we must 
 define what the \JS{Val} property means for the \J~Recell~ class.
 %
-\begin{lstlisting}
-$\define  \Val(x,\contentOld y z ) = $
-     $\Val\mbox{\$Cell}(x,\content y) * x.bak \mapsto z$  ;
-\end{lstlisting}
+\begin{verbatim}
+ define Val(x,content=y;oldcon=z) as  Val$Cell(x, {content=y}) * x.<Recell: int bak>|-> z 
+\end{verbatim}
+%\begin{lstlisting}
+%$\define  \Val(x,\contentOld y z ) = $
+%    $\Val\mbox{\$Cell}(x,\content y) * x.bak \mapsto z$  ;
+%\end{lstlisting}
 If \JS{x} is of type \J~Recell~, this defines
 $\Val(x,\contentOld y z)$ as the property associated to \JS{Val} from
-the superclass \J~Cell~ and the additional \JS{bak} field has value
+the superclass \J~Cell~ and the additional \J~oldcon~ field has value
 \JS{z}.  As we have defined the property with an additional labelled
 parameter, \J~old~, we must also provide a meaning to the property
 with only the \JS~content~ parameter.  In effect, we have width
 subtyping on the labelled parameters, where missing parameters are
 existentially quantified.  Hence, this defines $\Val(x,\content y)$
 for the \J~Recell~ class as
+\begin{verbatim}
+Val(x, content=y) as Val$Cell(x,content= y ) * x.<Recell: int bak>|-> _z
+\end{verbatim}
 %
-%\begin{center}
-%\J~Val@Cell(x,{content=y}) * x.bak |-> _z~
-%\end{center}
-\[
-\Val\mbox{\$Cell}(x,\content y ) * x.bak \mapsto \ex z
-\]
-%
-where $\ex z$ is an existentially quantified variable.  
 Importantly, by containing the \JS{Val}\J~@Cell~ property it allows the
 \J~Recell~ to make super calls to the \J~Cell~'s methods, and also
 inherit methods, as the precondition of \JS{Val}\J~@Cell~ can be
@@ -772,21 +795,14 @@ provided for the calls.
 %
 The specifications for \J~Recell~ is the following:
 %
-\begin{lstlisting}
-  void <init>(): {  } { $\Val\dollar(x,\contentOld y z )$ };
-  
-  int get(): 
-  { $\Val\dollar(\this,\contentOld{\ex X}{\ex Y})$ } 
-  { $\ex X= \return *\Val\dollar(\this,\contentOld{\ex X}{\ex Y})$ };
-
-  void set(int x): 
-  { $\Val\dollar(\this,\contentOld{\ex X}{\ex Y})$ } 
-  { $\Val\dollar(\this,\contentOld{\textrm{x}}{\ex X})$ };
-\end{lstlisting}
+\begin{verbatim}
+class Recell {  define Val(x,content=y;oldcon=z) as Val$Cell(x, {content=y}) * x.<Recell: int bak>|-> z;  void <init>() : { } { Val$(this, {content=_x; oldcon=_z}) };    int get() :   { Val$(this, {content=_X; oldcon=_Y})}   { _X=return * Val$(this, {content=_X; oldcon=_Y}) };  void set(int x) :   { Val$(@this:, {content=_X; oldcon=_})}   { Val$(@this:, {content=x; oldcon=_X}) };}
+\end{verbatim}
 We must verify that these specifications are valid behavioural
 subtypes, which follows from width subtyping of labelled
 parameters.~\jStarQED
 
+\dinocomment{up to here!}
 
 
 \section{Logic Rules}
