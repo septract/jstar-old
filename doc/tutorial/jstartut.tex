@@ -698,10 +698,10 @@ specification while changing the concrete behaviour, that is,
 modifying different fields.
 
 \begin{notation}
-In \jStar \ only the {\bf static}
+In \jStar \ only the {\tt static}
   qualifier needs to be explicitly stated. If it is not indicated 
   a method specification is assumed to be dynamic.
-  \end{notation}
+\end{notation}
 
 
 The static specification is very concrete since it is expressed in terms of the 
@@ -796,13 +796,23 @@ provided for the calls.
 The specifications for \J~Recell~ is the following:
 %
 \begin{verbatim}
-class Recell {  define Val(x,content=y;oldcon=z) as Val$Cell(x, {content=y}) * x.<Recell: int bak>|-> z;  void <init>() : { } { Val$(this, {content=_x; oldcon=_z}) };    int get() :   { Val$(this, {content=_X; oldcon=_Y})}   { _X=return * Val$(this, {content=_X; oldcon=_Y}) };  void set(int x) :   { Val$(@this:, {content=_X; oldcon=_})}   { Val$(@this:, {content=x; oldcon=_X}) };}
+class Recell {
+  define Val(x,content=y;oldcon=z) as Val$Cell(x, {content=y}) * x.<Recell: int bak>|-> z;
+
+  void <init>() : { } { Val$(this, {content=_x; oldcon=_z}) };
+  
+  int get() : 
+  { Val$(this, {content=_X; oldcon=_Y})} 
+  { _X=return * Val$(this, {content=_X; oldcon=_Y}) };
+
+  void set(int x) : 
+  { Val$(@this:, {content=_X; oldcon=_})} 
+  { Val$(@this:, {content=x; oldcon=_X}) };
+}
 \end{verbatim}
 We must verify that these specifications are valid behavioural
 subtypes, which follows from width subtyping of labelled
 parameters.~\jStarQED
-
-\dinocomment{up to here!}
 
 
 \section{Logic Rules}
@@ -821,46 +831,34 @@ In this tutorial we focus on the second type of rules. Rules are introduced with
 the syntactic construct {\tt rule}:
 \begin{verbatim}
 rule my_rule :
- SubFConc | 
-   PurePartConc-L | SpatialPartConc-L 
-   |-   PurePartConc-R | SpatialPartConc-R 
+ SubFConc | Conclusion-L |- Conclusion-R 
 if 
- SubtFPre |
-  PurePartPre-L | SpatialPartPre-L 
-  |-   PurePartPre-R | SpatialPartPre-R 
-\end{verbatim}
+ SubtFPre | Premise-L |- Premise-R
+  \end{verbatim}
 The keywords {\tt if} separate the conclusion from the premise.
 Mathematically this syntax corresponds to
 \[
 \infer[\texttt{my\_rule}]
-{
- \texttt{SubFConc} \mid 
-   \texttt{PurePartConc-L} \mid \texttt{SpatialPartConc-L} 
-   \vdash   \texttt{PurePartConc-R} \mid \texttt{SpatialPartConc-R} }
-{ \texttt{SubtFPre} \mid
-  \texttt{PurePartPre-L} \mid \texttt{SpatialPartPre-L }
-  \vdash   \texttt{PurePartPre-R} \mid \texttt{SpatialPartPre-R}} 
+{ \texttt{SubFConc} \mid \texttt{Conclusion-L}  \vdash   \texttt{Conclusion-R} }
+{ \texttt{SubtFPre} \mid \texttt{Premise-L } \vdash   \texttt{Premise-R}} 
 \]
 A sequent in the rule above is of the form
 \[
-\Sigma_f \mid \Pi_1 \mid \Sigma_1 \vdash \Pi_2 \mid \Sigma_2 
+\Sigma_f \mid F_1 \vdash F_2
 \]
-We call $\Pi_1 \mid \Sigma_1$ the assumed formula, $\Pi_2 \mid
-\Sigma_2$ the goal formula, and $\Sigma_f$ the subtracted (spatial)
+We call $F_1$ the assumed formula, $F_2$ the goal formula, and $\Sigma_f$ the subtracted (spatial)
 formula. The semantics of a judgement are:
 \[
-\Pi_1 \land (\Sigma_f * \Sigma_1) 
-\Longrightarrow
-\Pi_2 \land (\Sigma_f * \Sigma_2) 
+F_1 *\Sigma_f  \Longrightarrow F_2 * \Sigma_f 
 \]
 The subtracted formula, $\Sigma_f$, is used to allow predicates to be
 removed from both sides without losing information. Hence the 
 following example rule 
 \begin{verbatim}
 rule numeric_eq_right :
-     | | |- numeric_const(?x) = numeric_const(?y) |
+   | |- numeric_const(?x) = numeric_const(?y) 
 if
-     | | |- ?x=?y|
+   | |- ?x=?y
 \end{verbatim}
 encodes the implication:
 \[
@@ -868,9 +866,33 @@ encodes the implication:
 \]
 Informally, this rule says: if we want to prove that $\texttt{numeric\_const}(x) = \texttt{numeric\_const}(y)$ then we can prove the simpler fact $x=y$.
 
-\paragraph{Variable's notation.} As specified in previous sections, existentially quantified variables
+\begin{notation}
+ As specified in previous sections, existentially quantified variables
 start with an underscore. Variables starting with a question mark as in the rule above are used for 
 denoting any expressions (i.e., quantified variables, non-quantified variables, constant values, etc.). 
+\end{notation}
+
+\paragraph{Without clause.}
+Consider the following rule:
+\begin{verbatim}
+rule field_remove1:| field(?x,?f,?y) |-  field(?x,?f,?t) without  ?y!=?tif  field(?x,?f,?y) | |- ?y=?t 
+\end{verbatim}
+It states that if we have a field {\tt ?f} for the same object {\tt ?x} on both sides of an implication, add the  field to the subtracted formula, and require for proof obligation that their values {\tt ?y} and {\tt t} are the same. Here the clause {\tt without} prevents the firing of the rule if the inequality {\tt ?y!=?t} is
+present in one of the formulae of the conclusion, or in other words  when the formula already says
+that the fields have different  values.  The clause {\tt without} is useful to avoid the rule to be applied
+an infinite amount of times.
+\dinocomment{is this paragraph correct?}
+
+\paragraph{Axioms.} 
+\dinocomment{I'm not sure of this paragraph....}
+Rules with an empty premise are axioms. For example the rule {\tt field\_not\_null} 
+states that it is always true that an object {\tt ?x} having a certain value in a field is an allocated object and 
+therefore it cannot be {\tt nil}. 
+\begin{verbatim}
+rule field_not_null :  field(?x,?f,?y) | |- ?x!=nil() if  | |-
+\end{verbatim}
+\dinocomment{Why is the field predicate in the subtracted formula side?}
+\dinocomment{up to here!}
 
 
 \section{Abstraction Rules}
