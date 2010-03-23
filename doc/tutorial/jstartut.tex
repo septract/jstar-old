@@ -233,32 +233,31 @@ Example of key challenges in verifying object-oriented programs are:
   of the changed code.
 \end{description}
 
-There are two key technologies undelying \jStar: the modular
-verification technique of {\em abstract predicat families} defined by
-Parkinson and Bierman \cite{Parkinson:popl05,PB:popl08} and the abstraction
-techniques developed for separation logic developed by
+There are two key technologies underlying \jStar: the modular
+verification technique of {\em abstract predicate families} defined by
+Parkinson and Bierman~\cite{Parkinson:popl05,PB:popl08} and the abstraction
+techniques for separation logic developed by
 Distefano {\em et al}~\cite{DOY:tacas06}.~\jStarQED
 
 
 
 \section{Basics}
 \label{sec:basics}
-\jStar \ is implemented in OCaml and its internal structure is depicted in
+\jStar \ is implemented in OCaml. Its internal structure is depicted in
 Figure~\ref{fig:architecture}.  It is composed by two main
 components: a theorem prover and the symbolic execution module. The
-prover is called by the symbolic execution during the verification
-process to decide implications.  The symbolic execution module is
-responsible for the fixed point computation of invariants.
+prover is used by the symbolic execution during verification
+to decide implications.  The symbolic execution module is
+responsible for the fixed point computation of loop invariants.
 
 \jStar \ has a small core language which is executed by the symbolic execution module.
 Different languages can be verified by \jStar \ once a front-end translator module is provided.
-The current distribution contains a Jimple front end.
-Jimple is one of the Soot
-toolkit intermediate representations~\cite{vall99soot} designed to
-analyze Java programs. We use Soot for parsing Java into
-Jimple. Other languages can be verified by adding other front ends specific to a particular language.
+The current distribution contains a front end for Jimple, 
+one the intermediate representations of the Soot
+toolkit~\cite{vall99soot}. We use Soot for parsing Java into
+Jimple. \footnote{Other languages can be verified by adding other front ends specific to a particular language.
 We encourage writing new front-ends, and if you write one and like to have it included in the official 
-\jStar \ distribution, please contact us.
+\jStar \ distribution, please contact us.}
 
 %
 \begin{figure}[t]
@@ -271,43 +270,45 @@ We encourage writing new front-ends, and if you write one and like to have it in
 Other input files used by \jStar \ for the verification of a Java
 program are:
 \begin{description}
-\item[Pre/post condition specifications.]  The user needs to specify
+\item[Pre / post-condition specifications.]  This file
+  specifies the
   pre and postconditions of the program's methods as well as the
-  specification of the methods it calls. 
+  specifications of the methods called by it. 
 
-  Details on pre/postcondition specifications are discussed in
+  Details on pre / postcondition specifications are given in
   Section~\ref{sec:pre/post}.
-\item[Logic rules.]  In this file the user specifies the logical
+\item[Logic rules.]  This file specifies the logical
   theory which is used by the theorem prover to decide entailment
   and other kinds of implications. The theory is specified by logical
   rules.  
 
-  Details on logic rules are discussed in Section~\ref{sec:logic-rules}.
+  Details on logic rules are given in Section~\ref{sec:logic-rules}.
 \item[Abstraction rules.]  This file defines the abstraction function
   used to ensure convergence in the fixed-point computation of
-  loop-invariants. The abstraction function is defined by means of
+  loop invariants. The abstraction function is defined by means of
   abstraction rules that are an extension of the logical rules. 
   
-  Details on abstraction rules are discussed in
+  Details on abstraction rules are given in
   Section~\ref{sec:abstraction-rules}.~\jStarQED
 
 \end{description}
 
-\newcommand{\linkedlist}{\texttt{LinkedList.java} }
+\newcommand{\linkedlist}{\texttt{LinkedList.java}}
 
 
 
-\subsection{Let's start}
-To run  \jStar \ on a Java program we need first to compile it in the
-Jimple intermediated language. To do that the Soot~\cite{vall99soot} package
-should be already installed and correctly working in your system. Consider the
+\subsection{Getting started}
+
+To run  \jStar \ on a Java program we need first to compile it to the
+Jimple intermediated language. To do this the Soot~\cite{vall99soot} package
+must be installed and correctly working in your system. Consider the
 \linkedlist \ program in Figure~\ref{tab:linkedlist}. Soot works on
-bytecode therefore we first  compile it to produce the binary {\tt LinkedList.class}
+bytecode, so we first compile it to produce the binary {\tt LinkedList.class}
 with the command
 \begin{verbatim}
  javac LinkedList.java
 \end{verbatim}
-And then run Soot to produce the jumple version of our program:
+We then run Soot to produce the Jimple version of our program:
 \begin{verbatim}
 java soot.Main LinkedList -f J -d .
 \end{verbatim}
@@ -317,106 +318,115 @@ using the logical rules contained in {\tt LinkedList.logic}, the
 abstraction rules in {\tt LinkedList.abs} and the specification rules
 in {\tt LinkedList.specs} simply type the command
 \begin{verbatim}
-jstar -l LinkedList.logic -a LinkedList.abs -s LinkedList.specs -f LinkedList.jimple
+jstar -l LinkedList.logic -a LinkedList.abs -s LinkedList.specs   \
+      -f LinkedList.jimple
 \end{verbatim}
-Here we are using some of the command-line options available:\footnote{For 
+Here we are using the following \jStar \ command-line options:\footnote{For 
 the complete list of options, run {\tt jstar -help}.} 
 \begin{description}
-\item[-l] specifies the file containing the {\em logic rules} that
-  \jStar \ needs to use in this run of the verification.
+\item[-l] specifies the file containing the {\em logic rules} used
+    in this run of the verification.
 \item[-a] specifies the file containing the {\em abstraction rules}.
 \item[-s] specifies the file containing the pre/post specifications of the methods in the program.
-\item[-f] specifies the jimple translation of the program we want to
+\item[-f] specifies the Jimple translation of the program we want to
   verify.
 \end{description}
-\jStar \ should then reports that all methods have been verified (meening
+\jStar \ will either report that all methods have been verified (meaning
 that the \linkedlist \ meets the specifications defined in {\tt
-  LinkedList.specs}), or reports an error (indicating which methods
-could not be verified), or diverges (in case the abstraction function
+  LinkedList.specs}), or report an error (indicating those methods
+that could not be verified), or it will not terminate (indicating that the abstraction function
 is not strong enough to ensure the termination of the invariant
 computation).~\jStarQED
 
 %
-\begin{figure}[t]
+\begin{figure}[phtb]
   \centering
-  \begin{tabular}{l|l}
+  \begin{tabular}{l@{\quad\;}|@{\quad}l}
     \begin{lstlisting}
 class LinkedList
 {
-    private NodeLL head ;
-    private NodeLL tail ;
-    /* head == tail == null -> empty list */
+ private NodeLL head ;
+ private NodeLL tail ;
+ /* head == tail == null -> empty list */
 
-    void create()
-    {
-	head=null;
-	while (true) {
-	    NodeLL n = new NodeLL() ;
-	    n.next=head;
-	    head=n;
-	}
-    }
-    
-    void reverseList()
-    {
-        NodeLL f = null ; // finished part of list
-        NodeLL r = head ; // rest of list to do
-        NodeLL t = head ; // swap head and tail
-        head = tail ;
-        tail = t ;
-        // Assert: Loop Invariant: list is split
-        //    between f and r, f being finished, r
-        //    needs to be processed.
-        while ( r!=null )
-        {
-           t = r ; // to process t
-           r = r.next ; // loop will terminate 
-           t.next = f ; // put on head
-           f = t ; // note: t has been used
-        }
-    }
+ void create()
+ {
+  head=null;
+  while (true) {
+   NodeLL n = new NodeLL() ;
+   n.next=head;
+   head=n;
+  }
+ }
+ 
+ void reverseList()
+ {
+  NodeLL f = null ; // finished part of list
+  NodeLL r = head ; // rest of list to do
+  NodeLL t = head ; // swap head and tail
+  head = tail ;
+  tail = t ;
+  // Assert: Loop Invariant: list is split
+  // between f and r, f being finished, r
+  // needs to be processed.
+  while ( r!=null )
+  {
+   t = r ; // to process t
+   r = r.next ; // loop will terminate 
+   t.next = f ; // put on head
+   f = t ; // note: t has been used
+  }
+ }
+
+
+
+
+
+
+
+${}$
 \end{lstlisting}
-& \qquad \quad
-\begin{lstlisting}            
-    void insertAtHead( String newString )
-    {
-        NodeLL n = new NodeLL() ;
-        n.content = newString ;
-        n.next = head ;
-        head = n ;
-        if ( tail==null ) tail = head ;
-    }
+&
+\begin{lstlisting}   
+ void insertAtHead( String newString )
+ {
+  NodeLL n = new NodeLL() ;
+  n.content = newString ;
+  n.next = head ;
+  head = n ;
+  if ( tail==null ) tail = head ;
+ }
 
-    void insertAtTail( String newString )
-    {
-        if ( head==null )
-        {
-           insertAtHead( newString ) ;
-        }
-        else
-        {
-           NodeLL n = new NodeLL() ;
-           n.content = newString ;
-           tail.next = n ;
-           tail = n ;
-        }
-    }
-    
-    void printList()
-    {
-        NodeLL n = head ;
-        while ( n!=null )
-        {
-            n = n.next ;
-        }
-    }    
+ void insertAtTail( String newString )
+ {
+  if ( head==null )
+  {
+   insertAtHead( newString ) ;
+  }
+  else
+  {
+   NodeLL n = new NodeLL() ;
+   n.content = newString ;
+   tail.next = n ;
+   tail = n ;
+  }
+ }
+ 
+ void printList()
+ {
+  NodeLL n = head ;
+  while ( n!=null )
+  {
+   n = n.next ;
+  }
+ } 
 } //end LinkedList class
 
 
 class NodeLL
 {
-    String content ;
-    NodeLL next ;
+ String content ;
+ NodeLL next ;
 }
 \end{lstlisting}
   \end{tabular}
@@ -428,8 +438,8 @@ class NodeLL
 \section{Pre/post condition specifications}
 \label{sec:pre/post}
 In this section we gives few practical notions and conventions needed
-for writing specification in \jStar. For a methodological introduction
-on how to write specification in \jStar \ for a collection of tricky
+for writing specifications in \jStar. For a methodological introduction
+on how to write specification in \jStar, and a collection of tricky
 problems we refer the reader to~\cite{jstar}.
 
 The program in Figure~\ref{tab:linkedlist} contains two classes
@@ -440,9 +450,9 @@ need to provide specification for:
 \begin{itemize}
 \item all
 \linkedlist's methods;
-\item for the special method {\tt <init>()} introduced by jimple
-  (representing a constructor);
-\item for all the method used by \linkedlist's methods;
+\item the special method {\tt <init>()} introduced by Jimple
+  (representing a constructor); and
+\item  all the methods used by \linkedlist{}'s methods;
 \end{itemize}
 A specification is written as:
 \begin{verbatim}
@@ -454,7 +464,7 @@ method_name(list parameter types):
 %\begin{verbatim}
 %Pure part * Spatial Part
 %\end{verbatim}
-An example specification for the constructor of class {\tt NodeLL} is
+An example specification for the constructor of class {\tt NodeLL} is:
 \begin{verbatim}
   static void <init>() : 
     {  } 
@@ -465,42 +475,46 @@ An example specification for the constructor of class {\tt NodeLL} is
 The spec above tells us several syntactic conventions used by \jStar.
 \begin{itemize}
 \item An empty formula is is a shorthand for $\true \wedge \emp$.
-\item Following the jimple notation, the java special variable {\bf
+\item Following the Jimple notation, the Java special variable {\bf
     this} is written {\tt @this:}
 \item The {\em points-to} predicate of separation logic is expressed by the
   predicate {\tt field(object, field name, content value)}. Hence 
   $o.f\psto v$ is written as {\tt field(o,f,v)}.
 %\item Existentially quantified variables start with an underscore.
-\item Field's names must be written using their complete signature (as
-  it is done by jimple). Signatures in Jimple are  written {\tt <ClassName: TypeOfField NameOfField>}.
-  Hence {\tt <NodeLL: java.lang.String content>} stand for the {\tt content} field of class {\tt NodeLL} 
+\item Field names must be written using their complete signature (as
+  it is done by Jimple). Signatures in Jimple are  written {\tt <ClassName: TypeOfField NameOfField>}.
+  Hence {\tt <NodeLL: java.lang.String content>} stands for the {\tt content} field of class {\tt NodeLL} 
   which has type {\tt java.lang.String}.
 \end{itemize}
-Intuitively the meaning of the {\tt <init>}'s spec is that given an
-empty heap the init method returns an instance object of the node
-class expressed in terms of the {\tt field} predicate.  In separation
-logic we would write this with the following Hoare triple:
+Intuitively the meaning of {\tt <init>}'s specification is:
+\begin{quote}
+\it
+ ``Given an
+empty heap the {\tt init} method returns an instance object of the {\tt node}
+class expressed in terms of the {\tt field} predicate.''
+\end{quote}
+In separation
+logic we would write this as the following Hoare triple:
 \[
-\{ true \wedge \emp \} \ \texttt{<init>()} \ \{ \this.next \psto \nil * \this.content \psto \nil \}
+\{ true \wedge \emp \} \quad \texttt{<init>()} \quad \{ \this.next \psto \nil * \this.content \psto \nil \}
 \]
 
 \paragraph{Predicates definition.}
 When writing specifications it is often useful to define predicates
-which we will use inside speficiations. It is a bit like defining
-objects which will be then used in the program. Predicate's definition
+which we will use inside specifications. This is similar to defining
+objects which will be then used in the program. Predicate definitions
 are of the form:
 \begin{verbatim}
   define name_predicate(parameter_list) = Formula ;
 \end{verbatim}
-An alternative syntax is accepted by \jStar \ replaces the equal sign by the keyword {\tt as}:
+An alternative syntax accepted by \jStar \ replaces the equal sign by the keyword {\tt as}
 \begin{verbatim}
   define name_predicate(parameter_list) as Formula ;
 \end{verbatim}
 Both syntaxes can be used interchangeably.
 For example, for writing specifications for the \linkedlist \ class it
-useful to define a predicate denoting a linked list (after all
-speficications of \linkedlist's class do nothing more than express
-properties on linked lists).
+useful to define a predicate denoting a linked list. (Specifications of \linkedlist's class do nothing more than express
+properties on linked lists.)
 \begin{verbatim}
   define LL(x) =  
        field(x,<LinkedList: NodeLL tail>,_t) 
@@ -509,9 +523,9 @@ properties on linked lists).
         ||  _t!=nil() * lspe(_h,_t) * NodeLL(_t,nil())); 
 \end{verbatim}
 %
-In separation logic that translates into:
+In separation logic this translates to:
 \[\begin{array}{llll}
- LL(x) & = &  \exists t',h':  &x.tail \psto t' * x.head \psto h' * 
+ LL(x) & = &  \exists t',h' \ldotp  &x.tail \psto t' * x.head \psto h' * {}
 \\
 & & & (t'=\nil * h'=\nil \wedge \emp ) 
 \vee 
@@ -521,7 +535,7 @@ In separation logic that translates into:
 This specification uses the predicate $NodeLL(a,b)$ denoting an instance of the class {\tt NodeLL}
 and which can be written in separation logic as:
 \[
-  NodeLL(a,b) = a.next \psto b * x.content \psto c' 
+  NodeLL(a,b) \;\; = \;\; a.{\it next} \psto b * x.{\it content} \psto c' 
 \]
 The formula
 $LL(x)$ denotes either a list with only one element or a list with
@@ -531,24 +545,21 @@ All the specifications related to a class need do be enclosed between
 a {\tt class} construct:
 \begin{verbatim}
 class LinkedList {
-
-......
-
+ ...
   void reverseList() : 
    {  LL$(@this:) } 
    {  LL$(@this:) };
-
- ....
+ ...
 }
 \end{verbatim}
-Here the \dollar \ sign is used to give a specification which stand for both a dynamic an a static specification at the same time (see Section~\ref{sec:inheritance} for details on dynamic and static specifications and the use of \dollar).
+Here the \dollar \ sign is used to give a dual specification standing for both a dynamic and a static specification at the same time (see Section~\ref{sec:inheritance} for details on dynamic and static specifications and the use of \dollar).
 \paragraph{On logical variables.}
-Logical variables denoted with the name starting with an underscore
+Logical variables with names beginning with an underscore
 are quantified variables.  Within a formula, a variable  {\tt \_x} is {\em existentially}
-quantified (there is no need to write the quantifier explicitly). For example observe how {\tt \_t, \_h} in the example above  correspond to $t'$ and $h'$ in the separation logic formula.
+quantified (there is no need to write the quantifier explicitly). For example observe how {\tt \_t, \_h} in the example above correspond to $t'$ and $h'$ in the associated separation logic formula.
 
 However, if a variable {\tt \_x}
-occurs in both pre and post-condition then it is {\em universally}
+occurs in both the pre and post-condition then it is {\em universally}
 quantified (as in Hoare's logic). For example the specification:
 \begin{verbatim}
 { Val$(@this:, {content=_X})} 
@@ -557,12 +568,12 @@ quantified (as in Hoare's logic). For example the specification:
 \end{verbatim}
 corresponds to the Hoare triple:
 \[
-\forall \_X. \{ \ Val(\this,\_X) \} \ get() \ \{ \_X=ret\_var *  Val(\this, \_X)\}.
+\forall \_X. \{ \,{\it Val}(\this,\_X) \,\} \;\; \text{\tt get()} \;\; \{ \_X={\it ret\_var} *  {\it Val}(\this, \_X)\}.
 \]
 
 
-\paragraph{Remark.} 
-Every specification file must contain a specification for the {\tt <init>} method of the class {\tt java.lang.Object}. Normally this specification has empty pre and post:
+\paragraph{On initialisation.} 
+Every specification file must contain a specification for the {\tt <init>} method of the class {\tt java.lang.Object}. Normally this specification has an empty pre and postcondition:
 \begin{verbatim}
 class java.lang.Object 
 {
@@ -571,11 +582,13 @@ static void <init>(): {  } {  };
 \end{verbatim}
 ~\jStarQED
 
-\subsection{Advanced specification using inheritance}
+\subsection{Advanced specifications using inheritance}
 \label{sec:inheritance}
 We illustrate how inheritance can be dealt with in \jStar \ by mean of the following classes
 \J~Cell~ and \J~Recell~:
-\[\begin{tabular}{@{}ll@{}}\begin{lstlisting}
+\[
+\begin{tabular}{@{}ll@{}}
+\begin{lstlisting}
 class Cell {
     int val;
 
@@ -587,7 +600,7 @@ class Cell {
 	return val;
     }
 }
-\end{lstlisting}&\hspace{1em}
+\end{lstlisting}&\hspace{5em}
 \begin{lstlisting}
 class Recell extends Cell {
     int bak;
@@ -603,36 +616,41 @@ class Recell extends Cell {
 \end{lstlisting}
 \end{tabular}
 \]
-The \J~Cell~ class has a \J~val~ field, which is updated by the
+The \J~Cell~ class has a \J~val~ field. This is updated by the
 \J~set~ method and its value is returned by the \J~get~ method.  The
 subclass \J~Recell~ has an additional field \J~bak~, which stores the
-previous value the object was set with. 
+previous value the object held. 
 
-To specify the \J~Cell~ class, we define a property \JS{Val} describing a \J~Cell~'s contents.  This is done by  the following 
-specification defined inside the class \J~Cell~:
+To specify the \J~Cell~ class, we define a property \JS{Val} describing a \J~Cell~'s contents.  This is done with the following 
+specification, defined inside the class \J~Cell~:
 %
 \begin{equation}
 \label{eq:val}
-\texttt{  define Val(x,content=y) as x.<Cell: int val> |-> y ;}
+\texttt{  define Val(x,content=y) as x.<Cell:int val> |-> y ;}
 \end{equation}
 %
-This definition defines the property $\Val(x,\content y)$ to mean that the
-field \JS{val} of object $x$ has contents $y$, provided $x$ is
-precisely of dynamic type \J~Cell~.  If $x$ is not of this type,
-then this definition does not constrain the meaning of the property,
-called \emph{abstract predicate family}~\cite{parkinson05} (recall that $\Val$ is defined within \J~Cell~'s scope).  One can
-view this like a method definition: a method definition specifies the
-behaviour of a method for a single class, not for all classes.
+This defines the property $\Val(x,\content y)$ to mean that the
+field \JS{val} of object $x$ has contents $y$, \emph{provided} $x$ is
+precisely of dynamic type \J~Cell~.  
 
-Definition (\ref{eq:val}) also (implicitly) defines another concept 
+% TODO: Not sure the following paragraph is correct! 
+
+If $x$ is \emph{not} of this type,
+then this definition does not constrain the meaning of the property. We call
+$\Val$ an \emph{abstract predicate family}~\cite{parkinson05}. (Recall that $\Val$ is defined within \J~Cell~'s scope.)  One can
+view this like a method definition: the definition of a method specifies its behaviour for a single class, not for all classes.
+
+Definition (\ref{eq:val}) also (implicitly) defines another, related, property 
 \[
 \Val\J~@Cell~(x,\content y)
 \]
-which  is visible (and therefore can be used) not only inside \J~Cell~ but in any of \J~Cell~'s subclasses.
-Since its scope comprehends  \J~Cell~ and its subclasses, the property $\Val\J~@Cell~(x,\content y)$
+$\Val\$\J~Cell~(x,\content y)$ refers to the definition of $\Val$  for type \J~Cell~. 
+This property is visible (and therefore can be used) both inside \J~Cell~ and in any of \J~Cell~'s subclasses.
+Since its scope covers  \J~Cell~ and its subclasses, the property $\Val\J~@Cell~(x,\content y)$
 is independent of the actual dynamic type of \JS{x}. That is, it always asserts \JS{x}'s
 \JS{val} field contains \JS{y} no matter where it is used (either \J~Cell~ or a subclass specifications)
-and consequently no matter the type of \JS{x} (either \J~Cell~ or a subtype).  
+and consequently no matter what \JS{x}'s type is (either \J~Cell~ or a subtype).  
+
 We refer
 to this second property as the \emph{internal property} as it
 corresponds precisely to the body of the definition for a particular
@@ -647,31 +665,30 @@ class. Formally, we have the following two axioms:
 \Val\J~@Cell~(x,\content y) &\iff& x.val \mapsto y
 \end{array}
 \]
-where $\J~type~(x, \J~Cell~)$ means $x$ is precisely of dynamic type
-\J~Cell~.
-%
-The first relates the internal property to the general property.  Note
+(Here, $\J~type~(x, \J~Cell~)$ means $x$ is precisely of dynamic type
+\J~Cell~.)
+
+The first axiom relates the internal property to the general property.  Note
 that, this does not specify the meaning of $\Val(x,\content y)$ if $x$
 is not of dynamic type \J~Cell~.  The second axiom specifies the internal
 property.  This can be used to verify the class  \J~Cell~, but is not available
 when verifying other classes.  That is, other classes (including
 subclasses) must be independent of the specific internal definition of
-the predicate (i.e., $ x.val \mapsto y$),
+the predicate (in the case of $\Val$, $ x.val \mapsto y$),
  but may mention the predicate abstractly (i.e., $\Val\J~@Cell~(x,\content y)$).
 
 
 
-For each method, in \jStar \ we need to provide two types of specifications: {\em static}
-and {\em dynamic}~\cite{PB08,chin08}.  The static specification is
-used to give a precise specification of the code's behaviour, while the
-dynamic is used to give a more abstract view of how the method
+In \jStar \ we must provide two kinds of specification for each method: {\em static}
+and {\em dynamic}~\cite{PB08,chin08}.  The static specification gives a precise specification of the code's behaviour, while the
+dynamic gives a more abstract view of how the method
 behaves.  More specifically, the static specification is used for
-\J~super~ and private calls and for verifying it is sound to inherit a
+\J~super~ and private calls and for verifying that it is sound to inherit a
 method.  The dynamic specification is used for dynamic dispatch
 and hence must be implemented by all subclasses (behavioural
 subtyping~\cite{liskov94}).
 
-We can  specify the behaviour of the \J~get~ method by:
+We can specify the behaviour of the \J~get~ method by:
 \begin{verbatim}
   int get() static:
     {@this:.val |-> _X }
@@ -683,12 +700,12 @@ We can  specify the behaviour of the \J~get~ method by:
 %
 The first specification, the static specification, describes precisely
 how the method updates the \JS{val} field.\footnote{In this case, the
-  update of the method get() is the identity function.}  It has the
-precondition $$\this.val \mapsto X$$ that specifies that the \JS{val}
+  update of the method get() is the identity function.}  The
+precondition $$\this.val \mapsto X$$ specifies that the \JS{val}
 field of $\this$ has the value \JS{X} (a logical
-variable), and
-the postcondition $$X=\return * \this.val \mapsto X$$ specifies that the
-field still has the same value, and this value is returned,
+variable). 
+The postcondition $$X=\return * \this.val \mapsto X$$  specifies that the
+field still has the same value, and that this value is returned,
 $X=\return$.
 
 The second specification, the dynamic specification, describes how the
@@ -699,24 +716,24 @@ modifying different fields.
 
 \begin{notation}
 In \jStar \ only the {\tt static}
-  qualifier needs to be explicitly stated. If it is not indicated 
+  qualifier needs to be explicitly stated. Without it 
   a method specification is assumed to be dynamic.
 \end{notation}
 
 
-The static specification is very concrete since it is expressed in terms of the 
-$val$ fields.  It can be stated more abstractly so that is could be used by \JS~Cell~ 
-subclasses  by using the \JS{Val}\J~@Cell~ property.
+The static specification we have given for \J~get~ is very concrete, since it is expressed in terms of the 
+$val$ fields.  In order for subclasses of \JS~Cell~ 
+ to use it, it must be restated more abstractly using the \JS{Val}\J~@Cell~ property.
 \begin{verbatim}
  int get() static : 
   { Val$(this, {content=_X})} 
   { _X=return * Val$(@this:, {content=_X}) };
  \end{verbatim}
-This describes for all subclasses precisely what this method body
+This specification describes for all subclasses precisely what the method body
 does, but it does not reveal the fields that are actually modified.
 
 As this pattern of specification is common, \jStar \ provides a shorthand,
-which defines the dynamic specification given above, and the second
+which defines both the dynamic specification given above, and the second
 static specification, with the single specification.
 %
 \begin{verbatim}
@@ -724,7 +741,8 @@ static specification, with the single specification.
      { Val$(this, {content=_X})} 
      { _X=return * Val$(@this:, {content=_X}) };
 \end{verbatim}
-By postfixing a \J~@~ onto a property it is interpret by \jStar \ as the
+%
+A property postfixed by \J~@~ is interpret by \jStar \ as the
 standard property in the dynamic specification, that is without the
 \J~@~, and as the internal property for the current class in the
 static specification, in this case \JS{Val}\J~@Cell~.
@@ -734,17 +752,17 @@ Hence, both static and dynamic specifications for \J~set~  can be provided with 
    void set(int x) : 
      { Val$(this, {content=_})} 
      { Val$(this, {content=x}) };
- \end{verbatim}
+\end{verbatim}
  The underscore stand for some value.
 Remember that the behaviour of the constructor must be specified:
 %
 \begin{verbatim}
  void <init>() : { } { Val$(this,{content=_ }) };
 \end{verbatim}
-This specification stipulates that constructing an object gives
-$\exists \ex X.\Val(\this,\content{\ex X})$, and from a subclass's \J~super~
-constructor call results in the internal property
-$\exists \ex X.\Val\mbox{\$Cell}(\this,\content{\ex X})$.  This enables subclasses
+This specification stipulates that constructing an object gives the property
+$$\exists \ex X.\Val(\this,\content{\ex X})$$ and that a call to a subclass's \J~super~
+constructor results in the internal property
+$$\exists \ex X.\Val\mbox{\$Cell}(\this,\content{\ex X})$$  This enables subclasses
 to use this property without knowing its meaning.
 
 We can now give the complete specification of the class \JS~Cell~:
@@ -765,22 +783,25 @@ class Cell {
 \end{verbatim}
 
 \paragraph{Recell.}
-Now, let's consider the \J~Recell~ subclass.  First of all, we must 
+Now, let's consider \J~Recell~, a subclass of \J~Cell~.  First of all we must 
 define what the \JS{Val} property means for the \J~Recell~ class.
 %
+% TODO: Don't understand width subtyping bit
 \begin{verbatim}
- define Val(x,content=y;oldcon=z) as  Val$Cell(x, {content=y}) * x.<Recell: int bak>|-> z 
+ define Val(x,content=y;oldcon=z) as  
+     Val$Cell(x, {content=y}) * x.<Recell: int bak>|-> z 
 \end{verbatim}
 %\begin{lstlisting}
 %$\define  \Val(x,\contentOld y z ) = $
 %    $\Val\mbox{\$Cell}(x,\content y) * x.bak \mapsto z$  ;
 %\end{lstlisting}
 If \JS{x} is of type \J~Recell~, this defines
-$\Val(x,\contentOld y z)$ as the property associated to \JS{Val} from
-the superclass \J~Cell~ and the additional \J~oldcon~ field has value
+$\Val(x,\contentOld y z)$ as the composition of the 
+property associated to \JS{Val} from
+the superclass \J~Cell~, and the new field \J~oldcon~ with value 
 \JS{z}.  As we have defined the property with an additional labelled
-parameter, \J~old~, we must also provide a meaning to the property
-with only the \JS~content~ parameter.  In effect, we have width
+parameter, \J~oldcon~, we must also provide a meaning to the property
+with only the \J~content~ parameter.  In effect, we have width
 subtyping on the labelled parameters, where missing parameters are
 existentially quantified.  Hence, this defines $\Val(x,\content y)$
 for the \J~Recell~ class as
@@ -793,11 +814,12 @@ Importantly, by containing the \JS{Val}\J~@Cell~ property it allows the
 inherit methods, as the precondition of \JS{Val}\J~@Cell~ can be
 provided for the calls.
 %
-The specifications for \J~Recell~ is the following:
+The specifications for \J~Recell~ is as follows:
 %
 \begin{verbatim}
 class Recell {
-  define Val(x,content=y;oldcon=z) as Val$Cell(x, {content=y}) * x.<Recell: int bak>|-> z;
+  define Val(x,content=y;oldcon=z) as
+         Val$Cell(x, {content=y}) * x.<Recell: int bak>|-> z;
 
   void <init>() : { } { Val$(this, {content=_x; oldcon=_z}) };
   
@@ -818,14 +840,16 @@ parameters.~\jStarQED
 \section{Logic Rules}
 \label{sec:logic-rules}
 \jStar's  prover needs logic rules for deciding entailments. There are
-two kinds of such rules:\begin{description}
+two kinds of rule:
+%
+\begin{description}
 \item[Pre-defined rules] are very general structural rules which need
-  to be used with any kind of logic systems. For this resason these
+  to be used with any kind of logic systems. These
   rules are hard-coded inside the prover.
 \item[User-defined rules] are problem-specific rules. They define a
   particular logic theory needed to solve the problem at hand. They
-  must be provided by the user. Notice that \jStar \ does not check whether this set of rules is 
-  consistent or not. Therefore, the user should use special care in ensuring the soundness of his/her rules.
+  must be provided by the user. Notice that \jStar \ does not check that user-defined rules are 
+  consistent. Therefore, the user should use special care in ensuring the soundness of rules.
 \end{description} 
 In this tutorial we focus on the second type of rules. Rules are introduced with
 the syntactic construct {\tt rule}:
@@ -839,17 +863,17 @@ The keywords {\tt if} separate the conclusion from the premise.
 Mathematically this syntax corresponds to
 \[
 \infer[\texttt{my\_rule}]
-{ \texttt{SubFConc} \mid \texttt{Conclusion-L}  \vdash   \texttt{Conclusion-R} }
-{ \texttt{SubtFPre} \mid \texttt{Premise-L } \vdash   \texttt{Premise-R}} 
+{ \texttt{SubFConc} \; \mid \; \texttt{Conclusion-L}  \vdash   \texttt{Conclusion-R} }
+{ \texttt{SubtFPre} \; \mid \; \texttt{Premise-L } \vdash   \texttt{Premise-R}} 
 \]
 A sequent in the rule above is of the form
 \[
 \Sigma_f \mid F_1 \vdash F_2
 \]
-We call $F_1$ the assumed formula, $F_2$ the goal formula, and $\Sigma_f$ the subtracted (spatial)
-formula. The semantics of a judgement are:
+We call $F_1$ the \emph{assumed formula}, $F_2$ the \emph{goal formula}, and $\Sigma_f$ the \emph{subtracted (spatial)
+formula}. The semantics of a judgement is:
 \[
-F_1 *\Sigma_f  \Longrightarrow F_2 * \Sigma_f 
+F_1 *\Sigma_f \;\;  \Longrightarrow \;\;  F_2 * \Sigma_f 
 \]
 The subtracted formula, $\Sigma_f$, is used to allow predicates to be
 removed from both sides without losing information. Hence the 
@@ -872,14 +896,20 @@ start with an underscore. Variables starting with a question mark as in the rule
 denoting any expressions (i.e., quantified variables, non-quantified variables, constant values, etc.). 
 \end{notation}
 
-\paragraph{Without clause.}
+\paragraph{Without clauses.}
 Consider the following rule:
 \begin{verbatim}
-rule field_remove1:| field(?x,?f,?y) |-  field(?x,?f,?t) without  ?y!=?tif  field(?x,?f,?y) | |- ?y=?t 
+rule field_remove1:
+| field(?x,?f,?y) |-  field(?x,?f,?t) 
+without
+  ?y!=?t
+if
+  field(?x,?f,?y) | |- ?y=?t 
 \end{verbatim}
-It states that if we have a field {\tt ?f} for the same object {\tt ?x} on both sides of an implication, add the  field to the subtracted formula, and require for proof obligation that their values {\tt ?y} and {\tt t} are the same. Here the clause {\tt without} prevents the firing of the rule if the inequality {\tt ?y!=?t} is
+It states that if we have a field {\tt ?f} for the same object {\tt ?x} on both sides of an implication, add the 
+ field to the subtracted formula, and require for proof obligation that their values {\tt ?y} and {\tt t} are the same. Here the clause {\tt without} prevents the firing of the rule if the inequality {\tt ?y!=?t} is
 present in one of the formulae of the conclusion, or in other words  when the formula already says
-that the fields have different  values.  The clause {\tt without} is useful to avoid the rule to be applied
+that the fields have different  values.  The clause {\tt without} is useful to avoid the rule being applied
 an infinite amount of times.
 \dinocomment{is this paragraph correct?}
 
@@ -889,7 +919,10 @@ Rules with an empty premise are axioms. For example the rule {\tt field\_not\_nu
 states that it is always true that an object {\tt ?x} having a certain value in a field is an allocated object and 
 therefore it cannot be {\tt nil}. 
 \begin{verbatim}
-rule field_not_null :  field(?x,?f,?y) | |- ?x!=nil() if  | |-
+rule field_not_null :
+  field(?x,?f,?y) | |- ?x!=nil() 
+if
+  | |-
 \end{verbatim}
 \dinocomment{Why is the field predicate in the subtracted formula side?}
 \dinocomment{up to here!}
@@ -945,7 +978,7 @@ Condition {\tt \_x notincontext} says that {\tt \_x} does not occur syntacticall
 \] This rule abstracts away from the useless quantified variable {\tt \_x} and therefore it can reduce the original heap involving two list-segment predicates by only one.
 
 \paragraph{Acknowledgment.}
-The authors are bot supported by Royal Academy of Engineering research fellowships.
+The authors are both supported by Royal Academy of Engineering research fellowships.
 
 \bibliographystyle{plain}
 \bibliography{objects}
@@ -989,7 +1022,7 @@ formula  ::=  (formula)
           |   ! name ( expression , ... , expression ) 
           |   expression : name
           |   variable
-          |   formula | formula                    [deprecated, lhs must be pure]
+          |   formula | formula                 [deprecated, lhs must be pure]
           |   False
 \end{verbatim}
 
