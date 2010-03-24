@@ -788,8 +788,8 @@ define what the \JS{Val} property means for the \J~Recell~ class.
 %
 % TODO: Don't understand width subtyping bit
 \begin{verbatim}
- define Val(x,content=y;oldcon=z) as  
-     Val$Cell(x, {content=y}) * x.<Recell: int bak>|-> z 
+ define Val(x,content=y;oldcon=z) as  Val$Cell(x, {content=y})  
+                                      * x.<Recell: int bak>|-> z 
 \end{verbatim}
 %\begin{lstlisting}
 %$\define  \Val(x,\contentOld y z ) = $
@@ -806,7 +806,8 @@ subtyping on the labelled parameters, where missing parameters are
 existentially quantified.  Hence, this defines $\Val(x,\content y)$
 for the \J~Recell~ class as
 \begin{verbatim}
-Val(x, content=y) as Val$Cell(x,content= y ) * x.<Recell: int bak>|-> _z
+Val(x, content=y) as Val$Cell(x,content= y ) 
+                            * x.<Recell: int bak>|-> _z
 \end{verbatim}
 %
 Importantly, by containing the \JS{Val}\J~@Cell~ property it allows the
@@ -818,8 +819,8 @@ The specifications for \J~Recell~ is as follows:
 %
 \begin{verbatim}
 class Recell {
-  define Val(x,content=y;oldcon=z) as
-         Val$Cell(x, {content=y}) * x.<Recell: int bak>|-> z;
+  define Val(x,content=y;oldcon=z) as Val$Cell(x, {content=y}) 
+                                      * x.<Recell: int bak>|-> z;
 
   void <init>() : { } { Val$(this, {content=_x; oldcon=_z}) };
   
@@ -868,14 +869,14 @@ Mathematically this syntax corresponds to
 \]
 A sequent in the rule above is of the form
 \[
-\Sigma_f \mid F_1 \vdash F_2
+\Sigma \mid F_1 \vdash F_2
 \]
 We call $F_1$ the \emph{assumed formula}, $F_2$ the \emph{goal formula}, and $\Sigma_f$ the \emph{subtracted (spatial)
 formula}. The semantics of a judgement is:
 \[
-F_1 *\Sigma_f \;\;  \Longrightarrow \;\;  F_2 * \Sigma_f 
+F_1 *\Sigma  \Longrightarrow F_2 * \Sigma
 \]
-The subtracted formula, $\Sigma_f$, is used to allow predicates to be
+The subtracted formula, $\Sigma$, is used to allow predicates to be
 removed from both sides without losing information. Hence the 
 following example rule 
 \begin{verbatim}
@@ -907,35 +908,48 @@ if
   field(?x,?f,?y) | |- ?y=?t 
 \end{verbatim}
 It states that if we have a field {\tt ?f} for the same object {\tt ?x} on both sides of an implication, add the 
- field to the subtracted formula, and require for proof obligation that their values {\tt ?y} and {\tt t} are the same. Here the clause {\tt without} prevents the firing of the rule if the inequality {\tt ?y!=?t} is
-present in one of the formulae of the conclusion, or in other words  when the formula already says
+ field to the subtracted formula, and require for proof obligation that their values {\tt ?y} and {\tt ?t} are the same. Here the clause {\tt without} prevents the firing of the rule if the inequality {\tt ?y!=?t} is
+present in one of the formulae of the conclusion, or in other words,  when the formula already says
 that the fields have different  values.  The clause {\tt without} is useful to avoid the rule being applied
 an infinite amount of times.
-\dinocomment{is this paragraph correct?}
 
-\paragraph{Axioms.} 
-\dinocomment{I'm not sure of this paragraph....}
-Rules with an empty premise are axioms. For example the rule {\tt field\_not\_null} 
-states that it is always true that an object {\tt ?x} having a certain value in a field is an allocated object and 
-therefore it cannot be {\tt nil}. 
+
+
+\paragraph{Axioms and Contradictions.} 
+Rules with an empty premise can be used to define axioms or to force the termination of a proof
+search in case we reached a contradictory statement.
+%
+For example consider the rule {\tt field\_nil\_contradiction} below. It fires when in a proof search 
+we have reached a point where a field for {\tt nil()} is assumed to exist. Clearly, in that case
+ we have found a contradiction, and {\tt field\_nil\_contradiction}  will stop the proof search.
 \begin{verbatim}
-rule field_not_null :
-  field(?x,?f,?y) | |- ?x!=nil() 
+rule field_nil_contradiction :
+ field(nil(),?f,?z) | |-
 if
-  | |-
 \end{verbatim}
-\dinocomment{Why is the field predicate in the subtracted formula side?}
+
+
+%For example the rule {\tt field\_not\_null} below
+%states that it is always true that an object {\tt ?x} having a certain value in a field is an allocated object and 
+%therefore it cannot be {\tt nil}. 
+%\begin{verbatim}
+%rule field_not_null :
+%  field(?x,?f,?y) | |- ?x!=nil() 
+%if
+%  | |-
+%\end{verbatim}
+\dinocomment{Gives an example of axiom.}
 \dinocomment{up to here!}
 
 
 \section{Abstraction Rules}
 \label{sec:abstraction-rules}
 Similar to logic rules, abstraction rules have a different purpose. They help the convergence of \jStar's computation when dealing with infinite domains. The idea is that an abstraction rule simplifies 
-a symbolic heap so that it remains within a restricted class of heaps for which it is known to have 
+a formula so that it remains within a restricted class of heaps for which it is known to have 
 convergence. The simplification is done by {\em rewriting}, and therefore  
  abstraction rules are of the form:
 \[
-\infer[\mbox{(Abs Rule)}]{H * H' \leadsto H *H''}{ \mbox{condition}}
+\infer[\mbox{(Abs Rule)}]{H* H' \leadsto H *H''}{ \mbox{condition}}
 \]
 Heap $H'$ is replaced by $H''$ if the condition holds.  $H''$ is
 more abstract (simpler) than $H'$ since some unnecessary information is removed
@@ -948,9 +962,15 @@ any rules that can be applied to a heap. When no rules are applicable
 anymore the resulting heap is maximally abstracted. 
 Note that to ensure termination of this strategy abstraction rules should be designed in 
 such a way each application strictly simplify the heap.
-Moreover, for soundness, the abstraction rules must
+Moreover, for soundness, the abstraction rules {\em must}
 be true implications in separation logic: the more concrete heap
-should imply the more abstract one.
+should imply the more abstract one
+\[
+H*H' \Longrightarrow H*H''
+\]
+When designing abstraction rules
+checking this implication gives a easy sanity condition for the 
+soundness of the resulting fixed-point computation.
 
 The syntax for abstraction rules is uses the {\tt abstraction} construct and it is as follows:
 \begin{verbatim}
