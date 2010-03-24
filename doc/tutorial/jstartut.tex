@@ -946,7 +946,7 @@ if
 \label{sec:abstraction-rules}
 Similar to logic rules, abstraction rules have a different purpose. They help the convergence of \jStar's computation when dealing with infinite domains. The idea is that an abstraction rule simplifies 
 a formula so that it remains within a restricted class of heaps for which it is known to have 
-convergence. The simplification is done by {\em rewriting}, and therefore  
+convergence. The simplification is done by {\em rewriting}, and therefore,  
  abstraction rules are of the form:
 \[
 \infer[\mbox{(Abs Rule)}]{H* H' \leadsto H *H''}{ \mbox{condition}}
@@ -960,7 +960,7 @@ anywhere else in the heap.
 Given a set of abstraction rules, \jStar \  tries to use
 any rules that can be applied to a heap. When no rules are applicable
 anymore the resulting heap is maximally abstracted. 
-Note that to ensure termination of this strategy abstraction rules should be designed in 
+Note that to ensure termination of this strategy, abstraction rules should be designed in 
 such a way each application strictly simplify the heap.
 Moreover, for soundness, the abstraction rules {\em must}
 be true implications in separation logic: the more concrete heap
@@ -972,20 +972,20 @@ When designing abstraction rules
 checking this implication gives a easy sanity condition for the 
 soundness of the resulting fixed-point computation.
 
-The syntax for abstraction rules is uses the {\tt abstraction} construct and it is as follows:
+The syntax for abstraction rules uses the {\tt abstraction} construct and it is as follows:
 \begin{verbatim}
 abstraction my_abstraction_rule:
-PurePartPre | SpacePartPre ~~>   PurePartResult | SpacePartResult    
+InitialFormula ~~>   AbstractFormula   
 where  Condition
 \end{verbatim}
 The semantics  is
 \[
 \infer[\texttt{my\_abstraction\_rule}]
-{H* \texttt{PurePartPre | SpacePartPre} \leadsto H*\texttt{PurePartResult | SpacePartResult} }{\texttt{Condition}}
+{H* \texttt{InitialFormula} \leadsto H*\texttt{AbstractFormula} }{\texttt{Condition}}
 \] for some heap $H$. Here there is a concrete example:
 \begin{verbatim}
 abstraction ls_ls:
- | ls(?x,_x) * ls(_x,nil()) ~~>  | ls(?x,nil())
+ ls(?x,_x) * ls(_x,nil()) ~~>  ls(?x,nil())
 where 
   _x notincontext;
   _x notin ?x
@@ -994,8 +994,8 @@ Condition {\tt \_x notincontext} says that {\tt \_x} does not occur syntacticall
 \[
 \infer[]
 {H*ls(y,\_x)*ls(\_x,\nil) \leadsto H*ls(y,\nil)}
-{\texttt{\_x} \notin Var(H) \cup \{y,\_y \} }
-\] This rule abstracts away from the useless quantified variable {\tt \_x} and therefore it can reduce the original heap involving two list-segment predicates by only one.
+{\_x \notin Var(H) \cup \{ y \} }
+\] This rule abstracts away from the useless quantified variable {\tt \_x} and, therefore, it reduces the original heap involving two list-segment predicates into a formula with only such predicate.
 
 \paragraph{Acknowledgment.}
 The authors are both supported by Royal Academy of Engineering research fellowships.
