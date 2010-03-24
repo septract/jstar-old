@@ -800,8 +800,8 @@ $\Val(x,\contentOld y z)$ as the composition of the
 property associated to \JS{Val} from
 the superclass \J~Cell~, and the new field \J~oldcon~ with value 
 \JS{z}.  As we have defined the property with an additional labelled
-parameter, \J~oldcon~, we must also provide a meaning to the property
-with only the \J~content~ parameter.  In effect, we have width
+parameter, \J~oldcon~, the system will also provide a meaning to the property
+with only the \J~content~ parameter, for use when casting from \J~Cell~ to \J~Recell~.  In effect, we have width
 subtyping on the labelled parameters, where missing parameters are
 existentially quantified.  Hence, this defines $\Val(x,\content y)$
 for the \J~Recell~ class as
@@ -864,17 +864,21 @@ The keywords {\tt if} separate the conclusion from the premise.
 Mathematically this syntax corresponds to
 \[
 \infer[\texttt{my\_rule}]
-{ \texttt{SubFConc} \; \mid \; \texttt{Conclusion-L}  \vdash   \texttt{Conclusion-R} }
-{ \texttt{SubtFPre} \; \mid \; \texttt{Premise-L } \vdash   \texttt{Premise-R}} 
+{ H_s * \texttt{SubFConc} \; \mid \; H_a *  \texttt{Conclusion-L}  \; \vdash \; H_g * \texttt{Conclusion-R} }
+{ H_s * \texttt{SubtFPre} \; \mid \; H_a * \texttt{Premise-L } \; \vdash \; H_g * \texttt{Premise-R}} 
 \]
-A sequent in the rule above is of the form
+We call $F_1$ the \emph{assumed formula}, $F_2$ the \emph{goal formula}, and $\Sigma$ the \emph{subtracted (spatial)
+formula}. 
+Rules are \emph{implicitly framed} -- the semantics of the rule includes the contexts $H_s$, $H_a$ and $H_g$. This means rules can be applied inside large context heaps. 
+
+%A sequent in the rule above is of the form
+%\[
+%\Sigma * H_s \; \mid \; F_1 * H_a \; \vdash \; F_2 * H_g
+%\]
+
+The semantics of a judgement is:
 \[
-\Sigma \mid F_1 \vdash F_2
-\]
-We call $F_1$ the \emph{assumed formula}, $F_2$ the \emph{goal formula}, and $\Sigma_f$ the \emph{subtracted (spatial)
-formula}. The semantics of a judgement is:
-\[
-F_1 *\Sigma  \Longrightarrow F_2 * \Sigma
+F_1 *  \Sigma \Longrightarrow F_2 * \Sigma
 \]
 The subtracted formula, $\Sigma$, is used to allow predicates to be
 removed from both sides without losing information. Hence the 
@@ -907,26 +911,30 @@ without
 if
   field(?x,?f,?y) | |- ?y=?t 
 \end{verbatim}
-It states that if we have a field {\tt ?f} for the same object {\tt ?x} on both sides of an implication, add the 
- field to the subtracted formula, and require for proof obligation that their values {\tt ?y} and {\tt ?t} are the same. Here the clause {\tt without} prevents the firing of the rule if the inequality {\tt ?y!=?t} is
-present in one of the formulae of the conclusion, or in other words,  when the formula already says
-that the fields have different  values.  The clause {\tt without} is useful to avoid the rule being applied
-an infinite amount of times.
+This rule states that
+if we have a field {\tt ?f} for the object {\tt ?x} in both the assumed and goal formula of an implication, to then move the 
+ field to the subtracted formula, and to add the proof obligation that the values {\tt ?y} and {\tt ?t} are the same to the goal formula. 
+
+The clause {\tt without} prevents the firing of the rule if the inequality {\tt ?y!=?t} is
+present in one of the formulae of the conclusion. In other words, it prevents the rule from firing when the formula already says
+that the fields have different values.  This clause is used to avoid the rule being applied
+an infinite number of times.
 
 
 
 \paragraph{Contradictions.} 
-Rules with an empty premise can be used  to force the termination of a proof
-search in case we reached a contradictory statement.
+A rule with an empty premise can be used to force the termination of the proof
+search when we reached a contradictory statement.
 %
-For example consider the rule {\tt field\_nil\_contradiction} below. It fires when in a proof search 
-we have reached a point where a field for {\tt nil()} is assumed to exist. Clearly, in that case
- we have found a contradiction, and {\tt field\_nil\_contradiction}  will stop the proof search.
+For example consider the rule {\tt field\_nil\_contradiction}: 
 \begin{verbatim}
 rule field_nil_contradiction :
  field(nil(),?f,?z) | |-
 if
-\end{verbatim}\jStarQED
+\end{verbatim}
+This rule fires when a field for {\tt nil()} is assumed to exist. Clearly, in that case
+ we have found a contradiction, and {\tt field\_nil\_contradiction}  will stop the proof search.
+\jStarQED
 
 
 %For example the rule {\tt field\_not\_null} below
@@ -942,27 +950,26 @@ if
 
 \section{Abstraction Rules}
 \label{sec:abstraction-rules}
-Similar to logic rules, abstraction rules have a different purpose. They help the convergence of \jStar's computation when dealing with infinite domains. The idea is that an abstraction rule simplifies 
-a formula so that it remains within a restricted class of heaps for which it is known to have 
-convergence. The simplification is done by {\em rewriting}, and therefore,  
- abstraction rules are of the form:
+Abstraction rules are similar in syntax to logic rules, but they have a different purpose. They help the convergence of \jStar's computation when dealing with infinite domains. The idea is that an abstraction rule simplifies 
+a formula so that it remains within a restricted class of heaps for which simplification is known to 
+converge. The simplification is done by {\em rewriting}.  In general, simplification is
+achieved by removing existentially quantified variables that do not appear
+anywhere else in the heap. 
+
+Abstraction rules are of the form:
 \[
 \infer[\mbox{(Abs Rule)}]{H* H' \leadsto H *H''}{ \mbox{condition}}
 \]
-Heap $H'$ is replaced by $H''$ if the condition holds.  $H''$ is
+Heap $H'$ is replaced by $H''$ if the condition holds.  $H''$ should be 
 more abstract (simpler) than $H'$ since some unnecessary information is removed
-(abstracted away).  In general, the simplification of the formula is
-done by removing existentially quantified variables that do not appear
-anywhere else in the heap. 
+(abstracted away). 
+Heap $H$ is an arbitrary context preserved by the abstraction rule.
 
 Given a set of abstraction rules, \jStar \  tries to use
-any rules that can be applied to a heap. When no rules are applicable
-anymore the resulting heap is maximally abstracted. 
-Note that to ensure termination of this strategy, abstraction rules should be designed in 
-such a way each application strictly simplify the heap.
+any rules that can be applied to a heap. When no rules are applicable the resulting heap is maximally abstracted. 
+Note that to ensure termination of this strategy, abstraction rules should be chosen so that each application strictly simplifies the heap.
 Moreover, for soundness, the abstraction rules {\em must}
-be true implications in separation logic: the more concrete heap
-should imply the more abstract one
+be true implications in separation logic. In other words, it must hold that:
 \[
 H*H' \Longrightarrow H*H''
 \]
@@ -976,11 +983,13 @@ abstraction my_abstraction_rule:
 InitialFormula ~~>   AbstractFormula   
 where  Condition
 \end{verbatim}
-The semantics  is
+The semantics of such a formula is:
 \[
 \infer[\texttt{my\_abstraction\_rule}]
-{H* \texttt{InitialFormula} \leadsto H*\texttt{AbstractFormula} }{\texttt{Condition}}
-\] for some heap $H$. Here there is a concrete example:
+{H* \texttt{InitialFormula} \;\; \leadsto \;\; H*\texttt{AbstractFormula} }{\texttt{Condition}}
+\] 
+%
+The following is an abstraction rule for combining list predicates:
 \begin{verbatim}
 abstraction ls_ls:
  ls(?x,_x) * ls(_x,nil()) ~~>  ls(?x,nil())
@@ -988,12 +997,16 @@ where
   _x notincontext;
   _x notin ?x
 \end{verbatim}
-Condition {\tt \_x notincontext} says that {\tt \_x} does not occur syntactically in the rest of the heap (not mentioned in the rule), i.e., in $H$, whereas {\tt \_x notin ?x} says that {\tt ?x} cannot be instantiated to {\tt \_x}. Hence mathematically that rule would be written as:
+Condition {\tt \_x notincontext} says that {\tt \_x} does not occur syntactically in the rest of the heap, i.e., in $H$. The condition {\tt \_x notin ?x} says that {\tt ?x} cannot be instantiated to {\tt \_x}. 
+The rule would be written mathematically as:
 \[
 \infer[]
-{H*ls(y,\_x)*ls(\_x,\nil) \leadsto H*ls(y,\nil)}
+{H*ls(y,\_x)*ls(\_x,\nil) \;\; \leadsto \;\; H*ls(y,\nil)}
 {\_x \notin Var(H) \cup \{ y \} }
-\] This rule abstracts away from the useless quantified variable {\tt \_x} and, therefore, it reduces the original heap involving two list-segment predicates into a formula with only such predicate.\jStarQED
+\] 
+%
+This rule abstracts away from the useless quantified variable {\tt \_x}. It reduces the original heap involving two list-segment predicates to a simpler heap with only one such predicate.
+\jStarQED
 
 \paragraph{Acknowledgment.}
 The authors are both supported by Royal Academy of Engineering research fellowships.
@@ -1049,7 +1062,54 @@ In this section we report the specifications, logic, and abstraction rules to an
  reported in Figure~\ref{tab:linkedlist}.
 \subsection{Specifications for the LinkedList class}
 \begin{verbatim}
-class java.lang.Object {void <init>() static: { } { };}class NodeLL{  void <init>() static:     { }     { field(@this:,<NodeLL: NodeLL next>,nil()) *         field(@this:,<NodeLL: java.lang.String content>,nil())  };}class LinkedList{  define LL(x) =         field(x,<LinkedList: NodeLL tail>,_t)        * field(x,<LinkedList: NodeLL head>,_h)        * ( _t = nil() * _h = nil()         ||  _t!=nil() * lspe(_h,_t) * NodeLL(_t,nil()));          void <init>() :    { }    { field(@this:,<LinkedList: NodeLL tail>,nil())        * field(@this:,<LinkedList: NodeLL head>,nil()) };  void create() :    { field(@this:,<LinkedList: NodeLL tail>,nil())        * field(@this:,<LinkedList: NodeLL head>,nil()) }   { LL$(@this:) };  void reverseList() :    { LL$(@this:) }    { LL$(@this:) };  //This is called by insertAtTail with dynamic dispatch.  void insertAtHead(java.lang.String) :    { LL$LinkedList(@this:) }    { LL$LinkedList(@this:) };  void insertAtTail(java.lang.String) :    { LL$(@this:) }    { LL$(@this:) };  void printList() :    { LL$(@this:) }    { LL$(@this:) };}
+class java.lang.Object 
+{
+void <init>() static: { } { };
+}
+
+class NodeLL
+{
+  void <init>() static: 
+    { } 
+    { field(@this:,<NodeLL: NodeLL next>,nil()) * 
+        field(@this:,<NodeLL: java.lang.String content>,nil())  };
+}
+
+class LinkedList
+{
+  define LL(x) =  
+       field(x,<LinkedList: NodeLL tail>,_t) 
+       * field(x,<LinkedList: NodeLL head>,_h) 
+       * ( _t = nil() * _h = nil() 
+        ||  _t!=nil() * lspe(_h,_t) * NodeLL(_t,nil())); 
+       
+  void <init>() : 
+   { } 
+   { field(@this:,<LinkedList: NodeLL tail>,nil()) 
+       * field(@this:,<LinkedList: NodeLL head>,nil()) };
+
+  void create() : 
+   { field(@this:,<LinkedList: NodeLL tail>,nil()) 
+       * field(@this:,<LinkedList: NodeLL head>,nil()) }
+   { LL$(@this:) };
+
+  void reverseList() : 
+   { LL$(@this:) } 
+   { LL$(@this:) };
+
+  //This is called by insertAtTail with dynamic dispatch.
+  void insertAtHead(java.lang.String) : 
+   { LL$LinkedList(@this:) } 
+   { LL$LinkedList(@this:) };
+
+  void insertAtTail(java.lang.String) : 
+   { LL$(@this:) } 
+   { LL$(@this:) };
+
+  void printList() : 
+   { LL$(@this:) } 
+   { LL$(@this:) };
+}
 \end{verbatim}
 
 \subsection{Logic Rules for LinkedList}
@@ -1194,20 +1254,177 @@ if
 
 \subsection{Abstraction Rules for LinkedList class}
 \begin{verbatim}
-//Roll up a complete NodeLL if we have both fields.abstraction field_remove2:   field(?x,"<NodeLL: NodeLL next>",?e1) * field(?x,"<NodeLL: java.lang.String content>",_y) ~~>   NodeLL(?x,?e1) abstraction type_remove :  !type(?x,"NodeLL") * NodeLL(?x,?y)  ~~> NodeLL(?x,?y)  /****************nil() rules******************/abstraction nil_neq_remove_nodell :  ?x != nil() * NodeLL(?x,?y) ~~> NodeLL(?x,?y) abstraction nil_neq_remove_field :  ?x != nil() * field(?x,?f,?y) ~~> field(?x,?f,?y) abstraction nil_neq_remove_ls :  ?x != nil() * ls(?x,?y) ~~>  ls(?x,?y) /*************** Junk Rules *******************/abstraction garbage_garbage :  Garbage * Garbage  ~~>  Garbage abstraction gb1_ls : ls(_x,?e) ~~>  Garbage where    _x notincontext 
+//Roll up a complete NodeLL if we have both fields.
+abstraction field_remove2:
+   field(?x,"<NodeLL: NodeLL next>",?e1) * field(?x,"<NodeLL: java.lang.String content>",_y) 
+~~>
+   NodeLL(?x,?e1) 
+
+abstraction type_remove :
+  !type(?x,"NodeLL") * NodeLL(?x,?y)  ~~> NodeLL(?x,?y)  
+
+/****************nil() rules******************/
+
+abstraction nil_neq_remove_nodell :
+  ?x != nil() * NodeLL(?x,?y) ~~> NodeLL(?x,?y) 
+
+abstraction nil_neq_remove_field :
+  ?x != nil() * field(?x,?f,?y) ~~> field(?x,?f,?y) 
+
+abstraction nil_neq_remove_ls :
+  ?x != nil() * ls(?x,?y) ~~>  ls(?x,?y) 
+
+/*************** Junk Rules *******************/
+
+abstraction garbage_garbage :
+  Garbage * Garbage  ~~>  Garbage 
+
+
+abstraction gb1_ls :
+ ls(_x,?e) ~~>  Garbage 
+where 
+   _x notincontext 
 
 
 
 
-abstraction gb1_ast :  Ast(_x,?e) ~~>  where    _x notincontext abstraction gb1_pto :  NodeLL(_x,?e) ~~>  Garbage where    _x notincontext abstraction gb2_ls_ls:  ls(_x,_y) * ls(_y,_x) ~~>  Garbage where    _x,_y notincontextabstraction gb2_ls_pto:  ls(_x,_y) * NodeLL(_y,_x) ~~>  Garbage where    _x,_y notincontextabstraction gb2_pto_pto:  NodeLL(_x,_y) * NodeLL(_y,_x) ~~>  Garbage where    _x,_y notincontext/*************** End Junk Rules *******************//*************** Abs1 Rule *******************/abstraction ls_ls: ls(?x,_x) * ls(_x,nil()) ~~> ls(?x,nil()) where   _x notincontext;  _x notin ?x
 
-abstraction ls_pto:  ls(?x,_x) * NodeLL(_x,nil()) ~~>   ls(?x,nil()) where   _x notincontext;  _x notin ?x
-
-
-abstraction pto_ls:  NodeLL(?x,_x) * ls(_x,nil()) ~~>  ls(?x,nil()) where   _x notincontext;  _x notin ?xabstraction pto_pto:  NodeLL(?x,_x) * NodeLL(_x,nil()) ~~>  ls(?x,nil())where   _x notincontext;  _x notin ?x/*************** End Abs1 Rule *******************//*************** Abs2 Rule *******************/abstraction ls_ls_ls:   ls(?x,_x) * ls(_x,?y) * ls(?y,?z) ~~>   ls(?x,?y) * ls(?y,?z) where   _x notincontext;  _x notin ?x;  _x notin ?y;  _x notin ?zabstraction ls_ls_pto:   ls(?x,_x) * ls(_x,?y) * NodeLL(?y,?z) ~~>   ls(?x,?y) * NodeLL(?y,?z) where   _x notincontext;  _x notin ?x;  _x notin ?y;  _x notin ?zabstraction ls_pto_ls:   ls(?x,_x) * NodeLL(_x,?y) * ls(?y,?z) ~~>   ls(?x,?y) * ls(?y,?z)where     _x notincontext;  _x notin ?x;  _x notin ?y;  _x notin ?z
-
+abstraction gb1_ast :
+  Ast(_x,?e) ~~>  
+where 
+   _x notincontext 
 
 
+abstraction gb1_pto :
+  NodeLL(_x,?e) ~~>  Garbage 
+where 
+   _x notincontext 
 
-abstraction ls_pto_pto:   ls(?x,_x) * NodeLL(_x,?y) * NodeLL(?y,?z) ~~>   ls(?x,?y) * NodeLL(?y,?z)where   _x notincontext;  _x notin ?x;  _x notin ?y;  _x notin ?zabstraction pto_ls_ls:   NodeLL(?x,_x) * ls(_x,?y) * ls(?y,?z) ~~>   ls(?x,?y)  * ls(?y,?z) where   _x notincontext;  _x notin ?x;  _x notin ?y;  _x notin ?zabstraction pto_ls_pto:   NodeLL(?x,_x) * ls(_x,?y) * NodeLL(?y,?z) ~~>   ls(?x,?y)  * NodeLL(?y,?z)where   _x notincontext;  _x notin ?x;  _x notin ?y;  _x notin ?zabstraction pto_pto_ls:   NodeLL(?x,_x) * NodeLL(_x,?y) * ls(?y,?z) ~~>   ls(?x,?y) * ls(?y,?z) where   _x notincontext;  _x notin ?x;  _x notin ?y;  _x notin ?zabstraction pto_pto_pto:   NodeLL(?x,_x) * NodeLL(_x,?y) * NodeLL(?y,?z) ~~>   ls(?x,?y) * NodeLL(?y,?z) where   _x notincontext;  _x notin ?x;  _x notin ?y;  _x notin ?z\end{verbatim}
+
+abstraction gb2_ls_ls:
+  ls(_x,_y) * ls(_y,_x) ~~>  Garbage 
+where 
+   _x,_y notincontext
+
+
+abstraction gb2_ls_pto:
+  ls(_x,_y) * NodeLL(_y,_x) ~~>  Garbage 
+where 
+   _x,_y notincontext
+
+
+abstraction gb2_pto_pto:
+  NodeLL(_x,_y) * NodeLL(_y,_x) ~~>  Garbage 
+where 
+   _x,_y notincontext
+
+/*************** End Junk Rules *******************/
+/*************** Abs1 Rule *******************/
+abstraction ls_ls:
+ ls(?x,_x) * ls(_x,nil()) ~~> ls(?x,nil()) 
+where 
+  _x notincontext;
+  _x notin ?x
+
+
+abstraction ls_pto:
+  ls(?x,_x) * NodeLL(_x,nil()) ~~>   ls(?x,nil()) 
+where 
+  _x notincontext;
+  _x notin ?x
+
+
+
+
+abstraction pto_ls:
+  NodeLL(?x,_x) * ls(_x,nil()) ~~>  ls(?x,nil()) 
+where 
+  _x notincontext;
+  _x notin ?x
+
+
+abstraction pto_pto:
+  NodeLL(?x,_x) * NodeLL(_x,nil()) ~~>  ls(?x,nil())
+where 
+  _x notincontext;
+  _x notin ?x
+
+/*************** End Abs1 Rule *******************/
+
+/*************** Abs2 Rule *******************/
+abstraction ls_ls_ls:
+   ls(?x,_x) * ls(_x,?y) * ls(?y,?z) ~~>   ls(?x,?y) * ls(?y,?z) 
+where 
+  _x notincontext;
+  _x notin ?x;
+  _x notin ?y;
+  _x notin ?z
+
+
+abstraction ls_ls_pto:
+   ls(?x,_x) * ls(_x,?y) * NodeLL(?y,?z) ~~>   ls(?x,?y) * NodeLL(?y,?z) 
+where 
+  _x notincontext;
+  _x notin ?x;
+  _x notin ?y;
+  _x notin ?z
+
+
+abstraction ls_pto_ls:
+   ls(?x,_x) * NodeLL(_x,?y) * ls(?y,?z) ~~>   ls(?x,?y) * ls(?y,?z)
+where 
+    _x notincontext;
+  _x notin ?x;
+  _x notin ?y;
+  _x notin ?z
+
+
+
+
+
+
+abstraction ls_pto_pto:
+   ls(?x,_x) * NodeLL(_x,?y) * NodeLL(?y,?z) ~~>   ls(?x,?y) * NodeLL(?y,?z)
+where 
+  _x notincontext;
+  _x notin ?x;
+  _x notin ?y;
+  _x notin ?z
+
+
+abstraction pto_ls_ls:
+   NodeLL(?x,_x) * ls(_x,?y) * ls(?y,?z) ~~>   ls(?x,?y)  * ls(?y,?z) 
+where 
+  _x notincontext;
+  _x notin ?x;
+  _x notin ?y;
+  _x notin ?z
+
+
+abstraction pto_ls_pto:
+   NodeLL(?x,_x) * ls(_x,?y) * NodeLL(?y,?z) ~~>   ls(?x,?y)  * NodeLL(?y,?z)
+where 
+  _x notincontext;
+  _x notin ?x;
+  _x notin ?y;
+  _x notin ?z
+
+
+abstraction pto_pto_ls:
+   NodeLL(?x,_x) * NodeLL(_x,?y) * ls(?y,?z) ~~>   ls(?x,?y) * ls(?y,?z) 
+where 
+  _x notincontext;
+  _x notin ?x;
+  _x notin ?y;
+  _x notin ?z
+
+
+abstraction pto_pto_pto:
+   NodeLL(?x,_x) * NodeLL(_x,?y) * NodeLL(?y,?z) ~~>   ls(?x,?y) * NodeLL(?y,?z) 
+where 
+  _x notincontext;
+  _x notin ?x;
+  _x notin ?y;
+  _x notin ?z
+\end{verbatim}
 \end{document}
