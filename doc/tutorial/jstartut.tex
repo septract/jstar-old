@@ -637,7 +637,7 @@ precisely of dynamic type \J~Cell~.
 
 If $x$ is \emph{not} of this type,
 then this definition does not constrain the meaning of the property. We call
-$\Val$ an \emph{abstract predicate family}~\cite{parkinson05}. (Recall that $\Val$ is defined within \J~Cell~'s scope.)  One can
+$\Val$ an \emph{abstract predicate family}~\cite{Parkinson:popl05}. (Recall that $\Val$ is defined within \J~Cell~'s scope.)  One can
 view this like a method definition: the definition of a method specifies its behaviour for a single class, not for all classes.
 
 Definition (\ref{eq:val}) also (implicitly) defines another, related, property 
@@ -680,7 +680,7 @@ the predicate (in the case of $\Val$, $ x.val \mapsto y$),
 
 
 In \jStar \ we must provide two kinds of specification for each method: {\em static}
-and {\em dynamic}~\cite{PB08,chin08}.  The static specification gives a precise specification of the code's behaviour, while the
+and {\em dynamic}~\cite{PB:popl08,chin08}.  The static specification gives a precise specification of the code's behaviour, while the
 dynamic gives a more abstract view of how the method
 behaves.  More specifically, the static specification is used for
 \J~super~ and private calls and for verifying that it is sound to inherit a
@@ -926,7 +926,7 @@ we have reached a point where a field for {\tt nil()} is assumed to exist. Clear
 rule field_nil_contradiction :
  field(nil(),?f,?z) | |-
 if
-\end{verbatim}
+\end{verbatim}\jStarQED
 
 
 %For example the rule {\tt field\_not\_null} below
@@ -993,7 +993,7 @@ Condition {\tt \_x notincontext} says that {\tt \_x} does not occur syntacticall
 \infer[]
 {H*ls(y,\_x)*ls(\_x,\nil) \leadsto H*ls(y,\nil)}
 {\_x \notin Var(H) \cup \{ y \} }
-\] This rule abstracts away from the useless quantified variable {\tt \_x} and, therefore, it reduces the original heap involving two list-segment predicates into a formula with only such predicate.
+\] This rule abstracts away from the useless quantified variable {\tt \_x} and, therefore, it reduces the original heap involving two list-segment predicates into a formula with only such predicate.\jStarQED
 
 \paragraph{Acknowledgment.}
 The authors are both supported by Royal Academy of Engineering research fellowships.
