@@ -860,28 +860,24 @@ rule my_rule :
 if 
  SubtFPre | Premise-L |- Premise-R
   \end{verbatim}
-The keywords {\tt if} separate the conclusion from the premise.
+The keywords {\tt if} separates the conclusion from the premise.
 Mathematically this syntax corresponds to
 \[
 \infer[\texttt{my\_rule}]
 { H_s * \texttt{SubFConc} \; \mid \; H_a *  \texttt{Conclusion-L}  \; \vdash \; H_g * \texttt{Conclusion-R} }
 { H_s * \texttt{SubtFPre} \; \mid \; H_a * \texttt{Premise-L } \; \vdash \; H_g * \texttt{Premise-R}} 
+\] for some $H_s, H_a, H_g$. The rules work with sequents of the form
+\[
+\Sigma \; \mid \; F_1 \; \vdash \; F_2 
 \]
-We call $F_1$ the \emph{assumed formula}, $F_2$ the \emph{goal formula}, and $\Sigma$ the \emph{subtracted (spatial)
-formula}. 
-Rules are \emph{implicitly framed} -- the semantics of the rule includes the contexts $H_s$, $H_a$ and $H_g$. This means rules can be applied inside large context heaps. 
-
-%A sequent in the rule above is of the form
-%\[
-%\Sigma * H_s \; \mid \; F_1 * H_a \; \vdash \; F_2 * H_g
-%\]
-
-The semantics of a judgement is:
+We call $F_1$ the \emph{assumed formula}, $F_2$ the \emph{goal formula}, and $\Sigma$ the \emph{subtracted (spatial) formula}.  The semantics of a judgement is:
 \[
 F_1 *  \Sigma \Longrightarrow F_2 * \Sigma
 \]
-The subtracted formula, $\Sigma$, is used to allow predicates to be
-removed from both sides without losing information. Hence the 
+The subtracted formula $\Sigma$ is used to allow predicates to be
+removed from both sides without losing information. 
+Notice that rules are \emph{implicitly framed} | the semantics of the rule includes the contexts $H_s$, $H_a$ and $H_g$. This means rules can fire inside large context heaps. 
+Hence the 
 following example rule 
 \begin{verbatim}
 rule numeric_eq_right :
@@ -891,9 +887,9 @@ if
 \end{verbatim}
 encodes the implication:
 \[
-\infer[\texttt{rule numeric\_eq\_right}]{ \vdash \texttt{numeric\_const}(x) = \texttt{numeric\_const}(y)}{ \vdash x=y}
+\infer[\texttt{rule numeric\_eq\_right}]{ H_s  \mid H_a \vdash \texttt{numeric\_const}(x) = \texttt{numeric\_const} * H_g(y)}{ H_s  \mid H_a \vdash x=y * H_g}
 \]
-Informally, this rule says: if we want to prove that $\texttt{numeric\_const}(x) = \texttt{numeric\_const}(y)$ then we can prove the simpler fact $x=y$.
+Informally, this rule says: in any context $H_s, H_a, H_g$, if we want to prove the equality $\texttt{numeric\_const}(x) = \texttt{numeric\_const}(y)$ then we can prove the simpler fact $x=y$ in the same context.
 
 \begin{notation}
  As specified in previous sections, existentially quantified variables
