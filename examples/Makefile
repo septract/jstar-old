@@ -44,7 +44,7 @@ time :  all $(addsuffix .time, $(TARGETS))
 
 clean: 
 	@for dir in ${SUBDIRS} ; do ( cd $$dir; make clean ) ; done
-	@rm -f $(CLEAN)
+	rm -f $(CLEAN)
 
 %.time:
 	@echo $(INDENT) Timing $(DIR)/$*

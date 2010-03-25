@@ -449,7 +449,6 @@ let rm_add = RewriteMap.add
 let rm_find = RewriteMap.find
 
 
-
 type rewrite_rule = string * args list * args * ((pform) * (where list) * (pform)) (* if *) * string * bool
 
 type equiv_rule = string * (pform) * (pform) * (pform) * (pform)
