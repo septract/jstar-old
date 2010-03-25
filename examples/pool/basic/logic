@@ -36,7 +36,7 @@ union(?z,add(?x,?y)) = add(?x,union(?z,?y))
 rule setof :
 | | |- setof(?x) = setof(?y) |
 without 
-  |- ?x!=?y
+ ?x=?y |- ?x!=?y
 if
 | | |- ?x=?y |
 or

@@ -1,3 +1,15 @@
+(********************************************************
+   This file is part of jStar 
+	src/symbexe/symexec.ml
+   Release 
+        $Release$
+   Version 
+        $Rev$
+   $Copyright$
+   
+   jStar is distributed under a BSD license,  see, 
+      LICENSE.txt
+ ********************************************************)
 (******************************************************************
  JStar: Separation logic verification tool for Java.  
  Copyright (c) 2007-2008,
@@ -199,6 +211,12 @@ let add_id_form h cfg =
 let add_id_formset sheaps cfg =  List.map (fun h -> add_id_form h cfg) sheaps
 
 let add_id_formset_edge src label sheaps cfg =  
+  match sheaps with 
+    [] ->
+      if Config.symb_debug() then Printf.printf "\n\nInconsistent heap. Skip it!\n";
+      let idd = add_good_node "Inconsistent" in add_edge_with_proof src idd (label ^"\n Inconsistent");
+	[]
+  | _ -> 
   let sheaps_id = add_id_formset sheaps cfg in
   List.iter (fun dest -> add_edge_with_proof src (snd dest) label) sheaps_id;
   sheaps_id
@@ -321,12 +339,16 @@ let check_postcondition heaps sheap =
     Sepprover.print_counter_example ();
     System.reset();
     List.iter (fun heap -> 
-		 let idd = add_error_heap_node ((* TODO change this later, inefficient *)Sepprover.convert (fst heap)) in 
-		 add_edge_with_proof (snd sheap) idd 
-		   (Format.fprintf 
-		      (Format.str_formatter) "ERROR EXIT: @\n %a" 
-		      Sepprover.pprint_counter_example (); 
-		    Format.flush_str_formatter ()))
+                 let form = Sepprover.convert (fst heap) in 
+		 match form with 
+		   None -> () 
+		 | Some form -> 
+		     let idd = add_error_heap_node ((* TODO change this later, inefficient *)form) in 
+		     add_edge_with_proof (snd sheap) idd 
+		       (Format.fprintf 
+			  (Format.str_formatter) "ERROR EXIT: @\n %a" 
+			  Sepprover.pprint_counter_example (); 
+			Format.flush_str_formatter ()))
       heaps
       (*print_formset "\n\n Failed Heap:\n" [sheap]    *)
 
@@ -335,13 +357,14 @@ let check_postcondition heaps sheap =
 
 let rec exec n sheap = 
   let sheap_noid=fst sheap in
-  Sepprover.kill_all_exists_names sheap_noid;
+  let sheap_noid=Sepprover.kill_all_exists_names sheap_noid in 
+  let sheap = (sheap_noid, snd sheap) in 
 (*  if Config.symb_debug() then 
     Format.printf "Output to %i with heap@\n   %a@\n" (node_get_id n) (string_ts_form (Rterm.rao_create ())) sheap_noid; *)
   execute_core_stmt n sheap 
 
 and execs_with_function n sheaps g = 
-  let rec f ls = 
+ let rec f ls = 
     match ls with 
     | [] -> []
     | [s] ->  List.flatten (List.map (exec s) sheaps)
@@ -355,14 +378,14 @@ and execs_with_function n sheaps g =
   |  _ -> f succs
 
 and execs_one n sheaps =
-	execs_with_function n sheaps (fun n -> n.succs)
+	execs_with_function n sheaps (fun n -> if n.skind = End then [] else n.succs)
 	
 and execs n sheaps =
 	execs_with_function n sheaps (fun n -> [n])
 
 and execute_core_stmt n (sheap : formset_entry) : formset_entry list =
   let sheap_noid=fst sheap in
-  Sepprover.kill_all_exists_names sheap_noid;
+  let sheap_noid = Sepprover.kill_all_exists_names sheap_noid in 
   let stm=n in
   if Config.symb_debug() then 
     Format.printf "@\nExecuting statement:@ %a" Pprinter_core.pp_stmt_core stm.skind; 
@@ -393,7 +416,7 @@ and execute_core_stmt n (sheap : formset_entry) : formset_entry list =
 	  let sheaps_abs = List.map (fun x -> form_clone_abs x) sheaps_abs in 
 	  if Config.symb_debug() 
 	  then Format.printf "@\nPost-abstractionc count:@\n    %d@."  (List.length sheaps_abs);
-	  List.iter Sepprover.kill_all_exists_names sheaps_abs;
+	  let sheaps_abs = List.map Sepprover.kill_all_exists_names sheaps_abs in 
 	  if Config.symb_debug() 
 	  then List.iter (fun sheap -> Format.printf "@\nPost-abstraction:@\n    %a@."  string_inner_form sheap) sheaps_abs; 
 	  
@@ -446,7 +469,7 @@ and execute_core_stmt n (sheap : formset_entry) : formset_entry list =
 	| [v] ->
 	    let eliminate_ret_var h =
 	      let h = update_var_to v (Arg_var ret_var) h in 
-	      kill_var ret_var h;
+	      let h = kill_var ret_var h in 
 	      h
 	    in
 	    let hs=call_jsr_static sheap spec il n in
@@ -456,6 +479,7 @@ and execute_core_stmt n (sheap : formset_entry) : formset_entry list =
 	| _ -> assert false (* TODO be done *)
 	      )
     | Throw_stmt_core _ -> assert  false 
+    | End -> execs_one n [sheap]
 	  ))
       
 (* implements a work-list fidex point algorithm *)
@@ -474,11 +498,14 @@ let verify (mname : string) (stmts : stmt_core list)  (spec : spec) (lo : logic)
   | s::stmts -> 
       let id = add_good_node ("Start "^mname) in  
       make_start_node id;
-      let post = execute_core_stmt s (Sepprover.convert (spec.pre), id) in 
-      let id_exit = add_good_node ("Exit") in 
-      List.iter 
-	(fun post -> 
-	  check_postcondition [(spec.post,id_exit)] post) post
+      match Sepprover.convert (spec.pre) with 
+	None -> System.warning(); Printf.printf "False precondition for specification of %s." mname  ;System.reset()
+      |	Some pre -> 
+	  let post = execute_core_stmt s (pre, id) in 
+	  let id_exit = add_good_node ("Exit") in 
+	  List.iter 
+	    (fun post -> 
+	      check_postcondition [(spec.post,id_exit)] post) post
 
 
 let verify_ensures (name : string) (stmts: stmt_core list) (post : Psyntax.pform) conjoin_with_res_true (oldexp_frames : inner_form list list) lo abs_rules =
@@ -548,9 +575,13 @@ let get_frame (stmts : stmt_core list) (pre : Psyntax.pform) (lo : logic) (abs_r
 		  let id = add_good_node ("Start") in  
       make_start_node id;
       let rlogic_pre = Sepprover.convert pre in
-      let post = match execute_core_stmt s (rlogic_pre, id) with
-				| [p] -> p
-				| _ -> assert false  (* an old expression is guaranteed to have only one exit point *) 
-			in 
-      let id_exit = add_good_node ("Exit") in 
-      check_and_get_frame (rlogic_pre,id_exit) post
+      match rlogic_pre with
+	None -> System.warning(); Printf.printf "False precondition for specification."  ;System.reset(); []
+      |	Some rlogic_pre ->
+	  let post = match execute_core_stmt s (rlogic_pre, id) with
+	  | [p] -> p
+	  | [] -> assert false
+	  | _ -> assert false  (* an old expression is guaranteed to have only one exit point *) 
+	  in 
+	  let id_exit = add_good_node ("Exit") in 
+	  check_and_get_frame (rlogic_pre,id_exit) post

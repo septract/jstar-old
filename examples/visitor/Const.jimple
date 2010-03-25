@@ -1,0 +1,39 @@
+class Const extends java.lang.Object implements Ast
+{
+/*Visitor.java*/
+    int v;
+
+/*12*/
+    void <init>(int)
+    {
+        Const r0;
+        int i0;
+
+        r0 := @this: Const;
+/*13*/
+        i0 := @parameter0: int;
+/*13*/
+        specialinvoke r0.<java.lang.Object: void <init>()>();
+/*13*/
+        r0.<Const: int v> = i0;
+/*13*/
+        return;
+/*13*/
+    }
+
+/*15*/
+    public void accept(Visitor)
+    {
+        Const r0;
+        Visitor r1;
+
+        r0 := @this: Const;
+/*16*/
+        r1 := @parameter0: Visitor;
+/*16*/
+        interfaceinvoke r1.<Visitor: void visitC(Const)>(r0);
+/*16*/
+        return;
+/*17*/
+    }
+}

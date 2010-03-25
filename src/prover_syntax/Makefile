@@ -40,18 +40,24 @@ BLIBRARY = SOURCES="$(LIBRARYSOURCE)" \
        RESULT="$(LIB)/prover_syntax.cma" \
        TRASH=""
 
-default: sepprover.cmxa
+.PHONY: default
+default: prover_syntax.cmxa
 
+.PHONY: debug
+debug: prover_syntax.cma
+
+.PHONY: prebuild
 prebuild: 
 	@(cd ../utils; make)
 
+.PHONY: all
 all: default
 
 
-sepprover.cmxa: prebuild
+prover_syntax.cmxa: prebuild
 	@$(MAKE) -f $(OCAMLMAKEFILE) $(LIBRARY) native-code
 
-ssepprover.cma: prebuild
+prover_syntax.cma: prebuild
 	@$(MAKE) -f $(OCAMLMAKEFILE) $(BLIBRARY) byte-code
 
 clean:

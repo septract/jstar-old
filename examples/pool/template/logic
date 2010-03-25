@@ -38,7 +38,7 @@ union(?z,add(?x,?y)) = add(?x,union(?z,?y))
 rule setof :
 | | |- setof(?x) = setof(?y) |
 without 
-  ?x!=?y
+  ?x=?y |- ?x!=?y
 if
 | | |- ?x=?y |
 or
@@ -71,6 +71,8 @@ if
 
 rule iterresleft_union:
 | | IterRes(union(?x,?y),?z,?t) |- |
+without
+	?x=empty() 
 if
 | | IterRes(?y,?z,?t) * IterRes(?x,?z,?t) |- |
 

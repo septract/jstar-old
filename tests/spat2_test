@@ -1,0 +1,11 @@
+
+Implication:
+   empty() |-
+? True
+
+Implication:
+	|- empty()
+? True
+
+
+

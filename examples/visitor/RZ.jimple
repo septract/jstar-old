@@ -1,0 +1,139 @@
+class RZ extends java.lang.Object implements Visitor
+{
+/*Visitor.java*/
+    boolean isZero;
+    boolean isChanged;
+    Ast newl;
+
+/*45*/
+    void <init>()
+    {
+        RZ r0;
+
+        r0 := @this: RZ;
+/*46*/
+        specialinvoke r0.<java.lang.Object: void <init>()>();
+/*46*/
+        return;
+/*46*/
+    }
+
+/*51*/
+    public void visitC(Const)
+    {
+        RZ r0;
+        Const r1;
+        int $i0;
+
+        r0 := @this: RZ;
+/*52*/
+        r1 := @parameter0: Const;
+/*52*/
+        $i0 = r1.<Const: int v>;
+/*52*/
+        if $i0 != 0 goto label0;
+/*52*/
+
+        r0.<RZ: boolean isZero> = 1;
+/*53*/
+
+     label0:
+        return;
+/*55*/
+    }
+
+/*57*/
+    public void visitP(Plus)
+    {
+        RZ r0;
+        Plus r1;
+        Ast $r2, $r3, $r4, $r5, $r6, $r7, $r8;
+        boolean $z0, $z1, $z2, $z3, $z4;
+
+        r0 := @this: RZ;
+/*58*/
+        r1 := @parameter0: Plus;
+/*58*/
+        $r2 = r1.<Plus: Ast left>;
+/*58*/
+        interfaceinvoke $r2.<Ast: void accept(Visitor)>(r0);
+/*58*/
+        $z0 = r0.<RZ: boolean isZero>;
+/*59*/
+        if $z0 == 0 goto label0;
+/*59*/
+
+        r0.<RZ: boolean isZero> = 0;
+/*60*/
+        r0.<RZ: boolean isChanged> = 0;
+/*61*/
+        $r3 = r1.<Plus: Ast right>;
+/*62*/
+        interfaceinvoke $r3.<Ast: void accept(Visitor)>(r0);
+/*62*/
+        $z1 = r0.<RZ: boolean isChanged>;
+/*63*/
+        if $z1 != 0 goto label3;
+/*63*/
+
+        $r4 = r1.<Plus: Ast right>;
+/*64*/
+        r0.<RZ: Ast newl> = $r4;
+/*64*/
+        r0.<RZ: boolean isChanged> = 1;
+/*65*/
+        goto label3;
+/*65*/
+
+     label0:
+        $z2 = r0.<RZ: boolean isChanged>;
+/*68*/
+        if $z2 == 0 goto label1;
+/*68*/
+
+        $r5 = r0.<RZ: Ast newl>;
+/*69*/
+        r1.<Plus: Ast left> = $r5;
+/*69*/
+        r0.<RZ: boolean isChanged> = 0;
+/*70*/
+
+     label1:
+        $r6 = r1.<Plus: Ast right>;
+/*72*/
+        interfaceinvoke $r6.<Ast: void accept(Visitor)>(r0);
+/*72*/
+        $z3 = r0.<RZ: boolean isZero>;
+/*73*/
+        if $z3 == 0 goto label2;
+/*73*/
+
+        $r7 = r1.<Plus: Ast left>;
+/*74*/
+        r0.<RZ: Ast newl> = $r7;
+/*74*/
+        r0.<RZ: boolean isChanged> = 1;
+/*75*/
+        r0.<RZ: boolean isZero> = 0;
+/*76*/
+        goto label3;
+/*76*/
+
+     label2:
+        $z4 = r0.<RZ: boolean isChanged>;
+/*77*/
+        if $z4 == 0 goto label3;
+/*77*/
+
+        $r8 = r0.<RZ: Ast newl>;
+/*78*/
+        r1.<Plus: Ast right> = $r8;
+/*78*/
+        r0.<RZ: boolean isChanged> = 0;
+/*79*/
+
+     label3:
+        return;
+/*82*/
+    }
+}

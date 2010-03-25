@@ -58,23 +58,25 @@ class RZ implements Visitor {
 	p.left.accept(this);
 	if(this.isZero) {
 	    this.isZero = false;
-	    this.newl = null;
+	    this.isChanged = false;
 	    p.right.accept(this);
-	    if(this.newl == null) {
+	    if(!isChanged) {
 		this.newl = p.right;
+		isChanged = true;
 	    }
 	} else {
-	    if(this.newl != null) {
+	    if(this.isChanged) {
 		p.left = this.newl;
-		this.newl = null;
+		this.isChanged = false;
 	    }
 	    p.right.accept(this);
 	    if(this.isZero) {
 		this.newl = p.left;
+		this.isChanged = true;
 		this.isZero = false;
-	    } else if (this.newl != null) {
+	    } else if (this.isChanged) {
 		p.right = this.newl;
-		this.newl = null;
+		this.isChanged = false;
 	    }
 	}
     }

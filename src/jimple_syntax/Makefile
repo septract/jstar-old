@@ -40,7 +40,10 @@ BLIBRARY = SOURCES="$(LIBRARYSOURCE)" \
        RESULT="$(LIB)/jimple_syntax.cma" \
        TRASH=""
 
-default: sepprover.cmxa
+default: jimple_syntax.cmxa
+
+.PHONY: debug
+debug: jimple_syntax.cma
 
 prebuild: 
 	@(cd ../utils; make)
@@ -48,10 +51,10 @@ prebuild:
 all: default
 
 
-sepprover.cmxa: prebuild
+jimple_syntax.cmxa: prebuild
 	@$(MAKE) -f $(OCAMLMAKEFILE) $(LIBRARY) native-code
 
-ssepprover.cma: prebuild
+jimple_syntax.cma: prebuild
 	@$(MAKE) -f $(OCAMLMAKEFILE) $(BLIBRARY) byte-code
 
 clean:

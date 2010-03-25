@@ -1,3 +1,15 @@
+(********************************************************
+   This file is part of jStar 
+	src/proverfront/test.ml
+   Release 
+        $Release$
+   Version 
+        $Rev$
+   $Copyright$
+   
+   jStar is distributed under a BSD license,  see, 
+      LICENSE.txt
+ ********************************************************)
 (******************************************************************
      Separation logic theorem prover
 
@@ -55,7 +67,7 @@ let main () =
       match test with 
     | Psyntax.TImplication (heap1,heap2,result) ->
 	(*Format.printf "Check implication\n %s\n ===> \n %s\n" (Plogic.string_form heap1) (Plogic.string_form heap2);*)
-	(match (Sepprover.implies logic (Sepprover.convert heap1) heap2), result with 
+	(match (Sepprover.implies_opt logic (Sepprover.convert heap1) heap2), result with 
 	  true,true | false,false -> ()
 	| true,false -> Format.printf "Test failed! Unsound as proved @\n@ %a@\n@ ===> @\n%a@\n " 
 	      Psyntax.string_form heap1 
@@ -68,7 +80,7 @@ let main () =
 	  
     | Psyntax.TFrame (heap1, heap2, result)  -> 
 (*	Format.printf "Find frame for\n %s\n ===> \n %s\n" (Psyntax.string_form heap1) (Psyntax.string_form heap2);*)
-	let x = Sepprover.frame logic 
+	let x = Sepprover.frame_opt logic 
 	    (Sepprover.convert heap1) heap2 in 
 	begin 
 	  match x with 
@@ -86,7 +98,7 @@ let main () =
 	 )
 	end
     | Psyntax.TAbs (heap1,result)  -> 
-	let x = Sepprover.abs logic (Sepprover.convert heap1) in
+	let x = Sepprover.abs_opt logic (Sepprover.convert heap1) in
 	if Sepprover.implies_list x result then ()
 	else (
 	  Format.printf "Incorrect Abstraction for:@\n%a@\n "
@@ -97,7 +109,7 @@ let main () =
 	  Format.printf "Was expecting:@\n%a@\n" Psyntax.string_form result
 	 )	
     | Psyntax.TInconsistency (heap1,result) ->
-	(match Sepprover.inconsistent logic (Sepprover.convert heap1), result with 
+	(match Sepprover.inconsistent_opt logic (Sepprover.convert heap1), result with 
 	  true, true 
 	| false,false -> ()
 	| true,false -> Format.printf "Test failed! Prover found@ %a@ inconsistent, test said consistent.@\n" 

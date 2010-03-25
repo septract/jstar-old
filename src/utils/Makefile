@@ -18,7 +18,7 @@ export LIB
 
 INCLUDES = 
 
-SOURCES = misc.ml config.ml system.ml vars.ml debug.ml load.ml
+SOURCES = backtrack.ml misc.ml persistentarray.ml multiset.mli multiset.ml  config.ml system.ml vars.ml debug.ml load.ml
 #dotty.ml
 
 LIBRARY = SOURCES="$(SOURCES)" \
@@ -39,7 +39,11 @@ utils.cmxa:
 utils.cma: 
 	$(MAKE) -f $(OCAMLMAKEFILE) $(BLIBRARY) byte-code
 
+.PHONY: debug
+debug:	utils.cma
 
+
+.PHONY: clean
 clean:
 	$(MAKE) -f $(OCAMLMAKEFILE) $(LIBRARY) clean
 	rm -f *.annot doc/*.html doc/*.css doc/test.odoc jparser.output *.cmi *.cmx *.o

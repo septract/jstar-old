@@ -1,3 +1,15 @@
+(********************************************************
+   This file is part of jStar 
+	src/prover/external_interface.ml
+   Release 
+        $Release$
+   Version 
+        $Rev$
+   $Copyright$
+   
+   jStar is distributed under a BSD license,  see, 
+      LICENSE.txt
+ ********************************************************)
 (*F#
 namespace Microsoft.Research.Vcc2
 F#*)

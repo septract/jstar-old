@@ -52,6 +52,8 @@ if
  *******************************/
 rule cons_inj_right :
   | | |- cons(?s,?g) = cons(?t,?h) | 
+without 
+  ?g = ?h * ?s = ?t |-
 if
   | | |- ?g = ?h * ?s = ?t | 
 
@@ -121,6 +123,8 @@ if
 
 rule app_is_emp_right : 
      | | |- app(?x,?y) = empty() | 
+without
+ ?x = empty() * ?y = empty() |-
 if
      | | |- ?x = empty() * ?y = empty() |
 

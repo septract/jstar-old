@@ -1,3 +1,15 @@
+(********************************************************
+   This file is part of jStar 
+	src/jimple_syntax/spec_def.ml
+   Release 
+        $Release$
+   Version 
+        $Rev$
+   $Copyright$
+   
+   jStar is distributed under a BSD license,  see, 
+      LICENSE.txt
+ ********************************************************)
 open Jparsetree
 open Vars
 (*open Rterm *)

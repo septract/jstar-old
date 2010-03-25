@@ -1,3 +1,15 @@
+(********************************************************
+   This file is part of jStar 
+	src/prover_syntax/psyntax.ml
+   Release 
+        $Release$
+   Version 
+        $Rev$
+   $Copyright$
+   
+   jStar is distributed under a BSD license,  see, 
+      LICENSE.txt
+ ********************************************************)
 (******************************************************************
     Syntax for Separation logic theorem prover
 
@@ -14,6 +26,9 @@ open Vars
 (*F#
 open Microsoft.FSharp.Compatibility
 F#*)
+
+exception Contradiction
+
 
 (* Main terms *)
 type args = 
@@ -53,6 +68,7 @@ let vs_fold = VarSet.fold
 let vs_iter = VarSet.iter
 let vs_diff = VarSet.diff
 let vs_exists = VarSet.exists
+let vs_for_all = VarSet.for_all
 let vs_from_list vl = List.fold_right (fun vs v -> vs_add vs v) vl vs_empty
 
 
@@ -427,29 +443,49 @@ let string_psr ppf (sr :sequent_rule) : unit =
 
 
 
-type rewrite_entry =  (args list * args * ((pform) * (where list) * (pform)) * string * bool) list
+(* type rewrite_entry =  (args list * args * ((pform) * (where list) * (pform)) * string * bool) list *)
 
-(* substitution *)
-(*IF-OCAML*)
-module RewriteMap =
-  Map.Make(struct
-    type t = string
-    let compare = compare
-  end)
-type rewrite_map =  rewrite_entry RewriteMap.t 
-(*ENDIF-OCAML*)
+(* (\* substitution *\) *)
+(* (\*IF-OCAML*\) *)
+(* module RewriteMap = *)
+(*   Map.Make(struct *)
+(*     type t = string *)
+(*     let compare = compare *)
+(*   end) *)
+(* type rewrite_map =  rewrite_entry RewriteMap.t  *)
+(* (\*ENDIF-OCAML*\) *)
 
-(*F#
-module RewriteMap = Map
-type rewrite_map =  RewriteMap.t<string,rewrite_entry> 
-F#*)
+(* (\*F# *)
+(* module RewriteMap = Map *)
+(* type rewrite_map =  RewriteMap.t<string,rewrite_entry>  *)
+(* F#*\) *)
 
-let rm_empty = RewriteMap.empty
-let rm_add = RewriteMap.add
-let rm_find = RewriteMap.find
+(* let rm_empty = RewriteMap.empty *)
+(* let rm_add = RewriteMap.add *)
+(* let rm_find = RewriteMap.find *)
 
 
-type rewrite_rule = string * args list * args * ((pform) * (where list) * (pform)) (* if *) * string * bool
+
+(*type rewrite_rule = string * args list * args * ((pform) * (where list) * (pform)) (* if *) * string * bool*)
+
+type rewrite_guard = 
+    { 
+      without_form : pform;
+      if_form : pform;
+      where : where list;
+  } 
+
+type rewrite_rule =
+    {
+    function_name : string;
+    arguments : args list;
+    result : args;
+    guard : rewrite_guard ;
+    rewrite_name : string;
+    saturate : bool;
+  } 
+      
+      
 
 type equiv_rule = string * (pform) * (pform) * (pform) * (pform)
 
@@ -669,9 +705,9 @@ let default_pure_prover : external_prover =
     | _ -> false) , 
   (fun x y -> [])
 
-type logic = sequent_rule list * rewrite_map * external_prover
+type logic = sequent_rule list * rewrite_rule list * external_prover
 
-let empty_logic : logic = [],rm_empty, default_pure_prover
+let empty_logic : logic = [],[], default_pure_prover
 
 let pprint_sequent_rules logic =
 	let (rules,_,_) = logic in

@@ -3,7 +3,7 @@ ifndef TARGETS
 endif
 
 ifndef CLEAN
-  CLEAN =  *.jimple *.class *~ *.dot \#* .\#* *.proof_file* 
+  CLEAN =  *.class *~ *.dot \#* .\#* *.proof_file* 
 endif 
 
 ifndef SOURCES
@@ -12,7 +12,7 @@ endif
 
 ifndef SUBDIRSDEF
    SUBDIRSDEF = foo
-   SUBDIRS = pool linkedlist popl2008 traditional multinh visitor subject
+   SUBDIRS = popl2008 pool visitor traditional multinh linkedlist subject
 endif
 
 ifndef DIR
@@ -42,9 +42,9 @@ time :  all $(addsuffix .time, $(TARGETS))
 %.test.dir: 
 	@echo $(INDENT) Testing $(DIR); cd $*; make test
 
-clean: 
-	@for dir in ${SUBDIRS} ; do ( cd $$dir; make clean ) ; done
-	rm -f $(CLEAN)
+clean:: 
+	for dir in ${SUBDIRS} ; do ( cd $$dir; make clean ) ; done
+	@rm -f $(CLEAN)
 
 %.time:
 	@echo $(INDENT) Timing $(DIR)/$*

@@ -1,3 +1,15 @@
+(********************************************************
+   This file is part of jStar 
+	src/jimplefront/classverification.ml
+   Release 
+        $Release$
+   Version 
+        $Rev$
+   $Copyright$
+   
+   jStar is distributed under a BSD license,  see, 
+      LICENSE.txt
+ ********************************************************)
 (******************************************************************
  JStar: Separation logic verification tool for Java.  
  Copyright (c) 2007-2008,
@@ -30,7 +42,7 @@ let parent_classes_and_interfaces (jfile : Jimple_global_types.jimple_file) =
 let verify_exports_implications implications logic_with_where_pred_defs =
 	List.iter (fun implication ->
 		let name,antecedent,consequent = implication in
-		if Sepprover.implies logic_with_where_pred_defs (Sepprover.convert antecedent) consequent then
+		if Sepprover.implies_opt logic_with_where_pred_defs (Sepprover.convert antecedent) consequent then
 			(good(); if Config.symb_debug() then Printf.printf "\n\nVerification of exported implication %s succeeded!\n" name; reset();)
 		else
 			(warning(); if Config.symb_debug() then Printf.printf "\n\nVerification of exported implication %s failed!\n" name; reset();)
@@ -47,7 +59,7 @@ let verify_axioms_implications class_name jimple_file implications axiom_map log
 		if abstract_class_or_interface then
 			()
 		else
-			if Sepprover.implies logic (Sepprover.convert (Psyntax.pconjunction conjunct antecedent)) consequent then
+			if Sepprover.implies_opt logic (Sepprover.convert (Psyntax.pconjunction conjunct antecedent)) consequent then
 				(good(); if Config.symb_debug() then Printf.printf "\n\nImplication verification of axiom %s succeeded!\n" name; reset();)
 			else
 				(warning(); if Config.symb_debug() then Printf.printf "\n\nImplication verification of axiom %s failed!\n" name; reset();)
@@ -62,12 +74,12 @@ let verify_axioms_implications class_name jimple_file implications axiom_map log
 				(* (c=>d) \/ [(c=>a) /\ (b=>d)], we do the following: *)
 				let c = Sepprover.convert p_antecedent in
 				let d = p_consequent in
-				if Sepprover.implies logic c d then
+				if Sepprover.implies_opt logic c d then
 					(good(); if Config.symb_debug() then Printf.printf "\n\nParent consistency verification of axiom %s succeeded w.r.t. %s!\n" name parent_name; reset();)
 				else
 					let a = antecedent in
 					let b = Sepprover.convert consequent in
-					if Sepprover.implies logic c a && Sepprover.implies logic b d then
+					if Sepprover.implies_opt logic c a && Sepprover.implies_opt logic b d then
 						(good(); if Config.symb_debug() then Printf.printf "\n\nParent consistency verification of axiom %s succeeded w.r.t. %s!\n" name parent_name; reset();)
 					else
 						(warning(); if Config.symb_debug() then Printf.printf "\n\nParent consistency verification of axiom %s failed w.r.t. %s!\n" name parent_name; reset();)

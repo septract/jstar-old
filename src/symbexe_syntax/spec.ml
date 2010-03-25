@@ -1,3 +1,15 @@
+(********************************************************
+   This file is part of jStar 
+	src/symbexe_syntax/spec.ml
+   Release 
+        $Release$
+   Version 
+        $Rev$
+   $Copyright$
+   
+   jStar is distributed under a BSD license,  see, 
+      LICENSE.txt
+ ********************************************************)
 module ClassMap =   
   Map.Make(struct
     type t = string

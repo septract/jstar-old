@@ -1,0 +1,170 @@
+class ConnectionPool extends ResourcePool
+{
+/*Signature: LResourcePool<Ljava/sql/Connection;Ljava/sql/SQLException;>;*/
+/*ConnectionPool.java*/
+    java.lang.String url;
+    java.lang.String user;
+    java.lang.String password;
+
+/*8*/
+    void <init>(java.lang.String, java.lang.String, java.lang.String)
+    {
+        ConnectionPool r0;
+        java.lang.String r1, r2, r3;
+
+        r0 := @this: ConnectionPool;
+/*9*/
+        r1 := @parameter0: java.lang.String;
+/*9*/
+        r2 := @parameter1: java.lang.String;
+/*9*/
+        r3 := @parameter2: java.lang.String;
+/*9*/
+        specialinvoke r0.<ResourcePool: void <init>()>();
+/*9*/
+        r0.<ConnectionPool: java.lang.String url> = r1;
+/*10*/
+        r0.<ConnectionPool: java.lang.String user> = r2;
+/*11*/
+        r0.<ConnectionPool: java.lang.String password> = r3;
+/*12*/
+        return;
+/*13*/
+    }
+
+/*15*/
+    protected java.sql.Connection makeResource() throws java.sql.SQLException
+    {
+        ConnectionPool r0;
+        java.lang.String $r1, $r2, $r3;
+        java.sql.Connection $r4;
+
+        r0 := @this: ConnectionPool;
+/*16*/
+        $r1 = r0.<ConnectionPool: java.lang.String url>;
+/*16*/
+        $r2 = r0.<ConnectionPool: java.lang.String user>;
+/*16*/
+        $r3 = r0.<ConnectionPool: java.lang.String password>;
+/*16*/
+        $r4 = staticinvoke <java.sql.DriverManager: java.sql.Connection getConnection(java.lang.String,java.lang.String,java.lang.String)>($r1, $r2, $r3);
+/*16*/
+        return $r4;
+/*16*/
+    }
+
+/*19*/
+    protected void destructResource(java.sql.Connection) throws java.sql.SQLException
+    {
+        ConnectionPool r0;
+        java.sql.Connection r1;
+
+        r0 := @this: ConnectionPool;
+/*20*/
+        r1 := @parameter0: java.sql.Connection;
+/*20*/
+        interfaceinvoke r1.<java.sql.Connection: void close()>();
+/*20*/
+        return;
+/*21*/
+    }
+
+/*23*/
+    public void freeResource(java.sql.Connection) throws java.sql.SQLException
+    {
+        ConnectionPool r0;
+        java.sql.Connection r1;
+
+        r0 := @this: ConnectionPool;
+/*24*/
+        r1 := @parameter0: java.sql.Connection;
+/*24*/
+        specialinvoke r0.<ResourcePool: void freeResource(java.lang.Object)>(r1);
+/*24*/
+        return;
+/*24*/
+    }
+
+/*25*/
+    public java.sql.Connection getResource() throws java.sql.SQLException
+    {
+        ConnectionPool r0;
+        java.lang.Object $r1;
+        java.sql.Connection $r2;
+
+        r0 := @this: ConnectionPool;
+/*25*/
+        $r1 = specialinvoke r0.<ResourcePool: java.lang.Object getResource()>();
+/*25*/
+        $r2 = (java.sql.Connection) $r1;
+/*25*/
+        return $r2;
+/*25*/
+    }
+
+/*2*/
+    public volatile void freeResource(java.lang.Object) throws java.lang.Exception
+    {
+        ConnectionPool r0;
+        java.lang.Object r1;
+        java.sql.Connection $r2;
+
+        r0 := @this: ConnectionPool;
+/*3*/
+        r1 := @parameter0: java.lang.Object;
+/*3*/
+        $r2 = (java.sql.Connection) r1;
+/*3*/
+        virtualinvoke r0.<ConnectionPool: void freeResource(java.sql.Connection)>($r2);
+/*3*/
+        return;
+/*3*/
+    }
+
+/*2*/
+    public volatile java.lang.Object getResource() throws java.lang.Exception
+    {
+        ConnectionPool r0;
+        java.sql.Connection $r1;
+
+        r0 := @this: ConnectionPool;
+/*3*/
+        $r1 = virtualinvoke r0.<ConnectionPool: java.sql.Connection getResource()>();
+/*3*/
+        return $r1;
+/*3*/
+    }
+
+/*2*/
+    protected volatile void destructResource(java.lang.Object) throws java.lang.Exception
+    {
+        ConnectionPool r0;
+        java.lang.Object r1;
+        java.sql.Connection $r2;
+
+        r0 := @this: ConnectionPool;
+/*3*/
+        r1 := @parameter0: java.lang.Object;
+/*3*/
+        $r2 = (java.sql.Connection) r1;
+/*3*/
+        virtualinvoke r0.<ConnectionPool: void destructResource(java.sql.Connection)>($r2);
+/*3*/
+        return;
+/*3*/
+    }
+
+/*2*/
+    protected volatile java.lang.Object makeResource() throws java.lang.Exception
+    {
+        ConnectionPool r0;
+        java.sql.Connection $r1;
+
+        r0 := @this: ConnectionPool;
+/*3*/
+        $r1 = virtualinvoke r0.<ConnectionPool: java.sql.Connection makeResource()>();
+/*3*/
+        return $r1;
+/*3*/
+    }
+}

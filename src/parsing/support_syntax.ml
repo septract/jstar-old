@@ -1,3 +1,15 @@
+(********************************************************
+   This file is part of jStar 
+	src/parsing/support_syntax.ml
+   Release 
+        $Release$
+   Version 
+        $Rev$
+   $Copyright$
+   
+   jStar is distributed under a BSD license,  see, 
+      LICENSE.txt
+ ********************************************************)
 open Jparsetree
 open Psyntax
 open Jimple_global_types

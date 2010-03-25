@@ -1,6 +1,6 @@
 import "field_logic";
 import "boolean_logic";
-
+import "builtin_plus_logic";
 
 
 /********************************************
@@ -65,10 +65,3 @@ if
 
 
 
-/********************************************
- *   TODO: Needs adding to basic arithmetic file
- ********************************************/
-rule bp :
-  | |- builtin_plus(?x,?x) = builtin_plus(?y,?y) 
-if
-  | |- ?x=?y 

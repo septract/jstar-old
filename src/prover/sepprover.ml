@@ -1,9 +1,20 @@
+(********************************************************
+   This file is part of jStar 
+	src/prover/sepprover.ml
+   Release 
+        $Release$
+   Version 
+        $Rev$
+   $Copyright$
+   
+   jStar is distributed under a BSD license,  see, 
+      LICENSE.txt
+ ********************************************************)
 (*F#
 namespace Microsoft.Research.Vcc2
 F#*)
 
 open Debug
-open Rterm
 open Psyntax
 
 (*
@@ -158,47 +169,64 @@ open Psyntax
        Internal formula operations
      *****************************************)
 
-    type inner_form = Rlogic.ts_form
+    type inner_form = Clogic.ts_formula
 
-    let inner_truth =  Rlogic.ts_form_true
+    let inner_truth =  Clogic.mk_ts_form (Cterm.new_ts ()) Clogic.truth 
 
-    let convert : form -> inner_form  
-      = fun form -> Rlogic.convert form
+    let convert : form -> inner_form option  
+      = fun form -> 
+	try 
+	  Some (Clogic.convert_with_eqs false form)
+	with Contradiction -> 
+	  None 
 
     let conjoin : form -> inner_form -> inner_form 
-      = fun form inner_form -> Rlogic.conj_convert form inner_form
+      = fun form inner_form -> Clogic.conjoin false inner_form (Clogic.convert_to_inner form)
 
     let conjoin_inner : inner_form -> inner_form -> inner_form
-      = fun if1 if2 -> Rlogic.tsform_conjunction if1 if2
+      = fun if1 if2 -> Clogic.conjoin false if1 (Clogic.make_syntactic if2)
 
-    let kill_var : var -> inner_form -> unit 
-      = fun v inner_form -> Rlogic.kill_var v inner_form
+    let kill_var : var -> inner_form -> inner_form
+      = fun v inner_form -> 
+	Clogic.kill_var inner_form v(* Rlogic.kill_var v inner_form *)
 
-    let kill_all_exists_names : inner_form -> unit
-	= Rlogic.kill_all_exists_names 
+    let kill_all_exists_names : inner_form -> inner_form
+	= fun iform -> iform (*assert false  (* TODO. Should do some form of compression of formula *) (*Rlogic.kill_all_exists_names *)*)
 
     let update_var_to : var -> term -> inner_form -> inner_form
-      = fun x y z -> Rlogic.update_var_to x y z
+      = fun v e f -> Clogic.update_var_to f v e (* Rlogic.update_var_to x y z*)
 
     let form_clone : inner_form -> inner_form 
-      = fun inner_form -> Rlogic.form_clone inner_form false
+      = fun inner_form -> inner_form  (* functional rep now, so easy *)
 
     let form_clone_abs : inner_form -> inner_form 
-      = fun inner_form -> Rlogic.form_clone inner_form true
+      = fun inner_form -> inner_form  (* TODO. Should do some form of compression of formula *)
 
 
     let string_inner_form : Format.formatter -> inner_form -> unit = 
-      Rlogic.string_ts_form 
+      Clogic.pp_ts_form 
      
     (******************************************
        Entailment operations
      ******************************************)
 
     let implies : logic -> inner_form -> form -> bool 
-      = fun logic inner_form1 form2 -> Prover.check_implication logic inner_form1 (Rlogic.convert form2)
+      = fun logic inner_form1 form2 -> Prover.check_implication_pform logic inner_form1 form2
+
+    let implies_opt : logic -> inner_form option -> form -> bool 
+      = fun logic inner_form1 form2 -> 
+	match inner_form1 with 
+	  None -> true 
+	| Some inner_form1 -> Prover.check_implication_pform logic inner_form1 form2
 
     let inconsistent : logic -> inner_form -> bool
-      = fun logic inner_form1 -> Prover.check_implication logic inner_form1 (Rlogic.convert mkFalse)
+      = fun logic inner_form1 -> Prover.check_inconsistency logic inner_form1
+
+    let inconsistent_opt : logic -> inner_form option -> bool
+      = fun logic inner_form1 -> 
+	match inner_form1 with 
+	  None -> true 
+	| Some inner_form1 -> Prover.check_inconsistency logic inner_form1
 
     let implies_inner : logic -> inner_form -> inner_form -> bool 
       = fun logic inner_form1 inner_form2 -> Prover.check_implication logic inner_form1 inner_form2
@@ -207,15 +235,25 @@ open Psyntax
       = fun logic inner_form1 form2 -> 
 	Prover.check_implication_frame_pform logic inner_form1 form2
 
+    let frame_opt : logic -> inner_form option -> form -> inner_form list option
+	= fun logic inner_form1 form2 -> 
+	  match inner_form1 with 
+	    None -> Some []
+	  | Some inner_form1 -> 
+	      Prover.check_implication_frame_pform logic inner_form1 form2
+
     let frame_inner : logic -> inner_form -> inner_form -> inner_form list option
       = fun logic inner_form1 inner_form2 -> 
-	Prover.check_implication_frame logic inner_form1 inner_form2
+	Prover.check_frame logic inner_form1 inner_form2
 
     let abs : logic -> inner_form -> inner_form list 
       = Prover.abs
 
+    let abs_opt : logic -> inner_form option -> inner_form list 
+      = fun l form -> match form with None -> [] | Some form -> Prover.abs l form
+
     let implies_list : inner_form list -> form -> bool 
-	= fun iforml form -> Prover.check_equiv iforml [Rlogic.convert form]
+	= Prover.check_implies_list 
 
 (*
 

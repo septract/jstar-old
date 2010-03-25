@@ -1,3 +1,15 @@
+(********************************************************
+   This file is part of jStar 
+	src/jimple_syntax/jimple_global_types.ml
+   Release 
+        $Release$
+   Version 
+        $Rev$
+   $Copyright$
+   
+   jStar is distributed under a BSD license,  see, 
+      LICENSE.txt
+ ********************************************************)
 open Jparsetree
 open Spec
 (***************************************************

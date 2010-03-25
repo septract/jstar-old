@@ -1,3 +1,15 @@
+(********************************************************
+   This file is part of jStar 
+	src/symbexe/cfg_core.ml
+   Release 
+        $Release$
+   Version 
+        $Rev$
+   $Copyright$
+   
+   jStar is distributed under a BSD license,  see, 
+      LICENSE.txt
+ ********************************************************)
 (******************************************************************
  JStar: Separation logic verification tool for Java.  
  Copyright (c) 2007-2009,
@@ -47,6 +59,7 @@ let stmts_to_cfg stmts =
 	assert false
     in
     match s.skind with
+    | End -> ()
     | Nop_stmt_core ->  addOptionSucc next
     | Label_stmt_core l -> addOptionSucc next  
     | Assignment_core (_,_,_) -> addOptionSucc next

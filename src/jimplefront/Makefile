@@ -36,7 +36,11 @@ MAINOPT = $(DEFAULT_ARGS)  RESULT=$(BIN)/jstar
 
 default: jstar
 
-all: jstar
+.PHONY: debug
+debug: jstar.byte
+
+all: jstar jstar.byte
+
 
 prebuild: 
 	@(cd ../prover; make)

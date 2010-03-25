@@ -40,6 +40,9 @@ parser.cmxa: prebuild
 parser.cma: prebuild
 	@$(MAKE) -f $(OCAMLMAKEFILE) $(BLIBRARY) byte-code
 
+.PHONY: debug
+debug:	parser.cma
+
 prebuild:
 	@(cd ../prover_syntax; make)
 	@(cd ../symbexe_syntax; make)

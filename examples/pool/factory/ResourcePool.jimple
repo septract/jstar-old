@@ -1,0 +1,109 @@
+public class ResourcePool extends java.lang.Object
+{
+/*Signature: <R:Ljava/lang/Object;E:Ljava/lang/Exception;>Ljava/lang/Object;*/
+/*ResourcePool.java*/
+/*Signature: Ljava/util/LinkedList<TR;>;*/
+    java.util.LinkedList resources;
+/*Signature: LResourceFactory<TR;TE;>;*/
+    ResourceFactory rf;
+
+/*Signature: (LResourceFactory<TR;TE;>;)V*/
+/*7*/
+    void <init>(ResourceFactory)
+    {
+        ResourcePool r0;
+        ResourceFactory r1;
+        java.util.LinkedList $r2;
+
+        r0 := @this: ResourcePool;
+/*8*/
+        r1 := @parameter0: ResourceFactory;
+/*8*/
+        specialinvoke r0.<java.lang.Object: void <init>()>();
+/*8*/
+        $r2 = new java.util.LinkedList;
+/*9*/
+        specialinvoke $r2.<java.util.LinkedList: void <init>()>();
+/*9*/
+        r0.<ResourcePool: java.util.LinkedList resources> = $r2;
+/*9*/
+        r0.<ResourcePool: ResourceFactory rf> = r1;
+/*10*/
+        return;
+/*11*/
+    }
+
+/*Signature: ()TR;^TE;*/
+/*13*/
+    public java.lang.Object getResource() throws java.lang.Exception
+    {
+        ResourcePool r0;
+        java.util.LinkedList $r1, $r4;
+        int $i0;
+        ResourceFactory $r2;
+        java.lang.Object $r3, $r5;
+
+        r0 := @this: ResourcePool;
+/*14*/
+        $r1 = r0.<ResourcePool: java.util.LinkedList resources>;
+/*14*/
+        $i0 = virtualinvoke $r1.<java.util.LinkedList: int size()>();
+/*14*/
+        if $i0 != 0 goto label0;
+/*14*/
+
+        $r2 = r0.<ResourcePool: ResourceFactory rf>;
+/*15*/
+        $r3 = interfaceinvoke $r2.<ResourceFactory: java.lang.Object makeResource()>();
+/*15*/
+        return $r3;
+/*15*/
+
+     label0:
+        $r4 = r0.<ResourcePool: java.util.LinkedList resources>;
+/*17*/
+        $r5 = virtualinvoke $r4.<java.util.LinkedList: java.lang.Object removeFirst()>();
+/*17*/
+        return $r5;
+/*17*/
+    }
+
+/*Signature: (TR;)V^TE;*/
+/*20*/
+    public void freeResource(java.lang.Object) throws java.lang.Exception
+    {
+        ResourcePool r0;
+        java.lang.Object r1;
+        java.util.LinkedList $r2, $r4;
+        int $i0;
+        ResourceFactory $r3;
+
+        r0 := @this: ResourcePool;
+/*21*/
+        r1 := @parameter0: java.lang.Object;
+/*21*/
+        $r2 = r0.<ResourcePool: java.util.LinkedList resources>;
+/*21*/
+        $i0 = virtualinvoke $r2.<java.util.LinkedList: int size()>();
+/*21*/
+        if $i0 < 20 goto label0;
+/*21*/
+
+        $r3 = r0.<ResourcePool: ResourceFactory rf>;
+/*22*/
+        interfaceinvoke $r3.<ResourceFactory: void destructResource(java.lang.Object)>(r1);
+/*22*/
+        goto label1;
+/*22*/
+
+     label0:
+        $r4 = r0.<ResourcePool: java.util.LinkedList resources>;
+/*24*/
+        virtualinvoke $r4.<java.util.LinkedList: boolean add(java.lang.Object)>(r1);
+/*24*/
+
+     label1:
+        return;
+/*26*/
+    }
+}

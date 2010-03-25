@@ -1,0 +1,11 @@
+public interface  ResourceFactory extends java.lang.Object
+{
+/*Signature: <R:Ljava/lang/Object;E:Ljava/lang/Exception;>Ljava/lang/Object;*/
+/*ResourceFactory.java*/
+
+/*Signature: ()TR;^TE;*/
+    public abstract java.lang.Object makeResource() throws java.lang.Exception;
+
+/*Signature: (TR;)V^TE;*/
+    public abstract void destructResource(java.lang.Object) throws java.lang.Exception;
+}

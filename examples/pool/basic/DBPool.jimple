@@ -1,0 +1,118 @@
+class DBPool extends java.lang.Object
+{
+/*DBPool.java*/
+/*Signature: Ljava/util/LinkedList<Ljava/sql/Connection;>;*/
+    java.util.LinkedList conns;
+    java.lang.String url;
+    java.lang.String user;
+    java.lang.String password;
+
+/*9*/
+    void <init>(java.lang.String, java.lang.String, java.lang.String)
+    {
+        DBPool r0;
+        java.lang.String r1, r2, r3;
+        java.util.LinkedList $r4;
+
+        r0 := @this: DBPool;
+/*10*/
+        r1 := @parameter0: java.lang.String;
+/*10*/
+        r2 := @parameter1: java.lang.String;
+/*10*/
+        r3 := @parameter2: java.lang.String;
+/*10*/
+        specialinvoke r0.<java.lang.Object: void <init>()>();
+/*10*/
+        $r4 = new java.util.LinkedList;
+/*11*/
+        specialinvoke $r4.<java.util.LinkedList: void <init>()>();
+/*11*/
+        r0.<DBPool: java.util.LinkedList conns> = $r4;
+/*11*/
+        r0.<DBPool: java.lang.String url> = r1;
+/*12*/
+        r0.<DBPool: java.lang.String user> = r2;
+/*13*/
+        r0.<DBPool: java.lang.String password> = r3;
+/*14*/
+        return;
+/*15*/
+    }
+
+/*17*/
+    public java.sql.Connection getResource() throws java.sql.SQLException
+    {
+        DBPool r0;
+        java.util.LinkedList $r1, $r6;
+        int $i0;
+        java.lang.String $r2, $r3, $r4;
+        java.sql.Connection $r5, $r8;
+        java.lang.Object $r7;
+
+        r0 := @this: DBPool;
+/*18*/
+        $r1 = r0.<DBPool: java.util.LinkedList conns>;
+/*18*/
+        $i0 = virtualinvoke $r1.<java.util.LinkedList: int size()>();
+/*18*/
+        if $i0 != 0 goto label0;
+/*18*/
+
+        $r2 = r0.<DBPool: java.lang.String url>;
+/*19*/
+        $r3 = r0.<DBPool: java.lang.String user>;
+/*19*/
+        $r4 = r0.<DBPool: java.lang.String password>;
+/*19*/
+        $r5 = staticinvoke <java.sql.DriverManager: java.sql.Connection getConnection(java.lang.String,java.lang.String,java.lang.String)>($r2, $r3, $r4);
+/*19*/
+        return $r5;
+/*19*/
+
+     label0:
+        $r6 = r0.<DBPool: java.util.LinkedList conns>;
+/*20*/
+        $r7 = virtualinvoke $r6.<java.util.LinkedList: java.lang.Object removeFirst()>();
+/*20*/
+        $r8 = (java.sql.Connection) $r7;
+/*20*/
+        return $r8;
+/*20*/
+    }
+
+/*23*/
+    public void freeResource(java.sql.Connection) throws java.sql.SQLException
+    {
+        DBPool r0;
+        java.sql.Connection r1;
+        java.util.LinkedList $r2, $r3;
+        int $i0;
+
+        r0 := @this: DBPool;
+/*24*/
+        r1 := @parameter0: java.sql.Connection;
+/*24*/
+        $r2 = r0.<DBPool: java.util.LinkedList conns>;
+/*24*/
+        $i0 = virtualinvoke $r2.<java.util.LinkedList: int size()>();
+/*24*/
+        if $i0 < 20 goto label0;
+/*24*/
+
+        interfaceinvoke r1.<java.sql.Connection: void close()>();
+/*25*/
+        goto label1;
+/*25*/
+
+     label0:
+        $r3 = r0.<DBPool: java.util.LinkedList conns>;
+/*27*/
+        virtualinvoke $r3.<java.util.LinkedList: boolean add(java.lang.Object)>(r1);
+/*27*/
+
+     label1:
+        return;
+/*28*/
+    }
+}

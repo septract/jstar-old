@@ -44,29 +44,21 @@ if
 /*******************************
  *  Injective axioms
  *******************************/
-rule plus_inj_right :
-  | | |- plus(?s,?g) = plus(?t,?h) | 
-if
-  | | |- ?g = ?h * ?s = ?t | 
-
 rule plus_inj_left :
   | plus(?s,?g) = plus(?t,?h) | |- |
 without
-  ?g=?h
+  ?g=?h * ?s=?t
 if
   | ?g = ?h * ?s = ?t | |- |
 
-rule plus_inj_left :
-  | plus(?s,?g) = plus(?t,?h) | |- |
-without 
-  ?s = ?t
-if
-  | ?g = ?h * ?s = ?t | |- |
 
-rule const_inj_right :
-  | | |- const(?s) = const(?t) | 
+rule plus_inj_right :
+  | |- plus(?s,?g) = plus(?t,?h) 
+without
+  ?s = ?t * ?g=?h
 if
-  | | |- ?s=?t | 
+  | |- ?g = ?h * ?s = ?t 
+
 
 rule const_inj_left :
   | const(?s) = const(?t) | |- |
@@ -74,6 +66,13 @@ without
   ?s = ?t
 if
   | ?s=?t | |- |
+
+rule const_inj_right :
+  | | |- const(?s) = const(?t) | 
+without
+  ?s = ?t
+if
+  | | |- ?s=?t | 
 
 
 

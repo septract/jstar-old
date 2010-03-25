@@ -7,7 +7,20 @@ default:
 	cd jimple_syntax; make
 	cd parsing; make
 	cd proverfront; make
+	cd symbexe;  make 
 	cd jimplefront;  make 
+
+debug: 
+	cd utils; make debug
+	cd prover_syntax; make debug
+	cd prover; make debug
+	cd symbexe_syntax; make debug
+	cd symbexe;  make debug
+	cd jimple_syntax; make debug
+	cd parsing; make debug
+	cd proverfront; make debug
+	cd symbexe;  make debug
+	cd jimplefront;  make debug
 
 
 clean: 

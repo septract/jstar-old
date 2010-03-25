@@ -1,3 +1,15 @@
+(********************************************************
+   This file is part of jStar 
+	src/jimplefront/translatejimple.ml
+   Release 
+        $Release$
+   Version 
+        $Rev$
+   $Copyright$
+   
+   jStar is distributed under a BSD license,  see, 
+      LICENSE.txt
+ ********************************************************)
 (******************************************************************
  JStar: Separation logic verification tool for Java.  
  Copyright (c) 2007-2008,
@@ -195,7 +207,7 @@ let jimple_statement2core_statement s : core_statement list =
 	 let p0 = Arg_var(mk_parameter 0) in (* ddino: should it be a fresh program variable? *)
 	 let post= mkEQ(retvar_term,p0) in
 	 let spec=mk_spec [] post ClassMap.empty in
-	 [Assignment_core  ([],spec,[immediate2args e']) ]
+	 [Assignment_core  ([],spec,[immediate2args e']); End ]
       )
   | Throw_stmt(i) ->
       if Config.symb_debug() then Printf.printf "\n Translating a jimple Throw statement %s\n" (Pprinter.statement2str s);      

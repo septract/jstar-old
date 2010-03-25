@@ -1,0 +1,52 @@
+class Recell extends Cell
+{
+/*Recell.java*/
+    int bak;
+
+/*0*/
+    void <init>()
+    {
+        Recell r0;
+
+        r0 := @this: Recell;
+/*1*/
+        specialinvoke r0.<Cell: void <init>()>();
+/*1*/
+        return;
+/*1*/
+    }
+
+/*4*/
+    void set(int)
+    {
+        Recell r0;
+        int i0, $i1;
+
+        r0 := @this: Recell;
+/*5*/
+        i0 := @parameter0: int;
+/*5*/
+        $i1 = specialinvoke r0.<Cell: int get()>();
+/*5*/
+        r0.<Recell: int bak> = $i1;
+/*5*/
+        specialinvoke r0.<Cell: void set(int)>(i0);
+/*6*/
+        return;
+/*7*/
+    }
+
+/*9*/
+    int get()
+    {
+        Recell r0;
+        int $i0;
+
+        r0 := @this: Recell;
+/*10*/
+        $i0 = specialinvoke r0.<Cell: int get()>();
+/*10*/
+        return $i0;
+/*10*/
+    }
+}

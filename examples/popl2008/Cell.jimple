@@ -1,0 +1,48 @@
+class Cell extends java.lang.Object
+{
+/*Cell.java*/
+    int val;
+
+/*0*/
+    void <init>()
+    {
+        Cell r0;
+
+        r0 := @this: Cell;
+/*1*/
+        specialinvoke r0.<java.lang.Object: void <init>()>();
+/*1*/
+        return;
+/*1*/
+    }
+
+/*5*/
+    void set(int)
+    {
+        Cell r0;
+        int i0;
+
+        r0 := @this: Cell;
+/*6*/
+        i0 := @parameter0: int;
+/*6*/
+        r0.<Cell: int val> = i0;
+/*6*/
+        return;
+/*7*/
+    }
+
+/*10*/
+    int get()
+    {
+        Cell r0;
+        int $i0;
+
+        r0 := @this: Cell;
+/*11*/
+        $i0 = r0.<Cell: int val>;
+/*11*/
+        return $i0;
+/*11*/
+    }
+}

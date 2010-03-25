@@ -1,3 +1,15 @@
+(********************************************************
+   This file is part of jStar 
+	src/proverfront/inductive.ml
+   Release 
+        $Release$
+   Version 
+        $Rev$
+   $Copyright$
+   
+   jStar is distributed under a BSD license,  see, 
+      LICENSE.txt
+ ********************************************************)
 (* File to read an inductive file (and later its imports). *)
 open Prover
 open Psyntax

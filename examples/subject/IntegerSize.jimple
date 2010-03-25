@@ -1,0 +1,58 @@
+public class IntegerSize extends java.lang.Object implements Observer
+{
+/*IntegerSize.java*/
+    private IntegerDataBag bag;
+    private int size;
+
+/*7*/
+    public void <init>(IntegerDataBag)
+    {
+        IntegerSize r0;
+        IntegerDataBag r1;
+
+        r0 := @this: IntegerSize;
+/*8*/
+        r1 := @parameter0: IntegerDataBag;
+/*8*/
+        specialinvoke r0.<java.lang.Object: void <init>()>();
+/*8*/
+        r0.<IntegerSize: IntegerDataBag bag> = r1;
+/*9*/
+        virtualinvoke r1.<IntegerDataBag: void addObserver(Observer)>(r0);
+/*10*/
+        return;
+/*11*/
+    }
+
+/*13*/
+    public void update(Subject)
+    {
+        IntegerSize r0;
+        Subject r1;
+        IntegerDataBag $r2, $r3;
+        java.util.LinkedList $r4;
+        int $i0;
+
+        r0 := @this: IntegerSize;
+/*14*/
+        r1 := @parameter0: Subject;
+/*14*/
+        $r2 = r0.<IntegerSize: IntegerDataBag bag>;
+/*14*/
+        if r1 != $r2 goto label0;
+/*14*/
+
+        $r3 = r0.<IntegerSize: IntegerDataBag bag>;
+/*15*/
+        $r4 = $r3.<IntegerDataBag: java.util.LinkedList list>;
+/*15*/
+        $i0 = virtualinvoke $r4.<java.util.LinkedList: int size()>();
+/*15*/
+        r0.<IntegerSize: int size> = $i0;
+/*15*/
+
+     label0:
+        return;
+/*17*/
+    }
+}

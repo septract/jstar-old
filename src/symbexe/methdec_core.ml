@@ -1,3 +1,15 @@
+(********************************************************
+   This file is part of jStar 
+	src/symbexe/methdec_core.ml
+   Release 
+        $Release$
+   Version 
+        $Rev$
+   $Copyright$
+   
+   jStar is distributed under a BSD license,  see, 
+      LICENSE.txt
+ ********************************************************)
 (******************************************************************
  JStar: Separation logic verification tool for Java.  
  Copyright (c) 2007-2008,
@@ -17,7 +29,7 @@ type core_statement =
   | Assignment_core of Vars.var list * spec * Psyntax.args list
   | Goto_stmt_core of string list  
   | Throw_stmt_core of Psyntax.args
-
+  | End
 
 
 type stmt_core = { 

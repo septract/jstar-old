@@ -1,3 +1,15 @@
+(********************************************************
+   This file is part of jStar 
+	src/parsing/jlexer.mll
+   Release 
+        $Release$
+   Version 
+        $Rev$
+   $Copyright$
+   
+   jStar is distributed under a BSD license,  see, 
+      LICENSE.txt
+ ********************************************************)
 (******************************************************************
  JStar: Separation logic verification tool for Java.  
  Copyright (c) 2007-2008,

@@ -1,3 +1,17 @@
+(********************************************************
+   This file is part of jStar 
+	src/utils/misc.ml
+   Release 
+        $Release$
+   Version 
+        $Rev$
+   $Copyright$
+   
+   jStar is distributed under a BSD license,  see, 
+      LICENSE.txt
+ ********************************************************)
+open Backtrack 
+
 let map_option f l
     =
   List.fold_right 
@@ -36,3 +50,39 @@ let map_sum f l
       match f el with
       | Inl l -> (l::restl,restr)
       | Inr r -> (restl,r::restr)) l ([],[])
+
+
+let remove_duplicates c l =
+  let l = List.sort c l in 
+  snd (
+  List.fold_left 
+    (fun (complast,list) next  ->
+      if complast next = 0 then (complast,list) else (c next, next::list)
+	) ((fun _ -> -1),[]) l
+    )
+
+let intcmp a b =
+  if a<b then -1 else if a=b then 0 else 1
+
+let intcmp2 (x1,x2) (y1,y2) =
+  let v = intcmp x1 y1 in 
+  if v = 0 then intcmp x2 y2 
+  else v
+
+
+let rec find_no_match_simp f l =
+  let rec fnm_inner f l =
+  match l with 
+    [] -> raise No_match
+  | x::l -> try f x with No_match -> fnm_inner f l
+  in fnm_inner f l 
+
+
+
+let lift_pair f = 
+  fun (x,y) -> (f x, f y)
+
+let lift_option f =
+  fun x -> match x with
+    Some x -> f x
+  | None -> None

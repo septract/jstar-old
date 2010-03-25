@@ -1,3 +1,15 @@
+(********************************************************
+   This file is part of jStar 
+	src/utils/system.ml
+   Release 
+        $Release$
+   Version 
+        $Rev$
+   $Copyright$
+   
+   jStar is distributed under a BSD license,  see, 
+      LICENSE.txt
+ ********************************************************)
 let getenv variable = 
   try Sys.getenv variable 
   with Not_found -> ""

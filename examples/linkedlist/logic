@@ -21,7 +21,7 @@ rule ls_not_nil:
   ls(nil(),?y) | | |- |
 if
 
-rule NodeLL_not_nil:
+rule lspe_not_nil:
   lspe(nil(),?y) | | |- |
 if
   | ?y=nil() | |- |

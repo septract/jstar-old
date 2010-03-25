@@ -1,3 +1,15 @@
+(********************************************************
+   This file is part of jStar 
+	src/symbexe/specification.ml
+   Release 
+        $Release$
+   Version 
+        $Rev$
+   $Copyright$
+   
+   jStar is distributed under a BSD license,  see, 
+      LICENSE.txt
+ ********************************************************)
 (******************************************************************
  JStar: Separation logic verification tool for Java.  
  Copyright (c) 2007-2008,
@@ -126,9 +138,9 @@ let jsr logic (pre : inner_form) (spec : spec)  : (inner_form  list * ts_excep_p
       match frame_list with
 	None -> None
       |	Some frame_list -> 
-	let res = List.map (fun post -> (*Prover.tidy_one*) Sepprover.conjoin spec_post post) frame_list in 
+	let res = Misc.map_option (fun post -> (*Prover.tidy_one*) try Some (Sepprover.conjoin spec_post post) with Contradiction -> None) frame_list in 
 	let excep_res = List.map (conjunction_excep_convert spec_excep) frame_list in 
-	List.iter (fun ts -> vs_iter (fun e -> kill_var e ts) ev) res;
+	let res = List.map (fun ts -> vs_fold (fun e ts -> kill_var e ts) ev ts) res in 
 	Some (res,excep_res)
 
 let logical_vars_to_prog spec2 = 
@@ -144,12 +156,15 @@ let refinement_extra (logic : logic) (spec1 : spec) (spec2 : spec) (extra : pfor
   let spec2 = logical_vars_to_prog spec2 in 
   match spec2 with
     {pre=pre; post=post; excep=excep} ->
-      match jsr logic (Sepprover.convert (extra&&&pre)) spec1 with 
-	None -> false
-      | Some (newposts, newexcep_posts) ->
-	  let res = List.for_all (fun newpost -> Sepprover.implies logic newpost post) newposts in 
-	  let res2 = List.for_all (fun newexcep_post -> implication_excep logic newexcep_post excep) newexcep_posts in 
-	  (res&&res2)
+      match (Sepprover.convert (extra&&&pre)) with 
+	None -> true
+      |	Some form -> 
+	  match jsr logic form spec1 with 
+	    None -> false
+	  | Some (newposts, newexcep_posts) ->
+	      let res = List.for_all (fun newpost -> Sepprover.implies logic newpost post) newposts in 
+	      let res2 = List.for_all (fun newexcep_post -> implication_excep logic newexcep_post excep) newexcep_posts in 
+	      (res&&res2)
 
 
 (*  spec2 ==> spec1 

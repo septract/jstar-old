@@ -7,7 +7,7 @@ class Cell {
   
   int get() : 
   { Val$(this, {content=_X})} 
-  { _X=return * Val$(@this:, {content=return}) };
+  { _X=return * Val$(@this:, {content=_X}) };
 
   void set(int x) : 
   { Val$(this, {content=_})} 

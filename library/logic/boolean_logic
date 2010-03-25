@@ -22,6 +22,8 @@ if
 
 rule numeric_eq_right :
      | |- numeric_const(?x) = numeric_const(?y) 
+without
+  ?x=?y 
 if
      | |- ?x=?y
 
@@ -35,30 +37,5 @@ rule numeric_neq_right :
 if
      | |- ?x!=?y
 
-
-
-/***********************
- *  Should build this into the prover.
- **********************/
-
-rule string_eq_1_0 :
-     | "1" = "0" |-
-if
-
-rule string_eq_1_0 :
-     | |- "1" = "0"  
-if
-    | |- False
-
-
-rule string_neq_1_0 :
-     | "1" != "0" |-
-if
-     | |-
-
-rule string_neq_1_0 :
-     | |- "1" != "0" 
-if
-    | |- 
 
 

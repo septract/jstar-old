@@ -1,0 +1,9 @@
+rule empty_left: 
+   |  empty() |- 
+if
+   |	      |-
+
+rule empty_right:
+  |   |- empty()
+if
+  |   |-

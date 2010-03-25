@@ -12,11 +12,6 @@ rewrite baa2 :
 rewrite foo2:
   y(?x) = y(y(?x))
 
-rewrite foo3:
-  a(?x) = a(b(?x))
-
-rewrite foo4:
-  b(?x) = b(a(?x))
 
 rewrite cons_hd:
   hd(cons(?x,?y)) = ?x

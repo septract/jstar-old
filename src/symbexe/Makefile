@@ -32,20 +32,21 @@ MAIN = $(DEFAULT_ARGS) RESULT=$(LIB)/symbexe.cma
 
 MAINOPT = $(DEFAULT_ARGS)  RESULT=$(LIB)/symbexe.cmxa
 
-default: jstar
+default: symbexe.cmxa
 
-all: jstar
+.PHONY: debug
+debug: symbexe.cma
+
+all: default debug
 
 prebuild: 
 	@(cd ../prover; make)
 
-.PHONY: jstar.byte  
-jstar.byte: prebuild
+symbexe.cma: prebuild
 	@$(MAKE) -f $(OCAMLMAKEFILE) $(MAIN) 
 
 
-.PHONY: jstar
-jstar: prebuild
+symbexe.cmxa: prebuild
 	@$(MAKE) -f $(OCAMLMAKEFILE) $(MAINOPT) native-code
 
 clean:

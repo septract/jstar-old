@@ -1,3 +1,15 @@
+(********************************************************
+   This file is part of jStar 
+	src/utils/debug.ml
+   Release 
+        $Release$
+   Version 
+        $Rev$
+   $Copyright$
+   
+   jStar is distributed under a BSD license,  see, 
+      LICENSE.txt
+ ********************************************************)
 (******************************************************************
      Separation logic theorem prover
 

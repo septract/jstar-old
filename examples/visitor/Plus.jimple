@@ -1,0 +1,44 @@
+class Plus extends java.lang.Object implements Ast
+{
+/*Visitor.java*/
+    Ast left;
+    Ast right;
+
+/*22*/
+    void <init>(Ast, Ast)
+    {
+        Plus r0;
+        Ast r1, r2;
+
+        r0 := @this: Plus;
+/*23*/
+        r1 := @parameter0: Ast;
+/*23*/
+        r2 := @parameter1: Ast;
+/*23*/
+        specialinvoke r0.<java.lang.Object: void <init>()>();
+/*23*/
+        r0.<Plus: Ast left> = r1;
+/*24*/
+        r0.<Plus: Ast right> = r2;
+/*25*/
+        return;
+/*26*/
+    }
+
+/*28*/
+    public void accept(Visitor)
+    {
+        Plus r0;
+        Visitor r1;
+
+        r0 := @this: Plus;
+/*29*/
+        r1 := @parameter0: Visitor;
+/*29*/
+        interfaceinvoke r1.<Visitor: void visitP(Plus)>(r0);
+/*29*/
+        return;
+/*30*/
+    }
+}

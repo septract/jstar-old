@@ -1,0 +1,135 @@
+public class IntegerDataBag extends java.lang.Object implements Subject
+{
+/*IntegerDataBag.java*/
+    public java.util.LinkedList list;
+    private java.util.LinkedList observers;
+
+/*3*/
+    public void <init>()
+    {
+        IntegerDataBag r0;
+        java.util.LinkedList $r1, $r2;
+
+        r0 := @this: IntegerDataBag;
+/*4*/
+        specialinvoke r0.<java.lang.Object: void <init>()>();
+/*4*/
+        $r1 = new java.util.LinkedList;
+/*6*/
+        specialinvoke $r1.<java.util.LinkedList: void <init>()>();
+/*6*/
+        r0.<IntegerDataBag: java.util.LinkedList list> = $r1;
+/*6*/
+        $r2 = new java.util.LinkedList;
+/*8*/
+        specialinvoke $r2.<java.util.LinkedList: void <init>()>();
+/*8*/
+        r0.<IntegerDataBag: java.util.LinkedList observers> = $r2;
+/*8*/
+        return;
+/*8*/
+    }
+
+/*9*/
+    public void beginModification()
+    {
+        IntegerDataBag r0;
+
+        r0 := @this: IntegerDataBag;
+/*10*/
+        return;
+/*10*/
+    }
+
+/*11*/
+    public void endModification()
+    {
+        IntegerDataBag r0;
+
+        r0 := @this: IntegerDataBag;
+/*12*/
+        specialinvoke r0.<IntegerDataBag: void notifyObservers()>();
+/*12*/
+        return;
+/*12*/
+    }
+
+/*14*/
+    public void addObserver(Observer)
+    {
+        IntegerDataBag r0;
+        Observer r1;
+        java.util.LinkedList $r2;
+
+        r0 := @this: IntegerDataBag;
+/*15*/
+        r1 := @parameter0: Observer;
+/*15*/
+        $r2 = r0.<IntegerDataBag: java.util.LinkedList observers>;
+/*15*/
+        virtualinvoke $r2.<java.util.LinkedList: boolean add(java.lang.Object)>(r1);
+/*15*/
+        interfaceinvoke r1.<Observer: void update(Subject)>(r0);
+/*16*/
+        return;
+/*17*/
+    }
+
+/*19*/
+    public void removeObserver(Observer)
+    {
+        IntegerDataBag r0;
+        Observer r1;
+        java.util.LinkedList $r2;
+
+        r0 := @this: IntegerDataBag;
+/*20*/
+        r1 := @parameter0: Observer;
+/*20*/
+        $r2 = r0.<IntegerDataBag: java.util.LinkedList observers>;
+/*20*/
+        virtualinvoke $r2.<java.util.LinkedList: boolean remove(java.lang.Object)>(r1);
+/*20*/
+        return;
+/*21*/
+    }
+
+/*24*/
+    private void notifyObservers()
+    {
+        IntegerDataBag r0;
+        java.util.Iterator r1;
+        Observer r2;
+        java.util.LinkedList $r3;
+        boolean $z0;
+        java.lang.Object $r4;
+
+        r0 := @this: IntegerDataBag;
+/*25*/
+        $r3 = r0.<IntegerDataBag: java.util.LinkedList observers>;
+/*25*/
+        r1 = virtualinvoke $r3.<java.util.LinkedList: java.util.Iterator iterator()>();
+/*25*/
+/*25*/
+
+     label0:
+        $z0 = interfaceinvoke r1.<java.util.Iterator: boolean hasNext()>();
+/*26*/
+        if $z0 == 0 goto label1;
+/*26*/
+
+        $r4 = interfaceinvoke r1.<java.util.Iterator: java.lang.Object next()>();
+/*27*/
+        r2 = (Observer) $r4;
+/*27*/
+/*27*/
+        interfaceinvoke r2.<Observer: void update(Subject)>(r0);
+/*28*/
+        goto label0;
+/*29*/
+
+     label1:
+        return;
+/*30*/
+    }
+}

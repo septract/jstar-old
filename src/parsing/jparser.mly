@@ -1,3 +1,15 @@
+(********************************************************
+   This file is part of jStar 
+	src/parsing/jparser.mly
+   Release 
+        $Release$
+   Version 
+        $Rev$
+   $Copyright$
+   
+   jStar is distributed under a BSD license,  see, 
+      LICENSE.txt
+ ********************************************************)
 /* ddino implementation of a parser for Jimple */
 
 %{ (* header *)
@@ -983,8 +995,22 @@ equiv_rule:
 rule:
    | IMPORT STRING_CONSTANT SEMICOLON { ImportEntry($2) }
    |  RULE identifier_op COLON sequent without where IF sequent_list_or_list { NormalEntry(SeqRule($4,$8,$2,$5,$6)) }
-   |  REWRITERULE identifier_op COLON identifier L_PAREN jargument_list R_PAREN EQUALS jargument ifclause without_simp where { NormalEntry(RewriteRule($4,$6,$9,($11,$12,$10),$2,false)) }
-   |  REWRITERULE identifier_op MULT COLON identifier L_PAREN jargument_list R_PAREN EQUALS jargument ifclause without_simp where { NormalEntry(RewriteRule($5,$7,$10,($12,$13,$11),$2,true)) }
+   |  REWRITERULE identifier_op COLON identifier L_PAREN jargument_list R_PAREN EQUALS jargument ifclause without_simp where 
+	 { NormalEntry(RewriteRule({function_name=$4;
+				     arguments=$6;
+				     result=$9;
+				     guard={without_form=$11;where=$12;if_form=$10};
+				     rewrite_name=$2;
+				     saturate=false})) }
+   |  REWRITERULE identifier_op MULT COLON identifier L_PAREN jargument_list R_PAREN EQUALS jargument ifclause without_simp where 
+	 { NormalEntry(RewriteRule({function_name=$5;
+				     arguments=$7;
+				     result=$10;
+				     guard={without_form=$12;
+					     where=$13;
+					     if_form=$11};
+				     rewrite_name=$2;
+				     saturate=true})) }
    |  ABSRULE identifier_op COLON formula LEADSTO formula where  { let seq=([],$4,[]) in
 							       let wo=(mkEmpty,mkEmpty) in 
 							       let seq2=([],$6,[]) in

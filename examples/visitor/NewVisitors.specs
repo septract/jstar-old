@@ -110,16 +110,18 @@ class RZ
 {
 define Visitor(x,context=y) = 
 		     field(x,<RZ: boolean isZero>,false())
-    		*    field(x,<RZ: Ast newl>,nil())
+    		*    field(x,<RZ: Ast newl>,_)
+		*    field(x,<RZ: boolean isChanged>, false())
 ;
 define Visited(x,content=z;context=y;ast=a) = 
 	             field(x,<RZ: boolean isZero>,_iz)
     		*    field(x,<RZ: Ast newl>,_al)
+		*    field(x,<RZ: boolean isChanged>, _ic)
 		*    Ast(_al2, {content=rz(z)})
 		*    ( _iz != false() * rz(z) = const(zero())
 		     ||  _iz = false() * rz(z) != const(zero()) )
-		*    (  _al != nil() * _al = _al2
-		     || _al == nil() * _al2 = a )
+		*    (  _ic != false() * _al = _al2
+		     || _ic == false() * _al2 = a )
 ;
 
 void <init>() static: { } { Visitor$RZ(@this:,{context=_q})};

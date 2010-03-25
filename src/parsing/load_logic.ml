@@ -1,3 +1,15 @@
+(********************************************************
+   This file is part of jStar 
+	src/parsing/load_logic.ml
+   Release 
+        $Release$
+   Version 
+        $Rev$
+   $Copyright$
+   
+   jStar is distributed under a BSD license,  see, 
+      LICENSE.txt
+ ********************************************************)
 (* File to read a logic file and its imports. *)
 open Psyntax
 open System
@@ -17,11 +29,10 @@ let load_logic_extra_rules dirs filename extra_rules =
 		string_psr r; 
 	    (r::sl,rm)
 	| RewriteRule(r) -> 
-	    (match r with 
-	      (fn,a,b,(c,d,e),f,g) -> (sl,rm_add fn ((a,b,(c,d,e),f,g)::(try rm_find fn rm with Not_found -> [])) rm))
+	    (sl,r::rm)
 	| EquivRule(r) -> assert false
-      ) ([], rm_empty) rl
+      ) ([], []) rl
   in
   (sl,rm)
 
-let load_logic dirs filename : (sequent_rule list * rewrite_map)= load_logic_extra_rules dirs filename []
+let load_logic dirs filename : (sequent_rule list * rewrite_rule list)= load_logic_extra_rules dirs filename []

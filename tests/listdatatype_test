@@ -12,10 +12,21 @@ Implication:
 ? True
 */
 
+
+
 Implication: 
-  | |- len(cons(_x,empty())) = builtin_plus(numeric_const("1"),numeric_const("0")) * _x = "a" |
+  |- len(empty()) = numeric_const("0")
 ? True
 
+/*
+Implication: 
+  |- len(cons(_x,empty())) = builtin_plus(numeric_const("1"),numeric_const("0"))
+? True
+
+Implication: 
+  |- len(cons(_x,empty())) = builtin_plus(numeric_const("1"),numeric_const("0")) * _x = "a" 
+? True
+*/
 /*
 Implication: 
   | |- len(cons(_x,empty())) = builtin_plus(numeric_const("1"),numeric_const("0")) |

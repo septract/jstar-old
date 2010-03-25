@@ -1,0 +1,64 @@
+class Sum extends java.lang.Object implements Visitor
+{
+/*Visitor.java*/
+    int amount;
+
+/*33*/
+    void <init>()
+    {
+        Sum r0;
+
+        r0 := @this: Sum;
+/*34*/
+        specialinvoke r0.<java.lang.Object: void <init>()>();
+/*34*/
+        return;
+/*34*/
+    }
+
+/*36*/
+    public void visitP(Plus)
+    {
+        Sum r0;
+        Plus r1;
+        Ast $r2, $r3;
+
+        r0 := @this: Sum;
+/*37*/
+        r1 := @parameter0: Plus;
+/*37*/
+        $r2 = r1.<Plus: Ast left>;
+/*37*/
+        interfaceinvoke $r2.<Ast: void accept(Visitor)>(r0);
+/*37*/
+        $r3 = r1.<Plus: Ast right>;
+/*38*/
+        interfaceinvoke $r3.<Ast: void accept(Visitor)>(r0);
+/*38*/
+        return;
+/*39*/
+    }
+
+/*41*/
+    public void visitC(Const)
+    {
+        Sum r0;
+        Const r1;
+        int $i0, $i1, $i2;
+
+        r0 := @this: Sum;
+/*42*/
+        r1 := @parameter0: Const;
+/*42*/
+        $i0 = r0.<Sum: int amount>;
+/*42*/
+        $i1 = r1.<Const: int v>;
+/*42*/
+        $i2 = $i0 + $i1;
+/*42*/
+        r0.<Sum: int amount> = $i2;
+/*42*/
+        return;
+/*43*/
+    }
+}

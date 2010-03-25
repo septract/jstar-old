@@ -50,3 +50,6 @@ rule exists_foo_Visitor :
 if
  Visitor(?x,?y) | | |- ?y=?z |
 
+rule ast_not_null : 
+     | Ast(nil(),_) |- 
+if

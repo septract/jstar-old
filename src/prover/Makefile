@@ -24,7 +24,8 @@ endif
 export LIB
 
 
-CORESOURCE = rterm.ml rlogic.ml prover.ml sepprover.ml
+CORESOURCE = congruence.ml cterm.mli cterm.ml clogic.mli clogic.ml prover.ml sepprover.ml
+
 LIBRARYSOURCE = $(CORESOURCE)
 
 LIBRARY = SOURCES="$(LIBRARYSOURCE)" \
@@ -42,6 +43,8 @@ BLIBRARY = SOURCES="$(LIBRARYSOURCE)" \
 
 default: sepprover.cmxa
 
+debug: sepprover.cma
+
 prebuild: 
 	(cd ../prover_syntax; make)
 
@@ -51,7 +54,7 @@ all: default
 sepprover.cmxa: prebuild
 	$(MAKE) -f $(OCAMLMAKEFILE) $(LIBRARY) native-code
 
-ssepprover.cma: prebuild
+sepprover.cma: prebuild
 	$(MAKE) -f $(OCAMLMAKEFILE) $(BLIBRARY) byte-code
 
 clean:

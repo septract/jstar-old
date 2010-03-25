@@ -1,0 +1,6 @@
+public interface  Observer extends java.lang.Object
+{
+/*Observer.java*/
+
+    public abstract void update(Subject);
+}

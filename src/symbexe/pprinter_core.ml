@@ -1,3 +1,15 @@
+(********************************************************
+   This file is part of jStar 
+	src/symbexe/pprinter_core.ml
+   Release 
+        $Release$
+   Version 
+        $Rev$
+   $Copyright$
+   
+   jStar is distributed under a BSD license,  see, 
+      LICENSE.txt
+ ********************************************************)
 open Psyntax
 open Methdec_core
 open Spec
@@ -69,5 +81,4 @@ let pp_stmt_core ppf =
       Format.fprintf ppf 
 	"throw %a;"
 	string_args a
-
-
+  | End -> Format.fprintf ppf "End"

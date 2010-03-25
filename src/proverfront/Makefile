@@ -55,6 +55,9 @@ TMAINOPT = $(DEFAULT_ARGS) SOURCES="$(TESTPROVERSOURCE)" \
 
 default: toplevel testharness
 
+.PHONY: debug
+debug: toplevel.byte testharness.byte
+
 prebuild: 
 	@(cd ../prover; make)
 

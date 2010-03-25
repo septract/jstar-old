@@ -1,3 +1,4 @@
+
 Implication:  
    |-
 ? True
@@ -23,7 +24,7 @@ Implication:
  field(x,f,x) * (x=y || x=nil()) |- field(x,f,y)  
 ? True
 
-
+/*
 Inconsistency:
  field(x,f,y) * field(x,f,z)
 ? True
@@ -35,14 +36,15 @@ Inconsistency:
 Inconsistency:
  field(x,f,y) * field(y,f2,z)
 ? False
+*/
 
 
 Implication: 
- field(x,f,y) |- x!=nil()
+ field(x,f,y) |- x!=nil() * field(x,f,y)
 ? True
 
 Implication: 
- ( x!=nil() || field(x,f,y)) |- x!=nil()
+ ( x!=nil() || field(x,f,y)) |- x!=nil() *  ( x!=nil() || field(x,f,y))
 ? True
 
 Implication: 
@@ -50,8 +52,8 @@ Implication:
 ? True
 
 Implication: 
- y!=nil() * ( x!=nil()  || x=y * field(y,f,j) ) |- x!=nil() 
-? True
+ ( x!=nil()  || x=y * field(y,f,j) ) |- x!=nil() 
+? False
 
 
 Frame: 
@@ -67,6 +69,9 @@ Frame:
  field(y,f,j) * field(x,f,j) * field(z,f,j) |- field(x,f,j)
 ? field(z,f,j) * field(y,f,j)
 
+
+
 Frame: 
  field(y,f,j) * field(x,f,j) * (x=y || field(z,f,j)) |- field(x,f,j)
 ? field(z,f,j) * field(y,f,j)
+
