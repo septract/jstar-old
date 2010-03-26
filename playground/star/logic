@@ -1,9 +1,0 @@
-rewrite length_empty*:
-  length(empty()) = numeric_const("0")
-
-rewrite length_cons*:
-  length(cons(?a, ?alpha)) = builtin_plus(numeric_const("1"), length(?alpha))
-
-rewrite length_app*:
-  length(app(?alpha, ?beta)) = builtin_plus(length(?alpha), length(?beta))
-

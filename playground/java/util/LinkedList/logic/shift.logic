@@ -1,6 +1,0 @@
-/** Rules for right-shifts. **/
-rewrite shiftr_zero_one:
-  builtin_shiftr(numeric_const("0"), numeric_const("1")) = numeric_const("0")
-
-rewrite shiftr_one_one:
-  builtin_shiftr(numeric_const("1"), numeric_const("1")) = numeric_const("0")
