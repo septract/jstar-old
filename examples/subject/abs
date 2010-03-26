@@ -26,6 +26,7 @@ if
 
 
 /************* Abs3 Rule ***********************/
+/*
 rule ls_obs: 
      | | ls(?x,?z,cons(?w,?r)) * Observer(?w,{vals=?v; subject=?s}) |- |
 if
@@ -52,7 +53,7 @@ rule ls_obs_app3:
 if
 | | lsObs(?x,nil(),app(?l,?l2),?v,?s) |- |
 
-
+*/
 /*************** Abs1 Rule *******************/
 rule ls_ls:
 | | ls(?x,_x,?s1) * ls(_x,nil(),?s2) |- |   /* this is for empty | true */
@@ -185,13 +186,6 @@ rewrite hack5 :
   
 
 
-
-
-
-rule  foobar:
-| numeric_const("0") != numeric_const("1") | |- |
-if
-| | |- |
 
 
 

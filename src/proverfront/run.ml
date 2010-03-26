@@ -10,12 +10,6 @@
    jStar is distributed under a BSD license,  see, 
       LICENSE.txt
  ********************************************************)
-(******************************************************************
-     Separation logic theorem prover
-
-    Copyright Matthew Parkinson & Dino Distefano
- 
-*******************************************************************)
 open Congruence
 open Load_logic
 

@@ -500,16 +500,18 @@ let ts_eq ts1 ts2 =
 
 
 let var_not_used_in ts var reps : bool = 
-  let r = match var with 
+  match var with 
     EVar _ -> 
       begin
 	try 
-	  VarMap.find var ts.evars
+	  CC.rep_not_used_in ts.cc (VarMap.find var ts.evars) reps 	  
 	with Not_found -> 
-	  Printf.printf "Could not find existential! Impossible!";
-	  assert false 
+	  (* TODO Check that returning false is sensible.
+	     Printf.printf "Could not find existential! Impossible!";
+	    assert false *)
+	  false
       end
   | _ -> 
       Printf.printf "Don't use non-existential variables in notincontext stuff.";
-      assert false in 
-  CC.rep_not_used_in ts.cc r reps 
+      assert false 
+

@@ -60,7 +60,7 @@ jimple_syntax.cma: prebuild
 clean:
 	$(MAKE) -f $(OCAMLMAKEFILE) $(LIBRARY) clean
 	$(MAKE) -f $(OCAMLMAKEFILE) $(BLIBRARY) clean
-	rm -f *.annot doc/*.html doc/*.css doc/test.odoc logic_parser.output *~ *.dll *.exe *.cmi *.cmx *.o logic_parser.ml logic_lexer.ml logic_parser.mli logic_lexer.mli
+	rm -f *.annot doc/*.html doc/*.css doc/test.odoc logic_parser.output *~ *.dll *.exe *.cmi *.cmx *.o logic_parser.ml logic_lexer.ml logic_parser.mli logic_lexer.mli .depend
 
 prover.dll: $(CORESOURCE)
 	$(FSHARPCOMPILER) -a $(CORESOURCE) -o prover.dll

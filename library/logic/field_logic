@@ -61,11 +61,12 @@ if
   distinct values, then we need to search for a 
   contradiction (False).
  */
+/*
 rule field_field_no_match : 
   | ?y!=?t * field(?x,?f,?y) |-  field(?x,?f,?t) 
 if
   | ?y!=?t * field(?x,?f,?y) |-  field(?x,?f,?t) * False
-
+*/
 
 
 rule field_not_null :

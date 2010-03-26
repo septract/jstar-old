@@ -9,3 +9,6 @@ objects.bbl : objects.bib jstartut.aux
 
 jstartut.aux : jstartut.tex 
 	pdflatex jstartut.tex
+
+clean: 
+	rm jstartut.{aux,bbl,blg,log}

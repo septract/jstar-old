@@ -10,18 +10,7 @@
    jStar is distributed under a BSD license,  see, 
       LICENSE.txt
  ********************************************************)
-(******************************************************************
-     Separation logic theorem prover
 
-    Copyright Matthew Parkinson & Dino Distefano
-
-  $Rev$
-  $Version$
-  $Id: vars.ml 319 2010-03-25 09:13:01Z mjp41 $
-
-  $LastChangedDate $
-  $LastChangedRevision $
-*******************************************************************)
 
 type var =
   | PVar of int * string

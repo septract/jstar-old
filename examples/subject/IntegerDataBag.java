@@ -20,12 +20,21 @@ public class IntegerDataBag implements Subject {
 	observers.remove( o );
     }
 
+    private void notifyObservers(Iterator i) {
+	if (i.hasNext() ) {
+	    Observer o = ( Observer ) i.next();
+	    o.update( this );
+	    notifyObservers(i);
+	}
+    }
+
     private void notifyObservers() {
 	// loop through and notify each observer
 	Iterator i = observers.iterator();
-	while( i.hasNext() ) {
+	/*	while( i.hasNext() ) {
 	    Observer o = ( Observer ) i.next();
 	    o.update( this );
-	}
+	    }*/
+	notifyObservers(i);
     }
 }

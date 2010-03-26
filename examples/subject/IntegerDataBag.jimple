@@ -94,42 +94,56 @@ public class IntegerDataBag extends java.lang.Object implements Subject
 /*21*/
     }
 
-/*24*/
-    private void notifyObservers()
+/*23*/
+    private void notifyObservers(java.util.Iterator)
     {
         IntegerDataBag r0;
         java.util.Iterator r1;
         Observer r2;
-        java.util.LinkedList $r3;
         boolean $z0;
-        java.lang.Object $r4;
+        java.lang.Object $r3;
 
         r0 := @this: IntegerDataBag;
+/*24*/
+        r1 := @parameter0: java.util.Iterator;
+/*24*/
+        $z0 = interfaceinvoke r1.<java.util.Iterator: boolean hasNext()>();
+/*24*/
+        if $z0 == 0 goto label0;
+/*24*/
+
+        $r3 = interfaceinvoke r1.<java.util.Iterator: java.lang.Object next()>();
 /*25*/
-        $r3 = r0.<IntegerDataBag: java.util.LinkedList observers>;
-/*25*/
-        r1 = virtualinvoke $r3.<java.util.LinkedList: java.util.Iterator iterator()>();
+        r2 = (Observer) $r3;
 /*25*/
 /*25*/
+        interfaceinvoke r2.<Observer: void update(Subject)>(r0);
+/*26*/
+        specialinvoke r0.<IntegerDataBag: void notifyObservers(java.util.Iterator)>(r1);
+/*27*/
 
      label0:
-        $z0 = interfaceinvoke r1.<java.util.Iterator: boolean hasNext()>();
-/*26*/
-        if $z0 == 0 goto label1;
-/*26*/
-
-        $r4 = interfaceinvoke r1.<java.util.Iterator: java.lang.Object next()>();
-/*27*/
-        r2 = (Observer) $r4;
-/*27*/
-/*27*/
-        interfaceinvoke r2.<Observer: void update(Subject)>(r0);
-/*28*/
-        goto label0;
-/*29*/
-
-     label1:
         return;
-/*30*/
+/*29*/
+    }
+
+/*32*/
+    private void notifyObservers()
+    {
+        IntegerDataBag r0;
+        java.util.Iterator r1;
+        java.util.LinkedList $r2;
+
+        r0 := @this: IntegerDataBag;
+/*33*/
+        $r2 = r0.<IntegerDataBag: java.util.LinkedList observers>;
+/*33*/
+        r1 = virtualinvoke $r2.<java.util.LinkedList: java.util.Iterator iterator()>();
+/*33*/
+/*33*/
+        specialinvoke r0.<IntegerDataBag: void notifyObservers(java.util.Iterator)>(r1);
+/*38*/
+        return;
+/*39*/
     }
 }

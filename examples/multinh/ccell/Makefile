@@ -8,7 +8,7 @@ ifndef SUBDIRSDEF
 endif
 
 ifndef CLEAN
-  CLEAN = *.class *~ *.dot \#* .\#* *.proof_file*
+  CLEAN = *.proof_file* *.class *~ *.dot \#* .\#*
 endif
 
 DIR = multinh/ccell

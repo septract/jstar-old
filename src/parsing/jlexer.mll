@@ -10,13 +10,6 @@
    jStar is distributed under a BSD license,  see, 
       LICENSE.txt
  ********************************************************)
-(******************************************************************
- JStar: Separation logic verification tool for Java.  
- Copyright (c) 2007-2008,
-    Dino Distefano <ddino@dcs.qmul.ac.uk>
-    Matthew Parkinson <Matthew.Parkinson@cl.cam.ac.uk>
- All rights reserved. 
-*******************************************************************)
 
 
 { (* ddino implementation of a lexer for jimple *)

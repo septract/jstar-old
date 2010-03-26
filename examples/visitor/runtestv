@@ -1,4 +1,4 @@
 #!/bin/bash
 
-jstar -v -l logic -a abs -s ./NewVisitors.specs -f ./$1
+jstar -v -l logic -a abs -s ./Visitor.specs -f ./$1
 

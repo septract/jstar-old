@@ -3,7 +3,7 @@ ifndef TARGETS
 endif
 
 ifndef CLEAN
-  CLEAN =  *.class *~ *.dot \#* .\#* *.proof_file*
+  CLEAN =  *.proof_file* *.class *~ *.dot \#* .\#* 
 endif
 
 ifndef SUBDIRSDEF

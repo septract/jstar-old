@@ -531,14 +531,15 @@ rule Iterator :
 if
  Iterator(?x,?y) | | |- ?y=?z |
 
+
 rule ls_guess:
- | | ls(?x,?y,?v) |- | ls(?x,_w,?v2) 
+ |  ls(?x,?y,?v) |- ls(?x,_w,?v2) 
 without 
-  ?y!=_w
+  ?y=_w
 if
- ls(?x,?y,?v) | | |- ?y=_w * ?v=?v2 |  
+ ls(?x,?y,?v) | |- ?y=_w * ?v=?v2 
 or
- | | ls(?x,?y,?v) |- ?y!=_w | ls(?x,_w,?v2) 
+ | app(v3,v4) = ?v * ls(?x,z,v3) * lspe(z,?y,v4) |- z=_w * ls(?x,_w,?v2) 
 
 rule ls_neq:
  ls(?x,?y,?v) | |- 

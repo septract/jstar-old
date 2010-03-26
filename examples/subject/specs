@@ -152,6 +152,14 @@ void notifyObservers() :
 { Subject$(@this:, {obs=_O; vals=_V}) * ObsSet(_O, _V2, @this:) }
 { Subject$(@this:, {obs=_O; vals=_V}) * ObsSet(_O, _V, @this:) };
 
+void notifyObservers(java.util.Iterator) :
+{ Iterator(@parameter0:,_x) 
+  * lspe(_x,nil(), _O) 
+  * ObsSet(_O, _, @this:) 
+  * SubjectData(@this:,{vals=_V}) }
+{ lspe(_x, nil(), _O)
+  * ObsSet(_O,_V, @this:)
+  * SubjectData(@this:, {vals=_V}) };
 }
 
 

@@ -1,0 +1,3 @@
+Implication:
+  x!=numeric_const("0") * y != numeric_const("0") |- plus(x,y) = rz2(plus(x,y))
+? True
