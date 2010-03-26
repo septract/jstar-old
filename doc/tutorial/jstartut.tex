@@ -191,7 +191,7 @@ Queen Mary University of London, UK \\
 \and 
 {\sc Mike Dodds} \\
 University of Cambridge, UK \\ 
-{\tt Mike.Dodds@cl.cam.ac.uk}
+{\tt Michael.Dodds@cl.cam.ac.uk}
 \and
 {\sc Matthew J. Parkinson} \\
 University of Cambridge, UK \\ 
@@ -850,10 +850,10 @@ two kinds of rule:
 \begin{description}
 \item[Pre-defined rules] are very general structural rules which need
   to be used with any kind of logic systems. These
-  rules are hard-coded inside the prover.
+  rules are hard-coded into the prover.
 \item[User-defined rules] are problem-specific rules. They define a
   particular logic theory needed to solve the problem at hand. They
-  must be provided by the user. Notice that \jStar \ does not check that user-defined rules are 
+  must be provided by the user. Note that \jStar \ does not check that user-defined rules are 
   consistent. Therefore, the user should use special care in ensuring the soundness of rules.
 \end{description} 
 In this tutorial we focus on the second type of rules. Rules are introduced with
@@ -893,7 +893,7 @@ if
 \end{verbatim}
 encodes the implication:
 \[
-\infer[\texttt{rule numeric\_eq\_right}]{ H_s  \mid H_a \vdash \texttt{numeric\_const}(x) = \texttt{numeric\_const} * H_g(y)}{ H_s  \mid H_a \vdash x=y * H_g}
+\infer[\texttt{rule numeric\_eq\_right}]{ H_s  \mid H_a \vdash \texttt{numeric\_const}(x) = \texttt{numeric\_const}(y) * H_g}{ H_s  \mid H_a \vdash x=y * H_g}
 \]
 Informally, this rule says: in any context $H_s, H_a, H_g$, if we want to prove the equality $\texttt{numeric\_const}(x) = \texttt{numeric\_const}(y)$ then we can prove the simpler fact $x=y$ in the same context.
 
@@ -918,16 +918,16 @@ if we have a field {\tt ?f} for the object {\tt ?x} in both the assumed and goal
  field to the subtracted formula, and to add the proof obligation that the values {\tt ?y} and {\tt ?t} are the same to the goal formula. 
 
 The clause {\tt without} prevents the firing of the rule if the inequality {\tt ?y!=?t} is
-present in one of the formulae of the conclusion. In other words, it prevents the rule from firing when the formula already says
+present in the assumed formulae of the conclusion. In other words, it prevents the rule from firing when the assumed formula already says
 that the fields have different values.  This clause is used to avoid the rule being applied
 an infinite number of times.
 
-We actually allow the clause 
+We also allow the clause 
 \begin{verbatim}
 without  
    WO-L |- WO-R
 \end{verbatim}
-to allow the user to specify the side on which a formula does not occur.
+to allow the user to specify on which side the formula does not occur.
 
 \paragraph{Contradictions.} 
 A rule with an empty premise can be used to force the termination of the proof
@@ -955,9 +955,12 @@ Mathematically this syntax corresponds to
 \[
 \infer[\texttt{my\_rule}]
 { H_s \; \mid \; H_a *  \texttt{Conclusion-L}  \; \vdash \; H_g * \texttt{Conclusion-R} }
-{ H_s * \texttt{SubtFPre} \; \mid \; H_a * \texttt{Premise-L } \; \vdash \; H_g * \texttt{Premise-R} 
-  \\
+{ 
+\begin{array}{c}
+H_s * \texttt{SubtFPre} \; \mid \; H_a * \texttt{Premise-L } \; \vdash \; H_g * \texttt{Premise-R} 
+  \\[0.2em]
    H_s * H_a \; \vdash \;  \texttt{With-L} 
+\end{array}
 } 
 \] for some $H_s, H_a, H_g$. 
 
