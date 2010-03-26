@@ -121,6 +121,41 @@ let rec pp_form ts ppf form =
   )
     form.disjuncts
 
+
+let pp_smset_pre pre ppf s = 
+  let rec f s = 
+    if SMSet.has_more s then 
+      let (n,x),s = SMSet.remove s in 
+      Format.fprintf ppf "@[%s%s(%a)@]" pre n string_args_list x;
+      if SMSet.has_more s then 
+	begin Format.fprintf ppf "@ *@ "; f s end
+  in f s
+
+let pp_smset ppf s = 
+  pp_smset_pre "" ppf s 
+
+let rec pp_sform ppf form = 
+  List.iter
+    (fun (r1,r2) -> 
+      Format.fprintf ppf "@[%a=%a@]@ *@ " string_args r1 string_args r2)
+    form.seqs;
+  List.iter
+    (fun (r1,r2) -> 
+      Format.fprintf ppf "@[%a!=%a@]@ *@ " string_args r1 string_args r2)
+    form.sneqs;
+
+  (* Print spatial *)  
+  pp_smset ppf form.sspat; 
+  (* Print plain *)
+  pp_smset_pre "!" ppf form.splain; 
+  (* Print disjuncts *)
+  List.iter 
+    (fun (d1,d2) -> 
+      Format.fprintf ppf "*@ @[(@[%a@]@ ||@ @[%a@])@]" pp_sform d1 pp_sform d2
+  )
+    form.sdisjuncts
+
+
 let pp_ts_form ppf ts_form =
   let ts = ts_form.ts in 
   (* Print term_structure *)
@@ -182,10 +217,22 @@ let is_true form =
 
 
 let add_eqs_t_list fresh eqs ts : term_structure =
-  List.fold_left (fun ts (x,y) -> make_equal_t fresh ts x y) ts eqs
+  List.fold_left (fun ts (x,y) -> 
+    try 
+      make_equal_t fresh ts x y
+    with Contradiction -> 
+      Format.fprintf !(Debug.dump) "Trying to make %a and %a equal failed" string_args x string_args y; 
+      raise Contradiction 
+      ) ts eqs
 
 let add_neqs_t_list fresh neqs ts : term_structure = 
-  List.fold_left (fun ts (x,y) -> make_not_equal_t fresh ts x y) ts neqs
+  List.fold_left (fun ts (x,y) -> 
+    try 
+      make_not_equal_t fresh ts x y
+    with Contradiction -> 
+      Format.fprintf !(Debug.dump) "Trying to make %a and %a not equal failed" string_args x string_args y; 
+      raise Contradiction 
+      ) ts neqs
 
 let add_eqs_list eqs ts : term_structure =
   List.fold_left (fun ts (x,y) -> make_equal ts x y) ts eqs
@@ -497,14 +544,16 @@ type pat_sequent =
   }
       
 let convert_sequent (ps : psequent) : pat_sequent =
-  match ps with
+(*  Format.fprintf !(Debug.dump) "Converting sequent: %a@\n" string_pseq ps;*)
+  let ps = match ps with
     pm,pa,po -> 
       {
        assumption_same = convert_to_inner pm;
        assumption_diff = convert_to_inner pa;
        obligation_diff = convert_to_inner po;
-     }
-
+     } in 
+(*  Format.fprintf !(Debug.dump) "Produced sequent: %a@ |@ %a@ |-@ %a@\n@\n" pp_sform ps.assumption_same pp_sform ps.assumption_diff pp_sform ps.obligation_diff; *)
+  ps
 
 type inner_sequent_rule =
     {
@@ -532,17 +581,39 @@ let convert_rule (sr : sequent_rule) : inner_sequent_rule =
 
 let sequent_join fresh (seq : sequent) (pseq : pat_sequent) : sequent option = 
   try 
-    let ass,ts = convert fresh  seq.ts pseq.assumption_diff in
-    let sam,ts = convert fresh ts pseq.assumption_same in 
-    let obs,ts = convert_without_eqs fresh ts pseq.obligation_diff in 
+    let ass,ts = 
+      try 
+	convert fresh  seq.ts pseq.assumption_diff 
+      with Contradiction -> 
+	Format.fprintf !(Debug.dump) "Failed to add formula to lhs: %a@\n" pp_sform pseq.assumption_diff;
+	raise Contradiction
+    in
+    let ass = conjunction ass seq.assumption in
+    let sam,ts = 
+      try 
+	convert fresh ts pseq.assumption_same 
+      with Contradiction ->
+	Format.fprintf !(Debug.dump) "Failed to add formula to matched: %a@\n" pp_sform pseq.assumption_same;
+	assert false in 
+    let sam = RMSet.union sam.spat seq.matched in 
+    let obs,ts = 
+      try 
+	let obs,ts = convert_without_eqs fresh ts pseq.obligation_diff in
+	let obs = conjunction obs seq.obligation in 
+	obs,ts
+      with Contradiction ->
+	try 
+	  convert_without_eqs true ts false_sform
+	with Contradiction -> assert false
+    in 
     Some {
-     assumption = conjunction ass seq.assumption;
-     obligation = conjunction obs seq.obligation;
-     matched = RMSet.union sam.spat seq.matched;
+     assumption = ass;
+     obligation = obs;
+     matched = sam;
      ts = ts;
    }
   with Contradiction -> 
-    Format.fprintf !(Debug.dump) "Contradiction detected!@\n";
+    Format.fprintf !(Debug.dump) "Contradiction detected!!@\n";
     None
 
 let sequent_join_fresh = sequent_join true
@@ -590,7 +661,7 @@ let match_neqs ts neqs sneqs cont =
     
 
 (* TODO: Currently ignores disjuncts in matching *)
-let match_form remove ts form pat (cont : term_structure * formula -> 'a) : 'a =
+let rec match_form remove ts form pat (cont : term_structure * formula -> 'a) : 'a =
   match_and_remove remove ts form.spat pat.sspat
     (fun (ts,nspat) ->
       match_and_remove remove ts form.plain pat.splain
@@ -599,19 +670,25 @@ let match_form remove ts form pat (cont : term_structure * formula -> 'a) : 'a =
 	    (fun (ts,eqs) -> 
 	      match_neqs ts form.neqs pat.sneqs 
 		(fun (ts,neqs) -> 
-		  if pat.sdisjuncts = [] then
-		    cont (ts,{form with 
+		  match_disjunct remove ts {form with 
 			      spat = nspat;
 			      plain = nplain;
 			      eqs = eqs;
 			      neqs = neqs;
-			    })
-		  else 
-		    assert false
+			    }
+		    pat.sdisjuncts cont
 		)
 	    )
 	)
     )
+and match_disjunct remove ts form pat_disj cont =
+  match pat_disj with 
+    [] -> cont (ts,form)
+  | (x,y)::pat_disj -> 
+      try 
+	match_form remove ts form x (fun (ts,form) -> match_disjunct remove ts form pat_disj cont)
+      with No_match -> 
+	match_form remove ts form y (fun (ts,form) -> match_disjunct remove ts form pat_disj cont)
 
 let contains ts form pat : bool  = 
   try 

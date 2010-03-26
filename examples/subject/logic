@@ -93,8 +93,10 @@ if
 
 rule field_remove1:
 | field(?x,?f,?y) |- field(?x,?f,?t) 
+without 
+  ?y!=?t
 if
-field(?x,?f,?y) | ?y=?t |- 
+field(?x,?f,?y) | |- ?y=?t
 
 
 /*************************************
@@ -314,6 +316,8 @@ if
 
 rule cons_eq_right :
   | | |- cons(?x,?y) = cons(?z,?w) |
+without
+  ?x=?z * ?y=?w
 if
   | | |- ?x=?z * ?w=?y |
 
@@ -415,21 +419,25 @@ if
 *  Append guessing
 *******/
 rule app_inj_left :
-| | |- app(?x,?y) = app(?x,?w) |
+| |- app(?x,?y) = app(?x,?w)
+without 
+  ?y=?w
 if
- | | |- ?y = ?w |
+ | |- ?y = ?w |
 
 rule app_inj_right :
-| | |- app(?y,?x) = app(?w,?x) |
+| |- app(?y,?x) = app(?w,?x)
+without 
+  ?y=?w
 if
- | | |- ?y = ?w |
+ | |- ?y = ?w
 
 
 /*
 rule app_left_guess:
 | | |- app(?x,?y) = app(_z,?w) | 
 without
-  ?x!=_z 
+  ?x!=_z || ?x=_z
 if
 | | |- ?x=_z * app(?x,?y) = app(_z,?w) |
 or
@@ -448,8 +456,10 @@ or
 
 rule app_left_guess:
 | | |- app(?x,?y) = app(_z,?w) | 
+without
+  ?x=_z
 if
-| | |- ?x=_z * app(?x,?y) = app(_z,?w) |
+ | |- ?x=_z * app(?x,?y) = app(_z,?w)
 /*
 or
 | | |- ?x!=_z * app(?x,?y) = app(_z,?w) |
@@ -530,6 +540,12 @@ if
 or
  | | ls(?x,?y,?v) |- ?y!=_w | ls(?x,_w,?v2) 
 
+rule ls_neq:
+ ls(?x,?y,?v) | |- 
+without
+ ?x!=?y
+if
+ | ?x!=?y |-
 
 rule exist_neq :
   | | |- ?x!=_y |
@@ -627,7 +643,7 @@ if
 rule ls_pe4:
 | | |- | lspe(?x,?y,?z) 
 if
-| | |- | ls(?x,?y,?z) 
+| | |- ?x!=?y | ls(?x,?y,?z) 
 or
 | | |- ?x=?y * ?z=empty() |
 

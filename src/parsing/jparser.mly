@@ -1,4 +1,4 @@
-(********************************************************
+/********************************************************
    This file is part of jStar 
 	src/parsing/jparser.mly
    Release 
@@ -9,7 +9,7 @@
    
    jStar is distributed under a BSD license,  see, 
       LICENSE.txt
- ********************************************************)
+ ********************************************************/
 /* ddino implementation of a parser for Jimple */
 
 %{ (* header *)

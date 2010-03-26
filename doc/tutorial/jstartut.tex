@@ -860,7 +860,7 @@ In this tutorial we focus on the second type of rules. Rules are introduced with
 the syntactic construct {\tt rule}:
 \begin{verbatim}
 rule my_rule :
- SubFConc | Conclusion-L |- Conclusion-R 
+ | Conclusion-L |- Conclusion-R 
 if 
  SubtFPre | Premise-L |- Premise-R
   \end{verbatim}
@@ -868,8 +868,10 @@ The keywords {\tt if} separates the conclusion from the premise.
 Mathematically this syntax corresponds to
 \[
 \infer[\texttt{my\_rule}]
-{ H_s * \texttt{SubFConc} \; \mid \; H_a *  \texttt{Conclusion-L}  \; \vdash \; H_g * \texttt{Conclusion-R} }
-{ H_s * \texttt{SubtFPre} \; \mid \; H_a * \texttt{Premise-L } \; \vdash \; H_g * \texttt{Premise-R}} 
+{ H_s \; \mid \; H_a *  \texttt{Conclusion-L}  \; \vdash \; H_g * \texttt{Conclusion-R} }
+{ H_s * \texttt{SubtFPre} \; \mid \; H_a * \texttt{Premise-L } \; \vdash \; H_g * \texttt{Premise-R} 
+%  \qquad   H_s * H_a \; \vdash \;  \texttt{SubFConc} 
+} 
 \] for some $H_s, H_a, H_g$. The rules work with sequents of the form
 \[
 \Sigma \; \mid \; F_1 \; \vdash \; F_2 
@@ -907,7 +909,7 @@ Consider the following rule:
 rule field_remove1:
 | field(?x,?f,?y) |-  field(?x,?f,?t) 
 without
-  ?y!=?t
+  ?y!=?t 
 if
   field(?x,?f,?y) | |- ?y=?t 
 \end{verbatim}
@@ -920,7 +922,12 @@ present in one of the formulae of the conclusion. In other words, it prevents th
 that the fields have different values.  This clause is used to avoid the rule being applied
 an infinite number of times.
 
-
+We actually allow the clause 
+\begin{verbatim}
+without  
+   WO-L |- WO-R
+\end{verbatim}
+to allow the user to specify the side on which a formula does not occur.
 
 \paragraph{Contradictions.} 
 A rule with an empty premise can be used to force the termination of the proof
@@ -929,11 +936,38 @@ search when we reached a contradictory statement.
 For example consider the rule {\tt field\_nil\_contradiction}: 
 \begin{verbatim}
 rule field_nil_contradiction :
- field(nil(),?f,?z) | |-
+ | field(nil(),?f,?z) |-
 if
 \end{verbatim}
 This rule fires when a field for {\tt nil()} is assumed to exist. Clearly, in that case
  we have found a contradiction, and {\tt field\_nil\_contradiction}  will stop the proof search.
+
+\paragraph{With.}
+We allow the user to specify a match to the obligation that may be
+either in the already framed formula, or in the unmatched formula.
+\begin{verbatim}
+rule my_rule :
+ With-L | Conclusion-L |- Conclusion-R 
+if 
+ SubtFPre | Premise-L |- Premise-R
+  \end{verbatim}
+Mathematically this syntax corresponds to
+\[
+\infer[\texttt{my\_rule}]
+{ H_s \; \mid \; H_a *  \texttt{Conclusion-L}  \; \vdash \; H_g * \texttt{Conclusion-R} }
+{ H_s * \texttt{SubtFPre} \; \mid \; H_a * \texttt{Premise-L } \; \vdash \; H_g * \texttt{Premise-R} 
+  \\
+   H_s * H_a \; \vdash \;  \texttt{With-L} 
+} 
+\] for some $H_s, H_a, H_g$. 
+
+We can improve the previous rule by using the with formula.  
+\begin{verbatim}
+rule field_nil_contradiction :
+ field(nil(),?f,?z) | |-
+if
+\end{verbatim}
+This allows contradictions to be found in the already framed heap.  
 \jStarQED
 
 
