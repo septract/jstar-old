@@ -102,7 +102,6 @@ type j_base_type =
   | Null_type  
   | Class_name of class_name
 
-(* ddino: to be fixed.... what to do with quoted_name, identifier, full_identifier?? *)
 type nonvoid_type =
   | Base of  j_base_type * array_brackets list
   | Quoted of  quoted_name * array_brackets list

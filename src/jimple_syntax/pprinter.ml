@@ -52,7 +52,6 @@ let nonstatic_invoke2str i =
   | Interface_invoke -> "interfaceinvoke" 
 
 
-(* ddino: useless function since the type is already string. I just added for completeness and in case we need to change their type. In the latter  case we need to update the 2str function *)
 let identifier2str i = i
 let at_identifier2str i = i 
 let quoted_name2str i  = i 
