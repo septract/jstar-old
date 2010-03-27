@@ -80,4 +80,15 @@ class RZ implements Visitor {
 	    }
 	}
     }
+
+    Ast test1() {
+	Ast a = new Plus(new Const(0), new Const(0));
+	RZ rz = new RZ();
+	a.accept(rz);
+	if(rz.isChanged)
+	    return rz.newl;
+	else 
+	    return a;
+    }
+
 }

@@ -674,7 +674,19 @@ if
 | | |- ?f=?f2 |
 
 
+rule length: 
+ | |- length(_x) = numeric_const("0")
+if 
+ | |- _x=empty()
 
+rule length_guess :
+ | |- length(_x) = length(?y) 
+without 
+ |- _x=?y || _x != ?y 
+if
+ | |- _x = ?y
+or 
+ | |- length(_x) = length(?y) * _x != ?y
 
 
 

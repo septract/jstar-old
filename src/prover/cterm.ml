@@ -171,16 +171,16 @@ let rec add_term params pt ts : 'a * term_structure =
 		  let c,cc = CC.fresh_unifiable ts.cc in 
 		  lift(c), {ts with cc = cc; avars = VarMap.add (v) c ts.avars; originals = CMap.add c (FArg_var (Vars.freshen v))  ts.originals }  
 	      end
-          | PVar _ -> 
+          | PVar (n,_) -> 
 	      (* Check if variable is in current map *)
 	      begin
 		try 
-		  lift(VarMap.find v (if fresh then ts.apvars else ts.pvars)), ts 
+		  lift(VarMap.find v (if fresh && n!=0 then ts.apvars else ts.pvars)), ts 
 		with Not_found ->
 		  (* if not add to ts, and return constant to it *)
 		  let c,cc = CC.fresh ts.cc in
 		  (*let c,cc = app cc lift(ts.var) lift(c) in  *)
-		  if fresh then 
+		  if fresh && n!=0 then 
 		    lift c,{ts with cc = cc; apvars = VarMap.add (v) c ts.apvars; originals = CMap.add c (FArg_var (freshen v))  ts.originals }  
 		  else 
 		    lift c, {ts with cc = cc; pvars = VarMap.add (v) c ts.pvars; originals = CMap.add c (FArg_var v)  ts.originals }  

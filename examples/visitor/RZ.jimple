@@ -136,4 +136,52 @@ class RZ extends java.lang.Object implements Visitor
         return;
 /*82*/
     }
+
+/*84*/
+    Ast test1()
+    {
+        RZ r0, r4, $r6;
+        Plus $r1, r3;
+        Const $r2, $r5;
+        boolean $z0;
+        Ast $r7;
+
+        r0 := @this: RZ;
+/*85*/
+        $r1 = new Plus;
+/*85*/
+        $r2 = new Const;
+/*85*/
+        specialinvoke $r2.<Const: void <init>(int)>(0);
+/*85*/
+        $r5 = new Const;
+/*85*/
+        specialinvoke $r5.<Const: void <init>(int)>(0);
+/*85*/
+        specialinvoke $r1.<Plus: void <init>(Ast,Ast)>($r2, $r5);
+/*85*/
+        r3 = $r1;
+/*85*/
+        $r6 = new RZ;
+/*86*/
+        specialinvoke $r6.<RZ: void <init>()>();
+/*86*/
+        r4 = $r6;
+/*86*/
+        interfaceinvoke r3.<Ast: void accept(Visitor)>(r4);
+/*87*/
+        $z0 = r4.<RZ: boolean isChanged>;
+/*88*/
+        if $z0 == 0 goto label0;
+/*88*/
+
+        $r7 = r4.<RZ: Ast newl>;
+/*89*/
+        return $r7;
+/*89*/
+
+     label0:
+        return r3;
+/*91*/
+    }
 }
