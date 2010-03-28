@@ -9,3 +9,4 @@ test:
 clean: 
 	cd src; make clean
 	cd examples; make clean
+	cd doc/tutorial; make clean

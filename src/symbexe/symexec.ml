@@ -336,16 +336,13 @@ let check_postcondition heaps sheap =
 		 match form with 
 		   None -> () 
 		 | Some form -> 
-		     let idd = add_error_heap_node ((* TODO change this later, inefficient *)form) in 
+		     let idd = add_error_heap_node form in 
 		     add_edge_with_proof (snd sheap) idd 
 		       (Format.fprintf 
 			  (Format.str_formatter) "ERROR EXIT: @\n %a" 
 			  Sepprover.pprint_counter_example (); 
 			Format.flush_str_formatter ()))
       heaps
-      (*print_formset "\n\n Failed Heap:\n" [sheap]    *)
-
-      
 
 
 let rec exec n sheap = 
@@ -384,12 +381,6 @@ and execute_core_stmt n (sheap : formset_entry) : formset_entry list =
     Format.printf "@\nExecuting statement:@ %a" Pprinter_core.pp_stmt_core stm.skind; 
   if Config.symb_debug() then 
     Format.printf "@\nwith heap:@\n    %a@\n@\n@."  string_inner_form  sheap_noid; 
-(* TODO CHeck this is okay to remove.  Prover should do a frame call and return [] if inconsistent.
-   if (Sepprover.check_inconsistency !curr_logic (form_clone sheap_noid false)) then 
-    (if Config.symb_debug() then Printf.printf "\n\nInconsistent heap. Skip it!\n";
-     let idd = add_good_node "Inconsistent"  in add_edge_with_proof (snd sheap) idd "proof";
-     [])
-  else*)
   (
    if Config.symb_debug() 
    then begin

@@ -102,6 +102,8 @@ let has_pp_c ts c : bool =
 let rec get_pargs norm ts rs rep : Psyntax.args =
   if List.mem rep rs then 
     if rep != CC.normalise ts.cc rep then 
+      (* TODO: Add topological sorting to avoid printing this if possible.
+         If not possible should introduce a new variable. *)
       Arg_op ("CYCLE", [])
     else get_pargs norm ts rs (CC.normalise ts.cc rep)
   else 
@@ -147,7 +149,6 @@ let pp_ts ppf ts =
 
 let pp_c ts ppf c = CC.pp_c ts.cc (pp_c true ts) ppf c
 
-exception ERROR
 
 let rec add_term params pt ts : 'a * term_structure = 
   let (unif : bool),
@@ -302,23 +303,12 @@ let add_term fresh term ts =
 
 let add_tuple fresh ptl ts = 
   let c,ts,cl = add_term_list (params_term fresh) ptl (ts.tuple,ts) [] in 
-  (* TODO: Add to pretty printer *)
-  let ts = {ts with originals = CMap.add c (FArg_op("tuple",List.rev cl)) ts.originals}
-(*    if CMap.mem c ts.originals then ts 
-    else {ts with originals = CMap.add c (FArg_op("tuple",List.rev cl)) ts.originals}*) in 
-(*  Format.printf "Adding tuple: %a@\n" (pp_c ts) c;*)
+  let ts = {ts with originals = CMap.add c (FArg_op("tuple",List.rev cl)) ts.originals} in
   c,ts
 
 let make_tuple_pattern ptl ts = 
   let c,ts,cl = add_term_list params_pattern ptl ((CC.Constant ts.tuple),ts) [] in
   c,ts
-
-
-(*
-let match_pattern (ts : term_structure) (pt : pattern) (con : CC.constant) (cont : term_structure -> 'a) : 'a 
-    =
-  CC.patternmatch ts.cc pt con (fun cc -> cont {ts with cc = cc})
-*)  
 
 
 let unifies (ts : term_structure) (pt : pattern) (con : CC.constant) (cont : term_structure -> 'a) : 'a 
@@ -356,7 +346,10 @@ let make_not_equal_t fresh ts t1 t2 =
   make_not_equal ts c1 c2
 
 
-let compress ts = 
+let compress ts =
+  (* TODO: This does not correctly update the originals, some will be
+     lost by overwriting.  Should refactor to make the originals a
+     list, and filter out pointless ones on compression. *)
   let cc,map = CC.compress_full ts.cc in 
   {
   cc = cc;
@@ -419,9 +412,6 @@ let kill_var ts v =
     end
   with Not_found -> 
     ts
-(* We do this, for initial updates to a variable as we call the below *)
-(* Format.printf "Error: Should not call kill_var with non_existing variable.";
-    assert false *)
 
 let update_var_to ts v e = 
   let c,ts = add_term false e ts in

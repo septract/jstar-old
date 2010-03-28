@@ -18,3 +18,8 @@ There is a tutorial for the tool here:
 
 
 [1] http://caml.inria.fr/download.en.html
+
+Note: The OCaml release that is included in the most recent version of
+Cygwin (1.7.2) is 3.08.1 which is too old. Just download the sources
+of the latest OCaml release (3.11.2) and compile them under Cygwin
+following the instructions provided in the INSTALL file.

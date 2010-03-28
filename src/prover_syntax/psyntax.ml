@@ -470,7 +470,7 @@ type rewrite_guard =
     { 
       without_form : pform;
       if_form : pform;
-      where : where list;
+      rewrite_where : where list;
   } 
 
 type rewrite_rule =

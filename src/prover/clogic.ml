@@ -660,7 +660,6 @@ let match_neqs ts neqs sneqs cont =
 
     
 
-(* TODO: Currently ignores disjuncts in matching *)
 let rec match_form remove ts form pat (cont : term_structure * formula -> 'a) : 'a =
   match_and_remove remove ts form.spat pat.sspat
     (fun (ts,nspat) ->
@@ -711,6 +710,20 @@ let rec sequent_reps sequent reps =
   let reps = form_reps sequent.obligation reps in 
   reps
 
+let check wheres seq = 
+  let sreps = sequent_reps seq [] in 
+  List.for_all
+    (
+  function
+    | NotInContext (Psyntax.Var varset) -> 
+	vs_for_all (
+	  fun v -> 
+	    Cterm.var_not_used_in seq.ts v sreps
+	) varset
+    | NotInTerm (Psyntax.Var varset, term) -> 
+	assert false 
+  ) wheres
+
 
 
 
@@ -720,8 +733,7 @@ let rewrite_guard_check seq (ts,guard) =
     if not (is_sempty without) && contains ts seq.assumption without then 
       false
     else 
-      (* TODO add where clause *)
-      true
+      check guard.rewrite_where seq
   else
     false
       
@@ -809,25 +821,8 @@ try
 with Success -> None
 
 
-let check wheres seq = 
-  let sreps = sequent_reps seq [] in 
-(*  Printf.printf "list.length(sreps)=%i" (List.length sreps);*)
-  List.for_all
-    (
-  function
-    | NotInContext (Psyntax.Var varset) -> 
-(*	Printf.printf "HHHHH";*)
-	vs_for_all (
-	  fun v -> 
-	    Cterm.var_not_used_in seq.ts v sreps
-	) varset
-    | NotInTerm (Psyntax.Var varset, term) -> 
-	assert false 
-  ) wheres
 
-
-(* TODO ignores where clauses in rules,
-   Doesn't use obligation equalities to help with match. 
+(* TODO Doesn't use obligation equalities to help with match. 
    *)
 let apply_rule (sr : inner_sequent_rule) (seq : sequent) : sequent list list = 
   (* Should reset any matching variables in the ts to avoid clashes. *)
@@ -842,12 +837,6 @@ let apply_rule (sr : inner_sequent_rule) (seq : sequent) : sequent list list =
 	  let ass_f = {ass with spat=RMSet.union ass.spat seq.matched} in 
 	  match_form true ts ass_f sr.conclusion.assumption_same
 	    (fun (ts,_) ->
-(*	      
-   Format.fprintf !(Debug.dump) "Match rule upto contains %s@\n%a" sr.name pp_sequent
-   {seq with 
-   ts = ts;
-   obligation = ob;
-   assumption = ass;};*)
 	      if (not (is_sempty sr.without_left) && contains ts ass_f sr.without_left) then 
 		raise No_match
 	      else if (not (is_sempty sr.without_right) && contains ts ob sr.without_right) then

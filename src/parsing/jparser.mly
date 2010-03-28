@@ -999,7 +999,7 @@ rule:
 	 { NormalEntry(RewriteRule({function_name=$4;
 				     arguments=$6;
 				     result=$9;
-				     guard={without_form=$11;where=$12;if_form=$10};
+				     guard={without_form=$11;rewrite_where=$12;if_form=$10};
 				     rewrite_name=$2;
 				     saturate=false})) }
    |  REWRITERULE identifier_op MULT COLON identifier L_PAREN jargument_list R_PAREN EQUALS jargument ifclause without_simp where 
@@ -1007,7 +1007,7 @@ rule:
 				     arguments=$7;
 				     result=$10;
 				     guard={without_form=$12;
-					     where=$13;
+					     rewrite_where=$13;
 					     if_form=$11};
 				     rewrite_name=$2;
 				     saturate=true})) }

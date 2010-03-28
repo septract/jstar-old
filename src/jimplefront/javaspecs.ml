@@ -66,10 +66,6 @@ let add_apf_to_logic logic apfdefines classname : Psyntax.logic =
     let parvars = VarSet.add recvar (VarSet.add paramvar VarSet.empty) in
     let defvars = Psyntax.fv_form definition in 
     let sparevars = VarSet.diff defvars parvars in  
-(*TODO: The following sanity checks need rewriting to deal with the new rule form *)
-(*    let _ = if VarSet.for_all (fun x-> match x with EVar _ -> true | _ -> false) sparevars then () else raise ( BadAPF("Variable escape")) in 
-    let _ = if VarSet.cardinal parvars = List.length parameters +1 then () else raise (BadAPF "Parameters not distinct") in *)
-    (*Printf.printf "\n\nAdding a pair of apf rules for %s in class %s.\n" name classname;*)
     let pvarsubst = subst_kill_vars_to_fresh_prog sparevars in 
     let evarsubst = subst_kill_vars_to_fresh_exist sparevars in 
     let pdefinition = subst_pform pvarsubst definition in 

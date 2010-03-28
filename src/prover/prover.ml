@@ -41,57 +41,6 @@ let string_of_proof () =
 
 exception Failed_eg of Clogic.sequent list
 
-(* frame, P,S |- P',S' *)
-
-
-
-
-let external_proof ep ts pl_assume rs p_goal = 
-  false
-
-(*
-let check_cxt where (context_evs,interp) ts = 
-  if ts_debug then 
-    Format.fprintf !dump "Checking context! %a@\n" string_rep_list_db (Rset.elements context_evs);
-  let var_term_to_set varterm =
-    match varterm with 
-      Var vl -> vl
-  in
-  match where with
-    NotInContext (Var vs) ->
-      let varset = var_term_to_set varterm in
-      let b = not (vs_exists 
-	     (fun var -> 
-	       let r = (find_vs ts var interp) in 
-	       if ts_debug then 
-		 Format.fprintf !dump "For %a@\n" string_rep_db r;
-	       Rset.mem r context_evs
-	     ) 
-	     varset
-	  ) in 
-      if ts_debug then 
-	(if b then Format.fprintf !dump "Not found!@\n" else Format.fprintf !dump "Found! @\n");
-      b
-(*      not (vs_exists (fun var -> vs_mem (arg_var_to_evar (subst_var interp var)) context_evs) varset)*)
-  | NotInTerm (varterm,args) -> 
-      let varset = var_term_to_set varterm in
-      let r,interp2 = add_term ts interp args false false in 
- (*     assert(interp2 = interp);  (* Shouldn't change the interpretation *) TODO Can't just structural equality*)
-      let args_evs = rv_transitive r in
-      not (vs_exists (fun var -> Rset.mem (find_vs ts var interp) args_evs) varset)
- 
-
-let check where (form,interp) ts = 
-      let pl,sl,cl = form in 
-      let context_evs = Rterm.accessible_rs ts in
-      let context_evs = rv_spat_list sl context_evs in
-      let context_evs = rv_comp_list cl context_evs in 
-      let context_evs = rv_plain_list (List.filter (fun p -> match p with NEQ _ -> false | _ -> true) pl) context_evs in 
-      let context_evs = rv_trans_set context_evs in
-      check_cxt where (context_evs, interp) ts
-*)
-
-
 
 let rec apply_rule_list_once (rules : sequent_rule list) (seq : Clogic.sequent) ep : Clogic.sequent list list
     =
@@ -99,13 +48,8 @@ let rec apply_rule_list_once (rules : sequent_rule list) (seq : Clogic.sequent) 
     [] -> raise No_match
   | rule::rules ->
       try 
-	(*Printf.printf "Trying rule: %s\n" (match rule with (pff,pfl,pfr),premises,name,without,wherelist -> name);*)
-(*	Printf.printf "Trying rule: \n%s\n" (string_psr rule);*)
 	Clogic.apply_rule (Clogic.convert_rule rule) seq (*ep*)
       with No_match -> apply_rule_list_once rules seq ep
-
-
-
 
 
 let ask_the_audience ep ts p1 rs = 
@@ -119,16 +63,18 @@ let rec sequents_backtrack  f (seqss : Clogic.sequent list list) xs
     [] -> raise (Failed_eg xs)
   | seqs::seqss -> 
       try f seqs 
-      with Failed ->  (if true || !(Debug.debug_ref) then Format.fprintf !dump "Backtracking!@\n"); sequents_backtrack f seqss xs
-      | Failed_eg x -> (if true || !(Debug.debug_ref) then Format.fprintf !dump "Backtracking!@\n"); sequents_backtrack f seqss (x @ xs)
+      with 
+	Failed ->  
+	  Format.fprintf !dump "Backtracking!@\n"; sequents_backtrack f seqss xs
+      | Failed_eg x -> 
+	  Format.fprintf !dump "Backtracking!@\n"; sequents_backtrack f seqss (x @ xs)
 
 let rec apply_rule_list 
     logic 
     (sequents : Clogic.sequent list) 
     (must_finish : Clogic.sequent -> bool) 
     (may_finish : Clogic.sequent -> bool) 
-    find_frame 
-    abs : Clogic.sequent list 
+    : Clogic.sequent list 
     =
 (* Clear pretty print buffer *)
   Buffer.clear buffer_dump;
@@ -173,26 +119,16 @@ let rec apply_rule_list
   in let res = apply_rule_list_inner sequents n in 
   if true || !(Debug.debug_ref) then Format.fprintf !dump "End time :%f @\n@?" (Sys.time ()); res
 
-
-
-
-
-
-
-
-
-
-
 let check_imp logic seq = 
     try 
-      ignore (apply_rule_list logic [seq] Clogic.true_sequent Clogic.true_sequent false false); true
+      ignore (apply_rule_list logic [seq] Clogic.true_sequent Clogic.true_sequent); true
     with  
       Failed -> false
     | Failed_eg x -> prover_counter_example := x ; false
 
 let check_frm logic seq =
   try
-    let leaves = apply_rule_list logic [seq] (fun _ -> false) Clogic.frame_sequent false false in 
+    let leaves = apply_rule_list logic [seq] (fun _ -> false) Clogic.frame_sequent in 
     Some (Clogic.get_frames leaves)
   with 
     Failed -> Format.fprintf !(Debug.dump) "Foo55";None 
@@ -213,14 +149,6 @@ let abs logic ts_form  =
   | None -> 
       (* Abstraction cannot fail *)
       assert false
-
-(*  try
-    let seqs = 	[ts,([],heap1,([],[],[]))] in 
-    get_frames2 (apply_rule_list logic seqs true true) 
-  with Failed -> []
-  | Failed_eg x-> prover_counter_example := x;  []*)
-
-
 
 let check_implication_syntactic logic pform pform2 = 
   let seq = Clogic.make_sequent (Clogic.convert_sequent ([],pform,pform2)) in
