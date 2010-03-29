@@ -7,7 +7,7 @@ installed [1].
 To run the build process: 
   $ make 
 
-This will generate the jstar executable file:
+This will generate the following executable file for jstar:
   ./bin/jstar
 
 To run all of the tests in the examples directory: 
@@ -20,6 +20,6 @@ There is a tutorial for the tool here:
 [1] http://caml.inria.fr/download.en.html
 
 Note: The OCaml release that is included in the most recent version of
-Cygwin (1.7.2) is 3.08.1 which is too old. Just download the sources
-of the latest OCaml release (3.11.2) and compile them under Cygwin
-following the instructions provided in the INSTALL file.
+Cygwin (1.7.2) is 3.08.1 which is too old. Just download the sources of
+the latest OCaml release (currently 3.11.2) and compile them under
+Cygwin following the instructions provided in the INSTALL file.
