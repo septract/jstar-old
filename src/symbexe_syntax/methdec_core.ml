@@ -1,6 +1,6 @@
 (********************************************************
    This file is part of jStar 
-	src/symbexe/methdec_core.ml
+	src/symbexe_syntax/methdec_core.ml
    Release 
         $Release$
    Version 

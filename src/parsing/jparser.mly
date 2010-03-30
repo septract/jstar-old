@@ -195,6 +195,7 @@ let field_signature2str fs =
 %token <string> IDENTIFIER 
 %token <string> AT_IDENTIFIER 
 %token <string> FULL_IDENTIFIER 
+%token <string> CORE_LABEL
 %token COLON_EQUALS 
 %token EQUALS 
 %token AND 
@@ -302,7 +303,6 @@ let field_signature2str fs =
 
 %start rule_file
 %type <Psyntax.rules Load.importoption list> rule_file
-
 
 %start question_file
 %type <Psyntax.question list> question_file
@@ -1098,12 +1098,18 @@ inductive_file:
 
 core_file:
    |  EOF  { [] }
-   |  core_spec core_file  { $1 :: $2 } 
+   |  core_spec SEMICOLON core_file  { $1 :: $3 } 
 
 core_spec: 
    |  NOOP  { Nop_stmt_core }
-   |  variable_list EQUALS { Nop_stmt_core } 
-   |  GOTO { Nop_stmt_core } 
+   |  lvariable_list_ne_npv COLON_EQUALS L_BRACE formula_npv R_BRACE L_BRACE formula_npv R_BRACE L_PAREN R_PAREN
+       { Assignment_core($1, (Spec.mk_spec $4 $7 ClassMap.empty), []) } 
+   |  GOTO label_list { Goto_stmt_core $2 } 
+   |  LABEL IDENTIFIER  { Label_stmt_core $2 }
+
+label_list:
+   |  CORE_LABEL   { [$1] }
+   |  CORE_LABEL COMMA label_list   { $1 :: $3 }
 
 
 

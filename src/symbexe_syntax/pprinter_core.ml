@@ -1,6 +1,6 @@
 (********************************************************
    This file is part of jStar 
-	src/symbexe/pprinter_core.ml
+	src/symbexe_syntax/pprinter_core.ml
    Release 
         $Release$
    Version 

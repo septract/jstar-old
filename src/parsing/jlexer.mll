@@ -136,7 +136,7 @@ let keyword_al = [
   ("abstraction",ABSRULE);
   ("equiv",EQUIV);
   ( "inductive" , INDUCTIVE );
-  ("noop",NOOP);
+  ("nop",NOOP);
   ("label",LABEL);
 ]
 
@@ -219,6 +219,8 @@ let float_constant = ((dec_constant '.' dec_constant) (('e'|'E') ('+'|'-')? dec_
 
 let string_constant = '"' string_char* '"'
 
+let core_label = simple_id_char*
+
 (* Translation of section Tokens of jimple.scc *)
 
 rule token = parse
@@ -297,6 +299,8 @@ rule token = parse
 			let s= String.sub s 1 (String.length s - 2) in 
 			try List.assoc s keyword_al
 			with Not_found -> STRING_CONSTANT s }
+			
+   | core_label { let s = Lexing.lexeme lexbuf in CORE_LABEL s}
 
   | _ { raise (Failure (error_message (Illegal_character ((Lexing.lexeme lexbuf).[0])) lexbuf))}
 and comment = parse 
