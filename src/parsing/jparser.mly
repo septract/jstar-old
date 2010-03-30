@@ -22,6 +22,7 @@ open Lexing
 open Parsing 
 open Jimple_global_types
 open Spec
+open Methdec_core
 open Load
 open Spec_def
 open Psyntax
@@ -252,6 +253,9 @@ let field_signature2str fs =
 
 %token INDUCTIVE
 
+%token NOOP 
+%token LABEL
+
 
 /* ============================================================= */
 
@@ -309,7 +313,12 @@ let field_signature2str fs =
 %start inductive_file
 %type <Psyntax.inductive_stmt list> inductive_file
 
+%start core_file 
+%type <Methdec_core.core_statement list> core_file 
+
 %% /* rules */
+
+
 
 file:
    | modifier_list_star file_type class_name extends_clause implements_clause file_body
@@ -1085,6 +1094,17 @@ inductive:
 inductive_file: 
    | EOF  { [] }
    | inductive inductive_file  {$1 :: $2}
+
+
+core_file:
+   |  EOF  { [] }
+   |  core_spec core_file  { $1 :: $2 } 
+
+core_spec: 
+   |  NOOP  { Nop_stmt_core }
+   |  variable_list EQUALS { Nop_stmt_core } 
+   |  GOTO { Nop_stmt_core } 
+
 
 
 %% (* trailer *)

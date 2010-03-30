@@ -136,6 +136,8 @@ let keyword_al = [
   ("abstraction",ABSRULE);
   ("equiv",EQUIV);
   ( "inductive" , INDUCTIVE );
+  ("noop",NOOP);
+  ("label",LABEL);
 ]
 
 
