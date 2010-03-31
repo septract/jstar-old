@@ -113,8 +113,8 @@ let keyword_al = [
    ( "cls" , CLS );
    ( "andalso" , ANDALSO );
    ( "export" , EXPORT );
-	 ( "exports" , EXPORTS );
-	 ( "axioms" , AXIOMS );
+   ( "exports" , EXPORTS );
+   ( "axioms" , AXIOMS );
    ( "define" , DEFINE );
   ("import",IMPORT);
   ("False",FALSE);
@@ -135,10 +135,13 @@ let keyword_al = [
   ("or",ORTEXT);
   ("abstraction",ABSRULE);
   ("equiv",EQUIV);
-  ( "inductive" , INDUCTIVE );
+  ("inductive" , INDUCTIVE );
   ("nop",NOOP);
   ("label",LABEL);
+  ("end",END)
 ]
+
+
 
 
 (* to store the position of the beginning of a comment *)
@@ -219,7 +222,7 @@ let float_constant = ((dec_constant '.' dec_constant) (('e'|'E') ('+'|'-')? dec_
 
 let string_constant = '"' string_char* '"'
 
-let core_label = simple_id_char*
+let core_label = (first_id_char | escape_char) (simple_id_char | escape_char)* | "<clinit>" | "<init>"
 
 (* Translation of section Tokens of jimple.scc *)
 
@@ -300,8 +303,6 @@ rule token = parse
 			try List.assoc s keyword_al
 			with Not_found -> STRING_CONSTANT s }
 			
-   | core_label { let s = Lexing.lexeme lexbuf in CORE_LABEL s}
-
   | _ { raise (Failure (error_message (Illegal_character ((Lexing.lexeme lexbuf).[0])) lexbuf))}
 and comment = parse 
   | "/*"  { nest lexbuf; comment lexbuf }

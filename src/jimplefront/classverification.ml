@@ -81,11 +81,11 @@ let verify_axioms_implications class_name jimple_file implications axiom_map log
 	) implications
 	
 let verify_methods
-		jimple_file
-		static_method_specs
-		dynamic_method_specs
-		logic
-		abslogic =
+		(jimple_file : Jimple_global_types.jimple_file)
+		(static_method_specs : Javaspecs.methodSpecs)
+		(dynamic_method_specs : Javaspecs.methodSpecs)
+		(logic : logic)
+		(abslogic : logic) =
 	let Jimple_global_types.JFile(_,_,class_name,_,_,_) = jimple_file in
 	let parents = parent_classes_and_interfaces jimple_file in
 	let static_specs = MethodMap.fold (fun (cn,a,b,c) spec list -> if cn=class_name then ((cn,a,b,c),spec)::list else list) static_method_specs [] in

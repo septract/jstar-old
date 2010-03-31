@@ -256,6 +256,7 @@ let field_signature2str fs =
 
 %token NOOP 
 %token LABEL
+%token END
 
 
 /* ============================================================= */
@@ -315,6 +316,9 @@ let field_signature2str fs =
 
 %start core_file 
 %type <Methdec_core.core_statement list> core_file 
+
+%start spec
+%type <Spec.spec> spec
 
 %% /* rules */
 
@@ -1101,15 +1105,15 @@ core_file:
    |  core_spec SEMICOLON core_file  { $1 :: $3 } 
 
 core_spec: 
+   |  END   { End }
    |  NOOP  { Nop_stmt_core }
-   |  lvariable_list_ne_npv COLON_EQUALS L_BRACE formula_npv R_BRACE L_BRACE formula_npv R_BRACE L_PAREN R_PAREN
-       { Assignment_core($1, (Spec.mk_spec $4 $7 ClassMap.empty), []) } 
+   |  lvariable_list_ne_npv COLON_EQUALS spec { Assignment_core($1, $3, []) } 
    |  GOTO label_list { Goto_stmt_core $2 } 
    |  LABEL IDENTIFIER  { Label_stmt_core $2 }
 
 label_list:
-   |  CORE_LABEL   { [$1] }
-   |  CORE_LABEL COMMA label_list   { $1 :: $3 }
+   |  IDENTIFIER   { [$1] }
+   |  IDENTIFIER COMMA label_list   { $1 :: $3 }
 
 
 

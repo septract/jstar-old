@@ -470,7 +470,11 @@ and execute_core_stmt n (sheap : formset_entry) : formset_entry list =
 (* the queue qu is a list of pairs [(node, expression option)...] the expression
 is used to deal with if statement. It is the expression of the if statement is the predecessor
 of the node is a if_stmt otherwise is None. In the beginning is always None for each node *)
-let verify (mname : string) (stmts : stmt_core list)  (spec : spec) (lo : logic) (abs_rules : logic) =
+let verify (mname : string) 
+           (stmts : stmt_core list)  
+           (spec : spec) 
+           (lo : logic) 
+           (abs_rules : logic) =
 
   (* remove methods that are declared abstraction *)
   curr_logic:= lo;

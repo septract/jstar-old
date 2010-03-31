@@ -67,7 +67,7 @@ let pp_stmt_core ppf =
   | Nop_stmt_core -> 
       Format.fprintf ppf "nop;"
   | Label_stmt_core l ->  
-      Format.fprintf ppf "%s:" l 
+      Format.fprintf ppf "label %s;" l 
   | Assignment_core (v,spec,e)-> 
       Format.fprintf ppf "%a@ @[%a@]@[(%a)@];"
 	(fun ppf v -> match v with [] -> () | _ -> Format.fprintf ppf "%a@ :=@ " variable_list2str v) v	
@@ -81,4 +81,4 @@ let pp_stmt_core ppf =
       Format.fprintf ppf 
 	"throw %a;"
 	string_args a
-  | End -> Format.fprintf ppf "End"
+  | End -> Format.fprintf ppf "end"

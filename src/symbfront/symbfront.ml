@@ -29,9 +29,9 @@ let main () =
   if !program_file_name="" then 
     Printf.printf "File name not specified. Can't continue....\n %s \n" usage_msg
   else 
-    let question_list = System.parse_file Jparser.core_file Jlexer.token !program_file_name "Questions" true in
+   let question_list = System.parse_file Jparser.core_file Jlexer.token !program_file_name "Questions" true in
 	Printf.printf "parsing results:\n" ;
-	List.map (pp_stmt_core Format.std_formatter) question_list;
-    Printf.printf "Hello!\n"
+	List.iter (pp_stmt_core Format.std_formatter) question_list;
+	Format.print_newline () 
 
 let _ = main ()
