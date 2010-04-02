@@ -26,14 +26,14 @@ let logic_file_name = ref "";;
 let absrules_file_name = ref "";;
 
 let set_method_name n = method_name := n  
-let set_file_name n =  core_file_name := n 
+let set_core_name n =  core_file_name := n 
 let set_spec n =  spec_file_name := n
 let set_logic_file_name n =  logic_file_name := n 
 let set_absrules_file_name n =  absrules_file_name := n 
 
 let arg_list =[ 
   ("-m", Arg.String(set_method_name), "method name"); 
-  ("-f", Arg.String(set_file_name ), "program file name" );
+  ("-f", Arg.String(set_core_name ), "program file name" );
   ("-l", Arg.String(set_logic_file_name ), "logic file name" );
   ("-s", Arg.String(set_spec), "specification file name"); 
   ("-a", Arg.String(set_absrules_file_name ), "abstraction rules file name" );
