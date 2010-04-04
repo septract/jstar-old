@@ -480,6 +480,10 @@ let verify (mname : string)
   curr_logic:= lo;
   curr_abs_rules:=abs_rules;
  
+  (* Print core for the appropriate method *)
+  Printf.printf "Core dump for method %s", mname; 
+  
+
   stmts_to_cfg stmts;
   match stmts with 
     [] -> assert false

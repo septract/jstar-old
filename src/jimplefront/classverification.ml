@@ -79,6 +79,7 @@ let verify_axioms_implications class_name jimple_file implications axiom_map log
 			with Not_found -> ()
 		) parents
 	) implications
+
 	
 let verify_methods
 		(jimple_file : Jimple_global_types.jimple_file)

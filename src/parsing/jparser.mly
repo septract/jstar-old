@@ -385,6 +385,13 @@ specs:
    | spec ANDALSO specs  { $1 :: $3 }
    | spec     {[$1]}
 
+spec_npv:
+   | L_BRACE formula_npv R_BRACE L_BRACE formula_npv R_BRACE exp_posts_npv  {  {pre=$2;post=$5;excep=$7}  }
+specs_npv:
+   | spec_npv ANDALSO specs_npv  { $1 :: $3 }
+   | spec_npv     {[$1]}
+
+
 method_spec:
    | method_signature_short COLON specs  SEMICOLON  { mkDynamic($1, $3) }
    | method_signature_short STATIC COLON specs SEMICOLON  { mkStatic($1, $4) }
@@ -394,6 +401,11 @@ method_spec:
 exp_posts:
    | L_BRACE identifier COLON formula R_BRACE exp_posts { ClassMap.add $2 $4 $6 }
    | /*empty */ { ClassMap.empty }
+
+exp_posts_npv:
+   | L_BRACE identifier COLON formula_npv R_BRACE exp_posts_npv { ClassMap.add $2 $4 $6 }
+   | /*empty */ { ClassMap.empty }
+
 
 modifier:
    | ABSTRACT      {Abstract} 
@@ -1102,12 +1114,14 @@ inductive_file:
 
 core_file:
    |  EOF  { [] }
-   |  core_spec SEMICOLON core_file  { $1 :: $3 } 
+   |  core_stmt SEMICOLON core_file  { $1 :: $3 } 
 
-core_spec: 
+core_stmt: 
    |  END   { End }
    |  NOOP  { Nop_stmt_core }
-   |  lvariable_list_ne_npv COLON_EQUALS spec { Assignment_core($1, $3, []) } 
+   |  lvariable_list_ne_npv COLON_EQUALS spec L_BRACKET jargument_list_npv R_BRACKET 
+         { Assignment_core($1, $3, $5) } 
+   |  spec L_BRACKET jargument_list_npv R_BRACKET { Assignment_core([], $1, $3) } 
    |  GOTO label_list { Goto_stmt_core $2 } 
    |  LABEL IDENTIFIER  { Label_stmt_core $2 }
 
