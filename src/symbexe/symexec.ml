@@ -345,6 +345,32 @@ let check_postcondition heaps sheap =
       heaps
 
 
+(* extract the return value into variable v *)
+let eliminate_ret_var 
+      ( name_ret_var : string)
+      ( v : Vars.var) 
+      ( h : inner_form ) : inner_form   =
+   let ret_var = Vars.concretep_str name_ret_var in 
+   let h = update_var_to v (Arg_var ret_var) h in 
+   kill_var ret_var h
+
+
+(* extract return values called 'name_template' into variables vs *)
+let eliminate_ret_vs
+      ( name_template : string ) 
+      ( start : int )
+      ( vs : Vars.var list )
+      ( h : inner_form ) : inner_form  = 
+  let rec add_index 
+      ( xs : 'a list ) 
+      ( i : int ) : ( ('a * int) list )  = 
+    match xs with  | []     ->  [] 
+                   | y::ys  ->  ( (y,i) :: (add_index ys (i+1)) ) 
+  in 
+  let vs_i = add_index vs start in  
+  List.fold_right (fun (v,i) -> eliminate_ret_var (name_template ^ string_of_int i) v) vs_i h
+
+
 let rec exec n sheap = 
   let sheap_noid=fst sheap in
   let sheap_noid=Sepprover.kill_all_exists_names sheap_noid in 
@@ -352,6 +378,7 @@ let rec exec n sheap =
 (*  if Config.symb_debug() then 
     Format.printf "Output to %i with heap@\n   %a@\n" (node_get_id n) (string_ts_form (Rterm.rao_create ())) sheap_noid; *)
   execute_core_stmt n sheap 
+
 
 and execs_with_function n sheaps g = 
  let rec f ls = 
@@ -372,6 +399,7 @@ and execs_one n sheaps =
 	
 and execs n sheaps =
 	execs_with_function n sheaps (fun n -> [n])
+	
 
 and execute_core_stmt n (sheap : formset_entry) : formset_entry list =
   let sheap_noid=fst sheap in
@@ -445,26 +473,24 @@ and execute_core_stmt n (sheap : formset_entry) : formset_entry list =
     | Goto_stmt_core _ -> execs_one n [sheap]
     | Nop_stmt_core  -> execs_one n [sheap]
     | Assignment_core (vl, spec, il) -> 
-	( match vl with 
-	| [] -> 
-	    let hs=call_jsr_static sheap spec il n in
-	    let hs=add_id_formset_edge (snd sheap) (Debug.toString Pprinter_core.pp_stmt_core n.skind) hs n in
-	    execs_one n hs
-	| [v] ->
-	    let eliminate_ret_var h =
-	      let h = update_var_to v (Arg_var ret_var) h in 
-	      let h = kill_var ret_var h in 
-	      h
-	    in
-	    let hs=call_jsr_static sheap spec il n in
-	    let hs=List.map eliminate_ret_var hs in 
-	    let hs=add_id_formset_edge (snd sheap) (Debug.toString Pprinter_core.pp_stmt_core n.skind)  hs n in
-	    execs_one n hs
-	| _ -> assert false (* TODO be done *)
-	      )
+       ( 
+		let hs=call_jsr_static sheap spec il n in
+		match vl with 
+		| [] -> 
+			let hs=add_id_formset_edge (snd sheap) (Debug.toString Pprinter_core.pp_stmt_core n.skind) hs n in
+			execs_one n hs
+		| v::vs -> 
+			(* For legacy reasons, match first variable to $ret_var, not $ret_var1 *)
+			let hs=List.map (eliminate_ret_var "$ret_var" v) hs in 
+			(* start index from 2 *)
+		  	let hs=List.map (eliminate_ret_vs "$ret_var" 2 vs) hs in 
+			let hs=add_id_formset_edge (snd sheap) (Debug.toString Pprinter_core.pp_stmt_core n.skind)  hs n in
+			execs_one n hs
+	    )
     | Throw_stmt_core _ -> assert  false 
     | End -> execs_one n [sheap]
 	  ))
+	
       
 (* implements a work-list fidex point algorithm *)
 (* the queue qu is a list of pairs [(node, expression option)...] the expression
