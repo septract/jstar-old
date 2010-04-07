@@ -322,7 +322,7 @@ let rec string_form_at ppf pa =
   match pa with 
     P_NEQ(a1,a2) -> Format.fprintf ppf "%a != %a" string_args a1  string_args a2
   | P_EQ(a1,a2) -> Format.fprintf ppf "%a = %a" string_args a1  string_args a2
-  | P_PPred(op,al) -> Format.fprintf ppf "%s(%a)" op ]_list al
+  | P_PPred(op,al) -> Format.fprintf ppf "%s(%a)" op string_args_list al
   | P_SPred (s,al) -> Format.fprintf ppf "%s(%a)" s string_args_list al
   | P_Or(f1,f2) -> Format.fprintf ppf "@[@[(%a)@]@ || @[(%a)@]@]" string_form f1 string_form f2
   | P_Wand(f1,f2) -> Format.fprintf ppf "@[@[(%a)@] -* @[(%a)@]@]" string_form f1  string_form f2
