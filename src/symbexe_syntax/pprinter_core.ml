@@ -13,6 +13,9 @@
 open Psyntax
 open Methdec_core
 open Spec
+
+let core_debug () = false
+
 (* =================== PPrinter for core  ============================ *)
 
 let rec args2str  arg = 
@@ -62,7 +65,7 @@ and list_form2str  list =
 let variable_list2str lv =
   Debug.list_format "," Vars.pp_var lv
 
-let pp_stmt_core ppf = 
+let pp_stmt_core (ppf: Format.formatter) : core_statement -> unit = 
   function
   | Nop_stmt_core -> 
       Format.fprintf ppf "nop;"
@@ -82,3 +85,22 @@ let pp_stmt_core ppf =
 	"throw %a;"
 	string_args a
   | End -> Format.fprintf ppf "end"
+
+
+(* Print a sequence of core statements to a file *)
+let print_core 
+    (filename : string) 
+    (mname: string) 
+    (stmts : stmt_core list) : unit =
+
+  if core_debug () then ignore (Printf.printf "\n\nPrinting core file for method %s..." mname); 
+  
+  (* FIXME: Don't understand why I can't use Format.formatter_of_out_channel *)
+  let cstr = Format.flush_str_formatter 
+     (List.iter (fun x -> pp_stmt_core Format.str_formatter x.skind) stmts) in 
+  let chan = open_out (filename ^ "." ^ mname ^ ".core") in 
+  Printf.fprintf chan "%s" cstr; 
+  close_out chan; 
+
+
+

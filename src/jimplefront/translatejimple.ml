@@ -363,6 +363,8 @@ let jimple_locals2stattype_rules (locals : local_var list) : sequent_rule list =
 let add_static_type_info logic locals : Psyntax.logic =
 	let rules = jimple_locals2stattype_rules locals in
 	Javaspecs.append_rules logic rules
+	
+
 
 (* implements a work-list fidex point algorithm *)
 (* the queue qu is a list of pairs [(node, expression option)...] the expression
@@ -408,8 +410,13 @@ let compute_fixed_point
                   in
                   List.flatten [meth_body_info;requires_info;old_clause_info;ensures_info]
           ) mdl in (* TODO HERE *)
-  let xs = List.flatten xs in
-  Cfg_core.print_icfg_dotty xs (!file);
+
+  (* Print core files generated from methods *)
+  List.iter (fun (x,y) -> Pprinter_core.print_core !file y x) (List.flatten xs); 
+
+  (* print dot-file representation of CFG *)
+  Cfg_core.print_icfg_dotty (List.flatten xs) (!file);
+
   (* now verify each method *)
   List.iter (fun m ->
 									let meth_sig_str = methdec2signature_str m in
