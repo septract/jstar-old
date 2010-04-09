@@ -101,14 +101,19 @@ let pp_rmset ts ppf s =
   pp_rmset_pre "" ts ppf s 
 
 let rec pp_form ts ppf form = 
+ (* Debug.list_format "*" 
+    (fun ppf (r1,r2) -> 
+      Format.fprintf ppf "@[%a=%a@]" (pp_c ts) r1 (pp_c ts) r2)
+      ppf form.eqs; *)
+
   List.iter
     (fun (r1,r2) -> 
       Format.fprintf ppf "@[%a=%a@]@ *@ " (pp_c ts) r1 (pp_c ts) r2)
-    form.eqs;
+    form.eqs; 
   List.iter
     (fun (r1,r2) -> 
       Format.fprintf ppf "@[%a!=%a@]@ *@ " (pp_c ts) r1 (pp_c ts) r2)
-    form.neqs;
+    form.neqs; 
 
   (* Print spatial *)  
   pp_rmset ts ppf form.spat; 
@@ -138,11 +143,12 @@ let rec pp_sform ppf form =
   List.iter
     (fun (r1,r2) -> 
       Format.fprintf ppf "@[%a=%a@]@ *@ " string_args r1 string_args r2)
-    form.seqs;
+    form.sneqs;
+
   List.iter
     (fun (r1,r2) -> 
       Format.fprintf ppf "@[%a!=%a@]@ *@ " string_args r1 string_args r2)
-    form.sneqs;
+    form.sneqs; 
 
   (* Print spatial *)  
   pp_smset ppf form.sspat; 
@@ -154,7 +160,6 @@ let rec pp_sform ppf form =
       Format.fprintf ppf "*@ @[(@[%a@]@ ||@ @[%a@])@]" pp_sform d1 pp_sform d2
   )
     form.sdisjuncts
-
 
 let pp_ts_form ppf ts_form =
   let ts = ts_form.ts in 

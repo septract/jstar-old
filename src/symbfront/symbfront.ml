@@ -31,7 +31,7 @@ let set_spec n =  spec_file_name := n
 let set_logic_file_name n =  logic_file_name := n 
 let set_absrules_file_name n =  absrules_file_name := n 
 
-let arg_list =[ 
+let arg_list = [ 
   ("-m", Arg.String(set_method_name), "method name"); 
   ("-f", Arg.String(set_core_name ), "program file name" );
   ("-l", Arg.String(set_logic_file_name ), "logic file name" );
@@ -40,7 +40,7 @@ let arg_list =[
 ]
 
 
-let main () = 
+let main () : unit = 
   let usage_msg=
 "Usage: -m <method_name>  -l <logic_file_name>  -a <abstraction_file_name>  
         -s <spec_file_name>  -f <core_file_name>" in 
@@ -62,8 +62,9 @@ let main () =
       let lo = l1,l2, Psyntax.default_pure_prover in
 	let l1,l2 = Load_logic.load_logic  (System.getenv_dirlist "JSTAR_LOGIC_LIBRARY") !absrules_file_name in 
       let abs_rules = (l1,l2, Psyntax.default_pure_prover) in
-	
-	Symexec.verify !method_name stmts_core spec lo abs_rules 
+(*    List.iter (fun x -> pp_stmt_core Format.std_formatter x; 
+	           Format.print_newline ())  core_list; *)
+	Symexec.verify !method_name stmts_core spec lo abs_rules
 
 
 let _ = main ()

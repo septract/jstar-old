@@ -72,7 +72,7 @@ let pp_stmt_core (ppf: Format.formatter) : core_statement -> unit =
   | Label_stmt_core l ->  
       Format.fprintf ppf "label %s;" l 
   | Assignment_core (v,spec,e)-> 
-      Format.fprintf ppf "%a@ @[%a@]@[(%a)@];"
+      Format.fprintf ppf "assign %a@ @[%a@]@[(%a)@];"
 	(fun ppf v -> match v with [] -> () | _ -> Format.fprintf ppf "%a@ :=@ " variable_list2str v) v	
 	spec2str spec
 	string_args_list e
@@ -84,7 +84,7 @@ let pp_stmt_core (ppf: Format.formatter) : core_statement -> unit =
       Format.fprintf ppf 
 	"throw %a;"
 	string_args a
-  | End -> Format.fprintf ppf "end"
+  | End -> Format.fprintf ppf "end;"
 
 
 (* Print a sequence of core statements to a file *)
@@ -97,7 +97,8 @@ let print_core
   
   (* FIXME: Don't understand why I can't use Format.formatter_of_out_channel *)
   let cstr = Format.flush_str_formatter 
-     (List.iter (fun x -> pp_stmt_core Format.str_formatter x.skind) stmts) in 
+     (List.iter (fun x -> pp_stmt_core Format.str_formatter x.skind;
+	             Format.pp_print_newline Format.str_formatter () ) stmts) in 
   let chan = open_out (filename ^ "." ^ mname ^ ".core") in 
   Printf.fprintf chan "%s" cstr; 
   close_out chan; 

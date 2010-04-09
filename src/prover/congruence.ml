@@ -403,6 +403,8 @@ module PersistentCC ( A : GrowablePersistentArray) : PCC =
 	      end
 	  end;
 	(* Print neqs *)
+    let neqs = (A.get (ts.uselist) i) in 
+	
 	List.iter 
 	  (function
 	      Complex_eq (a,b,c) ->
@@ -410,7 +412,7 @@ module PersistentCC ( A : GrowablePersistentArray) : PCC =
 	    | Not_equal a ->
 		if i< a then Format.fprintf ppf "%a!=%a * " pp i pp a
 		  )
-	  (A.get (ts.uselist) i)
+	  neqs
       done 
 
     let print (ts:t) : unit =
