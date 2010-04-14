@@ -128,6 +128,9 @@ let pp_dotty_transition_system () =
     !graphe;
   Printf.fprintf dotty_outf "\n\n\n}";
   close_out dotty_outf;
+  (* FIXME: should be a macro *)
+  if Sys.os_type="Win32" then Sys.remove (!file ^ ".execution_core.dot") else (); 
+  (* FIXME: should be a macro *)
   Sys.rename foname (!file ^ ".execution_core.dot")
 
 

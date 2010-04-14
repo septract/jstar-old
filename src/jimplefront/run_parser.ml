@@ -126,9 +126,12 @@ let main () =
 	Mkspecs.print_specs_template program
        )
      else (
+	 (* FIXME: should be a macro *)
+	 let signals = (if Sys.os_type="Win32" then [] else [Sys.sigint; Sys.sigquit; Sys.sigterm]) in 
+	 (* FIXME: should be a macro *)
        List.iter 
 	 (fun s ->  Sys.set_signal s (Sys.Signal_handle (fun x -> Symexec.pp_dotty_transition_system (); exit x)))
-	 [Sys.sigint; Sys.sigquit; Sys.sigterm];
+        signals;
        try 
 	 let l1,l2 = Load_logic.load_logic  (System.getenv_dirlist "JSTAR_LOGIC_LIBRARY") !logic_file_name
 	 in 
