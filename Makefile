@@ -4,9 +4,12 @@ build:
 	cd src; make
 
 test:
-	. setjstarenv; cd examples; make test
+	cd examples; make test
 
-clean: 
+clean:
+	rm -f lib/*.a
 	cd src; make clean
 	cd examples; make clean
 	cd doc/tutorial; make clean
+
+#vim:noet:

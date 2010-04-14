@@ -48,10 +48,10 @@ if
 
 //Unroll NodeLL if we are looking for its next field
 rule field_remove1a:
-  | |  NodeLL(?x,?e1) |- | field(?x,"<NodeLL: NodeLL next>",?e2) 
+  |   NodeLL(?x,?e1) |-  field(?x,"<NodeLL: NodeLL next>",?e2) 
 if
   field(?x,"<NodeLL: NodeLL next>",?e1) | | field(?x,"<NodeLL: java.lang.String content>",_w) 
-     |-  ?e1=?e2 | 
+     |-  ?e1=?e2 
 
 //Unroll NodeLL if we are looking for its content field
 rule field_remove1b:
