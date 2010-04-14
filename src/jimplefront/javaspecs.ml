@@ -15,17 +15,16 @@
 (* Support functions for simbolic execution and misc conversion facilities *)
 
 
-open Vars
-open Psyntax
-open Spec_def
-open Jlogic
-open Sepprover
-open Jparsetree
-open Support_syntax
-open Specification
 open Jimple_global_types
-open System
+open Jlogic
+open Jparsetree
+open Psyntax
+open Sepprover
 open Spec 
+open Spec_def
+open Support_syntax
+open System
+open Vars
 
 exception Class_defines_external_spec
 
