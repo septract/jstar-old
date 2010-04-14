@@ -257,6 +257,7 @@ let field_signature2str fs =
 %token NOOP 
 %token LABEL
 %token END
+%token ASSIGN
 
 
 /* ============================================================= */
@@ -1119,11 +1120,14 @@ core_file:
 core_stmt: 
    |  END   { End }
    |  NOOP  { Nop_stmt_core }
-   |  lvariable_list_ne_npv COLON_EQUALS spec L_BRACKET jargument_list_npv R_BRACKET 
-         { Assignment_core($1, $3, $5) } 
-   |  spec L_BRACKET jargument_list_npv R_BRACKET { Assignment_core([], $1, $3) } 
+   |  ASSIGN core_assn_args spec L_PAREN jargument_list_npv R_PAREN
+         { Assignment_core($2, $3, $5) } 
    |  GOTO label_list { Goto_stmt_core $2 } 
    |  LABEL IDENTIFIER  { Label_stmt_core $2 }
+
+core_assn_args:
+   | lvariable_list_ne_npv COLON_EQUALS { $1 }
+   |  /* empty */  { [] }
 
 label_list:
    |  IDENTIFIER   { [$1] }

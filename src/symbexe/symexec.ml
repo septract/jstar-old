@@ -380,7 +380,7 @@ and execute_core_stmt n (sheap : formset_entry) : formset_entry list =
   if Config.symb_debug() then 
     Format.printf "@\nExecuting statement:@ %a" Pprinter_core.pp_stmt_core stm.skind; 
   if Config.symb_debug() then 
-    Format.printf "@\nwith heap:@\n    %a@\n@\n@."  string_inner_form  sheap_noid; 
+    Format.printf "@\nwith heap :@\n    %a@\n@\n@."  string_inner_form  sheap_noid; 
   (
    if Config.symb_debug() 
    then begin
@@ -474,7 +474,7 @@ let verify (mname : string)
            (stmts : stmt_core list)  
            (spec : spec) 
            (lo : logic) 
-           (abs_rules : logic) =
+           (abs_rules : logic) : unit =
 
   (* remove methods that are declared abstraction *)
   curr_logic:= lo;

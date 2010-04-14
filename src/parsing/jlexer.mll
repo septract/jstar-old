@@ -138,7 +138,8 @@ let keyword_al = [
   ("inductive" , INDUCTIVE );
   ("nop",NOOP);
   ("label",LABEL);
-  ("end",END)
+  ("end",END);
+  ("assign",ASSIGN)
 ]
 
 
