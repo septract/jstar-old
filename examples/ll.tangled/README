@@ -1,6 +1,0 @@
-A simple test of tangled annotations. The preprocessor
-jstartangle should produce X.jimple and X.specs files
-from X.java that has annotations.
-
-(The name tangle comes from the tangle operation of the
-literate programming tool CWEB.)
