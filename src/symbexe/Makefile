@@ -18,7 +18,7 @@ export LIB
 
 INCLUDES = 
 
-SYMBEXE_SOURCES = methdec_core.ml pprinter_core.ml cfg_core.ml symexec.ml
+SYMBEXE_SOURCES = symbexespec.ml methdec_core.ml pprinter_core.ml cfg_core.ml symexec.ml
 
 TOPLEVEL_SOURCES = $(SYMBEXE_SOURCES)
 

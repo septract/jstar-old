@@ -88,7 +88,7 @@ let spec_conjunction spec1 spec2 =
       {pre= Psyntax.mkOr ((Psyntax.pconjunction pre1 eq),(Psyntax.pconjunction pre2 neq));
        post= Psyntax.mkOr ((Psyntax.pconjunction post1 eq),(Psyntax.pconjunction post2 neq));
        excep = disjunction_excep (conjunction_excep excep1 eq) (conjunction_excep excep2 neq);
-       inv = inv1 @ inv2
+       inv = inv1 (* TODO(rgrig): combine invariants. *)
      }
 
 
@@ -102,7 +102,7 @@ let sub_spec  sub spec =
       {pre=subst_pform sub pre;
        post=subst_pform sub post;
        excep=ClassMap.map (subst_pform sub) excep;
-       inv=List.map (fun (l, i) -> (l, subst_pform sub i)) inv}
+       inv=LabelMap.map (subst_pform sub) inv}
       
 let ev_spec spec = 
   match spec with

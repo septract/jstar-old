@@ -16,6 +16,7 @@ open Methdec_core
 open Psyntax
 open Sepprover
 open Spec
+open Symbexespec
 open Vars
 
 

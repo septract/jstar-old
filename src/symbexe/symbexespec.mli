@@ -18,15 +18,16 @@
  *)
 
 type logic = Psyntax.logic
-type formula = Psyntax.formula
+type formula = Psyntax.pform
 type pformula = Sepprover.inner_form (* stands for 'prover' formula *)
 type ex = Spec.excep_post
+type pex = pformula Spec.ClassMap.t  (* stands for 'prover' exceptional ... *)
 type spec = Spec.spec
 
-val conjunction_excep_convert : ex -> formula -> ex
+val conjunction_excep_convert : ex -> pformula -> pex
 (** Conjoin a formula to all postconditions. *) 
 
-val implication_excep : logic -> e1 : ex -> e2 : ex -> bool
+val implication_excep : logic -> e1 : pex -> e2 : ex -> bool
 (** Does [e1] imply [e2] for all classes (in [e1])? *)
 
 val jsr : logic -> pformula -> spec -> (pformula list * ex list) option
