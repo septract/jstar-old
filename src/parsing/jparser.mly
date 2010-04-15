@@ -869,7 +869,7 @@ paramlist:
 /* Code for matching where not allowing question mark variables:
    no pattern vars*/
 jargument_npv:
-   | RETURN { Arg_var (newPVar(Support_syntax.name_ret_var)) }
+   | RETURN { Arg_var (newPVar(Spec.name_ret_v1)) }
    | lvariable_npv {Arg_var ($1)}
    | identifier L_PAREN jargument_list_npv R_PAREN {Arg_op($1,$3) }        
    | INTEGER_CONSTANT {Arg_string(string_of_int $1)} 
@@ -891,7 +891,7 @@ jargument_list_npv:
 
 
 jargument:
-   | RETURN { Arg_var (newPVar(Support_syntax.name_ret_var)) }
+   | RETURN { Arg_var (newPVar(Spec.name_ret_v1)) }
    | lvariable {Arg_var ($1)}
    | identifier L_PAREN jargument_list R_PAREN {Arg_op($1,$3) }        
    | INTEGER_CONSTANT {Arg_string(string_of_int $1)} 

@@ -51,10 +51,6 @@ let bop_to_prover_pred bop i1 i2 =
 let parameter n = "@parameter"^(string_of_int n)^":"
 let parameter_var n = (Vars.concretep_str (parameter n))
 
-(* define the constant name for the first return variable. *)
-(*let name_ret_var mname = (Pprinter.name2str mname)^"$"^"ret_var"*)
-let name_ret_var = "$"^"ret_v1"
-
 
 (* constant name for "this" object *)
 let this_var_name  =  "@this:"

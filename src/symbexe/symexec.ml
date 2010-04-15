@@ -263,9 +263,6 @@ let remove_id_formset formset =
 
 let parameter n = "@parameter"^(string_of_int n)^":"
 
-let name_ret_v1 = "$ret_v1"
-
-let ret_v1 = Vars.concretep_str name_ret_v1 
 
 
 let rec param_sub il num sub = 
@@ -276,7 +273,7 @@ let rec param_sub il num sub =
 
 
 let param_sub il =
-  let sub' = add ret_v1 (Arg_var(ret_v1))  empty in 
+  let sub' = add Spec.ret_v1 (Arg_var(Spec.ret_v1))  empty in 
   param_sub il 0 sub'
   
 
@@ -530,7 +527,7 @@ let verify_ensures (name : string) (stmts: stmt_core list) (post : Psyntax.pform
 	in
 	let oldexp_results = List.fold_left (fun acc oldexp_res -> conjoin_disjunctions oldexp_res acc) [Sepprover.inner_truth] oldexp_frames in
 	  (* substitute $ret_var in the post! *)
-	let post = subst_pform (add ret_v1 (Arg_var(Vars.concretep_str (name_ret_v1^"_post"))) empty) post in
+	let post = subst_pform (add Spec.ret_v1 (Arg_var(Vars.concretep_str (name_ret_v1^"_post"))) empty) post in
 	let ensures_preconds = List.map (fun oldexp_result -> Sepprover.conjoin post oldexp_result) oldexp_results in
 	let ensures_postcond = conjoin_with_res_true post in
 	(* now do the verification *)
