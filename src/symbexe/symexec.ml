@@ -263,9 +263,9 @@ let remove_id_formset formset =
 
 let parameter n = "@parameter"^(string_of_int n)^":"
 
-let name_ret_var = "$ret_var"
+let name_ret_v1 = "$ret_v1"
 
-let ret_var = Vars.concretep_str name_ret_var 
+let ret_v1 = Vars.concretep_str name_ret_v1 
 
 
 let rec param_sub il num sub = 
@@ -276,7 +276,7 @@ let rec param_sub il num sub =
 
 
 let param_sub il =
-  let sub' = add ret_var (Arg_var(ret_var))  empty in 
+  let sub' = add ret_v1 (Arg_var(ret_v1))  empty in 
   param_sub il 0 sub'
   
 
@@ -358,7 +358,6 @@ let eliminate_ret_var
 (* extract return values called 'name_template' into variables vs *)
 let eliminate_ret_vs
       ( name_template : string ) 
-      ( start : int )
       ( vs : Vars.var list )
       ( h : inner_form ) : inner_form  = 
   let rec add_index 
@@ -367,7 +366,7 @@ let eliminate_ret_vs
     match xs with  | []     ->  [] 
                    | y::ys  ->  ( (y,i) :: (add_index ys (i+1)) ) 
   in 
-  let vs_i = add_index vs start in  
+  let vs_i = add_index vs 1 in  
   List.fold_right (fun (v,i) -> eliminate_ret_var (name_template ^ string_of_int i) v) vs_i h
 
 
@@ -479,11 +478,8 @@ and execute_core_stmt n (sheap : formset_entry) : formset_entry list =
 		| [] -> 
 			let hs=add_id_formset_edge (snd sheap) (Debug.toString Pprinter_core.pp_stmt_core n.skind) hs n in
 			execs_one n hs
-		| v::vs -> 
-			(* For legacy reasons, match first variable to $ret_var, not $ret_var1 *)
-			let hs=List.map (eliminate_ret_var "$ret_var" v) hs in 
-			(* start index from 2 *)
-		  	let hs=List.map (eliminate_ret_vs "$ret_var" 2 vs) hs in 
+		| vs -> 
+		  	let hs=List.map (eliminate_ret_vs "$ret_v" vs) hs in 
 			let hs=add_id_formset_edge (snd sheap) (Debug.toString Pprinter_core.pp_stmt_core n.skind)  hs n in
 			execs_one n hs
 	    )
@@ -534,7 +530,7 @@ let verify_ensures (name : string) (stmts: stmt_core list) (post : Psyntax.pform
 	in
 	let oldexp_results = List.fold_left (fun acc oldexp_res -> conjoin_disjunctions oldexp_res acc) [Sepprover.inner_truth] oldexp_frames in
 	  (* substitute $ret_var in the post! *)
-	let post = subst_pform (add ret_var (Arg_var(Vars.concretep_str (name_ret_var^"_post"))) empty) post in
+	let post = subst_pform (add ret_v1 (Arg_var(Vars.concretep_str (name_ret_v1^"_post"))) empty) post in
 	let ensures_preconds = List.map (fun oldexp_result -> Sepprover.conjoin post oldexp_result) oldexp_results in
 	let ensures_postcond = conjoin_with_res_true post in
 	(* now do the verification *)

@@ -100,7 +100,7 @@ let get_spec  (iexp: Jparsetree.invoke_expr) =
 
 
 	
-let retvar_term = Arg_var(ret_var)
+let retvar_term = Arg_var(ret_v1)
 
 let rec translate_assign_stmt  (v:Jparsetree.variable) (e:Jparsetree.expression) =
   match v, e with 
