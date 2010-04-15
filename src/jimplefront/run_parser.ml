@@ -76,8 +76,8 @@ let parse_one_class cname =
 
 let parse_program () =
   if Config.symb_debug() then Printf.printf "Parsing program file  %s...\n" !program_file_name;
-  let s = System.string_of_file !program_file_name  in
-  let program =Jparser.file Jlexer.token (Lexing.from_string s)
+  let ch = open_in !program_file_name  in
+  let program =Jparser.file Jlexer.token (Lexing.from_channel ch)
   in if Config.symb_debug() then Printf.printf "Program Parsing... done!\n";
   (* Replace specialinvokes of <init> after news with virtual invokes of <init>*)
   let program = program in 
@@ -112,8 +112,8 @@ let main () =
   Debug.debug_ref:=!Config.verbose;
 
   if !program_file_name="" then
-    Printf.printf "Program file name not specified. Can't continue....\n %s \n" usage_msg
-   else 
+     Printf.printf "Program file name not specified. Can't continue....\n %s \n" usage_msg
+  else 
      let program=parse_program () in
      if !logic_file_name="" && not !Config.specs_template_mode then
        Printf.printf "Logic file name not specified. Can't continue....\n %s \n" usage_msg
