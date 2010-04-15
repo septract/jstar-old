@@ -1127,6 +1127,7 @@ core_stmt:
 
 core_assn_args:
    | lvariable_list_ne_npv COLON_EQUALS { $1 }
+   | COLON_EQUALS { [] }
    |  /* empty */  { [] }
 
 label_list:
