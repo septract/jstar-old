@@ -16,7 +16,7 @@ open Methdec_core
 open Psyntax
 open Sepprover
 open Spec
-open Symbexespec
+open Specification
 open Vars
 
 
@@ -288,7 +288,7 @@ let id_clone h = (form_clone (fst h), snd h)
 let call_jsr_static (sheap,id) spec il node = 
   let sub' = param_sub il in
   let sub''= (*freshening_subs*) sub' in
-  let spec'= Spec.sub_spec sub'' spec  in 
+  let spec'= Specification.sub_spec sub'' spec  in 
   let res = (jsr !curr_logic sheap spec') in
     match res with 
       None ->   

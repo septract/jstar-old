@@ -13,7 +13,7 @@
 
 open Spec_def
 open Psyntax
-open Spec
+open Specification
 open Javaspecs
 open Support_symex
 open Jimple_global_types

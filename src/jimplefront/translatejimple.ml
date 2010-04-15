@@ -12,17 +12,18 @@
  ********************************************************)
 
 
-open Javaspecs
-open Jimple_global_types
-open Jlogic
-open Jparsetree
-open Methdec_core
 open Psyntax
-open Spec
+open Jlogic
+open Jimple_global_types
+open Jparsetree
 open Spec_def
+open Specification
+open Vars
 open Support_symex
 open Symexec
-open Vars
+open Methdec_core
+open Javaspecs
+open Spec
 
 (* global variables *)
 let curr_static_methodSpecs: Javaspecs.methodSpecs ref = ref Javaspecs.emptyMSpecs

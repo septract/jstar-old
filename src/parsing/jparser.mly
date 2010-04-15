@@ -17,14 +17,14 @@ exception Give_up
 
 open Jparsetree
 
-open Jimple_global_types
-open Lexing
-open Load
-open Parsing 
-open Psyntax
-open Spec
-open Spec_def
 open Vars
+open Lexing
+open Parsing 
+open Jimple_global_types
+open Spec
+open Load
+open Spec_def
+open Psyntax
 
 
 let newPVar x = concretep_str x
@@ -61,7 +61,10 @@ let bind_spec_vars (mods,typ,name,args_list) {pre=pre;post=post;excep=excep} =
 	       subst
 	)) 
 	  (0,subst) args_list in
-  Specification.sub_spec subst (mk_spec pre post excep [])
+
+  {pre=subst_pform subst pre;
+   post=subst_pform subst post;
+   excep=ClassMap.map (subst_pform subst) excep}
 
 let mkDynamic (msig, specs) =
   let specs = List.map (bind_spec_vars msig) specs in 
@@ -364,17 +367,10 @@ methods_specs:
    | /*empty*/ { [] }
 
 spec:
-   | L_BRACE formula R_BRACE L_BRACE formula R_BRACE exp_posts invariants
-      {  {pre=$2;post=$5;excep=$7;inv=$8}  }
+   | L_BRACE formula R_BRACE L_BRACE formula R_BRACE exp_posts  {  {pre=$2;post=$5;excep=$7}  }
 specs:
    | spec ANDALSO specs  { $1 :: $3 }
    | spec     {[$1]}
-
-invariant:
-   | identifier COLON formula { {lbl=$1;inv=$3} }
-invariants:
-   | invariant invariants { $1 :: $2 }
-   | /*empty*/ {[]} 
 
 method_spec:
    | method_signature_short COLON specs  SEMICOLON  { mkDynamic($1, $3) }
@@ -1092,4 +1088,3 @@ inductive_file:
 
 
 %% (* trailer *)
-
