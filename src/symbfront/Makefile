@@ -18,41 +18,47 @@ export LIB
 
 INCLUDES = 
 
-SYMBEXE_SOURCES = specification.ml  cfg_core.ml symexec.ml
+SYMBFRONT_SOURCES = symbfront.ml
 
-TOPLEVEL_SOURCES = $(SYMBEXE_SOURCES)
+
+TOPLEVEL_SOURCES = $(SYMBFRONT_SOURCES)
 
 DEFAULT_ARGS = SOURCES="$(TOPLEVEL_SOURCES)" \
-       OCAMLLDFLAGS="-g -a " \
-       INCDIRS="../prover ../prover_syntax ../symbexe_syntax ../utils" \
+       LIBS="str unix utils prover_syntax symbexe_syntax jimple_syntax sepprover symbexe parser" \
+       OCAMLLDFLAGS="-g -I $(LIB)" \
+       INCDIRS="../prover ../prover_syntax ../parsing ../symbexe_syntax ../utils ../jimple_syntax ../symbexe" \
        OCAMLFLAGS="-g" \
        TRASH=""
 
-MAIN = $(DEFAULT_ARGS) RESULT=$(LIB)/symbexe.cma
+MAIN = $(DEFAULT_ARGS) RESULT=$(BIN)/jeffree.byte
 
-MAINOPT = $(DEFAULT_ARGS)  RESULT=$(LIB)/symbexe.cmxa
+MAINOPT = $(DEFAULT_ARGS)  RESULT=$(BIN)/jeffree
 
-default: symbexe.cmxa
+default: jeffree
 
 .PHONY: debug
-debug: symbexe.cma
+debug: jeffree.byte
 
-all: default debug
+all: jeffree jeffree.byte
+
 
 prebuild: 
 	@(cd ../prover; make)
+	@(cd ../symbexe; make)
 
-symbexe.cma: prebuild
+.PHONY: jeffree.byte  
+jeffree.byte: prebuild
 	@$(MAKE) -f $(OCAMLMAKEFILE) $(MAIN) 
 
 
-symbexe.cmxa: prebuild
+.PHONY: jeffree
+jeffree: prebuild
 	@$(MAKE) -f $(OCAMLMAKEFILE) $(MAINOPT) native-code
 
 clean:
 	$(MAKE) -f $(OCAMLMAKEFILE) $(MAIN) clean
 	$(MAKE) -f $(OCAMLMAKEFILE) $(MAINOPT) clean
-	rm -f *.annot doc/*.html doc/*.css doc/test.odoc jparser.output  *.cmi *.cmx *.o jparser.ml jlexer.ml jparser.mli jlexer.mli
+	rm -f *.annot doc/*.html doc/*.css doc/test.odoc jparser.output  *.cmi *.cmx *.o jparser.ml jlexer.ml jparser.mli jlexer.mli .depend
 
 .depend:
 	$(OCAMLDEP) $(INCLUDES) *.mli *.ml > .depend

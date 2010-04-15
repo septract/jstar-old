@@ -1,4 +1,3 @@
-#!/bin/sh
 export PATH=`pwd`/bin:$PATH
 
 export JSTAR_LOGIC_LIBRARY=`pwd`/library/logic

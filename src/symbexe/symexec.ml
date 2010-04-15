@@ -408,7 +408,7 @@ and execute_core_stmt n (sheap : formset_entry) : formset_entry list =
   if Config.symb_debug() then 
     Format.printf "@\nExecuting statement:@ %a" Pprinter_core.pp_stmt_core stm.skind; 
   if Config.symb_debug() then 
-    Format.printf "@\nwith heap:@\n    %a@\n@\n@."  string_inner_form  sheap_noid; 
+    Format.printf "@\nwith heap :@\n    %a@\n@\n@."  string_inner_form  sheap_noid; 
   (
    if Config.symb_debug() 
    then begin
@@ -496,7 +496,11 @@ and execute_core_stmt n (sheap : formset_entry) : formset_entry list =
 (* the queue qu is a list of pairs [(node, expression option)...] the expression
 is used to deal with if statement. It is the expression of the if statement is the predecessor
 of the node is a if_stmt otherwise is None. In the beginning is always None for each node *)
-let verify (mname : string) (stmts : stmt_core list)  (spec : spec) (lo : logic) (abs_rules : logic) =
+let verify (mname : string) 
+           (stmts : stmt_core list)  
+           (spec : spec) 
+           (lo : logic) 
+           (abs_rules : logic) : unit =
 
   (* remove methods that are declared abstraction *)
   curr_logic:= lo;

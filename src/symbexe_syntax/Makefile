@@ -24,7 +24,7 @@ endif
 export LIB
 
 
-CORESOURCE = spec.ml
+CORESOURCE = spec.ml methdec_core.ml pprinter_core.ml
 LIBRARYSOURCE = $(CORESOURCE)
 
 LIBRARY = SOURCES="$(LIBRARYSOURCE)" \
