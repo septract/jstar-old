@@ -20,7 +20,7 @@ class CEL
 		{Cell$(@this:, {val=@parameter0:})};
 	int value() :
 		{Cell$(@this:, {val=_v})}
-		{Cell$(@this:, {val=_v}) * $ret_var = _v};
+		{Cell$(@this:, {val=_v}) * $ret_v1 = _v};
 }
 
 class COUNTER
@@ -35,7 +35,7 @@ class COUNTER
 		{Cn$(@this:, {cnt=builtin_plus(_c, numeric_const(1))})};
 	int count() :
 		{Cn$(@this:, {cnt=_c})}
-		{Cn$(@this:, {cnt=_c}) * $ret_var = _c};
+		{Cn$(@this:, {cnt=_c}) * $ret_v1 = _c};
 	void increment_helper() static:
 		{Cn$COUNTER(@this:, {cnt=_c})}
 		{Cn$COUNTER(@this:, {cnt=builtin_plus(_c, numeric_const(1))})};
@@ -67,9 +67,9 @@ class CCELL extends CEL, COUNTER
 		{Cn$(@this:, {cnt=builtin_plus(_c, numeric_const(1))})};
 	int count() :
 		{Cc$(@this:, {val=_v;cnt=_c})}
-		{Cc$(@this:, {val=_v;cnt=_c}) * $ret_var = _c}
+		{Cc$(@this:, {val=_v;cnt=_c}) * $ret_v1 = _c}
 		andalso {Cn$(@this:, {cnt=_c})}
-		{Cn$(@this:, {cnt=_c}) * $ret_var = _c};
+		{Cn$(@this:, {cnt=_c}) * $ret_v1 = _c};
 	void set_value(int) :
 		{Cc$(@this:, {val=_v;cnt=_c})}
 		{Cc$(@this:, {val=@parameter0:;cnt=builtin_plus(_c, numeric_const(1))})}
@@ -77,9 +77,9 @@ class CCELL extends CEL, COUNTER
 		{Cell$(@this:, {val=@parameter0:;cnt=builtin_plus(_c, numeric_const(1))})};
 	int value() :
 		{Cc$(@this:, {val=_v;cnt=_c})}
-		{Cc$(@this:, {val=_v;cnt=_c}) * $ret_var = _v}
+		{Cc$(@this:, {val=_v;cnt=_c}) * $ret_v1 = _v}
 		andalso {Cell$(@this:, {val=_v;cnt=_c})}
-		{Cell$(@this:, {val=_v;cnt=_c}) * $ret_var = _v};
+		{Cell$(@this:, {val=_v;cnt=_c}) * $ret_v1 = _v};
 }
 
 class CCEL2 extends CEL, COUNTER
@@ -99,21 +99,21 @@ class CCEL2 extends CEL, COUNTER
 		{Cell$(@this:, {val=@parameter0:;cnt=numeric_const(0)})};
 	int count() :
 		{Cell$(@this:, {val=_v;cnt=_c})}
-		{Cell$(@this:, {val=_v;cnt=_c}) * $ret_var = _c}
+		{Cell$(@this:, {val=_v;cnt=_c}) * $ret_v1 = _c}
 		andalso {Cn$(@this:, {cnt=_c})}
-		{Cn$(@this:, {cnt=_c}) * $ret_var = _c};
+		{Cn$(@this:, {cnt=_c}) * $ret_v1 = _c};
 	void set_value(int) :
 		{Cell$(@this:, {val=_v;cnt=_c})}
 		{Cell$(@this:, {val=@parameter0:;cnt=builtin_plus(_c, numeric_const(1))})};
 	int value() :
 		{Cell$(@this:, {val=_v;cnt=_c})}
-		{Cell$(@this:, {val=_v;cnt=_c}) * $ret_var = _v};
+		{Cell$(@this:, {val=_v;cnt=_c}) * $ret_v1 = _v};
 }
 
 class CLIENT
 {
 	CCELL code(LIBRARY) :
 		{ }
-		{Cc($ret_var, {val=numeric_const(5);cnt=numeric_const(10)})};
+		{Cc($ret_v1, {val=numeric_const(5);cnt=numeric_const(10)})};
 }
 
