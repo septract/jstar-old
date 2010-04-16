@@ -367,16 +367,23 @@ methods_specs:
    | /*empty*/ { [] }
 
 spec:
-   | L_BRACE formula R_BRACE L_BRACE formula R_BRACE exp_posts  {  {pre=$2;post=$5;excep=$7}  }
+   | L_BRACE formula R_BRACE L_BRACE formula R_BRACE exp_posts invariants {  {pre=$2;post=$5;excep=$7}  }
 specs:
    | spec ANDALSO specs  { $1 :: $3 }
    | spec     {[$1]}
 
+invariant:
+  | identifier COLON formula { () }
+
+invariants:
+  | invariant SEMICOLON invariants { () }
+  | /* empty */ { () }
+
 method_spec:
    | method_signature_short COLON specs  SEMICOLON  { mkDynamic($1, $3) }
    | method_signature_short STATIC COLON specs SEMICOLON  { mkStatic($1, $4) }
-   | method_signature_short COLON specs   { mkDynamic($1, $3) }
-   | method_signature_short STATIC COLON specs  { mkStatic($1, $4) }
+   | method_signature_short COLON specs  { mkDynamic($1, $3) }
+   | method_signature_short STATIC COLON specs { mkStatic($1, $4) }
 
 exp_posts:
    | L_BRACE identifier COLON formula R_BRACE exp_posts { ClassMap.add $2 $4 $6 }
