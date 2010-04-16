@@ -395,7 +395,7 @@ and execute_core_stmt n (sheap : formset_entry) : formset_entry list =
 	  let sheaps_abs = Sepprover.abs !curr_abs_rules sheap_pre_abs in 
 	  let sheaps_abs = List.map (fun x -> form_clone_abs x) sheaps_abs in 
 	  if Config.symb_debug() 
-	  then Format.printf "@\nPost-abstractionc count:@\n    %d@."  (List.length sheaps_abs);
+	  then Format.printf "@\nPost-abstraction count:@\n    %d@."  (List.length sheaps_abs);
 	  let sheaps_abs = List.map Sepprover.kill_all_exists_names sheaps_abs in 
 	  if Config.symb_debug() 
 	  then List.iter (fun sheap -> Format.printf "@\nPost-abstraction:@\n    %a@."  string_inner_form sheap) sheaps_abs; 
