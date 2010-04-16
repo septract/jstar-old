@@ -1,28 +1,76 @@
 The jStar Verification System
 =============================
 
-The dependencies of jStar are listed below.
-
-Set the environment variables:
-  $ . setjstarenv
-
-To run the build process, simply call: 
-  $ make 
-
-This will generate the following executable file for jstar:
-  ./bin/jstar
-
-To run all of the tests in the examples directory: 
-  $ make test 
+jStar is a highly-customisable automatic verification tool based on separation
+logic aiming at object-oriented programs written in Java.
 
 There is a tutorial for the tool here:
    ./doc/tutorial/jstartut.pdf
 
+For more information, see http://www.jstarverifier.org
+
+
+
+Building on *nix / Mac OSX
+---------------------------
+
+To run the build process, call: 
+  $ make build
+
+This will generate the following executable file for jstar:
+  ./bin/jstar
+
+To set the environment variables necessary for jStar to run:
+  $ . setjstarenv
+
+To run all of the tests in the examples directory: 
+  $ make test 
+
 
 Dependencies:
--------------
 
- * OCaml >=3.11.1
-    http://caml.inria.fr/download.en.html
-    Debian/Ubuntu: ocaml, ocaml-native-compilers
+* OCaml >=3.11.1
+  http://caml.inria.fr/download.en.html
+  Debian / Ubuntu: ocaml, ocaml-native-compilers
 
+
+
+Building on Win32
+-----------------
+
+Open the Visual Studio Command Prompt. 
+ - If you obtained Microsoft tools not as a part of Visual Studio, just open
+   Command Prompt and manually set up necessary PATH and INCLUDE directories.)
+
+Check that the make tool is in path.
+ - If using Cywgin/MinGW based make, then just add Cygwin/MinGW bin directory
+   to path. In addition, set the LIB environment variable to empty. This is
+   due to problems that arise when make deals with directories containing
+   empty spaces (like "Program Files"). You will probably have to manually set
+   up additional include path for OCaml compiler to Visual C++ Runtime
+   Libraries and Windows SDK libraries.
+
+To run the build process, call: 
+  make build
+
+To set the environment variables necessary for jStar to run:
+  setjstarenv.bat
+
+After the build process has finished, you may have to add extension .exe to
+compiled binaries located in jStar's bin subdirectory.
+
+
+Dependencies:
+
+* Microsoft-based native Win32 port of OCaml: 
+  http://caml.inria.fr/pub/distrib/ocaml-3.11/ocaml-3.11.0-win-msvc.exe
+
+* FlexDLL: http://alain.frisch.fr/flexdll.html
+  (solves the problem that Windows DLL cannot refer to symbols defined
+  in the main application or in previously loaded DLLs)
+
+* Microsoft Macro Assembler (ml.exe), Microsoft Visual C++ and 
+  Microsoft Windows SDK libraries. (if you are not using Visual Studio,
+  these tools can be obtained for free at Microsoft site)
+
+* Unix make tool (e.g., the one distributed with Cygwin or MinGW)
