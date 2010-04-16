@@ -17,10 +17,9 @@ open Methdec_core
 
 let cfg_debug () = false
 
-(** Fills the succ and pred fields of [stmts] by adding edges
+(** Fills the [succs] and [preds] fields of [stmts] by adding edges
     corresponding to program order and to goto-s. *)
 let stmts_to_cfg (stmts : stmt_core list) : unit =
-  let ok () = List.for_all (fun s -> s.succs = [] && s.preds = []) stmts in
   let l2s = Hashtbl.create 11 in (* maps labels to statements *)
   let al = function
     | {skind = Label_stmt_core l} as s -> Hashtbl.add l2s l s
@@ -36,9 +35,11 @@ let stmts_to_cfg (stmts : stmt_core list) : unit =
         List.iter (fun ln -> connect m (find ln)) ls; process ss
     | m :: ((n :: tt) as ss)-> connect m n; process ss
     | _ -> () in
-  assert (ok ());
+  assert (List.for_all (fun s -> s.succs = [] && s.preds = []) stmts);
   List.iter al stmts;
   process stmts
+
+(* ================== BEGIN of Printing dotty files ================== *)
 
 let escape_for_dot_label s =
   Str.global_replace (Str.regexp "\\\\n") "\\l" (String.escaped s)
