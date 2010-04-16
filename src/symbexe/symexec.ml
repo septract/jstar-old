@@ -46,6 +46,7 @@ let fresh_file = let file_id = ref 0 in fun () -> let x = !file_id in file_id :=
 
 type node = {mutable content : string; id : id; mutable ntype : ntype; mutable url : string; mutable edges : edge list; cfg : stmt_core option}
 and  edge = string * string * node * node * string option
+  (** An edge has a label, a ???, source, target, and perhaps an URL. *)
 
 let graphe = ref []
 
@@ -92,9 +93,10 @@ let pp_dotty_transition_system () =
   if Config.symb_debug() then Printf.printf "\n Writing transition system file execution_core.dot  \n";
   Printf.fprintf dotty_outf "digraph main { \nnode [shape=box,  labeljust=l];\n\n";
   Idmap.iter 
-    (fun cfg nodes ->
-      ((
-       if grouped () then match cfg with Some cfg -> Printf.fprintf dotty_outf "subgraph cluster_cfg%i {\n"  cfg | _ -> ());
+    (fun cfg nodes -> (
+      (* Print Abs nodes. *)
+      (if grouped () then 
+        match cfg with Some cfg -> Printf.fprintf dotty_outf "subgraph cluster_cfg%i {\n"  cfg | _ -> ());
       List.iter (fun {content=label;id=id;ntype=ty;url=url;cfg=cfg} ->
 	let label=escape_for_dot_label label in
 	let url = if url = "" then "" else ", URL=\"file://" ^ url ^"\"" in
@@ -106,6 +108,7 @@ let pp_dotty_transition_system () =
 	| Abs ->  Printf.fprintf dotty_outf "\n state%i[label=\"%s\",labeljust=l, color=yellow, style=filled%s]\n" id label url)
 	nodes;
       if grouped () then match cfg with Some _ -> Printf.fprintf dotty_outf "\n}\n" | _ -> ());
+      (* Print non-Abs nodes. *)
       List.iter (fun {content=label;id=id;ntype=ty;url=url;cfg=cfg} ->
 	let label=escape_for_dot_label label in
 	let url = if url = "" then "" else ", URL=\"file://" ^ url ^"\"" in
@@ -118,7 +121,7 @@ let pp_dotty_transition_system () =
 	nodes;
     )
     !graphn;
-  List.iter (fun (l,c,s,d, o) ->
+  List.iter (fun (l,c,s,d,o) ->
     let l = escape_for_dot_label l in
     let c = escape_for_dot_label c in
     Printf.fprintf dotty_outf "\n state%i -> state%i [label=\"%s\", tooltip=\"%s\"%s]" s.id d.id l c
@@ -182,13 +185,6 @@ let add_edge_with_proof src dest label =
   graphe := edge::!graphe;
   src.edges <- edge::src.edges;
   if !x = 5 then (x:=0; pp_dotty_transition_system ()) else x :=!x+1
-
-(*let add_edge_with_string_proof src dest label proof = 
-  let f = fresh_file() in
-  let out = open_out f in
-  output_string out proof;
-  close_out out;
-  graphe := (label, src, dest, Some f)::!graphe*)
 
 let add_url_to_node src proof = 
   let f = fresh_file() in
@@ -466,7 +462,7 @@ and execute_core_stmt n (sheap : formset_entry) : formset_entry list =
     | End -> execs_one n [sheap]
 	  ))
       
-(* implements a work-list fidex point algorithm *)
+(* Implements a work-list fixed point algorithm. *)
 (* the queue qu is a list of pairs [(node, expression option)...] the expression
 is used to deal with if statement. It is the expression of the if statement is the predecessor
 of the node is a if_stmt otherwise is None. In the beginning is always None for each node *)

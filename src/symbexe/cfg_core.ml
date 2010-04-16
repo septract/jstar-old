@@ -12,63 +12,33 @@
  ********************************************************)
 
 
-
-
 open Pprinter_core
 open Methdec_core
 
 let cfg_debug () = false
 
-
-(* Call with non-empty statement list *)
-let stmts_to_cfg stmts =
-  (* Fill in the CFG info for a stmt
-     s  is the statement being filled in. 
-     next is the next statment in program order.
-     prog is the whole program. (This is required to lookup labels for jumps) *)
-  let cfgStmt (s: stmt_core) (next:stmt_core option) (prog: stmt_core list) =
-    if s.succs <> [] then begin
-      Printf.printf "CFG must be cleared before being computed!";
-      assert false
-    end;
-    (* Code to set the successor and predecessor of a node, and its successor. *)
-    let addSucc (n: stmt_core) =
-      assert (not (List.memq n s.succs));
-      assert (not (List.memq s n.preds));
-      if cfg_debug() then Printf.printf "\nAdding %i in %i.succ, and %i in %i.preds\n" n.sid s.sid s.sid n.sid;
-      n.preds <- s::n.preds;
-      s.succs <- n::s.succs in
-    let addOptionSucc (n: stmt_core option) =
-      match n with
-      | None -> ()
-      | Some n' -> addSucc n' in
-    let find_label_stmt l=  
-      try List.find 
-	  (fun s' -> match s'.skind with 
-	  |  Label_stmt_core l' -> l=l'
-	  | _ -> false) 
-	  prog
-      with Not_found ->
-	Printf.printf "Undefined label %s\n" l;
-	assert false
-    in
-    match s.skind with
-    | End -> ()
-    | Nop_stmt_core ->  addOptionSucc next
-    | Label_stmt_core l -> addOptionSucc next  
-    | Assignment_core (_,_,_) -> addOptionSucc next
-    | Goto_stmt_core ls -> List.iter (fun l -> addSucc (find_label_stmt l)) ls
-    | Throw_stmt_core imm -> () (* for the moment it goes to the end. Probably there should be a node for exceptions to denote abnormal termination. *) in
-  (* Fill in cfg for a list of statements. *)
-  let rec cfgStmts (ss: stmt_core list) (prog : stmt_core list) =
-  match ss with
-    | [] -> ()
-    | [s] -> cfgStmt s None prog
-    | hd::hd2::tl ->
-	cfgStmt hd (Some hd2) prog;
-	cfgStmts (hd2::tl) prog in
-  cfgStmts stmts stmts
-
+(** Fills the succ and pred fields of [stmts] by adding edges
+    corresponding to program order and to goto-s. *)
+let stmts_to_cfg (stmts : stmt_core list) : unit =
+  let ok () = List.for_all (fun s -> s.succs = [] && s.preds = []) stmts in
+  let l2s = Hashtbl.create 11 in (* maps labels to statements *)
+  let al = function
+    | {skind = Label_stmt_core l} as s -> Hashtbl.add l2s l s
+    | _ -> () in
+  let rec process =
+    let connect m n = (* adds an edge from [m] to [n] *)
+      m.succs <- n :: m.succs; n.preds <- m :: n.preds in
+    let find l = (* looks up [l] in [l2s] and reports error if not found *)
+      try Hashtbl.find l2s l
+      with Not_found -> Format.eprintf "Undefined label %s.@." l; assert false in
+    function
+    | {skind = Goto_stmt_core ls} as m :: ss -> 
+        List.iter (fun ln -> connect m (find ln)) ls; process ss
+    | m :: ((n :: tt) as ss)-> connect m n; process ss
+    | _ -> () in
+  assert (ok ());
+  List.iter al stmts;
+  process stmts
 
 let escape_for_dot_label s =
   Str.global_replace (Str.regexp "\\\\n") "\\l" (String.escaped s)
