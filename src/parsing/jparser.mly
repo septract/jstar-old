@@ -175,7 +175,6 @@ let field_signature2str fs =
 %token INVARIANT
 %token L_BRACE 
 %token L_BRACKET 
-%token L_BRACKET 
 %token L_PAREN 
 %token LEADSTO
 %token LENGTHOF 

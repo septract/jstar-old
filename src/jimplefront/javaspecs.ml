@@ -12,7 +12,7 @@
  ********************************************************)
 
 
-(* Support functions for simbolic execution and misc conversion facilities *)
+(* Support functions for symbolic execution and misc conversion facilities *)
 
 
 open Vars
