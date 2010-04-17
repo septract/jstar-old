@@ -87,10 +87,10 @@ let kwd_or_else =
     "Garbage", GARBAGE;
     "goto", GOTO;
     "if", IF;
-    "if", IF;
     "implements", IMPLEMENTS;
     "Implication", IMPLICATION;
     "import", IMPORT;
+    "invariant", INVARIANT;
     "Inconsistency", INCONSISTENCY;
     "inductive", INDUCTIVE;
     "instanceof", INSTANCEOF ;

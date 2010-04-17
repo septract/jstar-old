@@ -102,189 +102,190 @@ let field_signature2str fs =
 
 /* ============================================================= */
 /* tokens */
-%token REQUIRES
-%token OLD
-%token ENSURES
-%token AS
+%token ABS
 %token ABSRULE
-%token EQUIV
-%token LEADSTO
 %token ABSTRACT
-%token FINAL 
-%token NATIVE 
-%token PUBLIC 
-%token PROTECTED 
-%token PRIVATE 
-%token STATIC 
-%token SYNCHRONIZED 
-%token TRANSIENT 
-%token VOLATILE 
-%token STRICTFP 
-%token ENUM 
+%token AND 
+%token ANDALSO 
 %token ANNOTATION 
-%token CLASS 
-%token INTERFACE 
-%token VOID 
+%token AS
+%token AT_IDENTIFIER 
+%token AXIOMS
+%token BANG
+%token BIMP
 %token BOOLEAN  
+%token BREAKPOINT  
 %token BYTE 
-%token SHORT 
+%token CASE 
+%token CATCH 
 %token CHAR 
-%token INT 
-%token LONG 
-%token FLOAT 
+%token CLASS 
+%token CLS 
+%token CMP 
+%token CMPEQ 
+%token CMPG 
+%token CMPGE 
+%token CMPGT 
+%token CMPL 
+%token CMPLE 
+%token CMPLT 
+%token CMPNE 
+%token COLON
+%token COLON_EQUALS 
+%token COMMA 
+%token DEFAULT 
+%token DEFINE
+%token DIV 
+%token DOT 
 %token DOUBLE 
-%token NULL_TYPE 
-%token UNKNOWN 
-%token EXTENDS 
+%token EMPRULE
+%token ENSURES
+%token ENTERMONITOR 
+%token ENUM 
+%token EOF
+%token EQUALS 
+%token EQUIV
+%token EXITMONITOR 
 %token EXPORT
 %token EXPORTS
-%token AXIOMS
-%token IMPLEMENTS 
-%token BREAKPOINT  
-%token CASE 
-%token BANG
-%token CATCH 
-%token CMP 
-%token CMPG 
-%token CMPL 
-%token DEFAULT 
-%token ENTERMONITOR 
-%token EXITMONITOR 
+%token EXTENDS 
+%token FALSE
+%token FINAL 
+%token FLOAT 
+%token FLOAT_CONSTANT 
+%token FRAME
+%token FROM 
+%token FULL_IDENTIFIER 
+%token GARBAGE
 %token GOTO 
+%token IDENTIFIER 
 %token IF 
+%token IMP
+%token IMPLEMENTS 
+%token IMPLICATION
+%token IMPORT 
+%token INCONSISTENCY
+%token INDUCTIVE
 %token INSTANCEOF  
+%token INT 
+%token INTEGER_CONSTANT 
+%token INTEGER_CONSTANT_LONG 
+%token INTERFACE 
 %token INTERFACEINVOKE 
+%token INVARIANT
+%token L_BRACE 
+%token L_BRACKET 
+%token L_BRACKET 
+%token L_PAREN 
+%token LEADSTO
 %token LENGTHOF 
+%token LONG 
 %token LOOKUPSWITCH 
 %token MAPSTO
+%token MINUS 
+%token MOD 
+%token MULT 
+%token NATIVE 
 %token NEG 
 %token NEW 
 %token NEWARRAY 
 %token NEWMULTIARRAY 
 %token NOP 
+%token NOTIN
+%token NOTINCONTEXT
+%token NULL 
+%token NULL_TYPE 
+%token OLD
+%token OR 
+%token OROR 
+%token ORTEXT
+%token PLUS 
+%token PRED
+%token PRIVATE 
+%token PROTECTED 
+%token PUBLIC 
+%token PURERULE
+%token QUESTIONMARK 
+%token QUOTE
+%token QUOTED_NAME 
+%token R_BRACE 
+%token R_BRACKET 
+%token R_BRACKET 
+%token R_PAREN 
+%token REQUIRES
 %token RET 
 %token RETURN 
+%token REWRITERULE
+%token RULE
+%token SEMICOLON 
+%token SHL 
+%token SHORT 
+%token SHR 
 %token SPECIALINVOKE 
+%token STATIC 
 %token STATICINVOKE 
+%token STRICTFP 
+%token STRING_CONSTANT 
+%token SYNCHRONIZED 
 %token TABLESWITCH   
 %token THROW  
 %token THROWS 
-%token VIRTUALINVOKE 
-%token NULL 
-%token FROM 
 %token TO 
-%token WITH 
-%token CLS 
-%token COMMA 
-%token L_BRACE 
-%token R_BRACE 
-%token SEMICOLON 
-%token L_BRACKET 
-%token R_BRACKET 
-%token L_PAREN 
-%token R_PAREN 
-%token COLON
-%token DOT 
-%token QUOTE
-%token <int> INTEGER_CONSTANT 
-%token <int> INTEGER_CONSTANT_LONG 
-%token <float> FLOAT_CONSTANT 
-%token <string> STRING_CONSTANT 
-%token <string> QUOTED_NAME 
-%token <string> IDENTIFIER 
-%token <string> AT_IDENTIFIER 
-%token <string> FULL_IDENTIFIER 
-%token COLON_EQUALS 
-%token EQUALS 
-%token AND 
-%token OR 
-%token OROR 
-%token XOR 
-%token MOD 
-%token CMPEQ 
-%token CMPNE 
-%token CMPGT 
-%token CMPGE 
-%token CMPLT 
-%token CMPLE 
-%token SHL 
-%token SHR 
-%token USHR 
-%token PLUS 
-%token MINUS 
-%token WAND
-%token VDASH
-%token MULT 
-%token DIV 
-%token L_BRACKET 
-%token R_BRACKET 
-%token UNDERSCORE 
-%token QUESTIONMARK 
-%token IMP
-%token BIMP
-
-
-%token EOF
-
-
-%token ANDALSO 
-%token DEFINE
-
-%token FALSE
+%token TRANSIENT 
 %token TRUE
-%token IMPLICATION
-%token FRAME
-%token ABS
-%token INCONSISTENCY
-%token RULE
-%token PURERULE
-%token PRED
-%token REWRITERULE
-%token EMPRULE
-%token IF
-%token WITHOUT
+%token UNDERSCORE 
+%token UNKNOWN 
+%token USHR 
+%token VDASH
+%token VIRTUALINVOKE 
+%token VOID 
+%token VOLATILE 
+%token WAND
 %token WHERE
-%token NOTIN
-%token NOTINCONTEXT
-%token ORTEXT
-%token GARBAGE
-%token IMPORT 
+%token WITH 
+%token WITHOUT
+%token XOR 
 
-%token INDUCTIVE
+%type <float> FLOAT_CONSTANT 
 
+%type <int> INTEGER_CONSTANT 
+%type <int> INTEGER_CONSTANT_LONG 
+
+%type <string> AT_IDENTIFIER 
+%type <string> FULL_IDENTIFIER 
+%type <string> IDENTIFIER 
+%type <string> QUOTED_NAME 
+%type <string> STRING_CONSTANT 
 
 /* ============================================================= */
 
-%left IDENFIFIER
+%left AND
 %left AT_IDENTIFIER
-%left QUOTED_NAME
+%left CMP 
+%left CMPEQ 
+%left CMPG 
+%left CMPGE
+%left CMPGT
+%left CMPL 
+%left CMPLE
+%left CMPLT
+%left CMPNE
+%left DEFINE
+%left DIV
+%left EXPORT
 %left FULL_IDENTIFIER
-
+%left IDENTIFIER
+%left MINUS 
+%left MOD
+%left MULT
 %left OR
 %left OROR
-%left MULT
-%left AND
-%left XOR 
-%left MOD
-%left CMP 
-%left CMPG 
-%left CMPL 
-%left CMPEQ 
-%left CMPNE
-%left CMPGT
-%left CMPGE
-%left CMPLT
-%left CMPLE
+%left PLUS
+%left QUOTED_NAME
 %left SHL 
 %left SHR 
 %left USHR 
-%left PLUS
-%left MINUS 
-%left DIV
-
-
-%left DEFINE
-%left EXPORT
+%left XOR 
 
 
 /* entry points */
@@ -373,7 +374,7 @@ specs:
    | spec     {[$1]}
 
 invariant:
-  | identifier COLON formula SEMICOLON { () }
+  | INVARIANT identifier COLON formula SEMICOLON { () }
 
 invariants:
   | invariant invariants { () }

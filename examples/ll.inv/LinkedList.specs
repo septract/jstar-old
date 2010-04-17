@@ -32,7 +32,7 @@ class LinkedList
    { field(@this:,<LinkedList: NodeLL tail>,nil()) 
        * field(@this:,<LinkedList: NodeLL head>,nil()) }
    { LL$(@this:) }
-   label0: LL$(@this:);
+   invariant label0: LL$(@this:);
 
 
   void reverseList() : 
