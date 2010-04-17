@@ -99,6 +99,7 @@ let verify_methods
 								try
 									let _,_,mname,_ = msig in
 									let dynamic_spec = MethodMap.find msig dynamic_method_specs in
+                                                                        (*DBG Format.fprintf Format.err_formatter "@.@.Checking %s.@." (Pprinter.name2str mname); *)
 									if refinement_this logic static_spec dynamic_spec class_name then
 										(good();if Config.symb_debug() then Printf.printf "\n\nDynamic spec is consistent with static for %s!\n" (Pprinter.name2str mname); reset())
 									else

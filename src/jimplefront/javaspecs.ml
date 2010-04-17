@@ -684,6 +684,11 @@ let add_subtype_and_objsubtype_rules spec_list logic =
 
 
 let refinement_this (logic : logic) (spec1 : spec) (spec2 : spec) (cname : class_name): bool =
-    refinement_extra logic spec1 spec2 (objtype this_var (Pprinter.class_name2str cname))
+(*DBG  Format.fprintf Format.err_formatter "@[<2>===first===@\n";
+  spec2str Format.err_formatter spec1;
+  Format.fprintf Format.err_formatter "@]@\n@[<2>===second===@\n";
+  spec2str Format.err_formatter spec2;
+  Format.fprintf Format.err_formatter "@]@."; *)
+  refinement_extra logic spec1 spec2 (objtype this_var (Pprinter.class_name2str cname))
 
 

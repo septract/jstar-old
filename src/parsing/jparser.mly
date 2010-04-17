@@ -256,35 +256,38 @@ let field_signature2str fs =
 %type <string> QUOTED_NAME 
 %type <string> STRING_CONSTANT 
 
-/* ============================================================= */
+/* === associativity and precedence === */
 
-%left AND
-%left AT_IDENTIFIER
-%left CMP 
-%left CMPEQ 
-%left CMPG 
-%left CMPGE
-%left CMPGT
-%left CMPL 
-%left CMPLE
-%left CMPLT
-%left CMPNE
-%left DEFINE
-%left DIV
-%left EXPORT
-%left FULL_IDENTIFIER
 %left IDENTIFIER
-%left MINUS 
-%left MOD
-%left MULT
+%left AT_IDENTIFIER
+%left QUOTED_NAME
+%left FULL_IDENTIFIER
+
 %left OR
 %left OROR
-%left PLUS
-%left QUOTED_NAME
+%left MULT
+%left AND
+%left XOR 
+%left MOD
+%left CMP 
+%left CMPG 
+%left CMPL 
+%left CMPEQ 
+%left CMPNE
+%left CMPGT
+%left CMPGE
+%left CMPLT
+%left CMPLE
 %left SHL 
 %left SHR 
 %left USHR 
-%left XOR 
+%left PLUS
+%left MINUS 
+%left DIV
+
+
+%left DEFINE
+%left EXPORT
 
 
 /* entry points */
