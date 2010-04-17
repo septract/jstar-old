@@ -41,9 +41,6 @@ let stmts_to_cfg (stmts : stmt_core list) : unit =
 
 (* ================== BEGIN of Printing dotty files ================== *)
 
-let escape_for_dot_label s =
-  Str.global_replace (Str.regexp "\\\\n") "\\l" (String.escaped s)
-
 (* stmtsname is a list of programs and names, such that each program's
    cfg is printed in a subgraph with its name.*)
 let print_icfg_dotty (stmtsname : (stmt_core list * string) list) (filename : string) : unit =
@@ -56,7 +53,7 @@ let print_icfg_dotty (stmtsname : (stmt_core list * string) list) (filename : st
       "\t\t%i [label=\"%i: %s\"]\n" 
       s.sid 
       s.sid 
-      (escape_for_dot_label (Debug.toString pp_stmt_core s.skind));
+      (Dot.escape_for_label (Debug.toString pp_stmt_core s.skind));
     List.iter (d_cfgedge chan s) s.succs  in
 
   if cfg_debug () then ignore (Printf.printf "\n\nPrinting iCFG as dot file...");
@@ -65,7 +62,7 @@ let print_icfg_dotty (stmtsname : (stmt_core list * string) list) (filename : st
   List.iter 
     (fun (stmts,name) -> 
       stmts_to_cfg stmts;
-      Printf.fprintf chan "\tsubgraph \"cluster_%s\" {\n\t\tlabel=\"%s\"\n" name (escape_for_dot_label name);
+      Printf.fprintf chan "\tsubgraph \"cluster_%s\" {\n\t\tlabel=\"%s\"\n" name (Dot.escape_for_label name);
       List.iter (d_cfgnode chan) stmts;
       Printf.fprintf chan  "\t}\n";
     ) 

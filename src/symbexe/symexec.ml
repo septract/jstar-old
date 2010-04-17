@@ -84,9 +84,6 @@ let startnodes : node list ref = ref []
 
 let make_start_node node = startnodes := node::!startnodes
 
-let escape_for_dot_label s =
-  Str.global_replace (Str.regexp "\\\\n") "\\l" (String.escaped s)
-
 let pp_dotty_transition_system () =
   let foname = (!file) ^ ".execution_core.dot~" in
   let dotty_outf=open_out foname in
@@ -98,7 +95,7 @@ let pp_dotty_transition_system () =
       (if grouped () then 
         match cfg with Some cfg -> Printf.fprintf dotty_outf "subgraph cluster_cfg%i {\n"  cfg | _ -> ());
       List.iter (fun {content=label;id=id;ntype=ty;url=url;cfg=cfg} ->
-	let label=escape_for_dot_label label in
+	let label=Dot.escape_for_label label in
 	let url = if url = "" then "" else ", URL=\"file://" ^ url ^"\"" in
 	match ty with 
 	| Plain -> ()
@@ -110,7 +107,7 @@ let pp_dotty_transition_system () =
       if grouped () then match cfg with Some _ -> Printf.fprintf dotty_outf "\n}\n" | _ -> ());
       (* Print non-Abs nodes. *)
       List.iter (fun {content=label;id=id;ntype=ty;url=url;cfg=cfg} ->
-	let label=escape_for_dot_label label in
+	let label=Dot.escape_for_label label in
 	let url = if url = "" then "" else ", URL=\"file://" ^ url ^"\"" in
 	match ty with 
 	  Plain ->  Printf.fprintf dotty_outf "\n state%i[label=\"%s\",labeljust=l%s]\n" id label url
@@ -122,8 +119,8 @@ let pp_dotty_transition_system () =
     )
     !graphn;
   List.iter (fun (l,c,s,d,o) ->
-    let l = escape_for_dot_label l in
-    let c = escape_for_dot_label c in
+    let l = Dot.escape_for_label l in
+    let c = Dot.escape_for_label c in
     Printf.fprintf dotty_outf "\n state%i -> state%i [label=\"%s\", tooltip=\"%s\"%s]" s.id d.id l c
 	    (match o with 
 	      None -> ""
