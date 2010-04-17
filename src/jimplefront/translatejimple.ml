@@ -242,7 +242,7 @@ let jimple_stms2core stms =
     if Config.symb_debug() then 
       Format.printf "@\ninto the core statement:@\n  %a @\n" 
 	(Debug.list_format "; " Pprinter_core.pp_stmt_core) s; 
-    List.map (fun s -> Methdec_core.stmt_create s [] []) s
+    List.map Methdec_core.stmt_create s
   in
   List.flatten (List.map do_one_stmt stms)
 

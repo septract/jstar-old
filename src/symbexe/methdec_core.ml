@@ -26,27 +26,15 @@ type core_statement =
 
 
 type stmt_core = { 
-  (*labels: labels; *)
   mutable skind: core_statement;
   mutable sid: int;  (* this is filled when the cfg is done *)
   mutable succs: stmt_core list; (* this is filled when the cfg is done *)
   mutable preds: stmt_core list  (* this is filled when the cfg is done *)
  }
 
-
-
 let num_stmts = ref 0 
 
-
-let stmt_create 
-    (skind: core_statement)  
-    (pred_stmts: stmt_core list)  
-    (succ_stmts: stmt_core list) 
-    : stmt_core = 
-incr num_stmts;
-  { skind = skind;
-    sid = !num_stmts; 
-    succs = succ_stmts;
-    preds = pred_stmts }
+let stmt_create (skind: core_statement) : stmt_core = 
+  incr num_stmts; { skind = skind; sid = !num_stmts; succs = []; preds = [] }
 
 
