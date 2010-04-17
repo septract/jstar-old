@@ -171,7 +171,8 @@ let add_edge src dest label =
   graphe := edge::!graphe;
   src.edges <- edge::src.edges;
   explore_node src;
-  if !x = 5 then (x:=0; pp_dotty_transition_system ()) else x :=!x+1
+  x := (!x + 1) mod 5;
+  if !x = 0 then pp_dotty_transition_system ()
 
 
 let add_edge_with_proof src dest label = 
