@@ -77,7 +77,7 @@ let main () =
     | Psyntax.Equal (heap,arg1,arg2) -> ()
 (*	if Prover.check_equal logic heap arg1 arg2 
 	then Printf.printf("Equal!\n\n") else Printf.printf("Not equal!\n\n")*) 
-    | _ -> Printf.printf "Currently unsupported"
+(*    | _ -> Printf.printf "Currently unsupported" *)
   )
       question_list
 

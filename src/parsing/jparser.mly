@@ -637,10 +637,6 @@ array_descriptor_list_plus:
 array_descriptor:
   L_BRACKET immediate_question_mark R_BRACKET { $2 }
 ;
-variable_list:
-	 | /*empty*/  {[]}
-	 | variable variable_list { $1 :: $2 } 
-;
 variable:
    |reference {Var_ref($1)}
    |local_name {Var_name($1)}
@@ -752,11 +748,6 @@ binop_val_no_multor:
    | DIV {Div}   
 //   | OR  {Jparsetree.Or}    
 ;
-binop_val:
-   | OR  {Jparsetree.Or}    
-   | MULT {Mult}
-   | binop_val_no_multor {$1}
-;
 binop_cmp:
    | CMP {Cmp}   
    | CMPG {Cmpg}  
@@ -806,16 +797,6 @@ lvariable_npv:
    | at_identifier { newPVar($1) }
    | identifier { newVar($1) }
 ;
-
-lvariable_list_ne_npv:
-   |  lvariable_npv    { [$1] }
-   |  lvariable_npv COMMA lvariable_list_ne_npv  { $1 :: $3 }
-
-lvariable_list_npv:
-   |  {[]}
-   | lvariable_list_ne_npv { $1 }
-;
-
 fldlist: 
    | identifier EQUALS jargument { [($1,$3)] }
    | /*empty*/ { [] }
