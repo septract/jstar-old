@@ -373,10 +373,10 @@ specs:
    | spec     {[$1]}
 
 invariant:
-  | identifier COLON formula { () }
+  | identifier COLON formula SEMICOLON { () }
 
 invariants:
-  | invariant SEMICOLON invariants { () }
+  | invariant invariants { () }
   | /* empty */ { () }
 
 method_spec:
