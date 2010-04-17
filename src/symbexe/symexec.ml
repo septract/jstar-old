@@ -163,28 +163,25 @@ let add_error_heap_node (heap : inner_form) =
   (Format.fprintf (Format.str_formatter) "%a" Sepprover.string_inner_form heap);
   add_error_node (Format.flush_str_formatter ())
 
-let x = ref 0
-
-
-let add_edge src dest label = 
-  let edge = (label, "", src, dest, None) in
-  graphe := edge::!graphe;
-  src.edges <- edge::src.edges;
+let add_edge_common = 
+  let x = ref 0 in
+  fun src dst lbl f ->
+  let e = (lbl, "", src, dst, f) in
+  graphe := e :: !graphe;
+  src.edges <- e :: src.edges;
   explore_node src;
   x := (!x + 1) mod 5;
   if !x = 0 then pp_dotty_transition_system ()
 
+let add_edge src dest label = 
+  add_edge_common src dest label None
 
 let add_edge_with_proof src dest label = 
   let f = fresh_file() in
   let out = open_out f in
   Sepprover.pprint_proof out;
   close_out out;
-  explore_node src;
-  let edge = (label, "", src, dest, Some f) in 
-  graphe := edge::!graphe;
-  src.edges <- edge::src.edges;
-  if !x = 5 then (x:=0; pp_dotty_transition_system ()) else x :=!x+1
+  add_edge_common src dest label (Some f)
 
 let add_url_to_node src proof = 
   let f = fresh_file() in
