@@ -123,6 +123,7 @@ let keyword_al = [
   ("Frame",FRAME);
   ("Garbage",GARBAGE);
   ("Inconsistency",INCONSISTENCY);
+  ("Abduction", ABDUCTION );
   ("rule",RULE);
   ("rewrite",REWRITERULE);
   ("emprule",EMPRULE);

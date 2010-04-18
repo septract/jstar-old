@@ -531,6 +531,9 @@ let true_sequent (seq : sequent) : bool =
 let frame_sequent (seq : sequent) : bool = 
   (seq.obligation = empty) 
 
+let abductiv_sequent (seq : sequent) : bool = 
+  (seq.assumption = empty)
+
 
 (* Stolen from Prover just for refactor *)
 type sequent_rule = psequent * (psequent list list) * string * ((* without *) pform * pform) * (where list)

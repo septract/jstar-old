@@ -499,6 +499,7 @@ type question =
   |  Frame of pform * pform
   |  Equal of pform * args * args
   |  Abs of pform 
+  |  Abduction of pform * pform 
 
 
 type test =

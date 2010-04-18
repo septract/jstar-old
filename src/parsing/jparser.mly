@@ -235,6 +235,7 @@ let field_signature2str fs =
 %token IMPLICATION
 %token FRAME
 %token ABS
+%token ABDUCTION
 %token INCONSISTENCY
 %token RULE
 %token PURERULE
@@ -1037,6 +1038,8 @@ question:
    | INCONSISTENCY COLON formula_npv {Inconsistency($3)}
    | FRAME COLON formula_npv VDASH formula_npv {Frame($3,$5)}
    | ABS COLON formula_npv {Abs($3)} 
+   | ABDUCTION COLON formula_npv VDASH formula_npv {Abduction($3,$5)}
+
 
 test:
    | IMPLICATION COLON formula_npv VDASH formula_npv QUESTIONMARK boolean {TImplication($3,$5,$7)}
