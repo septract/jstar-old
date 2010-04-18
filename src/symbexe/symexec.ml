@@ -493,12 +493,14 @@ and execute_core_stmt n (sheap : formset_entry) : formset_entry list =
 (* the queue qu is a list of pairs [(node, expression option)...] the expression
 is used to deal with if statement. It is the expression of the if statement is the predecessor
 of the node is a if_stmt otherwise is None. In the beginning is always None for each node *)
-let verify (mname : string) 
-           (stmts : stmt_core list)  
-           (spec : spec) 
-           (lo : logic) 
-           (abs_rules : logic) : unit =
-
+let verify 
+    (mname : string) 
+    (stmts : stmt_core list)  
+    (spec : spec) 
+    (lo : logic) 
+    (abs_rules : logic) 
+    : unit 
+    =
   (* remove methods that are declared abstraction *)
   curr_logic:= lo;
   curr_abs_rules:=abs_rules;
@@ -519,7 +521,16 @@ let verify (mname : string)
 	      check_postcondition [(spec.post,id_exit)] post) post
 
 
-let verify_ensures (name : string) (stmts: stmt_core list) (post : Psyntax.pform) conjoin_with_res_true (oldexp_frames : inner_form list list) lo abs_rules =
+let verify_ensures 
+     (name : string) 
+     (stmts: stmt_core list) 
+     (post : Psyntax.pform) 
+     conjoin_with_res_true
+     (oldexp_frames : inner_form list list) 
+     (lo : logic) 
+     (abs_rules : logic) 
+     : unit 
+     =
   (* construct the specification of the ensures clause *)
 	let rec conjoin_disjunctions (d1 : inner_form list) (d2 : inner_form list) : inner_form list =
 		match d1 with
@@ -550,7 +561,7 @@ let verify_ensures (name : string) (stmts: stmt_core list) (post : Psyntax.pform
 	  check_postcondition [(ensures_postcond,id_exit)] post) post
 
 
-let check_and_get_frame (heap,id) sheap =
+let check_and_get_frame (heap,id) sheap : inner_form list =
   let sheap_noid=fst sheap in  
   let frame = frame_inner !curr_logic (form_clone sheap_noid) heap in
   match frame with 
@@ -575,7 +586,13 @@ let check_and_get_frame (heap,id) sheap =
                  [])
 
 
-let get_frame (stmts : stmt_core list) (pre : Psyntax.pform) (lo : logic) (abs_rules : logic) = 
+let get_frame 
+     (stmts : stmt_core list) 
+     (pre : Psyntax.pform) 
+     (lo : logic) 
+     (abs_rules : logic) 
+     : inner_form list 
+     = 
   curr_logic:= lo;
   curr_abs_rules:=abs_rules;
  

@@ -536,7 +536,6 @@ let true_sequent (seq : sequent) : bool =
 let frame_sequent (seq : sequent) : bool = 
   (seq.obligation = empty) 
 
-
 (* Stolen from Prover just for refactor *)
 type sequent_rule = psequent * (psequent list list) * string * ((* without *) pform * pform) * (where list)
 
@@ -829,7 +828,11 @@ with Success -> None
 
 (* TODO Doesn't use obligation equalities to help with match. 
    *)
-let apply_rule (sr : inner_sequent_rule) (seq : sequent) : sequent list list = 
+let apply_rule 
+     (sr : inner_sequent_rule) 
+     (seq : sequent) 
+     : sequent list list 
+     = 
   (* Should reset any matching variables in the ts to avoid clashes. *)
   let ts = blank_pattern_vars seq.ts in 
   (* Match obligation *)
@@ -893,7 +896,7 @@ let get_frame seq =
 
 let rec get_frames seqs frms = 
   match seqs with 
-    [] -> frms
+  | [] -> frms
   | seq::seqs ->  get_frames seqs ((get_frame seq)::frms)
 
 let get_frames seqs = 
