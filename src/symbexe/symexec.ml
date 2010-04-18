@@ -147,15 +147,16 @@ let add_error_node label = add_node label Error None
 let add_abs_node label cfg = add_node label Abs (Some cfg)
 let add_good_node label = add_node label Good None
 let add_node_unexplored label cfg = add_node label UnExplored (Some cfg)
-let add_node label cfg = add_node label UnExplored (Some cfg)
 
+(* Redefines [add_node]! *)
+let add_node label cfg = add_node label UnExplored (Some cfg)
 let explore_node src = if src.ntype = UnExplored then src.ntype <- Plain
 
-let add_abs_heap_node (heap : Sepprover.inner_form) cfg= 
+let add_abs_heap_node cfg (heap : Sepprover.inner_form) = 
   (Format.fprintf (Format.str_formatter) "%a" Sepprover.string_inner_form heap);
   add_abs_node (Format.flush_str_formatter ()) cfg
 
-let add_heap_node (heap : inner_form) cfg = 
+let add_heap_node cfg (heap : inner_form) = 
   (Format.fprintf (Format.str_formatter) "%a" Sepprover.string_inner_form heap);
   add_node (Format.flush_str_formatter ()) cfg
 
@@ -190,11 +191,10 @@ let add_url_to_node src proof =
   close_out out;
   src.url <- f
 
-let add_id_form h cfg =
-    let id=add_heap_node h cfg in
-    (h,id)
+let tabulate f = List.map (fun x -> (x, f x))
 
-let add_id_formset sheaps cfg =  List.map (fun h -> add_id_form h cfg) sheaps
+let add_id_formset cfg = tabulate (add_heap_node cfg)
+let add_id_abs_formset cfg = tabulate (add_abs_heap_node cfg)
 
 let add_id_formset_edge src label sheaps cfg =  
   match sheaps with 
@@ -203,18 +203,10 @@ let add_id_formset_edge src label sheaps cfg =
       let idd = add_good_node "Inconsistent" in add_edge_with_proof src idd (label ^"\n Inconsistent");
 	[]
   | _ -> 
-  let sheaps_id = add_id_formset sheaps cfg in
+  let sheaps_id = add_id_formset cfg sheaps in
   List.iter (fun dest -> add_edge_with_proof src (snd dest) label) sheaps_id;
   sheaps_id
 
-let add_id_abs_form cfg h =
-    let id=add_abs_heap_node h cfg in
-    (h,id)
-
-let add_id_abs_formset sheaps cfg =  List.map (add_id_abs_form cfg) sheaps
-
-
-(* ================   ==================  *)
 
 
 (* ================  work list algorithm ==================  *)
@@ -404,7 +396,7 @@ and execute_core_stmt n (sheap : formset_entry) : formset_entry list =
    print_formset "in " (remove_id_formset formset)
    ); *)
 	  explore_node (snd sheap);
-	  let sheaps_with_id = add_id_abs_formset sheaps_abs n in
+	  let sheaps_with_id = add_id_abs_formset n sheaps_abs in
 	  List.iter 
 	    (fun sheap2 ->  
 	      add_edge_with_proof 

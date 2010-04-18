@@ -27,13 +27,13 @@ let stmts_to_cfg (stmts : stmt_core list) : unit =
   let rec process =
     let connect m n = (* adds an edge from [m] to [n] *)
       m.succs <- n :: m.succs; n.preds <- m :: n.preds in
-    let find l = (* looks up [l] in [l2s] and reports error if not found *)
+    let find l = (* looks up [l] in [l2s] and reports an error if not found *)
       try Hashtbl.find l2s l
       with Not_found -> Format.eprintf "Undefined label %s.@." l; assert false in
     function
     | {skind = Goto_stmt_core ls} as m :: ss -> 
         List.iter (fun ln -> connect m (find ln)) ls; process ss
-    | m :: ((n :: tt) as ss)-> connect m n; process ss
+    | m :: ((n :: _) as ss)-> connect m n; process ss
     | _ -> () in
   assert (List.for_all (fun s -> s.succs = [] && s.preds = []) stmts);
   List.iter al stmts;
