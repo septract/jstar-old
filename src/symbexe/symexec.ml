@@ -224,7 +224,7 @@ type formset = formset_entry list
 type formset_hashtbl = (int, formset) Hashtbl.t
 
 (* table associating a cfg node to a set of heaps *)
-let formset_table : formset_hashtbl = Hashtbl.create 10000
+let formset_table : formset_hashtbl = Hashtbl.create 10007
 
 
 let formset_table_add key s = 
@@ -240,34 +240,24 @@ let formset_table_find key =
   try 
     Hashtbl.find formset_table key
   with Not_found -> 
-    []  (* Default case return false, empty list of disjunctions *)
+    []  (* Default case returns false, empty list of disjunctions *)
 
 
 let remove_id_formset formset =
   fst (List.split formset)
 
-let parameter n = "@parameter"^(string_of_int n)^":"
+let parameter = Format.sprintf "@@parameter%i:"
 
 let name_ret_var = "$ret_var"
 
 let ret_var = Vars.concretep_str name_ret_var 
 
-
-let rec param_sub il num sub = 
-  match il with 
-    [] -> sub
-  | i::il -> param_sub il (num+1) (add (Vars.concretep_str (parameter num)) (i) sub)
-
-
-
-let param_sub il =
-  let sub' = add ret_var (Arg_var(ret_var))  empty in 
-  param_sub il 0 sub'
+let param_sub il = 
+  let ps (cnt, sub) arg = 
+    (succ cnt, add (Vars.concretep_str (parameter cnt)) arg sub) in
+  snd (List.fold_left ps (0, add ret_var (Arg_var ret_var) empty) il)
   
-
-
-let id_clone h = (form_clone (fst h), snd h)
-
+let id_clone (sheap, node) = (form_clone sheap, node)
 
 
 let call_jsr_static (sheap,id) spec il node = 
