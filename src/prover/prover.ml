@@ -143,6 +143,11 @@ let check_implication_pform logic heap pheap  =
   check_imp logic (Clogic.make_implies heap pheap)
 
 
+let check_abduction_pform logic heap pheap = 
+  None
+(*  check_abd logic (Clogic.make_implies heap pheap) *)
+
+
 let abs logic ts_form  = 
   match check_frm logic  (Clogic.make_implies ts_form []) with 
     Some r -> r

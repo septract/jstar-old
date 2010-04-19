@@ -55,8 +55,9 @@ open Psyntax
     val frame_inner : logic -> inner_form -> inner_form -> inner_form list option
     val abs : logic -> inner_form -> inner_form list
     val abs_opt : logic -> inner_form option -> inner_form list
+    val abduction_opt : logic -> inner_form option -> form -> inner_form list option
     val pprint_proof : out_channel -> unit
     val pprint_counter_example : Format.formatter -> unit -> unit 
     val print_counter_example : unit -> unit 
     val string_of_proof : unit -> string 
-val implies_list : inner_form list -> form -> bool 
+    val implies_list : inner_form list -> form -> bool 

@@ -57,6 +57,7 @@ let main () =
 	if (Sepprover.implies_opt logic (Sepprover.convert heap1) heap2)
 	then Format.printf("Holds!\n\n") else Format.printf("Does not hold!\n\n");
 	if !(Debug.debug_ref) then Prover.pprint_proof stdout
+
     | Psyntax.Frame (heap1, heap2)  -> 
 	Format.printf "Find frame for\n %a\n ===> \n %a\n" Psyntax.string_form heap1   Psyntax.string_form heap2;
 	let x = Sepprover.frame_opt logic 
@@ -64,22 +65,26 @@ let main () =
 	(match x with None -> Format.printf "Can't find frame!" | Some x -> List.iter (fun form -> Format.printf "Frame:\n %a\n" Sepprover.string_inner_form  form) x);
 	Format.printf "\n";
 	if !(Debug.debug_ref) then Prover.pprint_proof stdout
+
     | Psyntax.Abs (heap1)  ->
 	Format.printf "Abstract@\n  @[%a@]@\nresults in@\n  " Psyntax.string_form heap1;
 	let x = Sepprover.abs_opt logic (Sepprover.convert heap1) in 
 	List.iter (fun form -> Format.printf "%a\n" Sepprover.string_inner_form form) x;
 	Format.printf "\n";
 	if !(Debug.debug_ref) then Prover.pprint_proof stdout
+
     | Psyntax.Inconsistency (heap1) ->
 	if Sepprover.inconsistent_opt logic (Sepprover.convert heap1) 
 	then Format.printf("Inconsistent!\n\n") else Format.printf("Consistent!\n\n");
 	if !(Debug.debug_ref) then Prover.pprint_proof stdout
+
     | Psyntax.Equal (heap,arg1,arg2) -> ()
+
     | Psyntax.Abduction (heap1, heap2)  -> 
 	Format.printf "Check abduction\n %a\n ===> \n %a \n"  Psyntax.string_form heap1   Psyntax.string_form heap2;
-	if false
-	then Format.printf("Holds!\n\n") else Format.printf("Does not hold!\n\n");
-	
+	let x = (Sepprover.abduction_opt logic (Sepprover.convert heap1) heap2) in 
+	(match x with None -> Format.printf "Can't find antiframe!" | Some x -> List.iter (fun form -> Format.printf "Antiframe:\n %a\n" Sepprover.string_inner_form  form) x);
+		
 (*	if Prover.check_equal logic heap arg1 arg2 
 	then Format.printf("Equal!\n\n") else Format.printf("Not equal!\n\n")*) 
     | _ -> Format.printf "Currently unsupported!\n"
