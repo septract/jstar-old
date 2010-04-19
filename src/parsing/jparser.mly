@@ -250,6 +250,7 @@ let field_signature2str fs =
 %token NOTINCONTEXT
 %token ORTEXT
 %token GARBAGE
+%token EMP
 %token IMPORT 
 
 %token INDUCTIVE
@@ -533,6 +534,7 @@ identifier:
   | FALSE   { "False" }
   | TRUE   { "True" }
   | GARBAGE   { "Garbage" }
+  | EMP    { "Emp"}
 /*  | IMPLICATION   { "Implication" }
   | FRAME   { "Frame" }
   | INCONSISTENCY   { "Inconsistency" }*/
@@ -913,7 +915,8 @@ jargument_list:
 
   
 formula: 
-   |  { [] }
+   | /*empty*/  { [] }
+   | EMP  { [] }
    | FALSE { mkFalse}
    | GARBAGE { mkGarbage}
    | lvariable DOT jargument MAPSTO  jargument { [P_SPred("field", [Arg_var $1; $3; $5] )] }
@@ -930,7 +933,8 @@ formula:
    | L_PAREN formula R_PAREN { $2 }
 
 formula_npv: 
-   |  { [] }
+   | /*empty*/ { [] }
+   | EMP  { []}
    | FALSE { mkFalse}
    | GARBAGE { mkGarbage}
    | lvariable_npv DOT jargument_npv MAPSTO  jargument_npv { [P_SPred("field", [Arg_var $1; $3; $5] )] }

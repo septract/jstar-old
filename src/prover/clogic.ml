@@ -91,40 +91,54 @@ let update_var_to ts_form v e =
 let pp_rmset_pre pre ts ppf s = 
   let rec f s = 
     if RMSet.has_more s then 
+      begin
       let (n,x),s = RMSet.remove s in 
       Format.fprintf ppf "@[%s%s%a@]" pre n (pp_c ts) x;
-      if RMSet.has_more s then 
-	begin Format.fprintf ppf "@ *@ "; f s end
+      if RMSet.has_more s then begin Format.fprintf ppf "@ *@ "; f s end
+      end
+   else Format.fprintf ppf "Emp"
   in f s
 
 let pp_rmset ts ppf s = 
   pp_rmset_pre "" ts ppf s 
 
 let rec pp_form ts ppf form = 
- (* Debug.list_format "*" 
+  Debug.form_format "*" "Emp"
     (fun ppf (r1,r2) -> 
       Format.fprintf ppf "@[%a=%a@]" (pp_c ts) r1 (pp_c ts) r2)
-      ppf form.eqs; *)
+      ppf form.eqs;
 
-  List.iter
+  Format.fprintf ppf " * ";
+  Debug.form_format "*" "Emp"
+(*    (match form.eqs with [] -> "" | _ -> "*")  *)
+    (fun ppf (r1,r2) -> 
+      Format.fprintf ppf "@[%a=%a@]" (pp_c ts) r1 (pp_c ts) r2)
+      ppf form.neqs;
+    
+
+(*  List.iter
     (fun (r1,r2) -> 
       Format.fprintf ppf "@[%a=%a@]@ *@ " (pp_c ts) r1 (pp_c ts) r2)
     form.eqs; 
   List.iter
     (fun (r1,r2) -> 
       Format.fprintf ppf "@[%a!=%a@]@ *@ " (pp_c ts) r1 (pp_c ts) r2)
-    form.neqs; 
+    form.neqs; *)
 
   (* Print spatial *)  
+  Format.fprintf ppf " * ";
   pp_rmset ts ppf form.spat; 
+
   (* Print plain *)
+  Format.fprintf ppf " * ";
   pp_rmset_pre "!" ts ppf form.plain; 
+
   (* Print disjuncts *)
-  List.iter 
-    (fun (d1,d2) -> 
-      Format.fprintf ppf "*@ @[(@[%a@]@ ||@ @[%a@])@]" (pp_form ts) d1 (pp_form ts) d2
-  )
-    form.disjuncts
+  Format.fprintf ppf " * ";
+  Debug.form_format "*" "Emp"
+    (fun ppf (d1,d2) -> 
+      Format.fprintf ppf "@[(@[%a@]@ ||@ @[%a@])@]" (pp_form ts) d1 (pp_form ts) d2)
+    ppf form.disjuncts
 
 
 let pp_smset_pre pre ppf s = 
@@ -140,7 +154,7 @@ let pp_smset ppf s =
   pp_smset_pre "" ppf s 
 
 let rec pp_sform ppf form = 
-  List.iter
+ (* List.iter
     (fun (r1,r2) -> 
       Format.fprintf ppf "@[%a=%a@]@ *@ " string_args r1 string_args r2)
     form.sneqs;
@@ -148,7 +162,7 @@ let rec pp_sform ppf form =
   List.iter
     (fun (r1,r2) -> 
       Format.fprintf ppf "@[%a!=%a@]@ *@ " string_args r1 string_args r2)
-    form.sneqs; 
+    form.sneqs;  *)
 
   (* Print spatial *)  
   pp_smset ppf form.sspat; 
@@ -165,6 +179,9 @@ let pp_ts_form ppf ts_form =
   let ts = ts_form.ts in 
   (* Print term_structure *)
   Cterm.pp_ts ppf ts;
+
+  Format.fprintf ppf " * ";
+
   (* Print eqs and neqs *)  
   pp_form ts ppf ts_form.form
 

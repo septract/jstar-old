@@ -119,6 +119,7 @@ let keyword_al = [
   ("import",IMPORT);
   ("False",FALSE);
   ("True",TRUE);
+  ("Emp",EMP);
   ("Implication",IMPLICATION);
   ("Frame",FRAME);
   ("Garbage",GARBAGE);

@@ -382,8 +382,8 @@ module PersistentCC ( A : GrowablePersistentArray) : PCC =
 	if i = (A.get rs i) then
 	  begin
 	    (*assert (has_pp i);*)
-	    List.iter 
-	      (fun x -> 	       
+	    Debug.form_format "*" "Emp"
+	      (fun ppf x -> 	       
 		if i!=x && has_pp x then
 		  if !first_elem then 
 		    begin
@@ -393,7 +393,7 @@ module PersistentCC ( A : GrowablePersistentArray) : PCC =
 		  else
 		    Format.fprintf ppf "=%a" pp x
 		      )
-	      (A.get ts.classlist i);
+	      ppf (A.get ts.classlist i);
 	    if !first_elem then 
 	      ()
 	    else
@@ -407,10 +407,8 @@ module PersistentCC ( A : GrowablePersistentArray) : PCC =
 	
 	List.iter 
 	  (function
-	      Complex_eq (a,b,c) ->
-		()
-	    | Not_equal a ->
-		if i< a then Format.fprintf ppf "%a!=%a * " pp i pp a
+	      Complex_eq (a,b,c) ->  ()
+	    | Not_equal a -> if i< a then Format.fprintf ppf "%a!=%a * " pp i pp a
 		  )
 	  neqs
       done 
