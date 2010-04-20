@@ -164,8 +164,8 @@ let pp_smset ppf s =
   pp_smset_pre "" ppf s 
 
 let rec pp_sform ppf form = 
- assert false; (* *)
- (* List.iter
+  Format.printf "Warning: pretty printer still broken!\n";
+  List.iter
     (fun (r1,r2) -> 
       Format.fprintf ppf "@[%a=%a@]@ *@ " string_args r1 string_args r2)
     form.sneqs;
@@ -173,7 +173,7 @@ let rec pp_sform ppf form =
   List.iter
     (fun (r1,r2) -> 
       Format.fprintf ppf "@[%a!=%a@]@ *@ " string_args r1 string_args r2)
-    form.sneqs;  *)
+    form.sneqs; 
 
   (* Print spatial *)  
   pp_smset ppf form.sspat; 

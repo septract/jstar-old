@@ -361,13 +361,7 @@ let eliminate_ret_vs
       ( name_template : string ) 
       ( vs : Vars.var list )
       ( h : inner_form ) : inner_form  = 
-  let rec add_index 
-      ( xs : 'a list ) 
-      ( i : int ) : ( ('a * int) list )  = 
-    match xs with  | []     ->  [] 
-                   | y::ys  ->  ( (y,i) :: (add_index ys (i+1)) ) 
-  in 
-  let vs_i = add_index vs 1 in  
+  let vs_i = Misc.add_index vs 1 in  
   List.fold_right (fun (v,i) -> eliminate_ret_var (name_template ^ string_of_int i) v) vs_i h
 
 

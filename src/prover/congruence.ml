@@ -379,12 +379,9 @@ module PersistentCC ( A : GrowablePersistentArray) : PCC =
 	    : unit = 
     let rs = ts.representative in 
     
-	let rec ilist i j = if i > j then assert false 
-	                    else if i=j then [j] else (i :: ilist (i+1) j) in 
-    
     (* Get equalities *)
 	let eqs = List.map (fun i -> (i,(A.get ts.classlist i)))
-	                   (ilist 0 (A.size rs - 1)) in 
+	                   (inter_list 0 (A.size rs - 1)) in 
 
     (* Filter trivial equalities *)
     let eqs = List.map (fun (i,e) -> 
@@ -412,7 +409,7 @@ module PersistentCC ( A : GrowablePersistentArray) : PCC =
 
     (* Get inequalities *)
 	let neqs = List.map (fun i -> (i,(A.get ts.uselist i)))
-	                    (ilist 0 (A.size rs - 1)) in
+	                    (inter_list 0 (A.size rs - 1)) in
 
     (* Filter *)
     let neqs = List.flatten 
@@ -443,12 +440,9 @@ module PersistentCC ( A : GrowablePersistentArray) : PCC =
 	    : bool = 
     let rs = ts.representative in 
     
-	let rec ilist i j = if i > j then assert false 
-	                    else if i=j then [j] else (i :: ilist (i+1) j) in 
-    
     (* Get equalities *)
 	let eqs = List.map (fun i -> (i,(A.get ts.classlist i)))
-	                   (ilist 0 (A.size rs - 1)) in 
+	                   (inter_list 0 (A.size rs - 1)) in 
 
     (* Filter trivial equalities *)
     let eqs = List.map (fun (i,e) -> 
@@ -460,7 +454,7 @@ module PersistentCC ( A : GrowablePersistentArray) : PCC =
 	
     (* Get inequalities *)
 	let neqs = List.map (fun i -> (i,(A.get ts.uselist i)))
-	                    (ilist 0 (A.size rs - 1)) in
+	                    (inter_list 0 (A.size rs - 1)) in
 
     (* Filter *)
     let neqs = List.flatten 

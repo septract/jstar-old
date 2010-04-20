@@ -86,3 +86,16 @@ let lift_option f =
   fun x -> match x with
     Some x -> f x
   | None -> None
+
+    
+let rec inter_list (i : int) (j : int) : int list =  
+  if i > j then [] else (i :: inter_list (i+1) j) 
+
+
+let rec add_index 
+    ( xs : 'a list ) 
+    ( i : int ) : ('a * int) list = 
+  match xs with  | []     ->  [] 
+                 | y::ys  ->  ( (y,i) :: (add_index ys (i+1)) ) 
+
+
