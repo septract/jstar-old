@@ -11,9 +11,11 @@
       LICENSE.txt
  ********************************************************)
 open Psyntax
-open Methdec_core
+open Core
 open Spec
-(* =================== PPrinter for core  ============================ *)
+
+(** Pretty printer for core programs. Note that this handles a lot more
+  than the data structure in core.ml. *)
 
 let rec args2str  arg = 
   match arg with 
@@ -82,3 +84,4 @@ let pp_stmt_core ppf =
 	"throw %a;"
 	string_args a
   | End -> Format.fprintf ppf "End"
+

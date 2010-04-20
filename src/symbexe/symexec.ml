@@ -12,7 +12,7 @@
  ********************************************************)
 
 open Cfg_core
-open Methdec_core
+open Core
 open Psyntax
 open Sepprover
 open Spec
@@ -44,7 +44,7 @@ let fresh_node = let node_counter = ref 0 in fun () ->  let x = !node_counter in
 let fresh_file = let file_id = ref 0 in fun () -> let x = !file_id in file_id := x+1;  Sys.getcwd() ^  "/" ^ !file ^ ".proof_file_"^(string_of_int x)^".txt"
 
 
-type node = {mutable content : string; id : id; mutable ntype : ntype; mutable url : string; mutable edges : edge list; cfg : stmt_core option}
+type node = {mutable content : string; id : id; mutable ntype : ntype; mutable url : string; mutable edges : edge list; cfg : cfg_node option}
 and  edge = string * string * node * node * string option
   (** An edge has a label, a ???, source, target, and perhaps an URL. *)
 
@@ -133,7 +133,7 @@ let pp_dotty_transition_system () =
   Sys.rename foname (!file ^ ".execution_core.dot")
 
 
-let add_node (label : string) (ty : ntype) (cfg : stmt_core option) = 
+let add_node (label : string) (ty : ntype) (cfg : cfg_node option) = 
   let id = fresh_node () in 
   let node = {content=label; id=id;ntype=ty;url=""; edges=[]; cfg = cfg} in 
   let cfgid = 
@@ -445,7 +445,7 @@ and execute_core_stmt n (sheap : formset_entry) : formset_entry list =
 (* the queue qu is a list of pairs [(node, expression option)...] the expression
 is used to deal with if statement. It is the expression of the if statement is the predecessor
 of the node is a if_stmt otherwise is None. In the beginning is always None for each node *)
-let verify (mname : string) (stmts : stmt_core list)  (spec : spec) (lo : logic) (abs_rules : logic) =
+let verify (mname : string) (stmts : cfg_node list)  (spec : spec) (lo : logic) (abs_rules : logic) =
 
   (* remove methods that are declared abstraction *)
   curr_logic:= lo;
@@ -467,7 +467,7 @@ let verify (mname : string) (stmts : stmt_core list)  (spec : spec) (lo : logic)
 	      check_postcondition [(spec.post,id_exit)] post) post
 
 
-let verify_ensures (name : string) (stmts: stmt_core list) (post : Psyntax.pform) conjoin_with_res_true (oldexp_frames : inner_form list list) lo abs_rules =
+let verify_ensures (name : string) (stmts: cfg_node list) (post : Psyntax.pform) conjoin_with_res_true (oldexp_frames : inner_form list list) lo abs_rules =
   (* construct the specification of the ensures clause *)
 	let rec conjoin_disjunctions (d1 : inner_form list) (d2 : inner_form list) : inner_form list =
 		match d1 with
@@ -523,7 +523,7 @@ let check_and_get_frame (heap,id) sheap =
                  [])
 
 
-let get_frame (stmts : stmt_core list) (pre : Psyntax.pform) (lo : logic) (abs_rules : logic) = 
+let get_frame (stmts : cfg_node list) (pre : Psyntax.pform) (lo : logic) (abs_rules : logic) = 
   curr_logic:= lo;
   curr_abs_rules:=abs_rules;
  

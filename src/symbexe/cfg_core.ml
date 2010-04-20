@@ -11,15 +11,35 @@
       LICENSE.txt
  ********************************************************)
 
+(** Data structures for representing flowgraphs of the core languages.
+  Also, utilities to build such flowgraphs and to pretty-print them. *)
 
 open Pprinter_core
-open Methdec_core
+open Core
 
 let cfg_debug () = false
 
+(* {{{ data structure to represent (core) flowgraphs *)
+
+(* A node in the flowgraph. The fields [succs] and [preds] are filled 
+  by [Cfg_core.stmts_to_cfg]. *)
+type cfg_node = { 
+  skind: core_statement;
+  sid: int;  
+  mutable succs: cfg_node list; 
+  mutable preds: cfg_node list }
+
+(* data structure to represent (core) flowgraphs }}} *)
+(* {{{ utils for building flowgraphs *)
+let mk_node : core_statement -> cfg_node =
+  let x = ref 0 in
+  fun stmt ->
+    incr x;
+    { skind = stmt; sid = !x; succs = []; preds = [] }
+
 (** Fills the [succs] and [preds] fields of [stmts] by adding edges
     corresponding to program order and to goto-s. *)
-let stmts_to_cfg (stmts : stmt_core list) : unit =
+let stmts_to_cfg (stmts : cfg_node list) : unit =
   let l2s = Hashtbl.create 11 in (* maps labels to statements *)
   let al = function
     | {skind = Label_stmt_core l} as s -> Hashtbl.add l2s l s
@@ -38,17 +58,17 @@ let stmts_to_cfg (stmts : stmt_core list) : unit =
   assert (List.for_all (fun s -> s.succs = [] && s.preds = []) stmts);
   List.iter al stmts;
   process stmts
-
-(* ================== BEGIN of Printing dotty files ================== *)
+(* utils for building flowgraphs }}} *)
+(* {{{ pretty printing flowgraphs (to .dot) *)
 
 (* stmtsname is a list of programs and names, such that each program's
    cfg is printed in a subgraph with its name.*)
-let print_icfg_dotty (stmtsname : (stmt_core list * string) list) (filename : string) : unit =
+let print_icfg_dotty (stmtsname : (cfg_node list * string) list) (filename : string) : unit =
   (* Print an edge between to stmts *)
   let d_cfgedge chan src dest =
     Printf.fprintf chan "\t\t%i -> %i\n" src.sid dest.sid in
   (* Print a node and edges to its successors *)
-  let d_cfgnode chan (s : stmt_core) =
+  let d_cfgnode chan (s : cfg_node) =
     Printf.fprintf chan 
       "\t\t%i [label=\"%i: %s\"]\n" 
       s.sid 
@@ -70,9 +90,6 @@ let print_icfg_dotty (stmtsname : (stmt_core list * string) list) (filename : st
   Printf.fprintf chan  "}\n";
   close_out chan;
   if cfg_debug() then ignore (Printf.printf "\n\n Printing dot file done!")
-
-(* ================== END of Printing dotty files ================== *)
-
-
+(* pretty printing flowgraphs (to .dot) }}} *)
 
 

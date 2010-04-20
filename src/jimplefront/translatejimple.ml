@@ -21,7 +21,7 @@ open Specification
 open Vars
 open Support_symex
 open Symexec
-open Methdec_core
+open Core
 open Javaspecs
 open Spec
 
@@ -242,7 +242,7 @@ let jimple_stms2core stms =
     if Config.symb_debug() then 
       Format.printf "@\ninto the core statement:@\n  %a @\n" 
 	(Debug.list_format "; " Pprinter_core.pp_stmt_core) s; 
-    List.map Methdec_core.stmt_create s
+    List.map Cfg_core.mk_node s
   in
   List.flatten (List.map do_one_stmt stms)
 
