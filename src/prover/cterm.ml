@@ -147,6 +147,9 @@ let pp_c norm ts ppf c : unit =
 let pp_ts ppf ts =
   CC.pretty_print (has_pp_c ts) (pp_c false ts) ppf ts.cc 
 
+let pp_ts_nonemp ppf ts =
+  CC.pretty_print_nonemp (has_pp_c ts) (pp_c false ts) ppf ts.cc 
+
 let pp_c ts ppf c = CC.pp_c ts.cc (pp_c true ts) ppf c
 
 

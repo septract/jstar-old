@@ -96,49 +96,58 @@ let pp_rmset_pre pre ts ppf s =
       Format.fprintf ppf "@[%s%s%a@]" pre n (pp_c ts) x;
       if RMSet.has_more s then begin Format.fprintf ppf "@ *@ "; f s end
       end
-   else Format.fprintf ppf "Emp"
   in f s
 
+let pp_rmset_nonemp ts ppf s = RMSet.has_more s 
+  
 let pp_rmset ts ppf s = 
   pp_rmset_pre "" ts ppf s 
 
+
+let rec pp_form_nonemp ts ppf form = 
+  (match form.eqs with [] -> false | _ -> true) ||
+  (match form.neqs with [] -> false | _ -> true) ||
+  (pp_rmset_nonemp ts ppf form.spat) ||
+  (pp_rmset_nonemp ts ppf form.plain) || 
+  (match form.disjuncts with [] -> false | _ -> true)
+
+
 let rec pp_form ts ppf form = 
-  Debug.form_format "*" "Emp"
+  Debug.list_format "*"
     (fun ppf (r1,r2) -> 
       Format.fprintf ppf "@[%a=%a@]" (pp_c ts) r1 (pp_c ts) r2)
-      ppf form.eqs;
+      ppf form.eqs; 
+  let bef = (match form.eqs with [] -> false | _ -> true) in 
 
-  Format.fprintf ppf " * ";
-  Debug.form_format "*" "Emp"
+  if bef && (match form.neqs with [] -> false | _ -> true) 
+  then Format.fprintf ppf " * ";
+  Debug.list_format "*" 
 (*    (match form.eqs with [] -> "" | _ -> "*")  *)
     (fun ppf (r1,r2) -> 
       Format.fprintf ppf "@[%a=%a@]" (pp_c ts) r1 (pp_c ts) r2)
       ppf form.neqs;
-    
-
-(*  List.iter
-    (fun (r1,r2) -> 
-      Format.fprintf ppf "@[%a=%a@]@ *@ " (pp_c ts) r1 (pp_c ts) r2)
-    form.eqs; 
-  List.iter
-    (fun (r1,r2) -> 
-      Format.fprintf ppf "@[%a!=%a@]@ *@ " (pp_c ts) r1 (pp_c ts) r2)
-    form.neqs; *)
+  let bef = bef || (match form.neqs with [] -> false | _ -> true) in
 
   (* Print spatial *)  
-  Format.fprintf ppf " * ";
+  if bef && pp_rmset_nonemp ts ppf form.spat 
+  then Format.fprintf ppf " * ";
   pp_rmset ts ppf form.spat; 
+  let bef = bef || (pp_rmset_nonemp ts ppf form.spat) in
 
   (* Print plain *)
-  Format.fprintf ppf " * ";
+  if bef && pp_rmset_nonemp ts ppf form.plain 
+  then Format.fprintf ppf " * ";
   pp_rmset_pre "!" ts ppf form.plain; 
+  let bef = bef || (pp_rmset_nonemp ts ppf form.plain) in
 
   (* Print disjuncts *)
-  Format.fprintf ppf " * ";
-  Debug.form_format "*" "Emp"
+  if bef && (match form.disjuncts with [] -> false | _ -> true) 
+  then Format.fprintf ppf " * ";
+  Debug.list_format "*"
     (fun ppf (d1,d2) -> 
       Format.fprintf ppf "@[(@[%a@]@ ||@ @[%a@])@]" (pp_form ts) d1 (pp_form ts) d2)
     ppf form.disjuncts
+
 
 
 let pp_smset_pre pre ppf s = 
@@ -150,10 +159,12 @@ let pp_smset_pre pre ppf s =
 	begin Format.fprintf ppf "@ *@ "; f s end
   in f s
 
+
 let pp_smset ppf s = 
   pp_smset_pre "" ppf s 
 
 let rec pp_sform ppf form = 
+ assert false; (* *)
  (* List.iter
     (fun (r1,r2) -> 
       Format.fprintf ppf "@[%a=%a@]@ *@ " string_args r1 string_args r2)
@@ -177,13 +188,16 @@ let rec pp_sform ppf form =
 
 let pp_ts_form ppf ts_form =
   let ts = ts_form.ts in 
+
   (* Print term_structure *)
   Cterm.pp_ts ppf ts;
-
-  Format.fprintf ppf " * ";
+ 
+  if Cterm.pp_ts_nonemp ppf ts && pp_form_nonemp ts ppf ts_form.form 
+  then Format.fprintf ppf " * ";
 
   (* Print eqs and neqs *)  
   pp_form ts ppf ts_form.form
+
 
 let conjunction form1 form2 : formula=
   {
@@ -532,9 +546,14 @@ let empty_sequent () =
 
 let pp_sequent ppf seq = 
   Format.fprintf ppf 
-    "@[%a@]@ |@ @[%a%a@]@ |-@ @[%a@]"  
-    (pp_rmset seq.ts) seq.matched
-    pp_ts seq.ts
+    "@[%a@]@ |@ @[%a"
+    (pp_rmset seq.ts) seq.matched 
+    pp_ts seq.ts ;
+
+  if pp_ts_nonemp ppf seq.ts && pp_form_nonemp ppf seq.ts seq.assumption
+  then Format.fprintf ppf " * "; 
+
+  Format.fprintf ppf "%a@]@ |-@ @[%a@]"  
     (pp_form seq.ts) seq.assumption
     (pp_form seq.ts) seq.obligation
 

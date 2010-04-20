@@ -52,7 +52,7 @@ F#*)
 let rec form_format sep emp f ppf list = 
   match list with 
     [] -> Format.fprintf ppf "%s" emp
-  | [x] -> f ppf x 
+  | [x] -> Format.fprintf ppf "%a" f x
   | x::xs -> Format.fprintf ppf "@[%a@]@ %s @[%a@]" f x sep (form_format sep emp f) xs 
 
 

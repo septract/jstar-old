@@ -130,6 +130,7 @@ module type PCC =
       (*  Debug stuff *)
       val print : t -> unit 
       val pretty_print : (constant -> bool) -> (Format.formatter -> constant -> unit) -> Format.formatter -> t -> unit 
+      val pretty_print_nonemp : (constant -> bool) -> (Format.formatter -> constant -> unit) -> Format.formatter -> t -> bool
       val pp_c : t -> (Format.formatter -> constant -> unit) -> (Format.formatter -> constant -> unit)  
 
       val get_eqs : (constant -> bool) -> (constant -> 'a) -> t -> ('a * 'a) list
@@ -371,47 +372,110 @@ module PersistentCC ( A : GrowablePersistentArray) : PCC =
       pp ppf (rep ts i)
 	
     let pretty_print 
-	(has_pp : constant -> bool)  
-	(pp : Format.formatter -> constant -> unit)  
-	(ppf : Format.formatter) 
-	(ts:t) : unit = 
-      let rs = ts.representative in 
-      let n = A.size rs - 1 in 
-      let first_elem = ref true in 
-      for i = 0 to n do
-	if i = (A.get rs i) then
-	  begin
-	    (*assert (has_pp i);*)
-	    Debug.form_format "*" "Emp"
-	      (fun ppf x -> 	       
-		if i!=x && has_pp x then
-		  if !first_elem then 
-		    begin
-		      first_elem := false;
-		      Format.fprintf ppf "%a=%a" pp i pp x
-		    end		    
-		  else
-		    Format.fprintf ppf "=%a" pp x
-		      )
-	      ppf (A.get ts.classlist i);
-	    if !first_elem then 
-	      ()
-	    else
-	      begin
-		first_elem := true;
-		Format.fprintf ppf "@ *@ " 
-	      end
-	  end;
-	(* Print neqs *)
-    let neqs = (A.get (ts.uselist) i) in 
+        (has_pp : constant -> bool)  
+	    (pp : Format.formatter -> constant -> unit)  
+	    (ppf : Format.formatter) 
+	    (ts:t) 
+	    : unit = 
+    let rs = ts.representative in 
+    
+	let rec ilist i j = if i > j then assert false 
+	                    else if i=j then [j] else (i :: ilist (i+1) j) in 
+    
+    (* Get equalities *)
+	let eqs = List.map (fun i -> (i,(A.get ts.classlist i)))
+	                   (ilist 0 (A.size rs - 1)) in 
+
+    (* Filter trivial equalities *)
+    let eqs = List.map (fun (i,e) -> 
+	   (i, List.filter (fun x -> i!=x && has_pp x) e )) eqs in 
 	
-	List.iter 
-	  (function
-	      Complex_eq (a,b,c) ->  ()
-	    | Not_equal a -> if i< a then Format.fprintf ppf "%a!=%a * " pp i pp a
-		  )
-	  neqs
-      done 
+	(* Filter useless elements *)
+	let eqs = List.filter (fun (i,e) -> i = (A.get rs i) && 
+	                   match e with [] -> false | _ -> true ) eqs in 
+	
+	(* Print *)
+	let first_elem = ref true in 
+    Debug.list_format "*"
+	   (fun ppf (i,eq) -> 
+	     List.iter
+	      (fun x -> 
+		      if !first_elem then 
+                begin
+                  first_elem := false;
+		          Format.fprintf ppf "%a=%a" pp i pp x
+		        end		    
+              else  Format.fprintf ppf "=%a" pp x
+		      )  eq;
+		  first_elem := true )
+		 ppf eqs;
+
+    (* Get inequalities *)
+	let neqs = List.map (fun i -> (i,(A.get ts.uselist i)))
+	                    (ilist 0 (A.size rs - 1)) in
+
+    (* Filter *)
+    let neqs = List.flatten 
+       (List.map (fun (i,xs) -> 
+        List.fold_right 
+        (fun x rs -> match x with 
+                     | Complex_eq a -> rs 
+                     | Not_equal a -> if i<a then (i,a)::rs else rs) xs []) neqs) in 
+
+    (* Put in a star if it's needed *)
+    if (function [] -> false | _ -> true) eqs && 
+       (function [] -> false | _ -> true) neqs then 
+      Format.fprintf ppf " * " ;
+    
+	(* Print neqs *)
+	Debug.list_format "*" 
+	  (fun ppf (i,a) -> Format.fprintf ppf "%a!=%a" pp i pp a ) 
+	  ppf neqs
+
+    
+
+
+    let pretty_print_nonemp 
+        (has_pp : constant -> bool)  
+	    (pp : Format.formatter -> constant -> unit)  
+	    (ppf : Format.formatter) 
+	    (ts:t) 
+	    : bool = 
+    let rs = ts.representative in 
+    
+	let rec ilist i j = if i > j then assert false 
+	                    else if i=j then [j] else (i :: ilist (i+1) j) in 
+    
+    (* Get equalities *)
+	let eqs = List.map (fun i -> (i,(A.get ts.classlist i)))
+	                   (ilist 0 (A.size rs - 1)) in 
+
+    (* Filter trivial equalities *)
+    let eqs = List.map (fun (i,e) -> 
+	   (i, List.filter (fun x -> i!=x && has_pp x) e )) eqs in 
+	
+	(* Filter useless elements *)
+	let eqs = List.filter (fun (i,e) -> i = (A.get rs i) && 
+	                   match e with [] -> false | _ -> true ) eqs in 
+	
+    (* Get inequalities *)
+	let neqs = List.map (fun i -> (i,(A.get ts.uselist i)))
+	                    (ilist 0 (A.size rs - 1)) in
+
+    (* Filter *)
+    let neqs = List.flatten 
+       (List.map (fun (i,xs) -> 
+        List.fold_right 
+        (fun x rs -> match x with 
+                     | Complex_eq a -> rs 
+                     | Not_equal a -> if i<a then (i,a)::rs else rs) xs []) neqs) in 
+
+    (* return *)
+    (function [] -> false | _ -> true) eqs || (function [] -> false | _ -> true) neqs
+
+    
+
+
 
     let print (ts:t) : unit =
       let rs = ts.representative in 
