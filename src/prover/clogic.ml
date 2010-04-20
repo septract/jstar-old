@@ -497,7 +497,8 @@ type sequent =
     matched : RMSet.multiset;
     ts : term_structure;
     assumption : formula;
-    obligation : formula;      
+    obligation : formula;
+    antiframe : formula; 
   } 
   
 let empty_sequent () = 
@@ -506,6 +507,7 @@ let empty_sequent () =
   ts = Cterm.new_ts ();
   assumption = empty;
   obligation = empty;
+  antiframe = empty; 
 } 
 
 let pp_sequent ppf seq = 
@@ -540,7 +542,7 @@ type sequent_rule = psequent * (psequent list list) * string * ((* without *) pf
 
 
 type pat_sequent =
-    {
+  {
     assumption_same : syntactic_form;
     assumption_diff : syntactic_form;
     obligation_diff : syntactic_form;
