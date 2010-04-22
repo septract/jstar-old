@@ -64,7 +64,8 @@ let bind_spec_vars (mods,typ,name,args_list) {pre=pre;post=post;excep=excep} =
 
   {pre=subst_pform subst pre;
    post=subst_pform subst post;
-   excep=ClassMap.map (subst_pform subst) excep}
+   excep=ClassMap.map (subst_pform subst) excep;
+   invariants=LabelMap.empty (* TODO INV *) }
 
 let mkDynamic (msig, specs) =
   let specs = List.map (bind_spec_vars msig) specs in 
@@ -370,7 +371,8 @@ methods_specs:
    | /*empty*/ { [] }
 
 spec:
-   | L_BRACE formula R_BRACE L_BRACE formula R_BRACE exp_posts invariants {  {pre=$2;post=$5;excep=$7}  }
+   | L_BRACE formula R_BRACE L_BRACE formula R_BRACE exp_posts invariants 
+     {  {pre=$2;post=$5;excep=$7;invariants=LabelMap.empty}  (* TODO INV *) } 
 specs:
    | spec ANDALSO specs  { $1 :: $3 }
    | spec     {[$1]}

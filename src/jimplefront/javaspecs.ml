@@ -445,8 +445,11 @@ let remove_this_type_info prepure =
 
 let static_to_dynamic spec = 
   match spec with 
-    {pre=pre; post=post; excep=excep} 
-      ->  {pre=remove_this_type_info pre; post=post; excep=excep}
+    {pre=pre; post=post; excep=excep; invariants=invariants} 
+      ->  { pre=remove_this_type_info pre; 
+            post=post; 
+            excep=excep; 
+            invariants=invariants (* TODO INV *) }
 
 let rec filtertype_spat classname spat =
   match spat with
@@ -489,17 +492,17 @@ and filterdollar x = List.map (filterdollar_at) x
 
 let dynamic_to_static cn spec = 
   match spec with
-    {pre=f1; post=f2; excep=excep}
+    {pre=f1; post=f2; excep=excep; invariants=invariants}
       -> {pre=filtertype cn f1; 
 	  post=filtertype cn f2; 
-	  excep=ClassMap.map (filtertype cn) excep}
+	  excep=ClassMap.map (filtertype cn) excep;
+          invariants=LabelMap.map (filtertype cn) invariants (* TODO INV *) }
 
-let filter_dollar_spec spec = 
-  match spec with
-    {pre=f1; post=f2; excep=excep}
-      -> {pre=filterdollar f1; 
-	  post=filterdollar f2; 
-	  excep=ClassMap.map filterdollar excep}
+let filter_dollar_spec {pre=f1; post=f2; excep=excep; invariants=invariants} =
+  { pre=filterdollar f1; 
+    post=filterdollar f2; 
+    excep=ClassMap.map filterdollar excep;
+    invariants=LabelMap.map filterdollar invariants (* TODO INV *) }
 
 let fix_spec_inheritance_gaps classes mmap spec_file exclude_function spec_type =
 	let mmapr = ref mmap in
