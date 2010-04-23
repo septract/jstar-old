@@ -370,13 +370,13 @@ let rec ev_form_at pa set =
 and ev_form pf set =
  List.fold_left (fun set pa -> ev_form_at pa set) set pf  
 
-type psequent = pform * pform * pform
+type psequent = pform * pform * pform * pform 
 
 
-let fv_psequent (pff,pfl,pfr) = 
+let fv_psequent (pff,pfl,pfr,pfa) = 
   (fv_form pff (fv_form pfl (fv_form pfr vs_empty)))
 
-let subst_psequent subst (pff,pfl,pfr) = 
+let subst_psequent subst (pff,pfl,pfr,pfa) = 
   (subst_pform subst pff, subst_pform subst pfl, subst_pform subst pfr)
 
 
@@ -418,13 +418,20 @@ let string_where ppf where =
 
 
 
-type sequent_rule = psequent * (psequent list list) * string * ((* without *) pform * pform) * (where list)
+type sequent_rule = 
+   psequent * 
+   (psequent list list) * 
+   string * 
+   ((* without *) pform * pform) * 
+   (where list)
 
-let string_pseq ppf (g,l,r) = 
-  Format.fprintf ppf "%a@ | %a@ |- %a" 
+
+let string_pseq ppf (g,l,r,a) = 
+  Format.fprintf ppf "%a@ | %a@ |- %a -| %a" 
     string_form g 
     string_form l
     string_form r
+    string_form a 
 
 let string_psr ppf (sr :sequent_rule) : unit = 
     match sr with 
@@ -515,12 +522,12 @@ let expand_equiv_rules rules =
   let equiv_rule_to_seq_rule x list : rules list= 
     match x with 
       EquivRule(name, guard, leftform, rightform, without) -> 
-	(SeqRule((guard, leftform, []), [[([],rightform,[])]],name ^ "_left", (without,mkEmpty) , []))
+	(SeqRule((guard, leftform, [],mkEmpty), [[([],rightform,[],mkEmpty)]],name ^ "_left", (without,mkEmpty) , []))
 	:: 
-	  (SeqRule(([],[],guard&&&leftform), [[([],[],guard&&&rightform)]], name ^"_right", (mkEmpty, without), []))
+	  (SeqRule(([],[],guard&&&leftform,mkEmpty), [[([],[],guard&&&rightform,mkEmpty)]], name ^"_right", (mkEmpty, without), []))
 	::
 	  if(guard != []) then 
-	    (SeqRule((guard, [], leftform), [[([],[],rightform)]], name ^ "_split", (mkEmpty, without), []))
+	    (SeqRule((guard, [], leftform, mkEmpty), [[([],[],rightform,mkEmpty)]], name ^ "_split", (mkEmpty, without), []))
 	    ::
 	      list
 	  else
@@ -714,6 +721,9 @@ let pprint_sequent_rules logic =
 
 
 (*
+
+(* FIXME: readd these *)
+
     type sequent = form * form * form
 
     type rewrite_rule = { 

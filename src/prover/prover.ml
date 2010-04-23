@@ -156,14 +156,14 @@ let abs logic ts_form  =
       assert false
 
 let check_implication_syntactic logic pform pform2 = 
-  let seq = Clogic.make_sequent (Clogic.convert_sequent ([],pform,pform2)) in
+  let seq = Clogic.make_sequent (Clogic.convert_sequent ([],pform,pform2,mkEmpty)) in
   match seq with 
     None -> true (* Found contradiction immediately *)
   | Some seq -> 
       check_imp logic seq
 
 let check_implication_frame_syntactic logic pform pform2 = 
-  let seq = Clogic.make_sequent (Clogic.convert_sequent ([],pform,pform2)) in
+  let seq = Clogic.make_sequent (Clogic.convert_sequent ([],pform,pform2,mkEmpty)) in
   match seq with 
     None -> Some [] (* Found contradiction immediately *)
   | Some seq -> 

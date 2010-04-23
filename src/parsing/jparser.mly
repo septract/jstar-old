@@ -214,6 +214,7 @@ let field_signature2str fs =
 %token MINUS 
 %token WAND
 %token VDASH
+%token DASHV
 %token MULT 
 %token DIV 
 %token L_BRACKET 

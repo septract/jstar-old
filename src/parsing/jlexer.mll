@@ -265,6 +265,7 @@ rule token = parse
    | "?" { QUESTIONMARK }
    | "!" { BANG }
    | "|-" { VDASH }
+   | "-|" { DASHV }
    | "~~>" {LEADSTO}
    | eof { EOF }
 

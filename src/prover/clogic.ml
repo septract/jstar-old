@@ -512,11 +512,12 @@ let empty_sequent () =
 
 let pp_sequent ppf seq = 
   Format.fprintf ppf 
-    "@[%a@]@ |@ @[%a%a@]@ |-@ @[%a@]"  
+    "@[%a@]@ |@ @[%a%a@]@ |-@ @[%a@] -|@ [%a]"  
     (pp_rmset seq.ts) seq.matched
     pp_ts seq.ts
     (pp_form seq.ts) seq.assumption
     (pp_form seq.ts) seq.obligation
+    (pp_form seq.ts) seq.antiframe
 
     
 
@@ -546,16 +547,18 @@ type pat_sequent =
     assumption_same : syntactic_form;
     assumption_diff : syntactic_form;
     obligation_diff : syntactic_form;
+    antiframe_diff : syntactic_form; 
   }
       
 let convert_sequent (ps : psequent) : pat_sequent =
 (*  Format.fprintf !(Debug.dump) "Converting sequent: %a@\n" string_pseq ps;*)
   let ps = match ps with
-    pm,pa,po -> 
+    pm,pl,pr,pa -> 
       {
        assumption_same = convert_to_inner pm;
-       assumption_diff = convert_to_inner pa;
-       obligation_diff = convert_to_inner po;
+       assumption_diff = convert_to_inner pl;
+       obligation_diff = convert_to_inner pr;
+       antiframe_diff = convert_to_inner pa;
      } in 
 (*  Format.fprintf !(Debug.dump) "Produced sequent: %a@ |@ %a@ |-@ %a@\n@\n" pp_sform ps.assumption_same pp_sform ps.assumption_diff pp_sform ps.obligation_diff; *)
   ps
@@ -584,8 +587,14 @@ let convert_rule (sr : sequent_rule) : inner_sequent_rule =
      }
 
 
-let sequent_join fresh (seq : sequent) (pseq : pat_sequent) : sequent option = 
+(* star together sequents *)
+let sequent_join 
+    (fresh : bool)
+    (seq : sequent) 
+    (pseq : pat_sequent) 
+    : sequent option = 
   try 
+    (* Construct new assumption *)
     let ass,ts = 
       try 
 	convert fresh  seq.ts pseq.assumption_diff 
@@ -594,6 +603,18 @@ let sequent_join fresh (seq : sequent) (pseq : pat_sequent) : sequent option =
 	raise Contradiction
     in
     let ass = conjunction ass seq.assumption in
+
+	(* Construct new antiframe *)
+	let ant,ts = 
+	  try 
+	convert fresh seq.ts pseq.antiframe_diff
+      with Contradiction -> 
+	Format.fprintf !(Debug.dump) "Failed to add formula to antiframe: %a@\n" pp_sform pseq.antiframe_diff;
+	raise Contradiction
+    in 
+    let ant = conjunction ant seq.antiframe in 
+
+    (* Construct new matched portion *)
     let sam,ts = 
       try 
 	convert fresh ts pseq.assumption_same 
@@ -601,6 +622,8 @@ let sequent_join fresh (seq : sequent) (pseq : pat_sequent) : sequent option =
 	Format.fprintf !(Debug.dump) "Failed to add formula to matched: %a@\n" pp_sform pseq.assumption_same;
 	assert false in 
     let sam = RMSet.union sam.spat seq.matched in 
+
+    (* Construct new obligation *)
     let obs,ts = 
       try 
 	let obs,ts = convert_without_eqs fresh ts pseq.obligation_diff in
@@ -609,13 +632,14 @@ let sequent_join fresh (seq : sequent) (pseq : pat_sequent) : sequent option =
       with Contradiction ->
 	try 
 	  convert_without_eqs true ts false_sform
-	with Contradiction -> assert false
-    in 
+	with Contradiction -> assert false  in 
+	
     Some {
      assumption = ass;
      obligation = obs;
      matched = sam;
      ts = ts;
+     antiframe = ant; (* FIXME: what should this be? *)
    }
   with Contradiction -> 
     Format.fprintf !(Debug.dump) "Contradiction detected!!@\n";
@@ -812,7 +836,8 @@ try
 	plain = o_plain;
 	eqs = ob_eqs; 
 	neqs=ob_neqs
-      } 
+      };
+      antiframe = seq.antiframe; (* FIXME: What should this do? *)
     } in
    (*  Format.printf "After simplification : %a@\n" pp_sequent seq; *)
     Some seq
@@ -829,7 +854,10 @@ with Success -> None
 
 (* TODO Doesn't use obligation equalities to help with match. 
    *)
-let apply_rule (sr : inner_sequent_rule) (seq : sequent) : sequent list list = 
+let apply_rule 
+     (sr : inner_sequent_rule) 
+     (seq : sequent) 
+     : sequent list list = 
   (* Should reset any matching variables in the ts to avoid clashes. *)
   let ts = blank_pattern_vars seq.ts in 
   (* Match obligation *)
@@ -915,7 +943,8 @@ let make_implies heap pheap =
   {ts = ts;
      assumption = form;
      obligation = rh;
-     matched = RMSet.empty}
+     matched = RMSet.empty;
+     antiframe = empty; }
 
 let make_syntactic ts_form = 
   let ts,form = break_ts_form ts_form in 
@@ -956,5 +985,6 @@ let make_implies_inner ts_form1 ts_form2 =
   {ts = ts;
     assumption = form;
     obligation = rform;
-    matched = RMSet.empty}
+    matched = RMSet.empty;
+    antiframe = empty; }
 

@@ -10,12 +10,15 @@
    jStar is distributed under a BSD license,  see, 
       LICENSE.txt
  ********************************************************)
+
 (* File to read a logic file and its imports. *)
 open Psyntax
 open System
 open Load
 
-let load_logic_extra_rules dirs filename extra_rules =
+
+let load_logic_extra_rules dirs filename extra_rules 
+     : (sequent_rule list * rewrite_rule list) =
   let fileentrys = import_flatten_extra_rules dirs filename extra_rules (Jparser.rule_file Jlexer.token) in  
   let rl = expand_equiv_rules fileentrys in 
   let sl,rm = 
@@ -35,4 +38,9 @@ let load_logic_extra_rules dirs filename extra_rules =
   in
   (sl,rm)
 
-let load_logic dirs filename : (sequent_rule list * rewrite_rule list)= load_logic_extra_rules dirs filename []
+
+let load_logic 
+     dirs 
+     filename 
+     : (sequent_rule list * rewrite_rule list) = 
+  load_logic_extra_rules dirs filename []
