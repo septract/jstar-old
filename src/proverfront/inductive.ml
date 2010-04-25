@@ -38,8 +38,8 @@ let print_inductive_rule r = Printf.printf "Inductive rule\n%a\n" (Logic.string_
 *)
 let convert_inductive_con inductive_con =
   let (heap, name, args) = inductive_con.con_def in
-  let premis = ([], [], heap) in
-  let conc = ([], [], [P_SPred (name, args)]) in
+  let premis = (mkEmpty, mkEmpty, heap, mkEmpty) in
+  let conc = (mkEmpty, mkEmpty, [P_SPred (name, args)], mkEmpty) in
     SeqRule (conc, [[premis]], name^"_"^inductive_con.con_name, ([], []), [])
 
 let convert_inductive inductive =
@@ -54,9 +54,9 @@ let convert_inductive inductive =
     let collect_eq l v = (Plogic.P_EQ (Pterm.Arg_var (Vars.freshp ()), v))::l in
     let arg_eqs = List.fold_left collect_eq [] args in
 *)
-      ([], arg_eqs@heap, []) in
+      (mkEmpty, arg_eqs@heap, mkEmpty, mkEmpty) in
   let case_premises = List.map extract_premise inductive.ind_cons in
-  let case_conc = ([], [P_SPred (inductive.ind_name, fresh_args)], []) in
+  let case_conc = (mkEmpty, [P_SPred (inductive.ind_name, fresh_args)], mkEmpty, mkEmpty) in
   let case_rule = SeqRule(case_conc, [case_premises], inductive.ind_name^"_case", ([], []), []) in
     case_rule::con_rules
 

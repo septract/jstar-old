@@ -604,6 +604,7 @@ let sequent_join
     in
     let ass = conjunction ass seq.assumption in
 
+(*
 	(* Construct new antiframe *)
 	let ant,ts = 
 	  try 
@@ -612,7 +613,7 @@ let sequent_join
 	Format.fprintf !(Debug.dump) "Failed to add formula to antiframe: %a@\n" pp_sform pseq.antiframe_diff;
 	raise Contradiction
     in 
-    let ant = conjunction ant seq.antiframe in 
+    let ant = conjunction ant seq.antiframe in  *)
 
     (* Construct new matched portion *)
     let sam,ts = 
@@ -639,7 +640,8 @@ let sequent_join
      obligation = obs;
      matched = sam;
      ts = ts;
-     antiframe = ant; (* FIXME: what should this be? *)
+(*     antiframe = ant; *)
+     antiframe = empty; 
    }
   with Contradiction -> 
     Format.fprintf !(Debug.dump) "Contradiction detected!!@\n";

@@ -939,9 +939,9 @@ spatial_list:
    |    { [] }
 
 sequent:
-   | spatial_list OR formula VDASH formula { ($1,$3,$5) }
+   | spatial_list OR formula VDASH formula { ($1,$3,$5,mkEmpty) }
 /* used as the collapse form is || is a reserved token */
-   | spatial_list OROR formula VDASH formula {  if Config.symb_debug() then parse_warning "deprecated use of |" ; ($1,$3,$5) }
+   | spatial_list OROR formula VDASH formula {  if Config.symb_debug() then parse_warning "deprecated use of |" ; ($1,$3,$5,mkEmpty) }
 
 sequent_list:
    |  /* empty */ { [] }
@@ -1013,9 +1013,9 @@ rule:
 					     if_form=$11};
 				     rewrite_name=$2;
 				     saturate=true})) }
-   |  ABSRULE identifier_op COLON formula LEADSTO formula where  { let seq=([],$4,[]) in
+   |  ABSRULE identifier_op COLON formula LEADSTO formula where  { let seq=(mkEmpty,$4,mkEmpty,mkEmpty) in
 							       let wo=(mkEmpty,mkEmpty) in 
-							       let seq2=([],$6,[]) in
+							       let seq2=(mkEmpty,$6,mkEmpty,mkEmpty) in
 							       let seq_list=[[seq2]] in
 							       NormalEntry(SeqRule(seq,seq_list,$2,wo,$7)) }
    | equiv_rule { NormalEntry($1) }
