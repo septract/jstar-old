@@ -86,3 +86,7 @@ let lift_option f =
   fun x -> match x with
     Some x -> f x
   | None -> None
+
+(* Similar to the one in Haskell. *)
+let curry f a b = f (a, b)
+

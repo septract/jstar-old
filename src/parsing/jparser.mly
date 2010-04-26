@@ -43,11 +43,13 @@ let msig_simp (mods,typ,name,args_list) =
   let args_list = List.map fst args_list in
   (mods,typ,name,args_list) 
 
-let bind_spec_vars (mods,typ,name,args_list) {pre=pre;post=post;excep=excep} =
+let bind_spec_vars 
+    (mods,typ,name,args_list) 
+    {pre=pre;post=post;excep=excep;invariants=invariants} =
   (* Make substitution to normalise names *)
   let subst = Psyntax.empty in 
   let subst = Psyntax.add (newPVar("this")) (Arg_var(Support_syntax.this_var)) subst in 
-  (* For each name that is given convert to normalised param name*)
+  (* For each name that is given convert to normalised param name. *)
   let _,subst = 
     List.fold_left 
       (fun (n,subst) arg_opt -> 
@@ -65,7 +67,7 @@ let bind_spec_vars (mods,typ,name,args_list) {pre=pre;post=post;excep=excep} =
   {pre=subst_pform subst pre;
    post=subst_pform subst post;
    excep=ClassMap.map (subst_pform subst) excep;
-   invariants=LabelMap.empty (* TODO INV *) }
+   invariants=LabelMap.map (subst_pform subst) invariants }
 
 let mkDynamic (msig, specs) =
   let specs = List.map (bind_spec_vars msig) specs in 
@@ -98,6 +100,12 @@ let field_signature2str fs =
   | Field_signature (c,t,n) ->  Pprinter.mkStrOfFieldSignature c t n
   | _ -> assert false
 
+
+let add_invariant (label, formula) map =
+  let old =
+    try LabelMap.find label map
+    with Not_found -> mkFalse in
+  LabelMap.add label (old &&& formula) map
 
 %} /* declarations */
 
@@ -372,17 +380,17 @@ methods_specs:
 
 spec:
    | L_BRACE formula R_BRACE L_BRACE formula R_BRACE exp_posts invariants 
-     {  {pre=$2;post=$5;excep=$7;invariants=LabelMap.empty}  (* TODO INV *) } 
+     {  {pre=$2;post=$5;excep=$7;invariants=$8} } 
 specs:
    | spec ANDALSO specs  { $1 :: $3 }
    | spec     {[$1]}
 
 invariant:
-  | INVARIANT identifier COLON formula SEMICOLON { () }
+  | INVARIANT identifier COLON formula SEMICOLON { ($2, $4) }
 
 invariants:
-  | invariant invariants { () }
-  | /* empty */ { () }
+  | invariant invariants { add_invariant $1 $2 }
+  | /* empty */ { LabelMap.empty }
 
 method_spec:
    | method_signature_short COLON specs  SEMICOLON  { mkDynamic($1, $3) }
