@@ -14,7 +14,7 @@
 open Microsoft.FSharp.Compatibility
 F#*)
 
-let debug_ref = ref false
+let debug_ref = ref true
 
 let debug = !debug_ref
 

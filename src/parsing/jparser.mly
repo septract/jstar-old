@@ -940,7 +940,8 @@ spatial_list:
 
 sequent:
    | spatial_list OR formula VDASH formula { ($1,$3,$5,mkEmpty) }
-/* used as the collapse form is || is a reserved token */
+   | spatial_list OR formula VDASH formula DASHV formula { ($1,$3,$5,$7) }
+/* used because the collapse form is || which is a reserved token */
    | spatial_list OROR formula VDASH formula {  if Config.symb_debug() then parse_warning "deprecated use of |" ; ($1,$3,$5,mkEmpty) }
 
 sequent_list:
@@ -1053,6 +1054,7 @@ test:
 question_file: 
    | EOF  { [] }
    | question question_file  {$1 :: $2}
+
 
 test_file: 
    | EOF  { [] }

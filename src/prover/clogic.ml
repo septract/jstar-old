@@ -597,31 +597,31 @@ let sequent_join
     (* Construct new assumption *)
     let ass,ts = 
       try 
-	convert fresh  seq.ts pseq.assumption_diff 
+	convert fresh seq.ts pseq.assumption_diff 
       with Contradiction -> 
-	Format.fprintf !(Debug.dump) "Failed to add formula to lhs: %a@\n" pp_sform pseq.assumption_diff;
-	raise Contradiction
+	    Format.fprintf !(Debug.dump) "Failed to add formula to lhs: %a@\n" pp_sform pseq.assumption_diff;
+	    raise Contradiction
     in
     let ass = conjunction ass seq.assumption in
 
-(*
 	(* Construct new antiframe *)
 	let ant,ts = 
 	  try 
-	convert fresh seq.ts pseq.antiframe_diff
+	convert fresh ts pseq.antiframe_diff 
       with Contradiction -> 
-	Format.fprintf !(Debug.dump) "Failed to add formula to antiframe: %a@\n" pp_sform pseq.antiframe_diff;
-	raise Contradiction
+	    Format.fprintf !(Debug.dump) "Failed to add formula to antiframe: %a@\n" pp_sform pseq.antiframe_diff;
+        raise Contradiction
     in 
-    let ant = conjunction ant seq.antiframe in  *)
+    let ant = conjunction ant seq.antiframe in   
 
     (* Construct new matched portion *)
     let sam,ts = 
       try 
 	convert fresh ts pseq.assumption_same 
       with Contradiction ->
-	Format.fprintf !(Debug.dump) "Failed to add formula to matched: %a@\n" pp_sform pseq.assumption_same;
-	assert false in 
+	    Format.fprintf !(Debug.dump) "Failed to add formula to matched: %a@\n" pp_sform pseq.assumption_same;
+	    assert false 
+	in 
     let sam = RMSet.union sam.spat seq.matched in 
 
     (* Construct new obligation *)
@@ -937,7 +937,7 @@ let convert_with_eqs fresh pform =
   mk_ts_form form ts
 
 let convert fresh ts pform = 
-  convert_without_eqs fresh  ts (convert_to_inner pform)
+  convert_without_eqs fresh ts (convert_to_inner pform)
 
 let make_implies heap pheap = 
   let ts,form = break_ts_form heap in 

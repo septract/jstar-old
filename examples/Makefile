@@ -3,7 +3,7 @@ ifndef TARGETS
 endif
 
 ifndef CLEAN
-  CLEAN =  *.class *~ *.dot *proof_file*.txt \#* .\#* 
+  CLEAN =  *.class *~ *.dot *.core *proof_file*.txt \#* .\#* 
 endif 
 
 ifndef SOURCES

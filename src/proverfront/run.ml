@@ -47,7 +47,7 @@ let main () =
     let l1,l2 = (load_logic (System.getenv_dirlist "JSTAR_LOGIC_LIBRARY") !logic_file_name) in 
     let logic = l1,l2, Psyntax.default_pure_prover in
 (*    let s = System.string_of_file !program_file_name  in*)
-    let question_list = System.parse_file Jparser.question_file Jlexer.token !program_file_name "Questions" true in
+    let question_list =  System.parse_file Jparser.question_file Jlexer.token !program_file_name "Questions" true in
 
     List.iter (
     fun question ->
@@ -78,10 +78,11 @@ let main () =
 	then Format.printf("Inconsistent!\n\n") else Format.printf("Consistent!\n\n");
 	if !(Debug.debug_ref) then Prover.pprint_proof stdout
 
-    | Psyntax.Equal (heap,arg1,arg2) -> ()
+    (* Doesn't seem to do anything at the moment *)
+    (*| Psyntax.Equal (heap,arg1,arg2) -> ()  *)
 
     | Psyntax.Abduction (heap1, heap2)  -> 
-	Format.printf "Check abduction\n %a\n ===> \n %a \n"  Psyntax.string_form heap1   Psyntax.string_form heap2;
+	Format.printf "Find antiframe for\n %a\n ===> \n %a \n"  Psyntax.string_form heap1   Psyntax.string_form heap2;
 	let x = (Sepprover.abduction_opt logic (Sepprover.convert heap1) heap2) in 
 	(match x with None -> Format.printf "Can't find antiframe!" | Some x -> List.iter (fun form -> Format.printf "Antiframe:\n %a\n" Sepprover.string_inner_form  form) x);
 		
