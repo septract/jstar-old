@@ -135,6 +135,15 @@ let check_frm logic seq =
   | Failed_eg x -> Format.fprintf !(Debug.dump) "Foo44"; prover_counter_example := x; None 
 
 
+let check_abduct logic seq = 
+  try 
+    let leaves = apply_rule_list logic [seq] (fun _ -> false) Clogic.abductive_sequent in 
+    Some (Clogic.get_frames leaves)
+  with 
+    Failed -> Format.fprintf !(Debug.dump) "Abduction failed"; None
+  | Failed_eg x -> Format.fprintf !(Debug.dump) "Abduction failed"; prover_counter_example := x; None 
+
+
 let check_implication_frame_pform logic heap pheap  =  
   check_frm logic (Clogic.make_implies heap pheap)
 
@@ -144,7 +153,7 @@ let check_implication_pform logic heap pheap  =
 
 
 let check_abduction_pform logic heap pheap = 
-  None
+  check_abduct logic (Clogic.make_implies heap pheap)
 (*  check_abd logic (Clogic.make_implies heap pheap) *)
 
 

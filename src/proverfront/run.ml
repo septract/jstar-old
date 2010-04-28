@@ -78,13 +78,13 @@ let main () =
 	then Format.printf("Inconsistent!\n\n") else Format.printf("Consistent!\n\n");
 	if !(Debug.debug_ref) then Prover.pprint_proof stdout
 
-    (* Doesn't seem to do anything at the moment *)
-    (*| Psyntax.Equal (heap,arg1,arg2) -> ()  *)
+    (* FIXME: Doesn't seem to do anything at the moment! *)
+    | Psyntax.Equal (heap,arg1,arg2) -> () 
 
     | Psyntax.Abduction (heap1, heap2)  -> 
 	Format.printf "Find antiframe for\n %a\n ===> \n %a \n"  Psyntax.string_form heap1   Psyntax.string_form heap2;
 	let x = (Sepprover.abduction_opt logic (Sepprover.convert heap1) heap2) in 
-	(match x with None -> Format.printf "Can't find antiframe!" | Some x -> List.iter (fun form -> Format.printf "Antiframe:\n %a\n" Sepprover.string_inner_form  form) x);
+	(match x with None -> Format.printf "Can't find antiframe!\n" | Some x -> List.iter (fun form -> Format.printf "Antiframe:\n %a\n" Sepprover.string_inner_form  form) x);
 		
 (*	if Prover.check_equal logic heap arg1 arg2 
 	then Format.printf("Equal!\n\n") else Format.printf("Not equal!\n\n")*) 

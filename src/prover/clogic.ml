@@ -532,9 +532,10 @@ let true_sequent (seq : sequent) : bool =
   plain seq.assumption
 
 let frame_sequent (seq : sequent) : bool = 
-  (seq.obligation = empty) 
+  (seq.obligation = empty) &&
+  (seq.antiframe = empty)
 
-let abductiv_sequent (seq : sequent) : bool = 
+let abductive_sequent (seq : sequent) : bool = 
   (seq.assumption = empty)
 
 
