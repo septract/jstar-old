@@ -135,10 +135,10 @@ let check_frm logic seq =
   | Failed_eg x -> Format.fprintf !(Debug.dump) "Foo44"; prover_counter_example := x; None 
 
 
-let check_abduct logic seq = 
+let check_abduct logic seq : (ts_formula list * ts_formula list) option = 
   try 
     let leaves = apply_rule_list logic [seq] (fun _ -> false) Clogic.abductive_sequent in 
-    Some (Clogic.get_frames leaves)
+    Some ((Clogic.get_frames_a leaves) , (Clogic.get_antiframes leaves))
   with 
     Failed -> Format.fprintf !(Debug.dump) "Abduction failed"; None
   | Failed_eg x -> Format.fprintf !(Debug.dump) "Abduction failed"; prover_counter_example := x; None 
