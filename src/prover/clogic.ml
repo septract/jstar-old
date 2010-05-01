@@ -162,29 +162,47 @@ let pp_smset_pre pre ppf s =
 
 let pp_smset ppf s = 
   pp_smset_pre "" ppf s 
+  
+  
+let pp_smset_nonemp ppf s = 
+  SMSet.has_more s
 
 let rec pp_sform ppf form = 
-  Format.printf "Warning: pretty printer still broken!\n";
-  List.iter
-    (fun (r1,r2) -> 
-      Format.fprintf ppf "@[%a=%a@]@ *@ " string_args r1 string_args r2)
-    form.sneqs;
-
-  List.iter
-    (fun (r1,r2) -> 
-      Format.fprintf ppf "@[%a!=%a@]@ *@ " string_args r1 string_args r2)
-    form.sneqs; 
+  Debug.list_format "*"
+    (fun ppf (r1,r2) -> 
+      Format.fprintf ppf "@[%a=%a@]" string_args r1 string_args r2)
+      ppf form.seqs; 
+  let bef = (match form.seqs with [] -> false | _ -> true) in 
+  
+  if bef || (match form.sneqs with [] -> false | _ -> true) 
+  then Format.fprintf ppf " * ";
+  Debug.list_format "*"
+    (fun ppf (r1,r2) -> 
+      Format.fprintf ppf "@[%a=%a@]" string_args r1 string_args r2)
+      ppf form.sneqs;
+  let bef = bef || (match form.sneqs with [] -> false | _ -> true) in 
 
   (* Print spatial *)  
-  pp_smset ppf form.sspat; 
+  if bef && pp_smset_nonemp ppf form.sspat 
+  then Format.fprintf ppf " * ";
+  pp_smset ppf form.sspat ; 
+  let bef = bef || (pp_smset_nonemp ppf form.sspat) in
+
   (* Print plain *)
+  if bef && pp_smset_nonemp ppf form.splain 
+  then Format.fprintf ppf " * " ;
   pp_smset_pre "!" ppf form.splain; 
+  let bef = bef || (pp_smset_nonemp ppf form.splain) in
+
   (* Print disjuncts *)
-  List.iter 
-    (fun (d1,d2) -> 
-      Format.fprintf ppf "*@ @[(@[%a@]@ ||@ @[%a@])@]" pp_sform d1 pp_sform d2
-  )
-    form.sdisjuncts
+  if bef && (match form.sdisjuncts with [] -> false | _ -> true) 
+  then Format.fprintf ppf " * " ;
+  Debug.list_format "*"
+    (fun ppf (d1,d2) -> 
+      Format.fprintf ppf "*@ @[(@[%a@]@ ||@ @[%a@])@]" pp_sform d1 pp_sform d2)
+    ppf form.sdisjuncts 
+
+
 
 let pp_ts_form ppf ts_form =
   let ts = ts_form.ts in 
