@@ -443,13 +443,11 @@ let remove_this_type_info prepure =
     | _ -> true 
   in List.filter is_this_type prepure
 
-let static_to_dynamic spec = 
-  match spec with 
-    {pre=pre; post=post; excep=excep; invariants=invariants} 
-      ->  { pre=remove_this_type_info pre; 
-            post=post; 
-            excep=excep; 
-            invariants=invariants (* TODO INV *) }
+let static_to_dynamic {pre=pre; post=post; excep=excep; invariants=invariants} =
+  { pre=remove_this_type_info pre; 
+    post=post; 
+    excep=excep; 
+    invariants=invariants (* TODO INV *) }
 
 let rec filtertype_spat classname spat =
   match spat with
