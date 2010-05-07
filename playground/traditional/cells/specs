@@ -1,0 +1,30 @@
+class CELL
+{
+	define C(x,{val=v}) = x.<CELL: int my_value> |-> v;
+
+	void <init>() :
+		{ }
+		{ C$(@this:,{val=numeric_const("10")}) };
+	void set_value(int) :
+		{ C$(@this:,{val=_v}) }
+		{ C$(@this:,{val=@parameter0:}) };
+	int value() :
+		{ C$(@this:,{val=_v}) }
+		{ C$(@this:,{val=_v}) * $ret_var=_v };
+}
+
+
+class BCELL
+{
+	define C(x,{val=v}) = C$CELL(x,{val=v}) * x.<BCELL: int my_bvalue> |-> v;
+
+	void <init>() :
+		{ }
+		{ C$(@this:,{val=numeric_const("10")}) };
+	void set_value(int) :
+		{ C$(@this:,{val=_v}) }
+		{ C$(@this:,{val=@parameter0:}) };
+	int value() :
+		{ C$(@this:,{val=_v}) }
+		{ C$(@this:,{val=_v}) * $ret_var=_v };
+}

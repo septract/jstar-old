@@ -1,0 +1,2 @@
+rewrite id_concrete:
+  id(?name) = ?name

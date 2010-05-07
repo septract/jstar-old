@@ -1,0 +1,74 @@
+/*******************************************
+ *  Definitions for datatype of list
+ *******************************************/
+
+
+rewrite cons_hd:
+  hd(cons(?a, ?alpha)) = ?a
+
+rewrite cons_tl:
+  tl(cons(?a, ?alpha)) = ?alpha
+
+rewrite app_empty_first:
+  app(empty(), ?beta) = ?beta
+
+rewrite app_empty_second:
+  app(?alpha, empty()) = ?alpha
+
+
+/*****************************
+ *   Inequalities
+ *****************************/
+equiv cons_empty_neq: 
+  => cons(?a, ?alpha) != empty()
+
+/******************************
+ *  Contradictions
+ ******************************/
+equiv cons_empty_eq:
+ cons(?s, ?t) = empty() <=> False
+
+/*******************************
+ *  Injective axioms
+ *******************************/
+equiv cons_inj:
+  cons(?a, ?alpha) = cons(?b, ?beta) <=> ?a = ?b * ?alpha = ?beta
+without
+  ?a = ?b
+
+equiv cons_inj:
+  cons(?a, ?alpha) = cons(?b, ?beta) <=> ?a = ?b * ?alpha = ?beta
+without
+  ?alpha = ?beta
+
+/*******************************
+ *  Injective axioms for neq
+ *******************************/
+
+equiv cons_inj_neq:
+  cons(?a, ?alpha) != cons(?b, ?beta) <=> ?a != ?b || ?alpha != ?beta
+without
+  ?a != ?b
+
+equiv cons_inj_neq:
+  cons(?a, ?alpha) != cons(?b, ?beta) <=> ?a != ?b || ?alpha != ?beta
+without
+  ?alpha != ?beta
+
+/***********************************
+ *  Rules for simplifying app
+ ***********************************/
+
+equiv app_is_emp1:
+  app(?alpha, ?beta) = empty() <=> ?alpha = empty() * ?beta = empty()
+without
+  ?alpha = empty()
+
+equiv app_is_emp2:
+  app(?alpha, ?beta) = empty() <=> ?alpha = empty() * ?beta = empty()
+without
+  ?beta = empty()
+
+equiv app_neq_empty_left:
+  app(?alpha, ?beta) != empty() <=> ?alpha != empty() || ?beta != empty()
+

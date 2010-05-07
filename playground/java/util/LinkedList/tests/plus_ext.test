@@ -1,0 +1,68 @@
+/****************************************
+ * Tests for (extended) addition rules. *
+ ****************************************/
+
+/* plus_commutativity */
+Implication:
+  |- (a + b) = (b + a)
+? True
+
+Implication:
+  (a + b) = (b + a) |- False
+? False
+
+/* plus_zero_second */
+Implication:
+  (x + numeric_const("0")) = y |-  x = y
+? True
+
+/* plus_zero_first */
+Implication:
+  (numeric_const("0") + x) = y |-  x = y
+? True
+
+/* plus_assoc */
+Implication:
+  ((x + y) + z) = n |- (x + (y + z)) = n
+? True
+
+/* plus_nested_first_eq_first_left */
+Implication:
+  (a + (x + b)) = (x + c) |- (a + b) = c
+? True
+
+Implication:
+  (a + b) = c |- (a + (x + b)) = (x + c)
+? True
+
+/* plus_nested_second_eq_first_left */
+Implication:
+  (a + (b + x)) = (x + c) |- (a + b) = c
+? True
+
+Implication:
+  (a + b) = c |- (a + (b + x)) = (x + c)
+? True
+
+Implication:
+  (a + (a + b)) = (b + (a + a)) |- False
+? True
+
+/* plus_nested_first_eq_second_left */
+Implication:
+  (a + (x + b)) = (c + x) |- (a + b) = c
+? True
+
+Implication:
+  (a + b) = c |- (a + (x + b)) = (c + x)
+? True
+
+/* plus_nested_second_eq_second_left */
+Implication:
+  (a + (b + x)) = (c + x) |- (a + b) = c
+? True
+
+Implication:
+  (a + b) = c |- (a + (b + x)) = (c + x)
+? True
+
