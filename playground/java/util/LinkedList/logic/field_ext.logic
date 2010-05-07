@@ -1,0 +1,24 @@
+/*******************************************
+ * Extends the rules for field predicates. *
+ ******************************************/
+
+/*
+  If there are two fields with the same type, then they must be distinct fields.
+  If they are not, we have a contradiction.
+*/
+
+equiv field_field_distinct:
+  /*?i1.?t |-> ?e1 * ?i2.?t |-> ?e2*/
+  field(?i1, ?t, ?e1) * field(?i2, ?t, ?e2) => ?i2 != ?i1 
+
+/**
+ * Contradictions.
+ */
+
+/*
+  If we have to show that there is a field "null |-> ?e", then we have to
+  search for a contradiction.
+*/
+equiv field_not_nil_right:
+  /*?i.?t |-> ?e*/
+  field(?i, ?t, ?e) => ?i = nil() <=> False

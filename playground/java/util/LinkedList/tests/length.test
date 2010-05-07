@@ -1,0 +1,63 @@
+/**********************************
+ * Tests for the length function. *
+ **********************************/
+
+/**
+ * Rewriting rules.
+ */
+
+/* length_empty */
+Implication:
+  i = length(alpha) * alpha = empty() |- i = numeric_const("0")
+? True
+
+Implication:
+  i = numeric_const("0") |- length(empty()) = i
+? True
+
+/* length_cons */
+Implication:
+  i = length(alpha) * j = length(cons(a, alpha))
+    |- j = (numeric_const("1") + i)
+? True
+
+/* length_app */
+Implication:
+  i = length(app(alpha, beta)) |- i = (length(alpha) + length(beta))
+? True
+
+Implication:
+  i = (length(alpha) + length(beta)) |- i = length(app(alpha, beta))
+? True
+
+/* length_cons_empty */
+Implication:
+  i = length(cons(a, empty())) |- i = numeric_const("1")
+? True
+
+Implication:
+  i = numeric_const("1") |- i = length(cons(a, empty()))
+? True
+
+/**
+ * Contradictions.
+ */
+
+/* length_plus_one_eq_zero_{left,right} */
+Implication:
+  (numeric_const("1") + length(alpha)) = numeric_const("0") |- False
+? True
+
+Implication:
+  |- (numeric_const("1") + length(alpha)) = numeric_const("0")
+? False
+
+/* length_cons_one_eq_zero_{left,right} */
+Implication:
+  length(cons(a, alpha)) = numeric_const("0") |- False
+? True
+
+Implication:
+  |- length(cons(a, alpha)) = numeric_const("0")
+? False
+

@@ -1,0 +1,177 @@
+/*******************************
+ * Tests for "list_ext.logic". *
+ *******************************/
+
+/* app_cons */
+Implication:
+  app(cons(a, alpha), beta) = i |- cons(a, app(alpha, beta)) = i
+? True
+
+/* app_eq_first_{left,right}, cons_contradiction_{left,right} */
+Implication:
+  app(alpha, beta) = app(alpha, cons(b, beta)) |- False
+? True
+
+Implication:
+  |- app(alpha, beta) = app(alpha, cons(b, beta))
+? False
+
+/* app_eq_second_{left,right}, cons_contradiction_{left,right}
+   or app_cons, cons_contradiction_{left,right} */
+Implication:
+  app(cons(a, alpha), gamma) = app(alpha, gamma) |- False
+? True
+
+Implication:
+  |- app(cons(a, alpha), gamma) = app(alpha, gamma)
+? False
+
+/* app_assoc */
+Implication:
+  app(app(alpha, beta), gamma) = i |- app(alpha, app(beta, gamma)) = i
+? True
+
+/* app_first_{left,right}, cons_empty_contradiction_{left,right} */
+Implication:
+  app(alpha, cons(b, beta)) = alpha |- False
+? True
+
+Implication:
+  |- app(alpha, cons(b, beta)) = alpha
+? False
+
+/* app_second_{left,right}, cons_empty_contradiction_{left,right} */
+Implication:
+  app(cons(a, alpha), beta) = beta |- False
+? True
+
+Implication:
+  |- app(cons(a, alpha), beta) = beta
+? False
+
+/* cons_eq_app_cons_left */
+Implication:
+  cons(a, empty()) = app(beta, cons(b, empty())) |- a = b * beta = empty()
+? True
+
+/* cons_eq_app_cons_right, cons_empty_constradiction_right */
+Implication:
+  |- cons(a, empty()) = app(beta, cons(b, empty())) * beta = cons(c, gamma)
+? False
+
+/* app_cons_eq_app_cons_left */
+Implication:
+  app(alpha, cons(a, gamma)) = app(beta, cons(b, gamma)) |- alpha = beta * a = b
+? True
+
+/* app_cons_eq_app_cons_right, cons_empty_contradiction_right */
+Implication:
+  |- app(alpha, cons(a, gamma)) = app(beta, cons(b, gamma)) * alpha = empty() * beta = cons(c, gamma)
+? False
+
+/**
+ * Contradictions.
+ */
+
+/*
+   app_cons, cons_contradiction_{left,right}
+   or app_eq_second_{left,right}, cons_contradiction_{left,right}
+*/
+Implication:
+  app(cons(a, alpha), beta) = app(alpha, beta) |- False
+? True
+
+Implication:
+  |- app(cons(a, alpha), beta) = app(alpha, beta)
+? False
+
+/* app_cons_first_contradiction_{left,right} */
+Implication:
+  app(cons(a, alpha), beta) = alpha |- False
+? True
+
+Implication:
+  |- app(cons(a, alpha), beta) = alpha
+? False
+
+/* app_cons_second_contradiction_{left,right} */
+Implication:
+  app(cons(a, alpha), beta) = beta |- False
+? True
+
+Implication:
+  |- app(cons(a, alpha), beta) = beta
+? False
+
+/* app_eq_first_{left,right}, cons_contradiction_{left,right} */
+Implication:
+  app(alpha, cons(b, beta)) = app(alpha, beta) |- False
+? True
+
+Implication:
+  |- app(alpha, cons(b, beta)) = app(alpha, beta)
+? False
+
+/* app_first_{left,right}, cons_eq_empty_contradiction_{left,right} */
+Implication:
+  app(alpha, cons(b, beta)) = alpha |- False
+? True
+
+Implication:
+  |- app(alpha, cons(b, beta)) = alpha
+? False
+
+/* app_cons_second_contradiction_{left,right} */
+Implication:
+  app(alpha, cons(b, beta)) = beta |- False
+? True
+
+Implication:
+  |- app(alpha, cons(b, beta)) = beta
+? False
+
+/* app_Left_first, cons_eq_empty_contradiction_{left,right} */
+Implication:
+  app(alpha, cons(b, beta)) = alpha |- False
+? True
+
+Implication:
+  |- app(alpha, cons(b, beta)) = alpha
+? False
+
+/* app_cons_second_contradiction_{left,right} */
+Implication:
+  app(alpha, cons(b, beta)) = beta |- False
+? True
+
+Implication:
+  |- app(alpha, cons(b, beta)) = beta
+? False
+
+/* app_cons_first_contradiction_{left,right} */
+Implication:
+  app(cons(a, alpha), beta) = alpha |- False
+? True
+
+Implication:
+  |- app(cons(a, alpha), beta) = alpha
+? False
+
+/* app_cons_first_contradiction_{left,right} */
+Implication:
+  cons(a, app(alpha, beta)) = alpha |- False
+? True
+
+Implication:
+  |- cons(a, app(alpha, beta)) = alpha
+? False
+
+/* app_cons_second_contradiction_{left,right} */
+Implication:
+  cons(a, app(alpha, beta)) = beta |- False
+? True
+
+Implication:
+  |-cons(a, app(alpha, beta)) = beta
+? False
+

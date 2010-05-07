@@ -1,0 +1,42 @@
+abstraction dseg_rollup_app_abs:
+  dseg_ne(?i, ?ip, _kn, _k, ?alpha) * dseg_ne(_kn, _k, ?jn, ?j, ?beta)
+~~>
+  dseg_ne(?i, ?ip, ?jn, ?j, app(?alpha, ?beta))
+where
+  _k, _kn notincontext
+
+abstraction dseg_rollup_app_singleton_abs:
+  dseg_ne(?i, ?ip, ?j, _k, ?alpha) * dseg_ne(?j, _k, ?jn, ?j, ?beta)
+~~>
+  dseg_ne(?i, ?ip, ?jn, ?j, app(?alpha, ?beta))
+where
+  _k notincontext
+
+abstraction dseg_rollup_singleton_app_abs:
+  dseg_ne(?i, ?ip, _kn, ?i, ?alpha) * dseg_ne(_kn, ?i, ?jn, ?j, ?beta)
+~~>
+  dseg_ne(?i, ?ip, ?jn, ?j, app(?alpha, ?beta))
+where
+  _kn notincontext
+
+abstraction dseg_rollup_singleton_app_singleton_abs:
+  dseg_ne(?i, ?ip, ?j, ?i, ?alpha) * dseg_ne(?j, ?i, ?jn, ?j, ?beta)
+~~>
+  dseg_ne(?i, ?ip, ?jn, ?j, app(?alpha, ?beta))
+
+abstraction dseg_ineq:
+  ?a != ?i * dseg_ne(?i, ?ip, ?jn, ?j, ?l) * field(?a, ?t, ?e)
+ ~~>
+  dseg_ne(?i, ?ip, ?jn, ?j, ?l) * field(?a, ?t, ?e)
+
+abstraction node_rollup_abs:
+  ?i.<java.util.LinkedList$Entry: java.util.LinkedList$Entry previous> |-> ?ip *
+  ?i.<java.util.LinkedList$Entry: java.util.LinkedList$Entry next> |-> ?in *
+  ?i.<java.util.LinkedList$Entry: java.lang.Object element> |-> ?a
+~~>
+  node(?i, ?ip, ?in, ?a)
+
+abstraction dseg_node_rollup_abs:
+  node(?i, ?ip, ?in, ?a)
+~~>
+  dseg_ne(?i, ?ip, ?in, ?i, cons(?a, empty()))
