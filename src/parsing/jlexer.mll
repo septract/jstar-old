@@ -140,7 +140,8 @@ let keyword_al = [
   ("nop",NOOP);
   ("label",LABEL);
   ("end",END);
-  ("assign",ASSIGN)
+  ("assign",ASSIGN);
+  ("Specification",SPECIFICATION);
 ]
 
 
