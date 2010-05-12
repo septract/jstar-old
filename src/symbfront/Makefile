@@ -30,29 +30,29 @@ DEFAULT_ARGS = SOURCES="$(TOPLEVEL_SOURCES)" \
        OCAMLFLAGS="-g" \
        TRASH=""
 
-MAIN = $(DEFAULT_ARGS) RESULT=$(BIN)/jeffree.byte
+MAIN = $(DEFAULT_ARGS) RESULT=$(BIN)/run_symb.byte
 
-MAINOPT = $(DEFAULT_ARGS)  RESULT=$(BIN)/jeffree
+MAINOPT = $(DEFAULT_ARGS)  RESULT=$(BIN)/run_symb
 
-default: jeffree
+default: run_symb
 
 .PHONY: debug
-debug: jeffree.byte
+debug: run_symb.byte
 
-all: jeffree jeffree.byte
+all: run_symb run_symb.byte
 
 
 prebuild: 
 	@(cd ../prover; make)
 	@(cd ../symbexe; make)
 
-.PHONY: jeffree.byte  
-jeffree.byte: prebuild
+.PHONY: run_symb.byte  
+run_symb.byte: prebuild
 	@$(MAKE) -f $(OCAMLMAKEFILE) $(MAIN) 
 
 
-.PHONY: jeffree
-jeffree: prebuild
+.PHONY: run_symb
+run_symb: prebuild
 	@$(MAKE) -f $(OCAMLMAKEFILE) $(MAINOPT) native-code
 
 clean:
