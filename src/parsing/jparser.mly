@@ -252,6 +252,7 @@ let field_signature2str fs =
 %token GARBAGE
 %token EMP
 %token IMPORT 
+%token SPECIFICATION
 
 %token INDUCTIVE
 
@@ -316,8 +317,8 @@ let field_signature2str fs =
 %start inductive_file
 %type <Psyntax.inductive_stmt list> inductive_file
 
-%start core_file 
-%type <Methdec_core.core_statement list> core_file 
+%start symb_question_file
+%type <Methdec_core.symb_question list> symb_question_file 
 
 %start spec
 %type <Spec.spec> spec
@@ -1117,9 +1118,18 @@ inductive_file:
    | inductive inductive_file  {$1 :: $2}
 
 
-core_file:
-   |  EOF  { [] }
-   |  core_stmt SEMICOLON core_file  { $1 :: $3 } 
+symb_question_file: 
+   | EOF  { [] }
+   | symb_question symb_question_file  {$1 :: $2}
+   
+
+symb_question: 
+   | SPECIFICATION identifier COLON spec QUESTIONMARK core_stmt_list  {Specification($2,$4,$6)}
+
+
+core_stmt_list:
+   |  core_stmt SEMICOLON core_stmt_list  { $1 :: $3 } 
+   |  /* empty */  { [] }
 
 core_stmt: 
    |  END   { End }

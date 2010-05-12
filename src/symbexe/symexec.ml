@@ -318,7 +318,7 @@ let call_jsr_static (sheap,id) spec il node =
 exception Contained
 
 
-let check_postcondition heaps sheap =
+let check_postcondition heaps sheap : bool =
   let sheap_noid=fst sheap in  
   try 
     let heap,id = List.find (fun (heap,id) -> (frame !curr_logic (form_clone sheap_noid) heap)!=None) heaps in
@@ -326,6 +326,7 @@ let check_postcondition heaps sheap =
       Printf.printf "\n\nPost okay \n";
     (*	let idd = add_good_node ("EXIT: "^(Pprinter.name2str m.name)) in *)
     add_edge_with_proof (snd sheap) id "exit";
+    true
     (*	add_edge id idd "";*)
   with Not_found -> 
     System.warning();
@@ -343,7 +344,8 @@ let check_postcondition heaps sheap =
 			  (Format.str_formatter) "ERROR EXIT: @\n %a" 
 			  Sepprover.pprint_counter_example (); 
 			Format.flush_str_formatter ()))
-      heaps
+      heaps;
+    false
 
 
 (* extract the return value into variable v *)
@@ -493,7 +495,7 @@ let verify
     (spec : spec) 
     (lo : logic) 
     (abs_rules : logic) 
-    : unit 
+    : bool 
     =
   (* remove methods that are declared abstraction *)
   curr_logic:= lo;
@@ -501,18 +503,19 @@ let verify
  
   stmts_to_cfg stmts;
   match stmts with 
-    [] -> assert false
-  | s::stmts -> 
+  | [] -> assert false; false
+  | s::_ -> 
       let id = add_good_node ("Start "^mname) in  
       make_start_node id;
       match Sepprover.convert (spec.pre) with 
-	None -> System.warning(); Printf.printf "False precondition for specification of %s." mname  ;System.reset()
+	None -> System.warning(); Printf.printf "False precondition for specification of %s." mname  ;System.reset(); false
       |	Some pre -> 
 	  let post = execute_core_stmt s (pre, id) in 
 	  let id_exit = add_good_node ("Exit") in 
-	  List.iter 
-	    (fun post -> 
-	      check_postcondition [(spec.post,id_exit)] post) post
+	  List.fold_right (fun succ b -> succ && b)
+                          (List.map (fun post -> check_postcondition [(spec.post,id_exit)] post) post)
+                          true
+
 
 
 let verify_ensures 
@@ -550,9 +553,10 @@ let verify_ensures
       make_start_node id;
       let post = execs s (List.map (fun pre -> (pre,id)) ensures_preconds) in
       let id_exit = add_good_node ("Exit") in
-      List.iter 
+      List.map 
 	(fun post -> 
-	  check_postcondition [(ensures_postcond,id_exit)] post) post
+	  check_postcondition [(ensures_postcond,id_exit)] post) post;
+      ()
 
 
 let check_and_get_frame (heap,id) sheap : inner_form list =

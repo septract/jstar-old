@@ -16,6 +16,7 @@
 
 open Spec
 
+
 type core_statement = 
   | Nop_stmt_core
   | Label_stmt_core of  string 
@@ -23,7 +24,6 @@ type core_statement =
   | Goto_stmt_core of string list  
   | Throw_stmt_core of Psyntax.args
   | End
-
 
 type stmt_core = { 
   (*labels: labels; *)
@@ -33,7 +33,11 @@ type stmt_core = {
   mutable preds: stmt_core list  (* this is filled when the cfg is done *)
  }
 
-
+type symb_question = 
+  | Specification of string * spec * core_statement list 
+  
+type symb_test = 
+  | Nothing_here_yet
 
 let num_stmts = ref 0 
 
