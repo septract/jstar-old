@@ -1,0 +1,7 @@
+/*******************************
+ * Tests for "list_ext.logic". *
+ *******************************/
+
+Implication:
+  app(cons(a, alpha), beta) = alpha | |- | False
+? True

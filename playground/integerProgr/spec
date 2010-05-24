@@ -1,0 +1,15 @@
+class java.lang.Object {
+  void <init>() : {|}{|};
+}
+
+class Test {
+      
+  void <init>() : {|}{|};
+
+  boolean random() : {|}{|};
+
+  boolean f() :
+  {|}
+  {$ret_var = numeric_const("1") | };
+
+}

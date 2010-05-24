@@ -1,0 +1,408 @@
+class java.lang.Object {
+  static void <init>():
+    {}
+    {}
+
+  boolean equals(java.lang.Object):
+    {@parameter0: = @this:}
+    {$ret_var = numeric_const(1)}
+  andalso
+    {@parameter0: != @this:}
+    {$ret_var = numeric_const(0)}
+
+/*    {|}
+    {| @parameter0: = @this: * $ret_var = numeric_const(1) |
+    || @parameter0: != @this: * $ret_var = numeric_const(0) |}*/
+}
+
+class java.util.AbstractCollection {
+  static void <init>():
+    {}
+    {}
+}
+
+class java.util.AbstractList {
+  export AbstractList(x, {modCount=count}) =
+    x.<java.util.AbstractList: int modCount> |-> count;
+
+  void <init>():
+    {}
+    {AbstractList(@this:, {modCount=numeric_const(0)})}
+}
+
+class java.util.AbstractSequentialList {
+  export AbstractSequentialList(x, {modCount=count}) =
+    AbstractList$java.util.AbstractList(x, {modCount=count});
+
+  void <init>():
+    {}
+    {AbstractSequentialList$(@this:, {modCount=numeric_const(0)})}
+}
+
+class java.util.LinkedList {
+  export LinkedList(x, {list=l}) =
+      length(l) = _s
+    * AbstractSequentialList$java.util.AbstractSequentialList(x, {modCount=_modCount})
+    * x.<java.util.LinkedList: int size> |-> _s
+    * x.<java.util.LinkedList: java.util.LinkedList$Entry header> |-> _h
+    * _h.<java.util.LinkedList$Entry: java.util.LinkedList$Entry next> |-> _n
+    * _h.<java.util.LinkedList$Entry: java.util.LinkedList$Entry previous> |-> _p
+    * dseg(_n, _h, _h, _p, l);
+
+  export LinkedListInternal(x, {handle=h; head=n; tail=p; list=l}) =
+      length(l) = _s
+    * AbstractSequentialList$java.util.AbstractSequentialList(x, {modCount=_modCount})
+    * x.<java.util.LinkedList: int size> |-> _s
+    * x.<java.util.LinkedList: java.util.LinkedList$Entry header> |-> h
+    * h.<java.util.LinkedList$Entry: java.util.LinkedList$Entry next> |-> n
+    * h.<java.util.LinkedList$Entry: java.util.LinkedList$Entry previous> |-> p;
+
+  void <init>():
+    {}
+    {LinkedList$java.util.LinkedList(@this:, {list=empty()})}
+
+  /** Private method. Specification closely matches the implementation. **/
+  java.util.LinkedList$Entry addBefore(java.lang.Object, java.util.LinkedList$Entry):
+    {   @this:.<java.util.LinkedList: int size> |-> _size
+      * @parameter1:.<java.util.LinkedList$Entry: java.util.LinkedList$Entry previous> |-> _prev
+      * _prev.<java.util.LinkedList$Entry: java.util.LinkedList$Entry next> |-> @parameter1:
+      * @this:.<java.util.LinkedList: int modCount> |-> _modcount}
+    {   $ret_var = _new
+      * @this:.<java.util.LinkedList: int size> |-> (_size + numeric_const(1)) *
+      * @parameter1:.<java.util.LinkedList$Entry: java.util.LinkedList$Entry previous> |-> _new *
+      * _prev.<java.util.LinkedList$Entry: java.util.LinkedList$Entry next> |-> _new *
+      * node(_new, _prev, @parameter1:, @parameter0:) *
+      * @this:.<java.util.LinkedList: int modCount> |-> (_modcount + numeric_const(1))
+    }
+
+  void addFirst(java.lang.Object):
+    {LinkedList$(@this:, {list=_alpha})}
+    {LinkedList$(@this:, {list=cons(@parameter0:, _alpha)})}
+
+  void addLast(java.lang.Object):
+    {LinkedList$(@this:, {list=_alpha})}
+    {LinkedList$(@this:, {list=app(_alpha, cons(@parameter0:, empty()))})}
+
+  /** Private method. Specification closely matches the implementation. **/
+  java.lang.Object remove(java.util.LinkedList$Entry):
+    {@parameter0: = _h
+      * @this:.<java.util.LinkedList: java.util.LinkedList$Entry header> |-> _h}
+    {$ret_var = nil()
+      * @this:.<java.util.LinkedList: java.util.LinkedList$Entry header> |-> _h}
+  andalso
+    {@parameter0: != _h
+      * @this:.<java.util.LinkedList: java.util.LinkedList$Entry header> |-> _h
+      * @this:.<java.util.LinkedList: int size> |-> _size
+      * node(@parameter0:, _prev, _next, _a)
+      * _prev.<java.util.LinkedList$Entry: java.util.LinkedList$Entry next> |-> _prev_next
+      * _next.<java.util.LinkedList$Entry: java.util.LinkedList$Entry previous> |-> _next_prev
+      * @this:.<java.util.LinkedList: int modCount> |-> _modcount}
+    {$ret_var = _a
+      * @this:.<java.util.LinkedList: java.util.LinkedList$Entry header> |-> _h
+      * @this:.<java.util.LinkedList: int size> |-> (_size - numeric_const(1))
+      * _prev.<java.util.LinkedList$Entry: java.util.LinkedList$Entry next> |-> _next
+      * _next.<java.util.LinkedList$Entry: java.util.LinkedList$Entry previous> |-> _prev
+      * node(@parameter0:, nil(), nil(), nil())
+      * @this:.<java.util.LinkedList: int modCount> |-> (_modcount + numeric_const(1))
+    }
+
+  java.lang.Object removeLast():
+    {LinkedList$(@this:, {list=empty()})}
+    {LinkedList$(@this:, {list=empty()})}
+  andalso
+    {_l = app(_l1, cons(_a, empty()))
+      * LinkedList$(@this:, {list=_l})}
+    {$ret_var = _a
+      * LinkedList$(@this:, {list=_l1})
+    }
+
+  java.lang.Object removeFirst():
+    {LinkedList$(@this:, {list=empty()})}
+    {LinkedList$(@this:, {list=empty()})}
+  andalso
+    {_l = cons(_a, _l1)
+      * LinkedList$(@this:, {list=_l})}
+    {$ret_var = _a
+      * LinkedList$(@this:, {list=_l1})
+    }
+
+  java.lang.Object getFirst():
+    {LinkedList$(@this:, {list=empty()})}
+    {LinkedList$(@this:, {list=empty()})
+      * $ret_var = nil()}
+  andalso
+    {LinkedList$(@this:, {list=cons(_a, _alpha)})}
+    {LinkedList$(@this:, {list=cons(_a, _alpha)})
+      * $ret_var = _a
+    }
+
+  java.lang.Object getLast():
+    {LinkedList$(@this:, {list=empty()})}
+    {LinkedList$(@this:, {list=empty()})
+      * $ret_var = nil()}
+  andalso
+    {LinkedList$(@this:, {list=app(_alpha, cons(_a, empty()))})}
+    {LinkedList$(@this:, {list=app(_alpha, cons(_a, empty()))})
+      * $ret_var = _a
+    }
+
+  int size():
+    {LinkedList$(@this:, {list=_l})}
+    {LinkedList$(@this:, {list=_l})
+      * $ret_var = length(_l)
+    }
+
+  void clear():
+    {LinkedList$(@this:, {list=_l})}
+    {LinkedList$(@this:, {list=empty()})}
+
+  int indexOf(java.lang.Object):
+    {LinkedList$(@this:, {list=_l})
+      * list_without(_l, @parameter0:)}
+    {LinkedList$(@this:, {list=_l})
+      * $ret_var = numeric_const("-1")}
+  andalso
+    {LinkedList$(@this:, {list=_l})
+      * _l = app(_l1, cons(_a, _l2))
+      * list_without(_l1)
+      * _a = @parameter0:}
+    {LinkedList$(@this:, {list=_l})
+      * $ret_var = length(_l1)}
+
+  java.lang.Object get(int):
+    {LinkedListInternal$(@this:, {handle=_h; head=_n; tail=_p; list=_l})
+      * _l = app(_l1, cons(_a, _l2))
+      * length(_l1) = @parameter0: *
+      * dseg(_n, _h, _k, _j, _l1)
+      * node(_k, _j, _m, _a)
+      * dseg(_m, _k, _h, _p, _l2)}
+    {LinkedList$(@this:, {list=_l})
+      * $ret_var = _a
+    }
+
+  java.util.LinkedList$Entry entry(int):
+    /*{LinkedList$(@this:, {list=_l})
+      * LT(@parameter0:, numeric_const(0))}
+    {LinkedList$(@this:, {list=_l})
+      * $ret_var = nil()}
+  andalso
+    {LinkedList$(@this:, {list=_l})
+      * LE(length(_l), @parameter0:)}
+    {LinkedList$(@this:, {list=_l})
+      * $ret_var = nil()}
+  andalso*/
+    {LinkedListInternal$(@this:, {handle=_h; head=_n; tail=_p; list=_l})
+      * _l = app(_l1, cons(_a, _l2))
+      * length(_l1) = @parameter0:
+      * dseg(_n, _h, _k, _j, _l1)
+      * node(_k, _j, _m, _a)
+      * dseg(_m, _k, _h, _p, _l2)}
+    {LinkedList$(@this:, {list=_l})
+      * $ret_var = _k
+    }
+
+  /** Helper functions allowing inner classes to access fields and methods of the LinkedList class (inserted by the javac compiler). **/
+  /* Get LinkedList.header. */
+  static java.util.LinkedList$Entry access$000(java.util.LinkedList):
+    {@parameter0:.<java.util.LinkedList: java.util.LinkedList$Entry header> |-> _h}
+    {$ret_var = _h *
+     @parameter0:.<java.util.LinkedList: java.util.LinkedList$Entry header> |-> _h}
+
+  /* Get LinkedList.size. */
+  static int access$100(java.util.LinkedList):
+    {@parameter0:.<java.util.LinkedList: int size> |-> _s}
+    {@parameter0:.<java.util.LinkedList: int size> |-> _s
+      * $ret_var = _s}
+
+  /* Call LinkedList.remove(java.util.LinkedList$Entry). */
+  static java.lang.Object access$200(java.util.LinkedList, java.util.LinkedList$Entry):
+    {@parameter0:.<java.util.LinkedList: java.util.LinkedList$Entry header> |-> _h
+      * @parameter1: = _h}
+    {@parameter0:.<java.util.LinkedList: java.util.LinkedList$Entry header> |-> _h
+      * $ret_var = nil()}
+  andalso
+    {   @parameter0:.<java.util.LinkedList: java.util.LinkedList$Entry header> |-> _h
+      * _prev.<java.util.LinkedList$Entry: java.util.LinkedList$Entry next> |-> _prev_next
+      * _next.<java.util.LinkedList$Entry: java.util.LinkedList$Entry previous> |-> _next_prev
+      * node(@parameter1:, _prev, _next, _a)
+      * @parameter1: != _h
+      * @parameter0:.<java.util.LinkedList: int size> |-> _size
+      * @parameter0:.<java.util.LinkedList: int modCount> |-> _modcount}
+    {   @parameter0:.<java.util.LinkedList: java.util.LinkedList$Entry header> |-> _h *
+      * _prev.<java.util.LinkedList$Entry: java.util.LinkedList$Entry next> |-> _next *
+      * _next.<java.util.LinkedList$Entry: java.util.LinkedList$Entry previous> |-> _prev *
+      * node(@parameter1:, nil(), nil(), nil()) *
+      * @parameter0:.<java.util.LinkedList: int size> |-> (_size - numeric_const(1)) *
+      * @parameter0:.<java.util.LinkedList: int modCount> |-> (_modcount + numeric_const(1))
+      * $ret_var = _a
+    }
+
+  /* Call LinkedList.addBefore(java.lang.Object, java.util.LinkedList$Entry). */
+  static java.util.LinkedList$Entry access$300(java.util.LinkedList, java.lang.Object, java.util.LinkedList$Entry):
+    {   @parameter2:.<java.util.LinkedList$Entry: java.util.LinkedList$Entry previous> |-> _prev
+      * _prev.<java.util.LinkedList$Entry: java.util.LinkedList$Entry next> |-> @parameter2:
+      * @parameter0:.<java.util.LinkedList: int size> |-> _size
+      * @parameter0:.<java.util.LinkedList: int modCount> |-> _modcount}
+    {   @parameter2:.<java.util.LinkedList$Entry: java.util.LinkedList$Entry previous> |-> _new
+      * _prev.<java.util.LinkedList$Entry: java.util.LinkedList$Entry next> |-> _new
+      * @parameter0:.<java.util.LinkedList: int size> |-> (numeric_const(1) + _size)
+      * @parameter0:.<java.util.LinkedList: int modCount> |-> (numeric_const(1) + _modcount)
+      * node(_new, _prev, @parameter2:, @parameter1:)
+      * $ret_var = _new
+    }
+}
+
+class java.util.LinkedList$Entry {
+  void <init>(java.lang.Object, java.util.LinkedList$Entry, java.util.LinkedList$Entry):
+    {}
+    {node(@this:, @parameter2:, @parameter1:, @parameter0:)}
+}
+
+class java.util.LinkedList$ListItr {
+  export ListItr(x, {handle=h; l1=l1; l2=l2; next=next; lastReturned=lastReturned}) =
+      x.<java.util.LinkedList$ListItr: java.util.LinkedList$Entry lastReturned> |-> lastReturned
+    * x.<java.util.LinkedList$ListItr: java.util.LinkedList$Entry next> |-> next
+    * x.<java.util.LinkedList$ListItr: int nextIndex> |-> length(l1)
+    * x.<java.util.LinkedList$ListItr: int expectedModCount> |-> _expectedModCount
+    * next = h
+    * x.<java.util.LinkedList$ListItr: java.util.LinkedList this$0> |-> _ll
+    * LinkedList$java.util.LinkedList(_ll, {handle=h; head=_n; tail=_p; list=_list})
+    * _list = app(l1, l2)
+    * l2 = empty()
+  ||
+      x.<java.util.LinkedList$ListItr: java.util.LinkedList this$0> |-> _ll
+    * x.<java.util.LinkedList$ListItr: java.util.LinkedList$Entry lastReturned> |-> lastReturned
+    * x.<java.util.LinkedList$ListItr: java.util.LinkedList$Entry next> |-> next
+    * x.<java.util.LinkedList$ListItr: int nextIndex> |-> length(l1)
+    * x.<java.util.LinkedList$ListItr: int expectedModCount> |-> _expectedModCount
+    * LinkedListInternal$java.util.LinkedList(_ll, {handle=h; head=_n; tail=_p; list=_list})
+    * _list = app(l1, cons(_element, _l2tail))
+    * l2 = cons(_element, _l2tail)
+    * dseg(_n, h, next, _front,l1)
+    * node(next, _front, _back, _element)
+    * dseg(_back, next, h, _p, _l2tail);
+
+  export ListItrEdit(x, {handle=h; l1=l1; l2=l2; next=next; lastReturned=lastReturned}) =
+      x.<java.util.LinkedList$ListItr: java.util.LinkedList this$0> |-> _ll
+    * x.<java.util.LinkedList$ListItr: java.util.LinkedList$Entry lastReturned> |-> lastReturned
+    * x.<java.util.LinkedList$ListItr: java.util.LinkedList$Entry next> |-> next
+    * x.<java.util.LinkedList$ListItr: int nextIndex> |-> length(l1)
+    * x.<java.util.LinkedList$ListItr: int expectedModCount> |-> _expectedModCount
+    * lastReturned = h
+    * LinkedList$java.util.LinkedList(_ll, {handle=h; head=_n; tail=_p; list=_list})
+    * _list = app(l1, l2)
+  ||
+      x.<java.util.LinkedList$ListItr: java.util.LinkedList this$0> |-> _ll
+    * x.<java.util.LinkedList$ListItr: java.util.LinkedList$Entry lastReturned> |-> lastReturned
+    * x.<java.util.LinkedList$ListItr: java.util.LinkedList$Entry next> |-> next
+    * x.<java.util.LinkedList$ListItr: int nextIndex> |-> length(l1)
+    * x.<java.util.LinkedList$ListItr: int expectedModCount> |-> _expectedModCount
+    * lastReturned != h
+    * LinkedListInternal$java.util.LinkedList(_ll, {handle=h; head=_n; tail=_p; list=_list})
+    * _list = app(l1, cons(_element, _l2tail))
+    * l2 = cons(_element, _l2tail)
+    * dseg(_n, h, lastReturned, _front,l1)
+    * node(lastReturned, _front, _back, _element)
+    * dseg(_back, lastReturned, h, _p, _l2tail);
+
+  void <init>(java.util.LinkedList, int):
+    {LinkedList$(@parameter0:, {handle=_h; head=_n; tail=_p; list=_l})}
+    {LinkedList$(@parameter0:, {handle=_h; head=_n; tail=_p; list=_l})
+      * ListItr$(@this:, {handle=_h; l1 = empty(); l2 = _l; next = _n; lastReturned=_h})
+    }
+
+  boolean hasNext():
+    {ListItr$(@this:, {handle=_h; l1 = _l1; l2 = empty(); next = _next; lastReturned = _lastReturned})}
+    {ListItr$(@this:, {handle=_h; l1 = _l1; l2 = empty(); next = _next; lastReturned = _lastReturned})
+      * $ret_var = numeric_const(0)}
+  andalso
+    {ListItr$(@this:, {handle=_h; l1 = _l1; l2 = cons(_a, _alpha); next = _next; lastReturned = _lastReturned})}
+    {ListItr$(@this:, {handle=_h; l1 = _l1; l2 = cons(_a, _alpha); next = _next; lastReturned = _lastReturned})
+      * $ret_var = numeric_const(1)
+    }
+
+  java.lang.Object next():
+    {ListItr$(@this:, {handle=_h; l1 = _l1; l2 = empty(); next = _next; lastReturned = _lastReturned})}
+    {ListItr$(@this:, {handle=_h; l1 = _l1; l2 = empty(); next = _next; lastReturned = _lastReturned})
+      * $ret_var = nil()}
+  andalso
+    {ListItr$(@this:, {handle=_h; l1 = _l1; l2 = cons(_a, _alpha); next = _next1; lastReturned = _lastReturned})}
+    {ListItr$(@this:, {handle=_h; l1 = app(_l1, cons(_a, empty())); l2 = _alpha; next = _next2; lastReturned = _next1})
+      * $ret_var = _a
+    }
+
+  boolean hasPrevious():
+    {ListItr$(@this:, {handle=_h; l1 = empty(); l2 = _l2; next = _next; lastReturned = _lastReturned})}
+    {ListItr$(@this:, {handle=_h; l1 = empty(); l2 = _l2; next = _next; lastReturned = _lastReturned})
+      * $ret_var = numeric_const(0)}
+  andalso
+    {ListItr$(@this:, {handle=_h; l1 = app(_alpha, cons(_a, empty())); l2 = _l2; next = _next; lastReturned = _lastReturned})}
+    {ListItr$(@this:, {handle=_h; l1 = app(_alpha, cons(_a, empty())); l2 = _l2; next = _next; lastReturned = _lastReturned})
+      * $ret_var = numeric_const(1)
+    }
+
+  java.lang.Object previous():
+    {ListItr$(@this:, {handle=_h; l1 = empty(); l2 = _l2; next = _next; lastReturned = _lastReturned})}
+    {ListItr$(@this:, {handle=_h; l1 = empty(); l2 = _l2; next = _next; lastReturned = _lastReturned})
+      * $ret_var = nil()}
+  andalso
+    {ListItr$(@this:, {handle=_h; l1 = app(_alpha, cons(_a, empty())); l2 = _l2; next = _next1; lastReturned = _lastReturned})}
+    {ListItr$(@this:, {handle=_h; l1 = _alpha; l2 = cons(_a, _l2); next = _next2; lastReturned = _next2})
+      * $ret_var = _a
+    }
+
+  void add(java.lang.Object):
+    {ListItr$(@this:, {handle=_h; l1 = _l1; l2 = _l2; next = _next; lastReturned = _lastReturned})}
+    {ListItr$(@this:, {handle=_h; l1 = app(_l1, cons(@parameter0:, empty())); l2 = _l2; next = _next; lastReturned = _h})}
+
+  int nextIndex():
+    {ListItr$(@this:, {handle=_h; l1 = _l1; l2 = _l2; next = _next; lastReturned = _lastReturned})}
+    {ListItr$(@this:, {handle=_h; l1 = _l1; l2 = _l2; next = _next; lastReturned = _lastReturned})
+      * $ret_var = length(_l1)}
+
+  int previousIndex():
+    {ListItr$(@this:, {handle=_h; l1 = _l1; l2 = _l2; next = _next; lastReturned = _lastReturned})}
+    {ListItr$(@this:, {handle=_h; l1 = _l1; l2 = _l2; next = _next; lastReturned = _lastReturned})
+      * $ret_var = (length(_l1) - numeric_const(1))}
+
+/*  void remove():
+    {}
+    {}
+*/
+  void set(java.lang.Object):
+    {ListItrEdit$(@this:, {handle=_h; l1 = _l1; l2 = _l2; next = _next; lastReturned = _h})}
+    {ListItrEdit$(@this:, {handle=_h; l1 = _l1; l2 = _l2; next = _next; lastReturned = _h})}
+  andalso
+    {ListItrEdit$(@this:, {handle=_h; l1 = _l1; l2 = cons(_a, _alpha); next = _next; lastReturned = _lastReturned})
+      * _h != _lastReturned}
+    {ListItrEdit$(@this:, {handle=_h; l1 = _l1; l2 = cons(@parameter0:, _alpha); next = _next; lastReturned = _lastReturned})
+      * _h != _lastReturned}
+/*
+  void checkForComodification():
+    {}
+    {}*/
+}
+
+class java.lang.StringBuilder {
+  void <init>():
+    {}
+    {}
+
+  java.lang.StringBuilder append(java.lang.String):
+    {}
+    {}
+
+  java.lang.StringBuilder append(int):
+    {}
+    {}
+
+  java.lang.String toString():
+    {}
+    {}
+}
+
+class java.lang.IndexOutOfBoundsException {
+  void <init>(java.lang.String):
+    {}
+    {}
+}

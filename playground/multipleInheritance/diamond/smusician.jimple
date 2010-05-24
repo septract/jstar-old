@@ -1,0 +1,36 @@
+class SMUSICIAN extends STUDENT, MUSICIAN {
+
+	void <init>(int,int,int)
+	{
+		SMUSICIAN r0;
+		int r1;
+		int r2;
+		int r3;
+		r0 := @this: SMUSICIAN;
+		r1 := @parameter0: int;
+		r2 := @parameter1: int;
+		r3 := @parameter2: int;
+		// All ancestor attributes jump to life!
+		{} : {} {r0.<PERSON: int my_age> |-> _ * r0.<STUDENT: int my_exams> |-> _ * r0.<MUSICIAN: int my_performances> |-> _};
+		// Consume the attributes used by STUDENT's constructor
+		{} : {r0.<STUDENT: int my_exams> |-> _ * r0.<PERSON: int my_age> |-> _} {};
+		specialinvoke r0.<STUDENT: void <init>(int,int)>(r1,r2);
+		// Consume the attributes used by MUSICIAN's constructor
+		{} : {r0.<MUSICIAN: int my_performances> |-> _ * r0.<PERSON: int my_age> |-> _} {};
+		specialinvoke r0.<MUSICIAN: void <init>(int,int)>(r1,r3);
+	}
+
+//	void test()
+//	{
+//		SMUSICIAN r0;
+//		r0 := @this: SMUSICIAN;
+//	}
+
+	void do_exam_performance()
+	{
+		SMUSICIAN r0;
+		r0 := @this: SMUSICIAN;
+		virtualinvoke r0.<SMUSICIAN: void take_exam()>();
+		virtualinvoke r0.<SMUSICIAN: void perform()>();
+	}
+}
