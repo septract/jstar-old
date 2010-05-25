@@ -108,7 +108,10 @@ let parse_program () =
 
 let main () =
   let usage_msg="Usage: -l <logic_file_name>  -a <abstraction_file_name>  -s <spec_file_name>  -f <class_file_program>" in 
-  Arg.parse arg_list (fun s ->()) usage_msg;
+  Arg.parse 
+      arg_list 
+      (fun s -> Format.eprintf "WARNING: Ignored argument %s.@." s) 
+      usage_msg;
   Debug.debug_ref:=!Config.verbose;
 
   if !program_file_name="" then

@@ -27,18 +27,15 @@ export LIB
 CORESOURCE = jparsetree.ml jimple_global_types.ml spec_def.ml pprinter.ml
 LIBRARYSOURCE = $(CORESOURCE)
 
-LIBRARY = SOURCES="$(LIBRARYSOURCE)" \
-       OCAMLLDFLAGS="-g -a" \
-       INCDIRS="../utils ../prover_syntax ../symbexe_syntax" \
-       OCAMLFLAGS="-g" \
-       RESULT="$(LIB)/jimple_syntax.cmxa" \
-       TRASH=""
-BLIBRARY = SOURCES="$(LIBRARYSOURCE)" \
-       OCAMLLDFLAGS="-g -a" \
-       INCDIRS="../utils ../prover_syntax ../symbexe_syntax" \
-       OCAMLFLAGS="-g" \
-       RESULT="$(LIB)/jimple_syntax.cma" \
-       TRASH=""
+COMMON_ARGS=\
+		SOURCES="$(LIBRARYSOURCE)"\
+		OCAMLLDFLAGS="-g -a" \
+		INCDIRS="../utils ../prover_syntax ../symbexe_syntax" \
+		OCAMLFLAGS="-g" \
+		TRASH=""
+
+LIBRARY=$(COMMON_ARGS) RESULT="$(LIB)/jimple_syntax.cmxa"
+BLIBRARY=$(COMMON_ARGS) RESULT="$(LIB)/jimple_syntax/cma"
 
 default: jimple_syntax.cmxa
 

@@ -554,7 +554,8 @@ let fix_gaps (smmap,dmmap) spec_file =
   (!smmapr,!dmmapr)
 
 
-let spec_file_to_method_specs sf =
+let spec_file_to_method_specs 
+    (sf : Spec_def.class_spec list) : (methodSpecs * methodSpecs) =
   let rec sf_2_ms_inner sf (pairmmap) = 
     match sf with 
       [] -> pairmmap

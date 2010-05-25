@@ -10,12 +10,13 @@
    jStar is distributed under a BSD license,  see, 
       LICENSE.txt
  ********************************************************)
+
+(** data types for specifications *)
+
 open Jparsetree
 open Vars
-(*open Rterm *)
 open Psyntax
 open Spec
-
 
 
 type methodspec =
@@ -46,3 +47,5 @@ type class_spec = {
 	exports: exports_clause;
 	axioms: axioms_clause;
 	methodspecs: methodspecs }
+
+
