@@ -1,0 +1,91 @@
+class BANK_ACCOUNT extends ANY {
+
+	int balance;
+
+	void <init>(int)
+	{
+		// Declaration of registers, locals, and temporaries
+		BANK_ACCOUNT Current;
+		int r1;
+
+		// Initialization of registers and locals
+		Current := @this: BANK_ACCOUNT;
+		r1 := @parameter0: int;
+
+		// The routine body
+		Current.<BANK_ACCOUNT: int balance> = r1;
+		return;
+	}
+
+	void deposit(int)
+	requires {
+			int a1;
+			a1 := @parameter0: int;
+			$res = a1 > 0;
+		 }
+	old 	 {
+			int $old1;
+			BANK_ACCOUNT Current;
+			Current := @this: BANK_ACCOUNT;
+			$old1 = Current.<BANK_ACCOUNT: int balance>;
+		 }
+	ensures	 {	
+			BANK_ACCOUNT Current;
+			int a2;
+			int a3;
+			int a4;
+			Current := @this: BANK_ACCOUNT;
+			a2 := @parameter0: int;
+			a3 = Current.<BANK_ACCOUNT: int balance>;
+			a4 = $old1 + a2;
+			$res = a3 == a4;
+		 }
+	{
+		// Declaration of registers, locals, and temporaries
+		BANK_ACCOUNT Current;
+		int r1;
+		int t1;
+		int t2;
+
+		// Initialization of registers and locals
+		Current := @this: BANK_ACCOUNT;
+		r1 := @parameter0: int;
+
+		// The routine body
+		t1 = Current.<BANK_ACCOUNT: int balance>;
+		t2 = t1 + r1;
+		Current.<BANK_ACCOUNT: int balance> = t2;
+		return;
+	}
+
+	void dummy(int)
+	{
+		BANK_ACCOUNT Current;
+		int param;
+		int res;
+		Current := @this: BANK_ACCOUNT;
+		param := @parameter0: int;
+		res = param > 0;
+		return res;
+	}
+
+	void withdraw(int)
+	{
+		// Declaration of registers, locals, and temporaries
+		BANK_ACCOUNT Current;
+		int r1;
+		int t1;
+		int t2;
+
+		// Initialization of registers and locals
+		Current := @this: BANK_ACCOUNT;
+		r1 := @parameter0: int;
+
+		// The routine body
+		t1 = Current.<BANK_ACCOUNT: int balance>;
+		t2 = t1 - r1;
+		Current.<BANK_ACCOUNT: int balance> = t2;
+		return;
+	}
+
+}

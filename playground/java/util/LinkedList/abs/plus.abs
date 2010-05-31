@@ -1,0 +1,73 @@
+rewrite num:
+  num(?x) = numeric_const(id(?x))
+
+rewrite plus_one_one_hack:
+  builtin_plus(numeric_const("1"), builtin_plus(numeric_const("1"), ?alpha))
+  = builtin_plus(num(?fresh), ?alpha)
+
+rewrite plus_one_one_hack2:
+  builtin_plus(_z, builtin_plus(numeric_const("1"), ?alpha))
+  = builtin_plus(num(?fresh), ?alpha)
+where
+  _z notincontext
+
+rewrite plus_one_one_hack2_2:
+  builtin_plus(numeric_const("1"), builtin_plus(_z, ?alpha))
+  = builtin_plus(num(?fresh), ?alpha)
+where
+  _z notincontext
+
+rewrite plus_one_one_hack3:
+  builtin_plus(_z1, builtin_plus(_z2, ?alpha))
+  = builtin_plus(num(?fresh), ?alpha)
+where
+  _z1, _z2 notincontext
+
+rewrite plus_ex_ex_hack:
+  builtin_plus(_z1, _z2) = num(?fresh)
+where
+  _z1, _z2 notincontext
+
+rewrite plus_one_ex_hack1:
+  builtin_plus(numeric_const("1"), _z) = num(?fresh)
+where
+  _z notincontext
+
+rewrite plus_one_ex_hack2:
+  builtin_plus(_z, numeric_const("1")) = num(?fresh)
+where
+  _z notincontext
+
+rewrite plus_one_one_hack2_num:
+  builtin_plus(numeric_const(_z), builtin_plus(numeric_const("1"), ?alpha))
+  = builtin_plus(num(?fresh), ?alpha)
+where
+  _z notincontext
+
+rewrite plus_one_one_hack2_2_num:
+  builtin_plus(numeric_const("1"), builtin_plus(numeric_const(_z), ?alpha))
+  = builtin_plus(num(?fresh), ?alpha)
+where
+  _z notincontext
+
+rewrite plus_one_one_hack3_num:
+  builtin_plus(numeric_const(_z1), builtin_plus(numeric_const(_z2), ?alpha))
+  = builtin_plus(num(?fresh), ?alpha)
+where
+  _z1, _z2 notincontext
+
+rewrite plus_ex_ex_hack:
+  builtin_plus(numeric_const(_z1), numeric_const(_z2)) = num(?fresh)
+where
+  _z1, _z2 notincontext
+
+rewrite plus_one_ex_hack1:
+  builtin_plus(numeric_const("1"), numeric_const(_z)) = num(?fresh)
+where
+  _z notincontext
+
+rewrite plus_one_ex_hack2:
+  builtin_plus(numeric_const(_z), numeric_const("1")) = num(?fresh)
+where
+  _z notincontext
+
