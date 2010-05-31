@@ -75,7 +75,7 @@ let parse_one_class cname =
 
 
 let parse_program () =
-  if Config.symb_debug() then Printf.printf "Parsing program file  %s...\n" !program_file_name;
+  if Config.symb_debug() then Printf.printf "Parsing program file %s...\n" !program_file_name;
   let ch = open_in !program_file_name  in
   let program =Jparser.file Jlexer.token (Lexing.from_channel ch)
   in if Config.symb_debug() then Printf.printf "Program Parsing... done!\n";
@@ -172,8 +172,12 @@ let main () =
 	 let logic = Javaspecs.add_axiom_implications_to_logic spec_list logic in
 	 (*let _ = Prover.pprint_sequent_rules logic in*)
 	 (* End of axioms clause treatment *)
-	
-	 let (static_method_specs,dynamic_method_specs) = Javaspecs.spec_file_to_method_specs spec_list in
+
+	 let (static_method_specs,dynamic_method_specs) = 
+     List.iter 
+        (fun x -> Spec_def.pp_class_spec Format.err_formatter x) 
+        spec_list;
+     Javaspecs.spec_file_to_method_specs spec_list in
 	 
 	 if Config.symb_debug() then Printf.printf "\n\n Starting symbolic execution...";
 	 Classverification.verify_methods program static_method_specs dynamic_method_specs logic abs_rules ;

@@ -1,4 +1,4 @@
 #!/bin/bash
 
-jstar -q -l logic -a abs -s ./LinkedList.specs  $2 -f ./$1
+jstar -q -l logic -a abs -s ./$1.specs  $2 -f ./$1.jimple
 

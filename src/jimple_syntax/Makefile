@@ -28,7 +28,7 @@ CORESOURCE = jparsetree.ml jimple_global_types.ml spec_def.ml pprinter.ml
 LIBRARYSOURCE = $(CORESOURCE)
 
 COMMON_ARGS=\
-		SOURCES="$(LIBRARYSOURCE)"\
+		SOURCES="$(LIBRARYSOURCE)" \
 		OCAMLLDFLAGS="-g -a" \
 		INCDIRS="../utils ../prover_syntax ../symbexe_syntax" \
 		OCAMLFLAGS="-g" \
@@ -55,8 +55,8 @@ jimple_syntax.cma: prebuild
 	@$(MAKE) -f $(OCAMLMAKEFILE) $(BLIBRARY) byte-code
 
 clean:
-	$(MAKE) -f $(OCAMLMAKEFILE) $(LIBRARY) clean
-	$(MAKE) -f $(OCAMLMAKEFILE) $(BLIBRARY) clean
+	@$(MAKE) -f $(OCAMLMAKEFILE) $(LIBRARY) clean
+	@$(MAKE) -f $(OCAMLMAKEFILE) $(BLIBRARY) clean
 	rm -f *.annot doc/*.html doc/*.css doc/test.odoc logic_parser.output *~ *.dll *.exe *.cmi *.cmx *.o logic_parser.ml logic_lexer.ml logic_parser.mli logic_lexer.mli .depend
 
 prover.dll: $(CORESOURCE)
@@ -68,3 +68,4 @@ prover.dll: $(CORESOURCE)
 dummy:
 
 include .depend
+# vim:noet:
