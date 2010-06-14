@@ -18,7 +18,7 @@ export LIB
 
 INCLUDES = 
 
-SOURCES = backtrack.ml misc.ml persistentarray.ml multiset.mli multiset.ml  config.ml system.ml vars.ml debug.ml load.ml dot.ml
+SOURCES = debug.ml backtrack.ml misc.ml persistentarray.ml multiset.mli multiset.ml  config.ml system.ml vars.ml load.ml dot.ml
 #dotty.ml
 
 LIBRARY = SOURCES="$(SOURCES)" \

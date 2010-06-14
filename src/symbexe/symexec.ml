@@ -13,6 +13,7 @@
 
 open Cfg_core
 open Core
+open Format
 open Psyntax
 open Sepprover
 open Spec
@@ -180,7 +181,9 @@ let add_edge src dest label =
 let add_edge_with_proof src dest label = 
   let f = fresh_file() in
   let out = open_out f in
-  Sepprover.pprint_proof out;
+  let fmt = formatter_of_out_channel out in
+  Sepprover.pprint_proof fmt;
+  pp_print_flush fmt ();
   close_out out;
   add_edge_common src dest label (Some f)
 

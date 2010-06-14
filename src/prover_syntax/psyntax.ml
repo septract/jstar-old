@@ -20,6 +20,7 @@
    The syntactic representation of terms.
 *************************************************************)
 open Debug
+open Format
 open Vars
 (*F#
 open Microsoft.FSharp.Compatibility
@@ -312,25 +313,19 @@ let rec string_varlist vl =
   | v::[] -> Printf.sprintf  "%s" (string_var v)
   | v::vl -> Printf.sprintf "%s,%s" (string_var v) (string_varlist vl)
 
-let rec list_format sep f ppf list = 
-  match list with 
-    [] -> Format.fprintf ppf ""
-  | [x] -> Format.fprintf ppf "%a" f x 
-  | x::xs -> Format.fprintf ppf "%a%s@ %a" f x sep (list_format sep f) xs 
-
 let rec string_form_at ppf pa =  
   match pa with 
     P_NEQ(a1,a2) -> Format.fprintf ppf "%a != %a" string_args a1  string_args a2
   | P_EQ(a1,a2) -> Format.fprintf ppf "%a = %a" string_args a1  string_args a2
   | P_PPred(op,al) -> Format.fprintf ppf "%s(%a)" op string_args_list al
   | P_SPred (s,al) -> Format.fprintf ppf "%s(%a)" s string_args_list al
-  | P_Or(f1,f2) -> Format.fprintf ppf "@[@[(%a)@]@ || @[(%a)@]@]" string_form f1 string_form f2
-  | P_Wand(f1,f2) -> Format.fprintf ppf "@[@[(%a)@] -* @[(%a)@]@]" string_form f1  string_form f2
-  | P_Septract(f1,f2) -> Format.fprintf ppf "@[@[(%a)@] -o @[(%a)@]@]" string_form f1  string_form f2
+  | P_Or(f1,f2) -> Format.fprintf ppf "(%a)@ || (%a)" string_form f1 string_form f2
+  | P_Wand(f1,f2) -> Format.fprintf ppf "(%a)@ -* (%a)" string_form f1  string_form f2
+  | P_Septract(f1,f2) -> Format.fprintf ppf "(%a)@ -o (%a)" string_form f1  string_form f2
   | P_False -> Format.fprintf ppf "False"
   | P_Garbage -> Format.fprintf ppf "Garbage"
 and string_form ppf pf = 
-  Debug.list_format "*" string_form_at ppf pf 
+  list_format "*" string_form_at ppf pf 
 
 
 
@@ -420,51 +415,26 @@ let string_where ppf where =
 
 type sequent_rule = psequent * (psequent list list) * string * ((* without *) pform * pform) * (where list)
 
-let string_pseq ppf (g,l,r) = 
-  Format.fprintf ppf "%a@ | %a@ |- %a" 
-    string_form g 
-    string_form l
-    string_form r
+let pp_entailment f ((h, c) : pform * pform) =
+  fprintf f "%a@ |- %a" string_form h string_form c
 
-let string_psr ppf (sr :sequent_rule) : unit = 
-    match sr with 
-      (conclusion, premises, name, (without1,without2), where) ->
-	Format.fprintf ppf 
-	  "rule %s:@\n%a@\n%a@\nwithout@\n %a@ |- %a@\n%a"
-	  name
-	  string_pseq conclusion
-	  (Debug.list_format_optional "if\n " " or " (Debug.list_format ";" string_pseq)) premises
-	  string_form without1
-	  string_form without2
-	  (Debug.list_format_optional "where" ";" string_where) where
-	  
+let pp_psequent f ((g,l,r) : psequent) =
+  fprintf f "%a@ | %a" string_form g pp_entailment (l, r)
 
+let pp_sequent_rule f ((c, hss, n, w, ss) : sequent_rule) =
+  let p a b c = fprintf f "@\n@[<4>%s%a@]" a b c in
+  fprintf f "@\n@[<2>rule %s:" n;
+  p "" pp_psequent c;
+  (match hss with
+    | [] -> ()
+    | x::xs ->
+        let ps = list_format ";" pp_psequent in
+        p "if " ps x; List.iter (p "or" ps) xs);
+  p "without " pp_entailment w;
+  if ss != [] then
+    p "where " (list_format ";" string_where) ss;
+  fprintf f "@]"
 
-
-(* type rewrite_entry =  (args list * args * ((pform) * (where list) * (pform)) * string * bool) list *)
-
-(* (\* substitution *\) *)
-(* (\*IF-OCAML*\) *)
-(* module RewriteMap = *)
-(*   Map.Make(struct *)
-(*     type t = string *)
-(*     let compare = compare *)
-(*   end) *)
-(* type rewrite_map =  rewrite_entry RewriteMap.t  *)
-(* (\*ENDIF-OCAML*\) *)
-
-(* (\*F# *)
-(* module RewriteMap = Map *)
-(* type rewrite_map =  RewriteMap.t<string,rewrite_entry>  *)
-(* F#*\) *)
-
-(* let rm_empty = RewriteMap.empty *)
-(* let rm_add = RewriteMap.add *)
-(* let rm_find = RewriteMap.find *)
-
-
-
-(*type rewrite_rule = string * args list * args * ((pform) * (where list) * (pform)) (* if *) * string * bool*)
 
 type rewrite_guard = 
     { 
@@ -557,7 +527,7 @@ type inductive_stmt = IndImport of string | IndDef of inductive
     (*************************************
        Syntactic representation of terms
     **************************************)
-    let debug f = Debug.debug_ref := f
+(*    let debug f = Debug.debug_ref := f *)
     
     type var = Vars.var
 
@@ -706,42 +676,4 @@ let default_pure_prover : external_prover =
 type logic = sequent_rule list * rewrite_rule list * external_prover
 
 let empty_logic : logic = [],[], default_pure_prover
-
-let pprint_sequent_rules logic =
-	let (rules,_,_) = logic in
-	List.iter (fun rule -> Format.printf "%a\n\n" string_psr rule) rules
-
-
-(*
-    type sequent = form * form * form
-
-    type rewrite_rule = { 
-        op : string;
-        arguments : term list;
-        new_term : term;
-        rule_name : string;
-     }
-
-    type sequent_rule = {
-        conclusion : sequent;
-        premises : sequent list list;
-        name : string;
-        without : form;
-      }
-
-  
-    let add_rewrite_rule (rr : rewrite_rule) ((sl,rm,ep) : logic) : logic = 
-      (sl,
-       rm_add rr.op ((rr.arguments,rr.new_term,([],[],[]),rr.rule_name,false)
-			   ::(try rm_find rr.op rm with Not_found -> [])) 
-	 rm,
-       ep)
-      
-
-    let add_sequent_rule (sr : sequent_rule) ((sl,rm,ep) : logic) : logic =
-      let sr = ((sr.conclusion,sr.premises,sr.name,(sr.without,[]),[])) in
-(*      Printf.printf "Adding rule: \n%s" (Prover.string_psr sr) ;*)
-      (sl @ [sr] , rm, ep)
-
-*)
 

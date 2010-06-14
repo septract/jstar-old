@@ -11,6 +11,9 @@
       LICENSE.txt
  ********************************************************)
 (* File to read a logic file and its imports. *)
+
+open Debug
+open Format
 open System
 
 type 'a importoption =
@@ -24,19 +27,21 @@ let import_flatten_extra_rules dirs filename extra_rules fileparser =
     let filename = 
       try 
 	System.find_file_from_dirs dirs filename 
-      with Not_found  ->  Format.printf "Cannot find file: %s@\n" filename; raise Exit
+      with Not_found  ->  eprintf "Cannot find file: %s@\n" filename; raise Exit
     in   
     if List.mem filename already_included then 
-      (if !(Debug.debug_ref) then Format.printf "Warning: Double inclusion of file: %s@\n" filename; 
-       (acc,already_included)
-      )
+      (if log log_phase then 
+        fprintf logf "@[<4>File %s@ already included.@." filename;
+      (acc, already_included))
     else (   
     let already_included = filename::already_included in 
-    if !(Debug.debug_ref) then Printf.printf "Start parsing logic in %s...\n" filename;
+    if log log_phase then 
+      fprintf logf "@[<4>Parsing logic in@ %s.@." filename;
     let inchan = open_in filename in 
     let file_entry_list  = fileparser (Lexing.from_channel inchan) in 
     close_in inchan;
-    if !(Debug.debug_ref) then Printf.printf "Parsed %s!\n" filename;
+    if log log_phase then 
+      fprintf logf "@[Parsed %s.@." filename;
     List.fold_left
       (fun (acc,already_included) entry -> 
 	match entry with 

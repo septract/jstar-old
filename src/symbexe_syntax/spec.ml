@@ -34,12 +34,9 @@ let mk_spec pre post excep invariants =
       invariants = invariants }
 
 let spec2str ppf (spec: spec)  = 
-  Format.fprintf ppf "@[<2>{%a}@]@\n@[<2>{%a}@]"
-    Psyntax.string_form spec.pre
-    Psyntax.string_form spec.post;
-  ClassMap.iter 
-    (fun cn pf -> Format.fprintf ppf " @[{%a}@]" Psyntax.string_form pf)
-    spec.excep
+  let po s = Format.fprintf ppf "@\n@[<4>{%a}@]" Psyntax.string_form s in
+  po spec.pre; po spec.post;
+  ClassMap.iter (fun _ s -> po s) spec.excep
 
 let pprinter_core_spec2str = ((Debug.toString spec2str) : (spec -> string))
   
