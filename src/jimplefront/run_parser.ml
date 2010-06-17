@@ -66,7 +66,10 @@ let arg_list =[
 let parse_program () =
   if log log_phase then 
     fprintf logf "@[<4>Parsing program@ %s.@." !program_file_name;
-  let ch = open_in !program_file_name  in
+  let ch = 
+    try 
+      open_in !program_file_name  
+    with Sys_error s -> failwith s in
   let program =Jparser.file Jlexer.token (Lexing.from_channel ch) in
   if log log_phase then fprintf logf "@[<4>Parsed@ %s.@." !program_file_name;
   (* Replace specialinvokes of <init> after news with virtual invokes of <init>*)
@@ -143,7 +146,10 @@ let main () =
       
        (* Exports clause treatment *)
        let (logic_with_where_pred_defs,implications) = Javaspecs.logic_and_implications_for_exports_verification class_name spec_list logic in
-       let _ = Classverification.verify_exports_implications implications logic_with_where_pred_defs in
+       if safe then
+         Classverification.verify_exports_implications 
+             implications
+             logic_with_where_pred_defs;
          (* Since where predicates are local to the exports clause, we discard them after exports clause verification *)
        let logic = Javaspecs.add_exported_implications_to_logic spec_list logic in
        if log log_logic then
@@ -157,7 +163,13 @@ let main () =
        (* Axioms clause treatment *)
        let axiom_map = Javaspecs.spec_file_to_axiom_map spec_list in
        let implications = Javaspecs.implications_for_axioms_verification class_name axiom_map in
-       let _ = Classverification.verify_axioms_implications class_name program implications axiom_map logic in
+       if safe then
+         Classverification.verify_axioms_implications 
+            class_name 
+            program
+            implications
+            axiom_map
+            logic;
        let logic = Javaspecs.add_axiom_implications_to_logic spec_list logic in
        (*let _ = Prover.pprint_sequent_rules logic in*)
        (* End of axioms clause treatment *)
@@ -172,11 +184,26 @@ let main () =
        
        if log log_phase then 
          fprintf logf "@[Starting symbolic execution.@.";
-       Classverification.verify_methods program static_method_specs dynamic_method_specs logic abs_rules ;
-         (*Symexec.compute_fixed_point program apfmap logic abs_rules static_method_specs dynamic_method_specs*)
-       Symexec.pp_dotty_transition_system () 
-      )
+       Classverification.verify_methods 
+           program 
+           static_method_specs 
+           dynamic_method_specs 
+           logic abs_rules;
+       Symexec.pp_dotty_transition_system ())
      
        
 let _ = 
-  main ()
+  let mf = {
+    mark_open_tag = (function
+      | "b" -> System.terminal_red (* bad *)
+      | "g" -> System.terminal_green (* good *)
+      | _ -> assert false);
+    mark_close_tag = (fun _ -> System.terminal_white);
+    print_open_tag = (fun _ -> ());
+    print_close_tag = (fun _ -> ())} in
+  set_formatter_tag_functions mf; 
+  pp_set_formatter_tag_functions err_formatter mf; 
+  set_tags true; pp_set_tags err_formatter true;
+  try main ()
+  with Failure s -> eprintf "@{<b>FAILED:@} %s@." s
+

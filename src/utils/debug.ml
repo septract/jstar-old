@@ -122,6 +122,8 @@ F#*)
 
 let pp_list pp f = List.iter (pp f)
 
+let string_of pp x = pp str_formatter x; flush_str_formatter ()
+
 let rec list_format sep f ppf = function
   | [] -> ()
   | [x] -> fprintf ppf "%a" f x 

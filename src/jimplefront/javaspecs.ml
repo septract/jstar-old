@@ -15,17 +15,19 @@
 (* Support functions for symbolic execution and misc conversion facilities *)
 
 
-open Vars
-open Psyntax
-open Spec_def
-open Jlogic
-open Sepprover
-open Jparsetree
-open Support_syntax
-open Specification
+open Debug
+open Format
 open Jimple_global_types
-open System
+open Jlogic
+open Jparsetree
+open Psyntax
+open Sepprover
 open Spec 
+open Spec_def
+open Specification
+open Support_syntax
+open System
+open Vars
 
 exception Class_defines_external_spec
 
@@ -253,7 +255,11 @@ let logic_with_where_pred_defs exportLocal_predicates logic =
 	
 (* Yields the logic augmented with 'where' predicate defs and the implications which are to be checked. *)
 let logic_and_implications_for_exports_verification class_name spec_list logic =
-	let cs = List.find (fun cs -> cs.classname=class_name) spec_list in
+	let cs = 
+    try
+      List.find (fun cs -> cs.classname=class_name) spec_list 
+    with Not_found -> failwith 
+        ("I need a spec for class " ^ (string_of pp_class_name class_name)) in
 	match cs.exports with
 		| None -> (logic,[])
 		| Some (exported_implications,exportLocal_predicates) ->
@@ -313,9 +319,13 @@ let spec_file_to_axiom_map spec_list =
 				let parent_axioms_with_same_name = axiommap2list (fun k imp -> imp) (axiommap_filter (fun (cn,an) ni -> an = axiom_name) parent_axiom_map) in
 				if same_elements parent_axioms_with_same_name then
 					()
-				else
-					(warning(); if Config.symb_debug() then Printf.printf "\n\n%s does not list axiom %s and its parents do not have the same spec for it!\n" (Pprinter.class_name2str classname) axiom_name; reset();)
-				;
+				else if Config.symb_debug () then
+                                  printf 
+                                      "@{<b>WARNING:@} %s does not list axiom \
+                                          %s and its parents do not have the \
+                                          same spec for it!@."
+                                      (Pprinter.class_name2str classname) 
+                                      axiom_name;
 				match parent_axioms_with_same_name with
 					| x :: xs -> axiommap := AxiomMap.add (classname,axiom_name) x (!axiommap)
 					| _ -> assert false
@@ -397,6 +407,7 @@ module MethodMap =
     type t = method_signature
     let compare = compare
   end)
+module MethodMapH = Misc.MapHelper (MethodMap)
 
 module MethodSet = 
   Set.Make(struct
@@ -516,7 +527,10 @@ let fix_spec_inheritance_gaps classes mmap spec_file exclude_function spec_type 
 										if same_elements samesig then
 											mmapr := MethodMap.add msig spec (!mmapr)
 										else
-											(warning(); if Config.symb_debug() then Printf.printf "\n\nThere is no %s spec listed for %s, and its parents do not agree on one!\n" spec_type (Pprinter.signature2str (Method_signature msig)); reset();)
+											if
+                                                                                          Config.symb_debug()
+                                                                                then
+                                                                                  printf "@{<b>WARNING:@} There is no %s spec listed for %s, and its parents do not agree on one!\n" spec_type (Pprinter.signature2str (Method_signature msig));
 					in
 					propagate_specs cn othersigs  
 	in

@@ -76,15 +76,13 @@ let get_spec  (iexp: Jparsetree.invoke_expr) =
 	(match get_dynamic_spec si with
 	  Some spec -> spec
 	| None -> 
-	    System.warning(); Printf.printf "\n No dynamic specs found for %s. Abort!\n\n" (Pprinter.signature2str si); System.reset();
-	    assert false	  )
+      failwith ("I need dynamic specs for " ^ (Pprinter.signature2str si)))
     | Invoke_nostatic_exp (Special_invoke,_,si,_) 
     | Invoke_static_exp (si,_) -> 
 	(match get_static_spec si with 
 	  Some spec -> spec
-	| None -> 	   
-	    System.warning(); Printf.printf "\n No static specs found for %s. Abort!\n\n" (Pprinter.signature2str si); System.reset();
-	    assert false	  )
+	| None ->
+      failwith ("I need static specs for " ^ (Pprinter.signature2str si)))
   in
   match iexp with
   | Invoke_nostatic_exp (Virtual_invoke,n,_,il) 
@@ -266,8 +264,7 @@ let get_spec_for m fields cname=
     try 
       MethodMap.find msi !curr_static_methodSpecs 
     with  Not_found -> 
-      System.warning(); Format.printf "\n\n Error: Cannot find spec for method %s\n\n" (methdec2signature_str m); System.reset();
-      assert false
+      failwith ("Cannot find spec for method " ^ methdec2signature_str m)
   in
   let spec = logical_vars_to_prog spec in 
   if is_init_method m then (* we treat <init> in a special way*)
@@ -290,8 +287,7 @@ let get_requires_clause_spec_for m fields cname =
                 try
                         MethodMap.find msi !curr_dynamic_methodSpecs
                 with Not_found ->
-                        System.warning(); Format.printf "\n\n Error: Cannot find spec for method %s\n\n" (methdec2signature_str m); System.reset();
-                        assert false
+                        failwith ("Cannot find spec for method " ^ methdec2signature_str m)
         in
         let dynspec = logical_vars_to_prog dynspec in
         (* Now construct the desired spec *)
@@ -309,8 +305,8 @@ let get_dyn_spec_for m fields cname =
                 try
                         MethodMap.find msi !curr_dynamic_methodSpecs
                 with Not_found ->
-                        System.warning(); Format.printf "\n\n Error: Cannot find spec for method %s\n\n" (methdec2signature_str m); System.reset();
-                        assert false
+                  failwith 
+                      ("Cannot find spec for method " ^ methdec2signature_str m)
         in
         logical_vars_to_prog dynspec
 
