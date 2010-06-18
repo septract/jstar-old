@@ -79,6 +79,7 @@ val make_not_equal_t : bool -> term_structure -> Psyntax.args -> Psyntax.args ->
 val blank_pattern_vars : term_structure -> term_structure
 
 val pp_ts : Format.formatter -> term_structure -> unit 
+val pp_ts_nonemp : Format.formatter -> term_structure -> bool
 
 val pp_c : term_structure -> Format.formatter -> representative -> unit
 val has_pp_c : term_structure -> representative -> bool

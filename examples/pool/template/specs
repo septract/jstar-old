@@ -13,18 +13,18 @@ class java.util.LinkedList
 
   java.lang.Object removeFirst() :
     { length(_l) != numeric_const(0) * ls(@this:,nil(),_l) }
-    { _x=$ret_var * _l = cons(_x,_l2) * ls(@this:,nil(),_l2) };
+    { _x=$ret_v1 * _l = cons(_x,_l2) * ls(@this:,nil(),_l2) };
 
   int size() :
     { ls(@this:,nil(),_l) }
-    { length(_l)=$ret_var * ls(@this:,nil(),_l) };
+    { length(_l)=$ret_v1 * ls(@this:,nil(),_l) };
 }
 
 class java.sql.DriverManager 
 {
   java.sql.Connection getConnection(java.lang.String, java.lang.String, java.lang.String) static:
     { }
-    { DBConnection($ret_var, {connection=sql(@parameter0:,@parameter1:,@parameter2:)})}; 
+    { DBConnection($ret_v1, {connection=sql(@parameter0:,@parameter1:,@parameter2:)})}; 
 }
 
 class java.sql.Connection
@@ -56,7 +56,7 @@ class ResourcePool
 
   abstract java.lang.Object makeResource() : 
     { PoolData(@this:, {type=_t}) } 
-    { Resource(@this:, { handle=$ret_var; type=_t }) * PoolData(@this:,{type=_t}) };
+    { Resource(@this:, { handle=$ret_v1; type=_t }) * PoolData(@this:,{type=_t}) };
 
   abstract void destructResource(java.lang.Object) : 
     { PoolData(@this:, {type=_t}) * Resource(@this:, {handle=@parameter0:; type=_t}) } 
@@ -64,7 +64,7 @@ class ResourcePool
 
   java.lang.Object getResource() : 
     { Pool$(@this:, {type=_t}) } 
-    { Pool$(@this:, {type=_t}) * Resource(@this:, {handle=$ret_var; type=_t})  };
+    { Pool$(@this:, {type=_t}) * Resource(@this:, {handle=$ret_v1; type=_t})  };
 
   void freeResource(java.lang.Object) : 
     { Pool$(@this:, {type=_t}) * Resource(@this:, {handle=@parameter0:;type=_t})  }
@@ -97,7 +97,7 @@ class ConnectionPool
 
   java.sql.Connection makeResource() : 
     { PoolData$(@this:, {type=_t}) } 
-    { Resource$(@this:, { handle=$ret_var; type=_t }) * PoolData$(@this:,{type=_t}) };
+    { Resource$(@this:, { handle=$ret_v1; type=_t }) * PoolData$(@this:,{type=_t}) };
 
   void destructResource(java.sql.Connection) :
     { PoolData$(@this:, {type=_t}) * Resource$(@this:, {handle=@parameter0:; type=_t}) } 
@@ -112,30 +112,30 @@ class ConnectionPool
 
   java.lang.Object makeResource() :
     { PoolData(@this:, {type=_t}) } 
-    { Resource(@this:, { handle=$ret_var; type=_t }) * PoolData(@this:,{type=_t}) };
+    { Resource(@this:, { handle=$ret_v1; type=_t }) * PoolData(@this:,{type=_t}) };
 
 
 /* Better specs for inherited methods */
 
   java.sql.Connection getResource() : 
     { Pool(@this:, {type=_t}) } 
-    { Pool(@this:, {type=_t}) * DBConnection($ret_var, {connection=_t})  };
+    { Pool(@this:, {type=_t}) * DBConnection($ret_v1, {connection=_t})  };
 
   java.sql.Connection getResource() static: 
     { Pool$ResourcePool(@this:, {type=_t}) } 
-    { Pool$ResourcePool(@this:, {type=_t}) * Resource(@this:, { handle=$ret_var; type=_t })  };
+    { Pool$ResourcePool(@this:, {type=_t}) * Resource(@this:, { handle=$ret_v1; type=_t })  };
 
   java.lang.Object getResource() static: 
     { Pool(@this:, {type=_t}) } 
-    { Pool(@this:, {type=_t}) * DBConnection($ret_var, {connection=_t})  };
+    { Pool(@this:, {type=_t}) * DBConnection($ret_v1, {connection=_t})  };
 
 //This only works one way round, due to not backtracking for the andalso
   java.lang.Object getResource() : 
     { @this: : ConnectionPool * Pool(@this:, {type=_t}) } 
-    { Pool(@this:, {type=_t}) * DBConnection($ret_var, {connection=_t})  }
+    { Pool(@this:, {type=_t}) * DBConnection($ret_v1, {connection=_t})  }
   andalso
     { Pool(@this:, {type=_t}) } 
-    { Pool(@this:, {type=_t}) * Resource(@this:, {handle=$ret_var; type=_t})  }
+    { Pool(@this:, {type=_t}) * Resource(@this:, {handle=$ret_v1; type=_t})  }
 ;
 
 

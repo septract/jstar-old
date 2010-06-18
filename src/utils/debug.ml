@@ -49,6 +49,16 @@ let unsupported_s s = raise (Unsupported2 s)
 let unsupported () = failwith "Assert false"
 F#*)
 
+let rec form_format sep emp f ppf list = 
+  match list with 
+    [] -> Format.fprintf ppf "%s" emp
+  | [x] -> Format.fprintf ppf "%a" f x
+  | x::xs -> Format.fprintf ppf "@[%a@]@ %s @[%a@]" f x sep (form_format sep emp f) xs 
+
+
+let rec form_format_optional start sep emp f ppf list = 
+  Format.fprintf ppf "%s@ @[%a@]" start (form_format sep emp f) list 
+
 
 let rec list_format sep f ppf list = 
   match list with 

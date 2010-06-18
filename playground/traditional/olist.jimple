@@ -1,0 +1,175 @@
+abstract class OLIST extends ANY {
+
+	abstract void init()
+	requires {
+		int $res;
+		$res = 1;
+	}
+	ensures {
+		OLIST Current;
+		int $res;
+		Current := @this: OLIST;
+		$res = virtualinvoke Current.<OLIST: int is_empty()>();
+	}
+	;
+
+	abstract void insert(int)
+	requires {
+		int $res;
+		$res = 1;
+	}
+	old {
+		int $old1;
+		OLIST Current;
+		int $res;
+		int a1;
+		int a2;
+		int a3;
+		int a4;
+		int a5;
+		
+		Current := @this: OLIST;
+		$old1 = virtualinvoke Current.<OLIST: int count()>();
+	}
+	ensures {
+		int $old1;
+		OLIST Current;
+		int $res;
+		int a1;
+		int a2;
+		int a3;
+		int a4;
+		int a5;
+
+		Current := @this: OLIST;
+		a1 := @parameter0: int;
+		a2 = virtualinvoke Current.<OLIST: int has(int)>(a1);
+		if a2 != 1 goto label_false;
+		a3 = virtualinvoke Current.<OLIST: int count()>();
+		a4 = $old1 + 1;
+		a5 = a3 == a4;
+		if a5 != 1 goto label_false;
+		$res = 1;
+		goto label_end;
+
+		label_false:
+		$res = 0;
+
+		label_end:
+	}
+	;
+
+	abstract void remove_first()
+	requires {
+		int a1;
+		OLIST Current;
+		int $res;
+		Current := @this: OLIST;
+		a1 = virtualinvoke Current.<OLIST: int is_empty()>();
+		$res = a1 == 0;
+	}
+	old {
+		int $old1;
+		OLIST Current;
+		int a1;
+		int a2;
+		int $res;
+		
+		Current := @this: OLIST;
+		$old1 = virtualinvoke Current.<OLIST: int count()>();
+	}
+	ensures {
+		int $old1;
+		OLIST Current;
+		int a1;
+		int a2;
+		int $res;
+		
+		Current := @this: OLIST;
+		a1 = virtualinvoke Current.<OLIST: int count()>();
+		a2 = $old1 - 1;
+		$res = a1 == a2;
+	}
+	;
+
+	abstract int first()
+	requires {
+		int a1;
+		OLIST Current;
+		int $res;
+		Current := @this: OLIST;
+		a1 = virtualinvoke Current.<OLIST: int is_empty()>();
+		$res = a1 == 0;
+	}
+	ensures {
+		int a1;
+		OLIST Current;
+		int $res;
+		Current := @this: OLIST;
+		a1 = virtualinvoke Current.<OLIST: int is_empty()>();
+		$res = a1 == 0;
+	}
+	;
+
+	abstract int has(int)
+	requires {
+		int $res;
+		$res = 1;
+	}
+	ensures {
+		int $res;
+		$res = 1;
+	}
+	;
+
+	abstract int count()
+	requires {
+		int $res;
+		$res = 1;
+	}
+	ensures {
+		int $res;
+		$res = 1;
+	}
+	;
+
+	abstract int is_empty()
+	requires {
+		int $res;
+		$res = 1;
+	}
+	ensures {
+		int $res;
+		$res = 1;
+	}
+	;
+
+	abstract void count_non_negative()
+	requires {
+		OLIST Current;
+		int a1;
+		int $res;
+
+		Current := @this: OLIST;
+		a1 = virtualinvoke Current.<OLIST: int count()>();
+		$res = a1 >= 0;
+	}
+	;
+
+	abstract void empty_definition()
+	requires {
+		OLIST Current;
+		int a1;
+		int a2;
+		int a3;
+		int $res;
+
+		Current := @this: OLIST;
+		a1 = virtualinvoke Current.<OLIST: int is_empty()>();
+		a2 = virtualinvoke Current.<OLIST: int count()>();
+		a3 = a2 == 0;
+		$res = a1 == a3;
+	}
+	;
+
+}

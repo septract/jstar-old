@@ -24,18 +24,18 @@ endif
 export LIB
 
 
-CORESOURCE = spec.ml
+CORESOURCE = spec.ml methdec_core.ml pprinter_core.ml
 LIBRARYSOURCE = $(CORESOURCE)
 
 LIBRARY = SOURCES="$(LIBRARYSOURCE)" \
        OCAMLLDFLAGS="-g -a" \
-       INCDIRS="../utils ../prover_syntax" \
+       INCDIRS="../utils ../prover_syntax ../prover" \
        OCAMLFLAGS="-g" \
        RESULT="$(LIB)/symbexe_syntax.cmxa" \
        TRASH=""
 BLIBRARY = SOURCES="$(LIBRARYSOURCE)" \
        OCAMLLDFLAGS="-g -a" \
-       INCDIRS="../utils ../prover_syntax" \
+       INCDIRS="../utils ../prover_syntax ../prover" \
        OCAMLFLAGS="-g" \
        RESULT="$(LIB)/symbexe_syntax.cma" \
        TRASH=""

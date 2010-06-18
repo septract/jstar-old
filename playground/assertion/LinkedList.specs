@@ -1,0 +1,48 @@
+class java.lang.Object {
+  static void <init>():
+    {}
+    {};
+}
+
+class java.util.AbstractList {
+  export AbstractList(x, {modCount=count}) =
+    field(x, <java.util.AbstractList: int modCount>, count);
+}
+
+class java.util.AbstractSequentialList {
+  export AbstractSequentialList(x, {modCount=count}) =
+    AbstractList$java.util.AbstractList(x, {modCount=count});
+}
+
+class java.util.LinkedList {
+  export LinkedList(x, {handle=h; head=n; tail=p; list=l}) =
+      length(l) = _s
+    * AbstractSequentialList$java.util.AbstractSequentialList(x, {modCount=_modCount})
+    * field(x, <java.util.LinkedList: int size>, _s)
+    * field(x, <java.util.LinkedList: java.util.LinkedList$Entry header>, h)
+    * field(h, <java.util.LinkedList$Entry: java.util.LinkedList$Entry next>, n)
+    * field(h, <java.util.LinkedList$Entry: java.util.LinkedList$Entry previous>, p)
+    * dseg(n, h, h, p, l);
+
+  export LinkedListInternal(x, {handle=h; head=n; tail=p; list=l}) =
+      length(l) = _s
+    * AbstractSequentialList$java.util.AbstractSequentialList(x, {modCount=_modCount})
+    * field(x, <java.util.LinkedList: int size>, _s)
+    * field(x, <java.util.LinkedList: java.util.LinkedList$Entry header>, h)
+    * field(h, <java.util.LinkedList$Entry: java.util.LinkedList$Entry next>, n)
+    * field(h, <java.util.LinkedList$Entry: java.util.LinkedList$Entry previous>, p);
+
+  java.util.LinkedList$Entry entry(int):
+    {LinkedListInternal$(@this:, {handle=_h; head=_n; tail=_p; list=_l})
+      * _l = app(_l1, cons(_a, _l2))
+      * length(_l1) = @parameter0:
+      * dseg(_n, _h, _k, _j, _l1)
+      * node(_k, _j, _m, _a)
+      * dseg(_m, _k, _h, _p, _l2)}
+    {LinkedList$(@this:, {handle=_h; head=_n; tail=_p; list=_l})
+      * $ret_var = _k
+    };
+
+}
+
+

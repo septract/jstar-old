@@ -22,6 +22,7 @@ open Lexing
 open Parsing 
 open Jimple_global_types
 open Spec
+open Methdec_core
 open Load
 open Spec_def
 open Psyntax
@@ -194,6 +195,7 @@ let field_signature2str fs =
 %token <string> IDENTIFIER 
 %token <string> AT_IDENTIFIER 
 %token <string> FULL_IDENTIFIER 
+%token <string> CORE_LABEL
 %token COLON_EQUALS 
 %token EQUALS 
 %token AND 
@@ -250,9 +252,16 @@ let field_signature2str fs =
 %token NOTINCONTEXT
 %token ORTEXT
 %token GARBAGE
+%token EMP
 %token IMPORT 
+%token SPECIFICATION
 
 %token INDUCTIVE
+
+%token NOOP 
+%token LABEL
+%token END
+%token ASSIGN
 
 
 /* ============================================================= */
@@ -301,7 +310,6 @@ let field_signature2str fs =
 %start rule_file
 %type <Psyntax.rules Load.importoption list> rule_file
 
-
 %start question_file
 %type <Psyntax.question list> question_file
 
@@ -311,7 +319,15 @@ let field_signature2str fs =
 %start inductive_file
 %type <Psyntax.inductive_stmt list> inductive_file
 
+%start symb_question_file
+%type <Methdec_core.symb_question list> symb_question_file 
+
+%start spec
+%type <Spec.spec> spec
+
 %% /* rules */
+
+
 
 file:
    | modifier_list_star file_type class_name extends_clause implements_clause file_body
@@ -374,6 +390,13 @@ specs:
    | spec ANDALSO specs  { $1 :: $3 }
    | spec     {[$1]}
 
+spec_npv:
+   | L_BRACE formula_npv R_BRACE L_BRACE formula_npv R_BRACE exp_posts_npv  {  {pre=$2;post=$5;excep=$7}  }
+specs_npv:
+   | spec_npv ANDALSO specs_npv  { $1 :: $3 }
+   | spec_npv     {[$1]}
+
+
 method_spec:
    | method_signature_short COLON specs  SEMICOLON  { mkDynamic($1, $3) }
    | method_signature_short STATIC COLON specs SEMICOLON  { mkStatic($1, $4) }
@@ -383,6 +406,11 @@ method_spec:
 exp_posts:
    | L_BRACE identifier COLON formula R_BRACE exp_posts { ClassMap.add $2 $4 $6 }
    | /*empty */ { ClassMap.empty }
+
+exp_posts_npv:
+   | L_BRACE identifier COLON formula_npv R_BRACE exp_posts_npv { ClassMap.add $2 $4 $6 }
+   | /*empty */ { ClassMap.empty }
+
 
 modifier:
    | ABSTRACT      {Abstract} 
@@ -509,6 +537,7 @@ identifier:
   | FALSE   { "False" }
   | TRUE   { "True" }
   | GARBAGE   { "Garbage" }
+  | EMP    { "Emp"}
 /*  | IMPLICATION   { "Implication" }
   | FRAME   { "Frame" }
   | INCONSISTENCY   { "Inconsistency" }*/
@@ -845,7 +874,7 @@ paramlist:
 /* Code for matching where not allowing question mark variables:
    no pattern vars*/
 jargument_npv:
-   | RETURN { Arg_var (newPVar(Support_syntax.name_ret_var)) }
+   | RETURN { Arg_var (newPVar(Spec.name_ret_v1)) }
    | lvariable_npv {Arg_var ($1)}
    | identifier L_PAREN jargument_list_npv R_PAREN {Arg_op($1,$3) }        
    | INTEGER_CONSTANT {Arg_string(string_of_int $1)} 
@@ -867,7 +896,7 @@ jargument_list_npv:
 
 
 jargument:
-   | RETURN { Arg_var (newPVar(Support_syntax.name_ret_var)) }
+   | RETURN { Arg_var (newPVar(Spec.name_ret_v1)) }
    | lvariable {Arg_var ($1)}
    | identifier L_PAREN jargument_list R_PAREN {Arg_op($1,$3) }        
    | INTEGER_CONSTANT {Arg_string(string_of_int $1)} 
@@ -889,7 +918,8 @@ jargument_list:
 
   
 formula: 
-   |  { [] }
+   | /*empty*/  { [] }
+   | EMP  { [] }
    | FALSE { mkFalse}
    | GARBAGE { mkGarbage}
    | lvariable DOT jargument MAPSTO  jargument { [P_SPred("field", [Arg_var $1; $3; $5] )] }
@@ -906,7 +936,8 @@ formula:
    | L_PAREN formula R_PAREN { $2 }
 
 formula_npv: 
-   |  { [] }
+   | /*empty*/ { [] }
+   | EMP  { []}
    | FALSE { mkFalse}
    | GARBAGE { mkGarbage}
    | lvariable_npv DOT jargument_npv MAPSTO  jargument_npv { [P_SPred("field", [Arg_var $1; $3; $5] )] }
@@ -1091,6 +1122,38 @@ inductive:
 inductive_file: 
    | EOF  { [] }
    | inductive inductive_file  {$1 :: $2}
+
+
+symb_question_file: 
+   | EOF  { [] }
+   | symb_question symb_question_file  {$1 :: $2}
+   
+
+symb_question: 
+   | SPECIFICATION identifier COLON spec QUESTIONMARK core_stmt_list  {Specification($2,$4,$6)}
+
+
+core_stmt_list:
+   |  core_stmt SEMICOLON core_stmt_list  { $1 :: $3 } 
+   |  /* empty */  { [] }
+
+core_stmt: 
+   |  END   { End }
+   |  NOOP  { Nop_stmt_core }
+   |  ASSIGN core_assn_args spec L_PAREN jargument_list_npv R_PAREN
+         { Assignment_core($2, $3, $5) } 
+   |  GOTO label_list { Goto_stmt_core $2 } 
+   |  LABEL IDENTIFIER  { Label_stmt_core $2 }
+
+core_assn_args:
+   | lvariable_list_ne_npv COLON_EQUALS { $1 }
+   | COLON_EQUALS { [] }
+   |  /* empty */  { [] }
+
+label_list:
+   |  IDENTIFIER   { [$1] }
+   |  IDENTIFIER COMMA label_list   { $1 :: $3 }
+
 
 
 %% (* trailer *)

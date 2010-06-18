@@ -15,7 +15,7 @@ class PERSON
 		{P(@this:, {age=builtin_plus(_a, numeric_const(1))})};
 	int age() :
 		{P$(@this:, {age=_a})}
-		{P$(@this:, {age=_a}) * $ret_var = _a};
+		{P$(@this:, {age=_a}) * $ret_v1 = _a};
 	void set_age(int) :
 		{P$(@this:, {age=_a})}
 		{P$(@this:, {age=@parameter0:})};
@@ -46,7 +46,7 @@ class MUSICIAN extends PERSON
 		{M$(@this:, {age=_a;pfm=builtin_plus(_p, numeric_const(1))})};
 	int performances() :
 		{M$(@this:, {age=_a;pfm=_p})}
-		{M$(@this:, {age=_a;pfm=_p}) * $ret_var = _p};
+		{M$(@this:, {age=_a;pfm=_p}) * $ret_v1 = _p};
 }
 
 class STUDENT extends PERSON
@@ -74,7 +74,7 @@ class STUDENT extends PERSON
 		{S$(@this:, {age=_a;exm=builtin_plus(_e, numeric_const(1))})};
 	int exams() :
 		{S$(@this:, {age=_a;exm=_e})}
-		{S$(@this:, {age=_a;exm=_e}) * $ret_var = _e};
+		{S$(@this:, {age=_a;exm=_e}) * $ret_v1 = _e};
 }
 
 class SMUSICIAN extends STUDENT, MUSICIAN

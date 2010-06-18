@@ -481,7 +481,7 @@ type rewrite_guard =
   } 
 
 type rewrite_rule =
-    {
+  {
     function_name : string;
     arguments : args list;
     result : args;

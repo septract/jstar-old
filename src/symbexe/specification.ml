@@ -121,6 +121,8 @@ let ev_spec_pre spec =
       let ev = ev_form spec_pre in 
       ev
 
+
+(* This is the function that performs the symbolic execution! *)
 let jsr logic (pre : inner_form) (spec : spec)  : (inner_form  list * ts_excep_post list) option  = 
   let ev = ev_spec spec in 
   let subst = subst_kill_vars_to_fresh_exist ev in 

@@ -16,7 +16,6 @@ module ClassMap =
     let compare = compare
   end)
 
-
 type excep_post = Psyntax.pform ClassMap.t 
 
 type spec = 
@@ -38,6 +37,8 @@ let spec2str ppf (spec: spec)  =
 
 let pprinter_core_spec2str = ((Debug.toString spec2str) : (spec -> string))
   
+let name_ret_v1 = "$ret_v1"
+let ret_v1 = Vars.concretep_str name_ret_v1
 
 
 (* TODO Should add stuff for internal representation of symbolic execution *)

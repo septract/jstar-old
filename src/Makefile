@@ -9,6 +9,8 @@ default:
 	cd proverfront; make
 	cd symbexe;  make 
 	cd jimplefront;  make 
+	cd symbfront; make
+
 
 debug: 
 	cd utils; make debug
@@ -21,6 +23,7 @@ debug:
 	cd proverfront; make debug
 	cd symbexe;  make debug
 	cd jimplefront;  make debug
+	cd symbfront; make debug
 
 
 clean: 
@@ -33,3 +36,4 @@ clean:
 	cd proverfront; make clean
 	cd symbexe; make clean
 	cd jimplefront;  make clean
+	cd symbfront; make clean

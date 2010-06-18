@@ -42,8 +42,12 @@ let string_of_proof () =
 exception Failed_eg of Clogic.sequent list
 
 
-let rec apply_rule_list_once (rules : sequent_rule list) (seq : Clogic.sequent) ep : Clogic.sequent list list
-    =
+let rec apply_rule_list_once 
+   (rules : sequent_rule list) 
+   (seq : Clogic.sequent) 
+   ep 
+   : Clogic.sequent list list
+   =
   match rules with 
     [] -> raise No_match
   | rule::rules ->
@@ -69,7 +73,7 @@ let rec sequents_backtrack  f (seqss : Clogic.sequent list list) xs
       | Failed_eg x -> 
 	  Format.fprintf !dump "Backtracking!@\n"; sequents_backtrack f seqss (x @ xs)
 
-let rec apply_rule_list 
+let apply_rule_list 
     logic 
     (sequents : Clogic.sequent list) 
     (must_finish : Clogic.sequent -> bool) 
@@ -101,10 +105,11 @@ let rec apply_rule_list
 	   with No_match -> 
 	     (* Do expensive rewrites and try again *)
 (*	     let seq = rewrites_sequent rwm ep abs true seq in *)
-	     try 
+(* Looks like dead code *)
+(*	     try 
 	       search (apply_rule_list_once rules seq ep)
-	     with No_match -> 
-	       try
+	     with No_match -> *)
+         try
 		 if may_finish seq then 
 		   [seq]
 		 else 

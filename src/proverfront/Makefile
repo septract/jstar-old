@@ -46,22 +46,22 @@ MAINOPT = $(DEFAULT_ARGS) SOURCES="$(PROVERSOURCE)" \
        RESULT=$(BIN)/run_logic
 
 TMAIN = $(DEFAULT_ARGS) SOURCES="$(TESTPROVERSOURCE)" \
-       RESULT=$(BIN)/testharness.byte 
+       RESULT=$(BIN)/test_logic.byte 
 
 TMAINOPT = $(DEFAULT_ARGS) SOURCES="$(TESTPROVERSOURCE)" \
-       RESULT=$(BIN)/testharness 
+       RESULT=$(BIN)/test_logic 
 
 #       LIBS="str" \
 
-default: toplevel testharness
+default: toplevel test_logic
 
 .PHONY: debug
-debug: toplevel.byte testharness.byte
+debug: toplevel.byte test_logic.byte
 
 prebuild: 
 	@(cd ../prover; make)
 
-all: toplevel testharness
+all: toplevel test_logic
 
 .PHONY: toplevel.byte
 toplevel.byte: prebuild
@@ -72,13 +72,13 @@ toplevel.byte: prebuild
 toplevel: prebuild
 	@$(MAKE) -f $(OCAMLMAKEFILE) $(MAINOPT) native-code
 
-.PHONY: testharness.byte
-testharness.byte: prebuild
+.PHONY: test_logic.byte
+test_logic.byte: prebuild
 	@$(MAKE) -f $(OCAMLMAKEFILE) $(TMAIN) byte-code
 
 
-.PHONY: testharness
-testharness: prebuild
+.PHONY: test_logic
+test_logic: prebuild
 	@$(MAKE) -f $(OCAMLMAKEFILE) $(TMAINOPT) native-code
 
 
