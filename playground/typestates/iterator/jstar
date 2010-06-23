@@ -1,0 +1,1 @@
+jstar -f $1 -l logic -a abs -s specs

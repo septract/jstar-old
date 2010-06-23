@@ -1,0 +1,23 @@
+class List {
+  static void <init>() : {} {};
+  static void add(java.lang.Object) : {} {};
+  static int size() : {} {};
+  static Iterator iterator() : {} {};
+  static void remove(java.lang.Object) : {} {};
+}
+
+
+class Collection {
+  static void add(java.lang.Object) : { | } { | };
+  static void remove(java.lang.Object) : { | } { | };
+  static int size() : { | } { | };
+  static Iterator iterator() : { | } { | };
+}
+
+
+class Iterator {
+  static boolean hasNext() : { | } { | };
+  static java.lang.Object next() : { | } { | };
+}
+
+
