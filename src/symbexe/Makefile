@@ -1,7 +1,7 @@
 export OCAMLMAKEFILE = OcamlMakefile
 export OCAMLYACC = ocamlyacc -v
-export OCAMLC = ocamlc.opt -dtypes
-export OCAMLOPT = ocamlopt.opt -dtypes
+export OCAMLC = ocamlc.opt -annot
+export OCAMLOPT = ocamlopt.opt -annot
 export OCAMLDEP = ocamldep.opt
 export OCAMLDOC = ocamldoc.opt
 
@@ -18,7 +18,7 @@ export LIB
 
 INCLUDES = 
 
-SYMBEXE_SOURCES = specification.ml methdec_core.ml pprinter_core.ml cfg_core.ml symexec.ml
+SYMBEXE_SOURCES = specification.ml core.ml pprinter_core.ml cfg_core.ml symexec.ml
 
 TOPLEVEL_SOURCES = $(SYMBEXE_SOURCES)
 

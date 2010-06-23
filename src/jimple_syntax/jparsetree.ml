@@ -11,6 +11,7 @@
       LICENSE.txt
  ********************************************************)
 
+open Format
 
 (* Types used to parse jimple *)
 
@@ -195,5 +196,27 @@ type local_var = j_type option * name
 type nodekind = Start_node | Exit_node | Call_node | Return_Site_node | Stmt_node
 
 
+(* The pretty printing functions below aid debugging. *)
 
+let pp_name f = function
+  | Quoted_name s
+  | Identifier_name s -> fprintf f "%s" s
 
+let pp_class_name f = function
+  | Quoted_clname s
+  | Identifier_clname s
+  | Full_identifier_clname s -> fprintf f "%s" s
+
+let pp_inheritance_clause p f = function
+  | [] -> ()
+  | x :: xs -> 
+      fprintf f "@[%s " p;
+      pp_class_name f x;
+      List.iter (fun x -> fprintf f ", "; pp_class_name f x) xs;
+      fprintf f "@]"
+
+let pp_method_signature_short f = function (ms, t, n, ps) ->
+  fprintf f "@[<4>";
+  (* TODO(rgrig): Print the other parts *)
+  pp_name f n;
+  fprintf f "@]"

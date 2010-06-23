@@ -11,15 +11,16 @@
       LICENSE.txt
  ********************************************************)
 
-open Vars
+open Cfg_core
+open Core
+open Format
 open Psyntax
 open Sepprover
-
-
 open Spec
-open Cfg_core
 open Specification
-open Methdec_core
+open Vars
+
+
 (* global variables *)
 
 let curr_logic : Psyntax.logic ref = ref Psyntax.empty_logic
@@ -44,8 +45,9 @@ let fresh_node = let node_counter = ref 0 in fun () ->  let x = !node_counter in
 let fresh_file = let file_id = ref 0 in fun () -> let x = !file_id in file_id := x+1;  Sys.getcwd() ^  "/" ^ !file ^ ".proof_file_"^(string_of_int x)^".txt"
 
 
-type node = {mutable content : string; id : id; mutable ntype : ntype; mutable url : string; mutable edges : edge list; cfg : stmt_core option}
+type node = {mutable content : string; id : id; mutable ntype : ntype; mutable url : string; mutable edges : edge list; cfg : cfg_node option}
 and  edge = string * string * node * node * string option
+  (** An edge has a label, a ???, source, target, and perhaps an URL. *)
 
 let graphe = ref []
 
@@ -83,59 +85,57 @@ let startnodes : node list ref = ref []
 
 let make_start_node node = startnodes := node::!startnodes
 
-let escape_for_dot_label s =
-  Str.global_replace (Str.regexp "\\\\n") "\\l" (String.escaped s)
-
 let pp_dotty_transition_system () =
   let foname = (!file) ^ ".execution_core.dot~" in
-  let dotty_outf=open_out foname in
-  if Config.symb_debug() then Printf.printf "\n Writing transition system file execution_core.dot  \n";
-  Printf.fprintf dotty_outf "digraph main { \nnode [shape=box,  labeljust=l];\n\n";
+  let dotty_out = open_out foname in
+  let dotty_outf = formatter_of_out_channel dotty_out in
+  if Config.symb_debug() then printf "\n Writing transition system file execution_core.dot  \n";
+  fprintf dotty_outf "digraph main { \nnode [shape=box,  labeljust=l];\n\n";
   Idmap.iter 
-    (fun cfg nodes ->
-      ((
-       if grouped () then match cfg with Some cfg -> Printf.fprintf dotty_outf "subgraph cluster_cfg%i {\n"  cfg | _ -> ());
+    (fun cfg nodes -> (
+      (* Print Abs nodes. *)
+      (if grouped () then 
+        match cfg with Some cfg -> fprintf dotty_outf "subgraph cluster_cfg%i {\n"  cfg | _ -> ());
       List.iter (fun {content=label;id=id;ntype=ty;url=url;cfg=cfg} ->
-	let label=escape_for_dot_label label in
+	let label=Dot.escape_for_label label in
 	let url = if url = "" then "" else ", URL=\"file://" ^ url ^"\"" in
 	match ty with 
 	| Plain -> ()
 	| Good ->  ()
 	| Error ->  ()
 	| UnExplored -> ()
-	| Abs ->  Printf.fprintf dotty_outf "\n state%i[label=\"%s\",labeljust=l, color=yellow, style=filled%s]\n" id label url)
+	| Abs ->  fprintf dotty_outf "\n state%i[label=\"%s\",labeljust=l, color=yellow, style=filled%s]\n" id label url)
 	nodes;
-      if grouped () then match cfg with Some _ -> Printf.fprintf dotty_outf "\n}\n" | _ -> ());
+      if grouped () then match cfg with Some _ -> fprintf dotty_outf "\n}\n" | _ -> ());
+      (* Print non-Abs nodes. *)
       List.iter (fun {content=label;id=id;ntype=ty;url=url;cfg=cfg} ->
-	let label=escape_for_dot_label label in
+	let label=Dot.escape_for_label label in
 	let url = if url = "" then "" else ", URL=\"file://" ^ url ^"\"" in
 	match ty with 
-	  Plain ->  Printf.fprintf dotty_outf "\n state%i[label=\"%s\",labeljust=l%s]\n" id label url
-	| Good ->  Printf.fprintf dotty_outf "\n state%i[label=\"%s\",labeljust=l, color=green, style=filled%s]\n" id label url
-	| Error ->  Printf.fprintf dotty_outf "\n state%i[label=\"%s\",labeljust=l, color=red, style=filled%s]\n" id label url
-	| UnExplored ->  Printf.fprintf dotty_outf "\n state%i[label=\"%s\",labeljust=l, color=orange, style=filled%s]\n" id label url
+	  Plain ->  fprintf dotty_outf "\n state%i[label=\"%s\",labeljust=l%s]\n" id label url
+	| Good ->  fprintf dotty_outf "\n state%i[label=\"%s\",labeljust=l, color=green, style=filled%s]\n" id label url
+	| Error ->  fprintf dotty_outf "\n state%i[label=\"%s\",labeljust=l, color=red, style=filled%s]\n" id label url
+	| UnExplored ->  fprintf dotty_outf "\n state%i[label=\"%s\",labeljust=l, color=orange, style=filled%s]\n" id label url
 	| Abs -> () )
 	nodes;
     )
     !graphn;
-  List.iter (fun (l,c,s,d, o) ->
-    let l = escape_for_dot_label l in
-    let c = escape_for_dot_label c in
-    Printf.fprintf dotty_outf "\n state%i -> state%i [label=\"%s\", tooltip=\"%s\"%s]" s.id d.id l c
+  List.iter (fun (l,c,s,d,o) ->
+    let l = Dot.escape_for_label l in
+    let c = Dot.escape_for_label c in
+    fprintf dotty_outf "\n state%i -> state%i [label=\"%s\", tooltip=\"%s\"%s]" s.id d.id l c
 	    (match o with 
 	      None -> ""
-	    | Some f -> Printf.sprintf ", URL=\"file://%s\", fontcolor=blue" f))
+	    | Some f -> sprintf ", URL=\"file://%s\", fontcolor=blue" f))
     !graphe;
-  Printf.fprintf dotty_outf "\n\n\n}";
-  close_out dotty_outf;
+  fprintf dotty_outf "\n\n\n}@.";
+  close_out dotty_out;
   let fname = (!file) ^ ".execution_core.dot" in
-  (* FIXME: should be a macro *)
-  if Sys.os_type="Win32" && Sys.file_exists fname then Sys.remove fname else ();
-  (* FIXME: should be a macro *)
+  if Sys.file_exists fname then Sys.remove fname;
   Sys.rename foname (!file ^ ".execution_core.dot")
 
 
-let add_node (label : string) (ty : ntype) (cfg : stmt_core option) = 
+let add_node (label : string) (ty : ntype) (cfg : cfg_node option) = 
   let id = fresh_node () in 
   let node = {content=label; id=id;ntype=ty;url=""; edges=[]; cfg = cfg} in 
   let cfgid = 
@@ -149,15 +149,16 @@ let add_error_node label = add_node label Error None
 let add_abs_node label cfg = add_node label Abs (Some cfg)
 let add_good_node label = add_node label Good None
 let add_node_unexplored label cfg = add_node label UnExplored (Some cfg)
-let add_node label cfg = add_node label UnExplored (Some cfg)
 
+(* Redefines [add_node]! *)
+let add_node label cfg = add_node label UnExplored (Some cfg)
 let explore_node src = if src.ntype = UnExplored then src.ntype <- Plain
 
-let add_abs_heap_node (heap : Sepprover.inner_form) cfg= 
+let add_abs_heap_node cfg (heap : Sepprover.inner_form) = 
   (Format.fprintf (Format.str_formatter) "%a" Sepprover.string_inner_form heap);
   add_abs_node (Format.flush_str_formatter ()) cfg
 
-let add_heap_node (heap : inner_form) cfg = 
+let add_heap_node cfg (heap : inner_form) = 
   (Format.fprintf (Format.str_formatter) "%a" Sepprover.string_inner_form heap);
   add_node (Format.flush_str_formatter ()) cfg
 
@@ -165,34 +166,27 @@ let add_error_heap_node (heap : inner_form) =
   (Format.fprintf (Format.str_formatter) "%a" Sepprover.string_inner_form heap);
   add_error_node (Format.flush_str_formatter ())
 
-let x = ref 0
-
+let add_edge_common = 
+  let x = ref 0 in
+  fun src dst lbl f ->
+  let e = (lbl, "", src, dst, f) in
+  graphe := e :: !graphe;
+  src.edges <- e :: src.edges;
+  explore_node src;
+  x := (!x + 1) mod 5;
+  if !x = 0 then pp_dotty_transition_system ()
 
 let add_edge src dest label = 
-  let edge = (label, "", src, dest, None) in
-  graphe := edge::!graphe;
-  src.edges <- edge::src.edges;
-  explore_node src;
-  if !x = 5 then (x:=0; pp_dotty_transition_system ()) else x :=!x+1
-
+  add_edge_common src dest label None
 
 let add_edge_with_proof src dest label = 
   let f = fresh_file() in
   let out = open_out f in
-  Sepprover.pprint_proof out;
+  let fmt = formatter_of_out_channel out in
+  Sepprover.pprint_proof fmt;
+  pp_print_flush fmt ();
   close_out out;
-  explore_node src;
-  let edge = (label, "", src, dest, Some f) in 
-  graphe := edge::!graphe;
-  src.edges <- edge::src.edges;
-  if !x = 5 then (x:=0; pp_dotty_transition_system ()) else x :=!x+1
-
-(*let add_edge_with_string_proof src dest label proof = 
-  let f = fresh_file() in
-  let out = open_out f in
-  output_string out proof;
-  close_out out;
-  graphe := (label, src, dest, Some f)::!graphe*)
+  add_edge_common src dest label (Some f)
 
 let add_url_to_node src proof = 
   let f = fresh_file() in
@@ -201,31 +195,22 @@ let add_url_to_node src proof =
   close_out out;
   src.url <- f
 
-let add_id_form h cfg =
-    let id=add_heap_node h cfg in
-    (h,id)
+let tabulate f = List.map (fun x -> (x, f x))
 
-let add_id_formset sheaps cfg =  List.map (fun h -> add_id_form h cfg) sheaps
+let add_id_formset cfg = tabulate (add_heap_node cfg)
+let add_id_abs_formset cfg = tabulate (add_abs_heap_node cfg)
 
 let add_id_formset_edge src label sheaps cfg =  
   match sheaps with 
     [] ->
-      if Config.symb_debug() then Printf.printf "\n\nInconsistent heap. Skip it!\n";
+      if Config.symb_debug() then printf "\n\nInconsistent heap. Skip it!\n";
       let idd = add_good_node "Inconsistent" in add_edge_with_proof src idd (label ^"\n Inconsistent");
 	[]
   | _ -> 
-  let sheaps_id = add_id_formset sheaps cfg in
+  let sheaps_id = add_id_formset cfg sheaps in
   List.iter (fun dest -> add_edge_with_proof src (snd dest) label) sheaps_id;
   sheaps_id
 
-let add_id_abs_form cfg h =
-    let id=add_abs_heap_node h cfg in
-    (h,id)
-
-let add_id_abs_formset sheaps cfg =  List.map (add_id_abs_form cfg) sheaps
-
-
-(* ================   ==================  *)
 
 
 (* ================  work list algorithm ==================  *)
@@ -243,7 +228,7 @@ type formset = formset_entry list
 type formset_hashtbl = (int, formset) Hashtbl.t
 
 (* table associating a cfg node to a set of heaps *)
-let formset_table : formset_hashtbl = Hashtbl.create 10000
+let formset_table : formset_hashtbl = Hashtbl.create 10007
 
 
 let formset_table_add key s = 
@@ -259,34 +244,24 @@ let formset_table_find key =
   try 
     Hashtbl.find formset_table key
   with Not_found -> 
-    []  (* Default case return false, empty list of disjunctions *)
+    []  (* Default case returns false, empty list of disjunctions *)
 
 
 let remove_id_formset formset =
   fst (List.split formset)
 
-let parameter n = "@parameter"^(string_of_int n)^":"
+let parameter = Format.sprintf "@@parameter%i:"
 
 let name_ret_var = "$ret_var"
 
 let ret_var = Vars.concretep_str name_ret_var 
 
-
-let rec param_sub il num sub = 
-  match il with 
-    [] -> sub
-  | i::il -> param_sub il (num+1) (add (Vars.concretep_str (parameter num)) (i) sub)
-
-
-
-let param_sub il =
-  let sub' = add ret_var (Arg_var(ret_var))  empty in 
-  param_sub il 0 sub'
+let param_sub il = 
+  let ps (cnt, sub) arg = 
+    (succ cnt, add (Vars.concretep_str (parameter cnt)) arg sub) in
+  snd (List.fold_left ps (0, add ret_var (Arg_var ret_var) empty) il)
   
-
-
-let id_clone h = (form_clone (fst h), snd h)
-
+let id_clone (sheap, node) = (form_clone sheap, node)
 
 
 let call_jsr_static (sheap,id) spec il node = 
@@ -298,20 +273,17 @@ let call_jsr_static (sheap,id) spec il node =
       None ->   
 	let idd = add_error_node "ERROR" in
 	add_edge_with_proof id idd 	
-	  (Format.fprintf 
-	     (Format.str_formatter) "%a:@\n %a" 
-	     Pprinter_core.pp_stmt_core node.skind
-	     Sepprover.pprint_counter_example (); 
-	   Format.flush_str_formatter ());
-        System.warning();
-	Format.printf "\n\nERROR: While executing node %d:\n   %a\n"  
-	  (node.sid) 
-	  Pprinter_core.pp_stmt_core node.skind;
+            (fprintf str_formatter "@[%a:@\n %a@]"
+	        Pprinter_core.pp_stmt_core node.skind
+	        Sepprover.pprint_counter_example (); 
+	    flush_str_formatter ());
+        printf "@[<2>%sERROR:%s While executing node %d:@\n%a@."
+            System.terminal_red System.terminal_white node.sid
+            Pprinter_core.pp_stmt_core node.skind;
 	Sepprover.print_counter_example ();
-	System.reset(); 
+        printf "%s(end error description)%s@." 
+        System.terminal_red System.terminal_white;
 	[]
-	(*assert false*)
-(*	  "Preheap:\n    %s\n\nPrecondition:\n   %s\nCannot find splitting to apply spec. Giving up! \n\n" sheap_string (Plogic.string_form spec.pre); assert false *)
     | Some r -> fst r
 
 
@@ -326,15 +298,16 @@ let check_postcondition heaps sheap =
   try 
     let heap,id = List.find (fun (heap,id) -> (frame !curr_logic (form_clone sheap_noid) heap)!=None) heaps in
     if Config.symb_debug() then 
-      Printf.printf "\n\nPost okay \n";
+      printf "\n\nPost okay \n";
     (*	let idd = add_good_node ("EXIT: "^(Pprinter.name2str m.name)) in *)
     add_edge_with_proof (snd sheap) id "exit";
     (*	add_edge id idd "";*)
   with Not_found -> 
-    System.warning();
-    let _= Printf.printf "\n\nERROR: cannot prove post\n"  in
+    let _ = 
+      printf "%sERROR:%s Cannot prove post@." 
+          System.terminal_red System.terminal_white in
     Sepprover.print_counter_example ();
-    System.reset();
+    printf "%s(end of error)%s@." System.terminal_red System.terminal_white;
     List.iter (fun heap -> 
                  let form = Sepprover.convert (fst heap) in 
 		 match form with 
@@ -367,7 +340,7 @@ and execs_with_function n sheaps g =
   let succs=g n in
   match succs with 
     [] -> 
-      if Config.symb_debug() then Printf.printf "Exit node %i\n" (n.sid);
+      if Config.symb_debug() then printf "Exit node %i\n" (n.sid);
       sheaps
   |  _ -> f succs
 
@@ -388,7 +361,7 @@ and execute_core_stmt n (sheap : formset_entry) : formset_entry list =
   (
    if Config.symb_debug() 
    then begin
-     Printf.printf "\nStarting execution of node %i \n" (n.sid);
+     printf "\nStarting execution of node %i \n" (n.sid);
      Format.printf "@\nExecuting statement:@ %a%!" Pprinter_core.pp_stmt_core stm.skind; 
      Format.printf "@\nwith heap:@\n    %a@\n@\n%!"  string_inner_form sheap_noid; 
     end;
@@ -403,7 +376,7 @@ and execute_core_stmt n (sheap : formset_entry) : formset_entry list =
 	  let sheaps_abs = Sepprover.abs !curr_abs_rules sheap_pre_abs in 
 	  let sheaps_abs = List.map (fun x -> form_clone_abs x) sheaps_abs in 
 	  if Config.symb_debug() 
-	  then Format.printf "@\nPost-abstractionc count:@\n    %d@."  (List.length sheaps_abs);
+	  then Format.printf "@\nPost-abstraction count:@\n    %d@."  (List.length sheaps_abs);
 	  let sheaps_abs = List.map Sepprover.kill_all_exists_names sheaps_abs in 
 	  if Config.symb_debug() 
 	  then List.iter (fun sheap -> Format.printf "@\nPost-abstraction:@\n    %a@."  string_inner_form sheap) sheaps_abs; 
@@ -415,7 +388,7 @@ and execute_core_stmt n (sheap : formset_entry) : formset_entry list =
    print_formset "in " (remove_id_formset formset)
    ); *)
 	  explore_node (snd sheap);
-	  let sheaps_with_id = add_id_abs_formset sheaps_abs n in
+	  let sheaps_with_id = add_id_abs_formset n sheaps_abs in
 	  List.iter 
 	    (fun sheap2 ->  
 	      add_edge_with_proof 
@@ -445,7 +418,7 @@ and execute_core_stmt n (sheap : formset_entry) : formset_entry list =
 	  formset_table_replace id (sheaps_with_id @ formset);
 	  execs_one n (List.map id_clone sheaps_with_id)
 	with Contained -> 
-	  if Config.symb_debug() then Printf.printf "Formula contained.\n"; [])
+	  if Config.symb_debug() then printf "Formula contained.\n"; [])
     | Goto_stmt_core _ -> execs_one n [sheap]
     | Nop_stmt_core  -> execs_one n [sheap]
     | Assignment_core (vl, spec, il) -> 
@@ -470,11 +443,11 @@ and execute_core_stmt n (sheap : formset_entry) : formset_entry list =
     | End -> execs_one n [sheap]
 	  ))
       
-(* implements a work-list fidex point algorithm *)
+(* Implements a work-list fixed point algorithm. *)
 (* the queue qu is a list of pairs [(node, expression option)...] the expression
 is used to deal with if statement. It is the expression of the if statement is the predecessor
 of the node is a if_stmt otherwise is None. In the beginning is always None for each node *)
-let verify (mname : string) (stmts : stmt_core list)  (spec : spec) (lo : logic) (abs_rules : logic) =
+let verify (mname : string) (stmts : cfg_node list)  (spec : spec) (lo : logic) (abs_rules : logic) =
 
   (* remove methods that are declared abstraction *)
   curr_logic:= lo;
@@ -487,7 +460,9 @@ let verify (mname : string) (stmts : stmt_core list)  (spec : spec) (lo : logic)
       let id = add_good_node ("Start "^mname) in  
       make_start_node id;
       match Sepprover.convert (spec.pre) with 
-	None -> System.warning(); Printf.printf "False precondition for specification of %s." mname  ;System.reset()
+	None -> 
+          printf "%sWARNING%s: %s has an unsatisfiable precondition@." 
+              System.terminal_red System.terminal_white mname
       |	Some pre -> 
 	  let post = execute_core_stmt s (pre, id) in 
 	  let id_exit = add_good_node ("Exit") in 
@@ -496,7 +471,7 @@ let verify (mname : string) (stmts : stmt_core list)  (spec : spec) (lo : logic)
 	      check_postcondition [(spec.post,id_exit)] post) post
 
 
-let verify_ensures (name : string) (stmts: stmt_core list) (post : Psyntax.pform) conjoin_with_res_true (oldexp_frames : inner_form list list) lo abs_rules =
+let verify_ensures (name : string) (stmts: cfg_node list) (post : Psyntax.pform) conjoin_with_res_true (oldexp_frames : inner_form list list) lo abs_rules =
   (* construct the specification of the ensures clause *)
 	let rec conjoin_disjunctions (d1 : inner_form list) (d2 : inner_form list) : inner_form list =
 		match d1 with
@@ -533,26 +508,25 @@ let check_and_get_frame (heap,id) sheap =
   match frame with 
     Some frame -> 
                  if Config.symb_debug() then 
-                        (Printf.printf "\n\nOld expression okay \n";
+                        (printf "\n\nOld expression okay \n";
                         add_edge_with_proof (snd sheap) id "exit";
                         frame)
                  else
                         frame
-  | None -> 
-                 (System.warning();
-                 let _= Printf.printf "\n\nERROR: cannot prove frame for old expression\n"  in
-                 Sepprover.print_counter_example ();
-                 System.reset();
-                 let idd = add_error_heap_node heap in 
-		 add_edge_with_proof (snd sheap) idd 
-		   (Format.fprintf 
-		      (Format.str_formatter) "ERROR EXIT: @\n %a" 
-		      Sepprover.pprint_counter_example (); 
-                      Format.flush_str_formatter ());
-                 [])
+  | None ->
+      (printf "@{<b>ERROR:@} Cannot prove frame@.";
+      Sepprover.print_counter_example ();
+      add_edge_with_proof
+          (snd sheap)
+          (add_error_heap_node heap)
+          (fprintf str_formatter "@[<2>ERROR EXIT:@\n%a@."
+              Sepprover.pprint_counter_example ();
+              flush_str_formatter ());
+      printf "@{<b>(end of error)@}@.";
+      [])
 
 
-let get_frame (stmts : stmt_core list) (pre : Psyntax.pform) (lo : logic) (abs_rules : logic) = 
+let get_frame (stmts : cfg_node list) (pre : Psyntax.pform) (lo : logic) (abs_rules : logic) = 
   curr_logic:= lo;
   curr_abs_rules:=abs_rules;
  
@@ -564,7 +538,7 @@ let get_frame (stmts : stmt_core list) (pre : Psyntax.pform) (lo : logic) (abs_r
       make_start_node id;
       let rlogic_pre = Sepprover.convert pre in
       match rlogic_pre with
-	None -> System.warning(); Printf.printf "False precondition for specification."  ;System.reset(); []
+	None -> printf "@{<b>WARNING:@} False precondition in spec.@."; []
       |	Some rlogic_pre ->
 	  let post = match execute_core_stmt s (rlogic_pre, id) with
 	  | [p] -> p

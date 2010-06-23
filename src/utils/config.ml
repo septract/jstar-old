@@ -22,6 +22,6 @@ let specs_template_mode = ref false
 (** Flag to print heaps on every node in the cfg *)
 let dotty_print = ref false
 
-let sym_debug = ref true
+let sym_debug = ref false
 
 let symb_debug() = !sym_debug 

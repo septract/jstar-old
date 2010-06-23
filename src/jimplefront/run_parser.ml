@@ -11,6 +11,8 @@
       LICENSE.txt
  ********************************************************)
 
+open Debug
+open Format
 open Jparsetree
 open Jimple_global_types
 
@@ -61,24 +63,15 @@ let arg_list =[
  ]
 
 
-(*
-let parse_one_class cname =
-  let cname= !path_class_files ^ cname ^".jimple" in
-  Printf.printf "Start parsing class file %s...\n" cname;
-  let s = string_of_file cname  in
-  let parsed_class_file  = Jparser.file Jlexer.token (Lexing.from_string s) 
-  in Printf.printf "Parsing %s... done!\n" cname;
-  Printf.printf "\n\n\n%s" (Pprinter.jimple_file2str parsed_class_file);
-  parsed_class_file
-*)
-
-
-
 let parse_program () =
-  if Config.symb_debug() then Printf.printf "Parsing program file  %s...\n" !program_file_name;
-  let s = System.string_of_file !program_file_name  in
-  let program =Jparser.file Jlexer.token (Lexing.from_string s)
-  in if Config.symb_debug() then Printf.printf "Program Parsing... done!\n";
+  if log log_phase then 
+    fprintf logf "@[<4>Parsing program@ %s.@." !program_file_name;
+  let ch = 
+    try 
+      open_in !program_file_name  
+    with Sys_error s -> failwith s in
+  let program =Jparser.file Jlexer.token (Lexing.from_channel ch) in
+  if log log_phase then fprintf logf "@[<4>Parsed@ %s.@." !program_file_name;
   (* Replace specialinvokes of <init> after news with virtual invokes of <init>*)
   let program = program in 
   let rec spec_to_virt x maps = match x with 
@@ -108,76 +101,109 @@ let parse_program () =
 
 let main () =
   let usage_msg="Usage: -l <logic_file_name>  -a <abstraction_file_name>  -s <spec_file_name>  -f <class_file_program>" in 
-  Arg.parse arg_list (fun s ->()) usage_msg;
-  Debug.debug_ref:=!Config.verbose;
+  Arg.parse 
+      arg_list 
+      (fun s -> Format.eprintf "WARNING: Ignored argument %s.@." s) 
+      usage_msg;
 
   if !program_file_name="" then
-    Printf.printf "Program file name not specified. Can't continue....\n %s \n" usage_msg
-   else 
+     eprintf "Program file name not specified. Can't continue....\n %s \n" usage_msg
+  else 
      let program=parse_program () in
      if !logic_file_name="" && not !Config.specs_template_mode then
-       Printf.printf "Logic file name not specified. Can't continue....\n %s \n" usage_msg
+       eprintf "@\nLogic file name not specified. Can't continue....\n %s \n" usage_msg
      else if !spec_file_name="" && not !Config.specs_template_mode then
-       Printf.printf "Specification file name not specified. Can't continue....\n %s \n" usage_msg
+       eprintf "@\nSpecification file name not specified. Can't continue....\n %s \n" usage_msg
      else if !absrules_file_name="" && not !Config.specs_template_mode then
-       Printf.printf "Abstraction rules file name not specified. Can't continue....\n %s \n" usage_msg
-     else if  !Config.specs_template_mode then 
-       (Printf.printf "\nCreating empty specs template for class  %s... \n" !program_file_name;
-	Mkspecs.print_specs_template program
-       )
+       eprintf "@\nAbstraction rules file name not specified. Can't continue....\n %s \n" usage_msg
+     else if !Config.specs_template_mode then 
+       (if log log_phase then
+         fprintf logf "@[<4>Creating empty specs template for class@ %s.@." !program_file_name;
+       Mkspecs.print_specs_template program)
      else (
-	 (* FIXME: should be a macro *)
-	 let signals = (if Sys.os_type="Win32" then [] else [Sys.sigint; Sys.sigquit; Sys.sigterm]) in 
-	 (* FIXME: should be a macro *)
+       let signals = (if Sys.os_type="Win32" then [] else [Sys.sigint; Sys.sigquit; Sys.sigterm]) in 
        List.iter 
 	 (fun s ->  Sys.set_signal s (Sys.Signal_handle (fun x -> Symexec.pp_dotty_transition_system (); exit x)))
-        signals;
-       try 
-	 let l1,l2 = Load_logic.load_logic  (System.getenv_dirlist "JSTAR_LOGIC_LIBRARY") !logic_file_name
-	 in 
-	 let logic = (l1,l2,Psyntax.default_pure_prover) in 
-	
-	 let l1,l2 = Load_logic.load_logic  (System.getenv_dirlist "JSTAR_LOGIC_LIBRARY") !absrules_file_name in 
-	 let abs_rules = (l1,l2, Psyntax.default_pure_prover) in
-	 
-	 let spec_list : (Spec_def.class_spec list) = Load.import_flatten 
-	     (System.getenv_dirlist "JSTAR_SPECS_LIBRARY")
-	     !spec_file_name
-	     (Jparser.spec_file Jlexer.token) in
-			
-	 let Jimple_global_types.JFile(_,_,class_name,_,_,_) = program in
-	
-	 let logic = Javaspecs.augmented_logic_for_class class_name spec_list logic in
-	 let logic = Javaspecs.add_common_apf_predicate_rules spec_list logic in
-	 (* Axioms use the "subtype" and "objsubtype" relation - see jlogic.ml *)
-	 let logic = Javaspecs.add_subtype_and_objsubtype_rules spec_list logic in
-	
-	 (* Exports clause treatment *)
-	 let (logic_with_where_pred_defs,implications) = Javaspecs.logic_and_implications_for_exports_verification class_name spec_list logic in
-				(*Inspect the augmented logic as follows:*)
-	 			(*let _ = Prover.pprint_sequent_rules logic_with_where_pred_defs in*)
-	 let _ = Classverification.verify_exports_implications implications logic_with_where_pred_defs in
-				(* Since where predicates are local to the exports clause, we discard them after exports clause verification *)
-	 let logic = Javaspecs.add_exported_implications_to_logic spec_list logic in
-	 			(*let _ = Prover.pprint_sequent_rules logic in*)
-	 (* End of exports clause treatment *)
-	
-	 (* Axioms clause treatment *)
-	 let axiom_map = Javaspecs.spec_file_to_axiom_map spec_list in
-	 let implications = Javaspecs.implications_for_axioms_verification class_name axiom_map in
-	 let _ = Classverification.verify_axioms_implications class_name program implications axiom_map logic in
-	 let logic = Javaspecs.add_axiom_implications_to_logic spec_list logic in
-	 (*let _ = Prover.pprint_sequent_rules logic in*)
-	 (* End of axioms clause treatment *)
-	
-	 let (static_method_specs,dynamic_method_specs) = Javaspecs.spec_file_to_method_specs spec_list in
-	 
-	 if Config.symb_debug() then Printf.printf "\n\n Starting symbolic execution...";
-	 Classverification.verify_methods program static_method_specs dynamic_method_specs logic abs_rules ;
-	   (*Symexec.compute_fixed_point program apfmap logic abs_rules static_method_specs dynamic_method_specs*)
-	 Symexec.pp_dotty_transition_system () 
-       with Assert_failure (e,l,c) -> Printf.printf "Error!!! Assert failure %s line %d character %d\n" e l c
-      )
+         signals;
+       let l1,l2 = Load_logic.load_logic  (System.getenv_dirlist "JSTAR_LOGIC_LIBRARY") !logic_file_name
+       in 
+       let logic = (l1,l2,Psyntax.default_pure_prover) in 
+      
+       let l1,l2 = Load_logic.load_logic  (System.getenv_dirlist "JSTAR_LOGIC_LIBRARY") !absrules_file_name in 
+       let abs_rules = (l1,l2, Psyntax.default_pure_prover) in
+       
+       let spec_list : (Spec_def.class_spec list) = Load.import_flatten 
+           (System.getenv_dirlist "JSTAR_SPECS_LIBRARY")
+           !spec_file_name
+           (Jparser.spec_file Jlexer.token) in
+                      
+       let Jimple_global_types.JFile(_,_,class_name,_,_,_) = program in
+      
+       let logic = Javaspecs.augmented_logic_for_class class_name spec_list logic in
+       let logic = Javaspecs.add_common_apf_predicate_rules spec_list logic in
+       (* Axioms use the "subtype" and "objsubtype" relation - see jlogic.ml *)
+       let logic = Javaspecs.add_subtype_and_objsubtype_rules spec_list logic in
+      
+       (* Exports clause treatment *)
+       let (logic_with_where_pred_defs,implications) = Javaspecs.logic_and_implications_for_exports_verification class_name spec_list logic in
+       if safe then
+         Classverification.verify_exports_implications 
+             implications
+             logic_with_where_pred_defs;
+         (* Since where predicates are local to the exports clause, we discard them after exports clause verification *)
+       let logic = Javaspecs.add_exported_implications_to_logic spec_list logic in
+       if log log_logic then
+         let s,_,_ = logic in
+         fprintf 
+            logf 
+            "@[<2>Augmented logic sequent rules%a@."
+            (pp_list Psyntax.pp_sequent_rule) s;
+       (* End of exports clause treatment *)
+      
+       (* Axioms clause treatment *)
+       let axiom_map = Javaspecs.spec_file_to_axiom_map spec_list in
+       let implications = Javaspecs.implications_for_axioms_verification class_name axiom_map in
+       if safe then
+         Classverification.verify_axioms_implications 
+            class_name 
+            program
+            implications
+            axiom_map
+            logic;
+       let logic = Javaspecs.add_axiom_implications_to_logic spec_list logic in
+       (*let _ = Prover.pprint_sequent_rules logic in*)
+       (* End of axioms clause treatment *)
+
+       if log log_specs then (
+         fprintf 
+            logf 
+            "@[<2>Specifications%a@." 
+            (pp_list Spec_def.pp_class_spec) spec_list);
+       let (static_method_specs,dynamic_method_specs) = 
+         Javaspecs.spec_file_to_method_specs spec_list in
+       
+       if log log_phase then 
+         fprintf logf "@[Starting symbolic execution.@.";
+       Classverification.verify_methods 
+           program 
+           static_method_specs 
+           dynamic_method_specs 
+           logic abs_rules;
+       Symexec.pp_dotty_transition_system ())
      
        
-let _ = main ()
+let _ = 
+  let mf = {
+    mark_open_tag = (function
+      | "b" -> System.terminal_red (* bad *)
+      | "g" -> System.terminal_green (* good *)
+      | _ -> assert false);
+    mark_close_tag = (fun _ -> System.terminal_white);
+    print_open_tag = (fun _ -> ());
+    print_close_tag = (fun _ -> ())} in
+  set_formatter_tag_functions mf; 
+  pp_set_formatter_tag_functions err_formatter mf; 
+  set_tags true; pp_set_tags err_formatter true;
+  try main ()
+  with Failure s -> eprintf "@{<b>FAILED:@} %s@." s
+

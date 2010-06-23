@@ -39,4 +39,5 @@ val pprint_proof : out_channel -> unit
 val pprint_counter_example : Format.formatter -> unit -> unit 
 val print_counter_example : unit -> unit 
 val string_of_proof : unit -> string 
+
 val implies_list : inner_form list -> form -> bool 
