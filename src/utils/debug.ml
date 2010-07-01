@@ -122,6 +122,8 @@ F#*)
 
 let pp_list pp f = List.iter (pp f)
 
+(* TODO(rgrig): Move this out of debug. *)
+(* TODO(rgrig): Use a local buffer instead of the global str_formatter. *)
 let string_of pp x = pp str_formatter x; flush_str_formatter ()
 
 let rec list_format sep f ppf = function

@@ -1104,44 +1104,7 @@ module PersistentCC ( A : GrowablePersistentArray) : PCC =
       patternmatch_inner pattern constant ts cont
 
     let unifies = patternmatch 
-(*
-    let rec unifies ts c1 c2 (cont : t -> 'a) : 'a =
-      if rep_eq ts c1 c2 then 
-      (* They are equal *)
-	cont ts
-      else if rep_uneq ts c1 c2 then 
-	raise No_match
-      else if A.get ts.unifiable (rep ts c1)(* || A.get ts.unifiable (rep ts c2) *)then
-	begin 
-          (* They can be made equal *)
-	  (* TODO Add occurs check *)
-	  cont (make_equal ts c1 c2)
-	end
-      else
-	begin
-	  let rec f ts (a,b) tl cont = 
-	    match tl with 
-	      [] -> raise No_match
-	    | (a2,b2)::tl -> 
-		try 
-		  unifies ts a a2
-		    (fun ts-> unifies ts b b2 cont)
-		with No_match ->
-		  f ts (a,b) tl cont		  
-	  in
-	  let rec g ts tl1 tl2 cont = 
-	    match tl1 with 
-	      [] -> cont ts 
-	    | (a,b)::tl1 -> f ts (a,b) tl2 (fun ts -> g ts tl1 tl2 cont)
-	  in
-	  let tl1 = A.get ts.rev_lookup (rep ts c1) in 
-	  let tl2 = A.get ts.rev_lookup (rep ts c2) in 
-	  match tl1,tl2 with 
-	  | [],_ | _,[] -> raise No_match
-	  | [(a,b)],tl -> f ts (a,b) tl cont
-	  |  _,_ ->  g ts tl1 tl2 cont 
-	end
-*)
+
 
     let unifies_any ts c1 cont = 
       (* Very naive code, should do something clever like e-matching, but will do for now. *)

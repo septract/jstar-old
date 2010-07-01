@@ -90,24 +90,24 @@ let verify_axioms_implications class_name jimple_file implications axiom_map log
   ) implications
 	
 let verify_methods
-		jimple_file
-		static_method_specs
-		dynamic_method_specs
-		logic
-		abslogic =
-	let Jimple_global_types.JFile(_,_,class_name,_,_,_) = jimple_file in
-	let parents = parent_classes_and_interfaces jimple_file in
+    jimple_file
+    static_method_specs
+    dynamic_method_specs
+    logic
+    abslogic =
+  let Jimple_global_types.JFile(_,_,class_name,_,_,_) = jimple_file in
+  let parents = parent_classes_and_interfaces jimple_file in
   let keep_cn = MethodMapH.filter (fun (cn,_,_,_) _ -> cn = class_name) in
-	let static_specs = keep_cn static_method_specs in
-	(* Body verification - call symbolic execution for all methods in the jimple file *)
-	Translatejimple.compute_fixed_point 
+  let static_specs = keep_cn static_method_specs in
+  (* Body verification - call symbolic execution for all methods in the jimple file *)
+  Translatejimple.compute_fixed_point 
       jimple_file 
       logic 
       abslogic
       static_method_specs 
       dynamic_method_specs;
 
-	(* Dynamic dispatch *)
+  (* Dynamic dispatch *)
   if not (is_class_abstract jimple_file || is_interface jimple_file) then
     let pss msig ss = (* process static spec *)
       let _,_,mname,_ = msig in

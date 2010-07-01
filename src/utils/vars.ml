@@ -11,38 +11,25 @@
       LICENSE.txt
  ********************************************************)
 
+open Format
 
 type var =
   | PVar of int * string
   | EVar of int * string
   | AnyVar of int * string 
 
-let gensym = ref (0)
+let mk_pvar i s = PVar (i, s)
+let mk_evar i s = EVar (i, s)
+let mk_anyvar i s = AnyVar (i, s)
 
-let freshe () = 
-  gensym := !gensym + 1;
-  EVar(!gensym,"v")
-
-let freshp () = 
-  gensym := !gensym + 1;
-  PVar(!gensym,"v")
-
-let fresha () = 
-  gensym := !gensym + 1;
-  AnyVar(!gensym,"v")
-
-let freshe_str vn = 
-  gensym := !gensym + 1;
-  EVar(!gensym,vn)
-
-let freshp_str vn = 
-  gensym := !gensym + 1;
-  PVar(!gensym,vn)
-
-let fresha_str vn = 
-  gensym := !gensym + 1;
-  AnyVar(!gensym,vn)
-
+let gensym = ref 0
+let fresh mk = incr gensym; mk !gensym
+let freshp_str = fresh mk_pvar
+let freshe_str = fresh mk_evar
+let fresha_str = fresh mk_anyvar
+let freshp () = freshp_str "v"
+let freshe () = freshe_str "v"
+let fresha () = fresha_str "v"
 
 module StrVarHash = 
   Hashtbl.Make(struct 
@@ -53,43 +40,27 @@ module StrVarHash =
 
 let hashcons = StrVarHash.create 1000
 
+let concrete mk vn =
+  try StrVarHash.find hashcons vn
+  with Not_found ->
+    let r = mk 0 vn in
+    StrVarHash.add hashcons vn r;
+    r
 
-let concretep_str vn = 
-  try 
-    StrVarHash.find hashcons vn
-  with Not_found -> 
-    let return = PVar(0,vn) in 
-    StrVarHash.add hashcons vn return;
-    return
+let concretep_str = concrete mk_pvar
+let concretee_str = concrete mk_evar
 
-let concretee_str vn = 
-  try 
-    StrVarHash.find hashcons vn
-  with Not_found -> 
-    let return = EVar(0,vn) in 
-    StrVarHash.add hashcons vn return;
-    return
+let freshen = function 
+  | PVar (_,v) -> freshp_str v
+  | EVar (_,v) -> freshe_str v
+  | AnyVar (_,v) -> fresha_str v 
 
+let pp_var f =
+  let p = function 0 -> "" | n -> sprintf "_%d" n in
+  function 
+    | PVar (n,vn) -> fprintf f "%s%s" vn (p n)
+    | EVar (n,vn) -> fprintf f "_%s%s" vn (p n)
+    | AnyVar (n,vn) -> fprintf f "a_%s%s" vn (p n)
 
-let freshen var = 
-  match var with 
-    PVar (i,v) -> freshp_str v
-  | EVar (i,v) -> freshe_str v
-  | AnyVar (i,v) -> fresha_str v 
-
-
-
-let string_var v =
-  let foo n = if n = 0 then Printf.sprintf "" else Printf.sprintf "_%d" n in
-  match v with 
-    PVar (n,vn) -> Printf.sprintf  "%s%s" vn (foo n)
-  | EVar (n,vn) -> Printf.sprintf  "_%s%s" vn (foo n)
-  | AnyVar (n,vn) -> Printf.sprintf  "a_%s%s" vn (foo n)
-
-let pp_var ppf v =
-  let foo n = if n = 0 then Printf.sprintf "" else Printf.sprintf "_%d" n in
-  match v with 
-    PVar (n,vn) -> Format.fprintf ppf "%s%s" vn (foo n)
-  | EVar (n,vn) -> Format.fprintf ppf "_%s%s" vn (foo n)
-  | AnyVar (n,vn) -> Format.fprintf ppf "a_%s%s" vn (foo n)
+let string_var = Debug.string_of pp_var
 
