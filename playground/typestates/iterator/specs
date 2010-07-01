@@ -1,3 +1,4 @@
+//{{{ List
 class List {
   static void <init>() : {} {};
   static void add(java.lang.Object) : {} {};
@@ -5,19 +6,42 @@ class List {
   static Iterator iterator() : {} {};
   static void remove(java.lang.Object) : {} {};
 }
-
-
+//}}}
+//{{{ List$LI
+class List$LI {
+}
+//}}}
+//{{{List$Node
+class List$Node {
+}
+//}}}
+//{{{ Collection
 class Collection {
-  static void add(java.lang.Object) : { | } { | };
-  static void remove(java.lang.Object) : { | } { | };
-  static int size() : { | } { | };
-  static Iterator iterator() : { | } { | };
+  static void add(java.lang.Object) : {} {};
+  static void remove(java.lang.Object) : {} {};
+  static int size() : {} {};
+  static Iterator iterator() : {} {};
 }
-
-
+//}}}
+//{{{ Iterator
+// TODO(rgrig): keywords: "@this", "@result", "@caller".
 class Iterator {
-  static boolean hasNext() : { | } { | };
-  static java.lang.Object next() : { | } { | };
+  define trueHasNext(x,c=c;k=k) = write(this, c, k, Z);
+  define falseHasNext(x) = ;
+  static boolean hasNext() : 
+      {falseHasNext(@this:)} 
+      {falseHasNext(@this:) * $ret_val=False} // TODO(rgrig): =False is redundant
+    andalso
+      {trueHasNext(@this:)}
+      {trueHasNext(@this:) * $ret_val=True};
+  static java.lang.Object next() : 
+      {trueHasNext(@this:,{c=_c;k=_k})} // TODO(rgrig): (inner) {} should be optional
+      {trueHasNext(@this:,{c=_c;k=_k}) || 
+      (falseHasNext(@this:) * write(@caller,_c,_k,Z))};
 }
-
+//}}}
+//{{{ Client
+class Client {
+}
+//}}}
 
