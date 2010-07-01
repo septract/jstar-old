@@ -39,11 +39,10 @@ let verify_exports_implications implications logic_with_where_pred_defs =
 		let name,antecedent,consequent = implication in
     let antecedent = Sepprover.convert antecedent in
 		if Sepprover.implies_opt logic_with_where_pred_defs antecedent consequent then
-      printf "@{<g> OK@}"
+      (if log log_exec then printf "@{<g> OK@}: exported implication %s@." name)
 		else
-      printf "@{<b>NOK@}";
-    printf ": exported implication %s@." name
-	) implications
+      printf "@{<b>NOK@}: exported implication %s@." name)
+	implications
 
 (* Check both proof obligations (Implication and Parent consistency) for each axiom in 'implications'. *)
 let verify_axioms_implications class_name jimple_file implications axiom_map logic =
