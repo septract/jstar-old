@@ -35,14 +35,15 @@ let parent_classes_and_interfaces (jfile : Jimple_global_types.jimple_file) =
 	parent_classes @ parent_interfaces  (* stephan mult inh *)
 
 let verify_exports_implications implications logic_with_where_pred_defs =
-	List.iter (fun implication ->
-		let name,antecedent,consequent = implication in
-    let antecedent = Sepprover.convert antecedent in
-		if Sepprover.implies_opt logic_with_where_pred_defs antecedent consequent then
-      (if log log_exec then printf "@{<g> OK@}: exported implication %s@." name)
-		else
-      printf "@{<b>NOK@}: exported implication %s@." name)
-	implications
+  List.iter 
+    (fun implication ->
+      let name,antecedent,consequent = implication in
+      let antecedent = Sepprover.convert antecedent in
+      if Sepprover.implies_opt logic_with_where_pred_defs antecedent consequent then
+        (if log log_exec then printf "@{<g> OK@}: exported implication %s@." name)
+      else
+        printf "@{<b>NOK@}: exported implication %s@." name)
+    implications
 
 (* Check both proof obligations (Implication and Parent consistency) for each axiom in 'implications'. *)
 let verify_axioms_implications class_name jimple_file implications axiom_map logic =
@@ -56,11 +57,11 @@ let verify_axioms_implications class_name jimple_file implications axiom_map log
       if not abstract_class_or_interface then (
         let antecedent = 
           Sepprover.convert (Psyntax.pconjunction conjunct antecedent) in
+        let m = sprintf "implication verification of axiom %s" name in
         if Sepprover.implies_opt logic antecedent consequent then
-          printf "@{<g> OK@}"
+          (if log log_logic then printf "@{<g> OK@}: %s@." m)
         else
-          printf "@{<b>NOK@}";
-        printf ": implication verification of axiom %s@." name);
+          printf "@{<b>NOK@}: %s@." m);
       (* Then we tackle the Parent consistency proof obligation *)
       List.iter (fun parent ->
           let parent_name = (Pprinter.class_name2str parent) in
@@ -73,17 +74,18 @@ let verify_axioms_implications class_name jimple_file implications axiom_map log
                  (p_antecedent => p_consequent) \/
                  ((p_antecedent => antecedent) /\ (consequent => p_consequent))
              *)
+            let m = 
+              sprintf "axiom %s consistent with parent %s" name parent_name in
             let p_antecedent = Sepprover.convert p_antecedent in
             let consequent = Sepprover.convert consequent in
             if Sepprover.implies_opt logic p_antecedent p_consequent ||
                 (Sepprover.implies_opt logic p_antecedent antecedent &&
                 Sepprover.implies_opt logic consequent p_consequent) then
-              printf "@{<g>OK@}"
+              (if log log_logic then printf "@{<g>OK@}: %s@." m)
             else
               (* Note that P\/Q may be valid even if P and Q are not! *)
               (* TODO(rgrig): Try to not approximate the condition. *)
-              printf "@{<b>POSSIBLY NOK@}";
-            printf ": axiom %s consistent with parent %s@." name parent_name
+              printf "@{<b>POSSIBLY NOK@}: %s@." m;
           with Not_found -> () (* TODO(rgrig): Should this print something? *)
       ) parents
   ) implications
@@ -106,7 +108,7 @@ let verify_methods
       static_method_specs 
       dynamic_method_specs;
 
-	(* Dynamic dispatch *)
+  (* Dynamic dispatch *)
   if not (is_class_abstract jimple_file || is_interface jimple_file) then
     let pss msig ss = (* process static spec *)
       let _,_,mname,_ = msig in
@@ -121,7 +123,7 @@ let verify_methods
     try MethodMap.iter pss static_specs
     with Not_found -> assert false;
 
-	(* Behavioural subtyping of non-constructor methods *)
+  (* Behavioural subtyping of non-constructor methods *)
   let dynamic_specs = 
     MethodMapH.filter 
         (fun (_,_,mn,_) _ -> not (Jparsetree.constructor mn))

@@ -117,7 +117,8 @@ let rec apply_rule_list
 	 ) sequents 
       )
   in let res = apply_rule_list_inner sequents n in 
-  if log log_prove then fprintf !dump "@\nEnd time :%f@ " (Sys.time ()); res
+  if log log_prove then fprintf !dump "@\nEnd time :%f@ " (Sys.time ());
+  res
 
 let check_imp logic seq = 
     try 

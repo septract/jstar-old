@@ -1,3 +1,10 @@
+//{{{ Issues
+// * finalize: we need a logic rule that is applied only if necessary
+// * rewrite rules for read/write predicates
+// * @caller, @return, @this
+// * do we need xor? (this state `xor' that state)
+// * what's the scope for abstract predicate names?
+//}}}
 //{{{ List
 class List {
   static void <init>() : {} {};
@@ -17,17 +24,27 @@ class List$Node {
 //}}}
 //{{{ Collection
 class Collection {
-  static void add(java.lang.Object) : {} {};
-  static void remove(java.lang.Object) : {} {};
-  static int size() : {} {};
-  static Iterator iterator() : {} {};
+  static void add(java.lang.Object) : 
+      {write(@caller,@this:,_r,_w)}
+      {write(@caller,@this:,_r,_w)};
+  static void remove(java.lang.Object) : 
+      {write(@caller,@this:,_r,_w)}
+      {write(@caller,@this:,_r,_w)};
+  static int size() : 
+      {read(@caller,@this:,_r,_w)}
+      {read(@caller,@this:,_r,_w)};
+  static Iterator iterator() : 
+      {write(@caller,@this:,_r,Z)} 
+      {validIterator($ret_val,{c=@this:;r=_r})};
 }
 //}}}
 //{{{ Iterator
-// TODO(rgrig): keywords: "@this", "@result", "@caller".
 class Iterator {
-  define trueHasNext(x,c=c;k=k) = write(this, c, k, Z);
+  define trueHasNext(x,c=c;r=r) = write(this, c, r, Z);
   define falseHasNext(x) = ;
+  define validIterator(x,c=c;r=r) = 
+      trueHasNext(x,{c=c;r=r})
+      || (falseHasNext(x) * write(@caller,_c,_r,Z));
   static boolean hasNext() : 
       {falseHasNext(@this:)} 
       {falseHasNext(@this:) * $ret_val=False} // TODO(rgrig): =False is redundant
@@ -35,9 +52,8 @@ class Iterator {
       {trueHasNext(@this:)}
       {trueHasNext(@this:) * $ret_val=True};
   static java.lang.Object next() : 
-      {trueHasNext(@this:,{c=_c;k=_k})} // TODO(rgrig): (inner) {} should be optional
-      {trueHasNext(@this:,{c=_c;k=_k}) || 
-      (falseHasNext(@this:) * write(@caller,_c,_k,Z))};
+      {trueHasNext(@this:,{c=_c;r=_r})} // TODO(rgrig): (inner) {} should be optional
+      {validIterator(@this:,{c=_c;r=_r})};
 }
 //}}}
 //{{{ Client

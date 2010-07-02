@@ -152,12 +152,12 @@ let main () =
              logic_with_where_pred_defs;
          (* Since where predicates are local to the exports clause, we discard them after exports clause verification *)
        let logic = Javaspecs.add_exported_implications_to_logic spec_list logic in
-       if log log_logic then
+       if log log_logic then (
          let s,_,_ = logic in
          fprintf 
             logf 
             "@[<2>Augmented logic sequent rules%a@."
-            (pp_list Psyntax.pp_sequent_rule) s;
+            (pp_list Psyntax.pp_sequent_rule) s);
        (* End of exports clause treatment *)
       
        (* Axioms clause treatment *)
