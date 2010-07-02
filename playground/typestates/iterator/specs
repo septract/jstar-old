@@ -5,6 +5,14 @@
 // * do we need xor? (this state `xor' that state)
 // * what's the scope for abstract predicate names?
 //}}}
+//{{{ java.*
+class java.lang.Object {
+  void <init>(): {} {};
+}
+class java.lang.Integer {
+  java.lang.Integer valueOf(int) : {} {};
+}
+//}}}
 //{{{ List
 class List {
   static void <init>() : {} {};
@@ -16,10 +24,14 @@ class List {
 //}}}
 //{{{ List$LI
 class List$LI {
+  void <init>(List$Node) : {} {};
+  boolean hasNext(): {}{};
+  java.lang.Object next(): {}{};
 }
 //}}}
 //{{{List$Node
 class List$Node {
+  void <init>(java.lang.Object,List$Node): {} {};
 }
 //}}}
 //{{{ Collection
@@ -58,6 +70,8 @@ class Iterator {
 //}}}
 //{{{ Client
 class Client {
+  void <init>() : {} {};
+  void main(java.lang.String[]) : {} {};
 }
 //}}}
 

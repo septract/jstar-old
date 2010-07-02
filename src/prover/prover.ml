@@ -22,16 +22,13 @@ open Psyntax
 open Vars
 
 let prover_counter_example : Clogic.sequent list ref = ref []
-let print_counter_example ()  = 
-  printf "Needed to prove:@   @[%a@]@\n@\n"
-    (list_format "\nor" Clogic.pp_sequent)
-    !prover_counter_example
 
 let pprint_counter_example ppf () = 
   fprintf ppf "Needed to prove:@   @[%a@]@\n@\n"
-    (Debug.list_format "\nor" Clogic.pp_sequent)
+    (list_format "\nor" Clogic.pp_sequent)
     !prover_counter_example
 
+let print_counter_example = pprint_counter_example std_formatter
 
 let pprint_proof (f : formatter) : unit = 
   fprintf f "%s" (Buffer.contents buffer_dump)

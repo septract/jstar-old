@@ -10,11 +10,12 @@
    jStar is distributed under a BSD license,  see, 
       LICENSE.txt
  ********************************************************)
-open Congruence
-open Misc
-open Cterm
-open Multiset
 open Backtrack 
+open Congruence
+open Cterm
+open Format
+open Misc
+open Multiset
 open Psyntax
 
 exception Success
@@ -23,13 +24,7 @@ exception Failed
 module RMSet = MultisetImpl(
   struct
     type t = string * Cterm.representative
-    let compare (s1,r1) (s2,r2) = 
-      if s1 < s2 then 
-	-1
-      else if s1 = s2 then
-	compare r1 r2 
-      else 
-	1
+    let compare = compare
   end
 )
 
@@ -38,13 +33,7 @@ type multiset = RMSet.multiset
 module SMSet = MultisetImpl(
   struct
     type t = string * (Psyntax.args list)
-    let compare (s1,r1) (s2,r2) = 
-      if s1 < s2 then 
-	-1
-      else if s1 = s2 then
-	compare r1 r2 
-      else 
-	1
+    let compare = compare
   end
 )
 
@@ -92,9 +81,9 @@ let pp_rmset_pre pre ts ppf s =
   let rec f s = 
     if RMSet.has_more s then 
       let (n,x),s = RMSet.remove s in 
-      Format.fprintf ppf "@[%s%s%a@]" pre n (pp_c ts) x;
+      fprintf ppf "@[%s%s%a@]" pre n (pp_c ts) x;
       if RMSet.has_more s then 
-	begin Format.fprintf ppf "@ *@ "; f s end
+	begin fprintf ppf "@ *@ "; f s end
   in f s
 
 let pp_rmset ts ppf s = 
@@ -103,11 +92,11 @@ let pp_rmset ts ppf s =
 let rec pp_form ts ppf form = 
   List.iter
     (fun (r1,r2) -> 
-      Format.fprintf ppf "@[%a=%a@]@ *@ " (pp_c ts) r1 (pp_c ts) r2)
+      fprintf ppf "%a=%a@ * " (pp_c ts) r1 (pp_c ts) r2)
     form.eqs;
   List.iter
     (fun (r1,r2) -> 
-      Format.fprintf ppf "@[%a!=%a@]@ *@ " (pp_c ts) r1 (pp_c ts) r2)
+      fprintf ppf "%a!=%a@ * " (pp_c ts) r1 (pp_c ts) r2)
     form.neqs;
 
   (* Print spatial *)  
@@ -117,8 +106,7 @@ let rec pp_form ts ppf form =
   (* Print disjuncts *)
   List.iter 
     (fun (d1,d2) -> 
-      Format.fprintf ppf "*@ @[(@[%a@]@ ||@ @[%a@])@]" (pp_form ts) d1 (pp_form ts) d2
-  )
+      fprintf ppf "*@ @[(@[%a@]@ ||@ @[%a@])@]" (pp_form ts) d1 (pp_form ts) d2)
     form.disjuncts
 
 
@@ -126,9 +114,9 @@ let pp_smset_pre pre ppf s =
   let rec f s = 
     if SMSet.has_more s then 
       let (n,x),s = SMSet.remove s in 
-      Format.fprintf ppf "@[%s%s(%a)@]" pre n string_args_list x;
+      fprintf ppf "@[%s%s(%a)@]" pre n string_args_list x;
       if SMSet.has_more s then 
-	begin Format.fprintf ppf "@ *@ "; f s end
+	begin fprintf ppf "@ *@ "; f s end
   in f s
 
 let pp_smset ppf s = 
@@ -137,11 +125,11 @@ let pp_smset ppf s =
 let rec pp_sform ppf form = 
   List.iter
     (fun (r1,r2) -> 
-      Format.fprintf ppf "@[%a=%a@]@ *@ " string_args r1 string_args r2)
+      fprintf ppf "@[%a=%a@]@ *@ " string_args r1 string_args r2)
     form.seqs;
   List.iter
     (fun (r1,r2) -> 
-      Format.fprintf ppf "@[%a!=%a@]@ *@ " string_args r1 string_args r2)
+      fprintf ppf "@[%a!=%a@]@ *@ " string_args r1 string_args r2)
     form.sneqs;
 
   (* Print spatial *)  
@@ -151,7 +139,7 @@ let rec pp_sform ppf form =
   (* Print disjuncts *)
   List.iter 
     (fun (d1,d2) -> 
-      Format.fprintf ppf "*@ @[(@[%a@]@ ||@ @[%a@])@]" pp_sform d1 pp_sform d2
+      fprintf ppf "*@ @[(@[%a@]@ ||@ @[%a@])@]" pp_sform d1 pp_sform d2
   )
     form.sdisjuncts
 
@@ -221,7 +209,7 @@ let add_eqs_t_list fresh eqs ts : term_structure =
     try 
       make_equal_t fresh ts x y
     with Contradiction -> 
-      Format.fprintf !(Debug.dump) "Trying to make %a and %a equal failed" string_args x string_args y; 
+      fprintf !(Debug.dump) "Trying to make %a and %a equal failed" string_args x string_args y; 
       raise Contradiction 
       ) ts eqs
 
@@ -230,7 +218,7 @@ let add_neqs_t_list fresh neqs ts : term_structure =
     try 
       make_not_equal_t fresh ts x y
     with Contradiction -> 
-      Format.fprintf !(Debug.dump) "Trying to make %a and %a not equal failed" string_args x string_args y; 
+      fprintf !(Debug.dump) "Trying to make %a and %a not equal failed" string_args x string_args y; 
       raise Contradiction 
       ) ts neqs
 
@@ -275,7 +263,7 @@ let intersect_with_ts ts rem_snd set1 set2 =
 
 
 let rec normalise ts form : formula * term_structure = 
-(*  Format.printf "Normalising formula : %a @\n" pp_ts_form  {ts=ts;form=form};*)
+(*  printf "Normalising formula : %a @\n" pp_ts_form  {ts=ts;form=form};*)
   let rec f nform ts disj =
     match disj with 
       [] -> nform,ts
@@ -287,7 +275,7 @@ let rec normalise ts form : formula * term_structure =
 	    let f1,ts1 = normalise ts1 f1 in 	  
 	    Some (f1,ts1)
 	  with Contradiction -> 
-(*	    Format.printf "Contradiction left@\n";*)
+(*	    printf "Contradiction left@\n";*)
 	    None in 
 	let f2o =
 	  try
@@ -296,13 +284,13 @@ let rec normalise ts form : formula * term_structure =
 	    let f2,ts2 = normalise ts2 f2 in 
 	    Some (f2,ts2)
 	  with Contradiction ->
-(*	    Format.printf "Contradiction right@\n";*)
+(*	    printf "Contradiction right@\n";*)
 	    None in 
 	match f1o,f2o with 
 	  None,None -> raise Contradiction
 	| Some (form,ts'), None
 	| None, Some (form,ts') ->
-	    Format.fprintf !(Debug.dump) "Disjunct eliminated! Remaining disjunct:@ %a@\n" (pp_form ts) form ;
+	    fprintf !(Debug.dump) "Disjunct eliminated! Remaining disjunct:@ %a@\n" (pp_form ts) form ;
 	    let nform = (conjunction form nform) in 
 	    f nform
 	      ts'
@@ -327,7 +315,7 @@ let rec normalise ts form : formula * term_structure =
 	      disj
   in
   let form,ts = f {form with disjuncts=[]} ts form.disjuncts in 
-(*  Format.printf "Normalised formula : %a @\n" pp_ts_form  {ts=ts;form=form};*)
+(*  printf "Normalised formula : %a @\n" pp_ts_form  {ts=ts;form=form};*)
   form,ts
 
 let rec out_normalise ts form =
@@ -509,7 +497,7 @@ let empty_sequent () =
 } 
 
 let pp_sequent ppf seq = 
-  Format.fprintf ppf 
+  fprintf ppf 
     "@[%a@]@ |@ @[%a%a@]@ |-@ @[%a@]"  
     (pp_rmset seq.ts) seq.matched
     pp_ts seq.ts
@@ -544,7 +532,7 @@ type pat_sequent =
   }
       
 let convert_sequent (ps : psequent) : pat_sequent =
-(*  Format.fprintf !(Debug.dump) "Converting sequent: %a@\n" string_pseq ps;*)
+(*  fprintf !(Debug.dump) "Converting sequent: %a@\n" string_pseq ps;*)
   let ps = match ps with
     pm,pa,po -> 
       {
@@ -552,7 +540,7 @@ let convert_sequent (ps : psequent) : pat_sequent =
        assumption_diff = convert_to_inner pa;
        obligation_diff = convert_to_inner po;
      } in 
-(*  Format.fprintf !(Debug.dump) "Produced sequent: %a@ |@ %a@ |-@ %a@\n@\n" pp_sform ps.assumption_same pp_sform ps.assumption_diff pp_sform ps.obligation_diff; *)
+(*  fprintf !(Debug.dump) "Produced sequent: %a@ |@ %a@ |-@ %a@\n@\n" pp_sform ps.assumption_same pp_sform ps.assumption_diff pp_sform ps.obligation_diff; *)
   ps
 
 type inner_sequent_rule =
@@ -585,7 +573,7 @@ let sequent_join fresh (seq : sequent) (pseq : pat_sequent) : sequent option =
       try 
 	convert fresh  seq.ts pseq.assumption_diff 
       with Contradiction -> 
-	Format.fprintf !(Debug.dump) "Failed to add formula to lhs: %a@\n" pp_sform pseq.assumption_diff;
+	fprintf !(Debug.dump) "Failed to add formula to lhs: %a@\n" pp_sform pseq.assumption_diff;
 	raise Contradiction
     in
     let ass = conjunction ass seq.assumption in
@@ -593,7 +581,7 @@ let sequent_join fresh (seq : sequent) (pseq : pat_sequent) : sequent option =
       try 
 	convert fresh ts pseq.assumption_same 
       with Contradiction ->
-	Format.fprintf !(Debug.dump) "Failed to add formula to matched: %a@\n" pp_sform pseq.assumption_same;
+	fprintf !(Debug.dump) "Failed to add formula to matched: %a@\n" pp_sform pseq.assumption_same;
 	assert false in 
     let sam = RMSet.union sam.spat seq.matched in 
     let obs,ts = 
@@ -613,7 +601,7 @@ let sequent_join fresh (seq : sequent) (pseq : pat_sequent) : sequent option =
      ts = ts;
    }
   with Contradiction -> 
-    Format.fprintf !(Debug.dump) "Contradiction detected!!@\n";
+    fprintf !(Debug.dump) "Contradiction detected!!@\n";
     None
 
 let sequent_join_fresh = sequent_join true
@@ -741,7 +729,7 @@ let rewrite_guard_check seq (ts,guard) =
 let simplify_sequent rm seq : sequent option 
     =
 try
-(*  Format.printf "Before simplification : %a@\n" pp_sequent seq ;*)
+(*  printf "Before simplification : %a@\n" pp_sequent seq ;*)
   (* Try to prove each equality and inequality using ts.
    Note we assume ones we can prove to prove the rest.*)
   let remove test update = 
@@ -764,7 +752,7 @@ try
     try 
       out_normalise seq.ts ass
     with Contradiction -> 
-      Format.fprintf !(Debug.dump)"Success: %a@\n" pp_sequent seq;  
+      fprintf !(Debug.dump)"Success: %a@\n" pp_sequent seq;  
       raise Success
   in 
   try 
@@ -809,7 +797,7 @@ try
 	neqs=ob_neqs
       } 
     } in
-   (*  Format.printf "After simplification : %a@\n" pp_sequent seq; *)
+   (*  printf "After simplification : %a@\n" pp_sequent seq; *)
     Some seq
   with Failed -> 
     let obs,ts = convert_without_eqs true ts false_sform in
@@ -847,7 +835,7 @@ let apply_rule (sr : inner_sequent_rule) (seq : sequent) : sequent list list =
 					    assumption = ass})) then
 		  raise No_match
 	      else begin
-		Format.fprintf !(Debug.dump) "Match rule %s@\n" sr.name;
+		fprintf !(Debug.dump) "Match rule %s@\n" sr.name;
 		let seq = 			    
 		  {seq with 
 		   ts = ts;
