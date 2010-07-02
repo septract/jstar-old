@@ -573,23 +573,23 @@ case_stmt_list_plus:
    | case_stmt case_stmt_list_plus { $1::$2 }
 ;
 statement:
-   | label_name COLON  {Label_stmt($1)}            
-   | BREAKPOINT SEMICOLON  {Breakpoint_stmt}   
-   | ENTERMONITOR immediate SEMICOLON {Entermonitor_stmt($2)} 
-   | EXITMONITOR immediate SEMICOLON  {Exitmonitor_stmt($2)}  
-   | TABLESWITCH L_PAREN immediate R_PAREN L_BRACE case_stmt_list_plus R_BRACE SEMICOLON {Tableswitch_stmt($3,$6)}  
-   | LOOKUPSWITCH L_PAREN immediate R_PAREN L_BRACE case_stmt_list_plus R_BRACE SEMICOLON {Lookupswitch_stmt($3,$6)} 
-   | local_name COLON_EQUALS at_identifier SEMICOLON {Identity_no_type_stmt($1,$3)}  
-   | local_name COLON_EQUALS at_identifier jtype SEMICOLON  {Identity_stmt($1,$3,$4)}     
-   | variable EQUALS expression SEMICOLON  {Assign_stmt($1,$3)}       
-   | IF bool_expr goto_stmt     {If_stmt($2,$3)}           
-   | goto_stmt {Goto_stmt($1)}         
-   | NOP SEMICOLON     {Nop_stmt}          
-   | RET immediate_question_mark SEMICOLON     {Ret_stmt($2)}          
-   | RETURN immediate_question_mark SEMICOLON  {Return_stmt($2)}       
-   | THROW immediate SEMICOLON     {Throw_stmt($2)}        
-   | invoke_expr SEMICOLON     {Invoke_stmt($1)}       
-	 | L_BRACE lvariable_list R_BRACE COLON spec SEMICOLON {Spec_stmt($2,$5)}
+   | label_name COLON  {Label_stmt($1),Parsing.symbol_start_pos(),Parsing.symbol_end_pos()}            
+   | BREAKPOINT SEMICOLON  {Breakpoint_stmt,Parsing.symbol_start_pos(),Parsing.symbol_end_pos()}   
+   | ENTERMONITOR immediate SEMICOLON {Entermonitor_stmt($2),Parsing.symbol_start_pos(),Parsing.symbol_end_pos()} 
+   | EXITMONITOR immediate SEMICOLON  {Exitmonitor_stmt($2),Parsing.symbol_start_pos(),Parsing.symbol_end_pos()}  
+   | TABLESWITCH L_PAREN immediate R_PAREN L_BRACE case_stmt_list_plus R_BRACE SEMICOLON {Tableswitch_stmt($3,$6),Parsing.symbol_start_pos(),Parsing.symbol_end_pos()}  
+   | LOOKUPSWITCH L_PAREN immediate R_PAREN L_BRACE case_stmt_list_plus R_BRACE SEMICOLON {Lookupswitch_stmt($3,$6),Parsing.symbol_start_pos(),Parsing.symbol_end_pos()} 
+   | local_name COLON_EQUALS at_identifier SEMICOLON {Identity_no_type_stmt($1,$3),Parsing.symbol_start_pos(),Parsing.symbol_end_pos()}  
+   | local_name COLON_EQUALS at_identifier jtype SEMICOLON  {Identity_stmt($1,$3,$4),Parsing.symbol_start_pos(), Parsing.symbol_end_pos()}     
+   | variable EQUALS expression SEMICOLON  {Assign_stmt($1,$3),Parsing.symbol_start_pos(), Parsing.symbol_end_pos()}       
+   | IF bool_expr goto_stmt     {If_stmt($2,$3),Parsing.symbol_start_pos(),Parsing.symbol_end_pos()}           
+   | goto_stmt {Goto_stmt($1),Parsing.symbol_start_pos(),Parsing.symbol_end_pos()}         
+   | NOP SEMICOLON     {Nop_stmt,Parsing.symbol_start_pos(),Parsing.symbol_end_pos()}          
+   | RET immediate_question_mark SEMICOLON     {Ret_stmt($2),Parsing.symbol_start_pos(),Parsing.symbol_end_pos()}          
+   | RETURN immediate_question_mark SEMICOLON  {Return_stmt($2),Parsing.symbol_start_pos(),Parsing.symbol_end_pos()}       
+   | THROW immediate SEMICOLON     {Throw_stmt($2),Parsing.symbol_start_pos(),Parsing.symbol_end_pos()}        
+   | invoke_expr SEMICOLON     {Invoke_stmt($1),Parsing.symbol_start_pos(),Parsing.symbol_end_pos()}       
+   | L_BRACE lvariable_list R_BRACE COLON spec SEMICOLON {Spec_stmt($2,$5),Parsing.symbol_start_pos(),Parsing.symbol_end_pos()}
 ;
 immediate_question_mark:
    | immediate {Some $1}

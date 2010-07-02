@@ -24,6 +24,7 @@ open Symexec
 open Methdec_core
 open Javaspecs
 open Spec
+open Lexing
 
 (* global variables *)
 let curr_static_methodSpecs: Javaspecs.methodSpecs ref = ref Javaspecs.emptyMSpecs
@@ -235,17 +236,22 @@ let is_init_method md = Pprinter.name2str md.name_m ="<init>"
 
 let methdec2signature_str dec =
   Pprinter.class_name2str dec.class_name ^ "." ^ Pprinter.name2str dec.name_m ^ "(" ^ (Pprinter.list2str Pprinter.parameter2str  dec.params ", ") ^ ")"
+  
+  
+let jimple_stmt_create s start_pos end_pos =
+ let node = Methdec_core.stmt_create s [] [] in
+    Symexec.table := Jimple_line_node_id_table.add node.sid (start_pos,end_pos) !Symexec.table;
+    node 
 
 let jimple_stms2core stms = 
-  let do_one_stmt stmt_jimple =
+  let do_one_stmt (stmt_jimple, start_pos, end_pos) =
     let s=jimple_statement2core_statement stmt_jimple in
     if Config.symb_debug() then 
       Format.printf "@\ninto the core statement:@\n  %a @\n" 
-	(Debug.list_format "; " Pprinter_core.pp_stmt_core) s; 
-    List.map (fun s -> Methdec_core.stmt_create s [] []) s
+      (Debug.list_format "; " Pprinter_core.pp_stmt_core) s; 
+    List.map (fun s -> jimple_stmt_create s start_pos end_pos) s
   in
   List.flatten (List.map do_one_stmt stms)
-
 
 (* returns a triple (m,initial_formset, final_formset)*)
 let get_spec_for m fields cname= 

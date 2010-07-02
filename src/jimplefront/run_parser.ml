@@ -82,13 +82,13 @@ let parse_program () =
   (* Replace specialinvokes of <init> after news with virtual invokes of <init>*)
   let program = program in 
   let rec spec_to_virt x maps = match x with 
-    DOS_stm(Assign_stmt(x,New_simple_exp(y)))::xs -> 
-      DOS_stm(Assign_stmt(x,New_simple_exp(y)))::(spec_to_virt xs ((x,y)::maps))  
-  | DOS_stm(Invoke_stmt(Invoke_nostatic_exp(Special_invoke,b,(Method_signature (c1,c2,Identifier_name "<init>",c4)),d)))
+    DOS_stm(Assign_stmt(x,New_simple_exp(y)),start_pos,end_pos)::xs -> 
+      DOS_stm(Assign_stmt(x,New_simple_exp(y)),start_pos,end_pos)::(spec_to_virt xs ((x,y)::maps))  
+  | DOS_stm(Invoke_stmt(Invoke_nostatic_exp(Special_invoke,b,(Method_signature (c1,c2,Identifier_name "<init>",c4)),d)),start_pos, end_pos)
     ::xs 
     when List.mem (Var_name b,Class_name c1) maps
     ->
-      DOS_stm(Invoke_stmt(Invoke_nostatic_exp(Virtual_invoke,b,(Method_signature (c1,c2,Identifier_name "<init>",c4)),d)))
+      DOS_stm(Invoke_stmt(Invoke_nostatic_exp(Virtual_invoke,b,(Method_signature (c1,c2,Identifier_name "<init>",c4)),d)),start_pos, end_pos)
       ::(spec_to_virt xs (List.filter (fun x -> fst x <> Var_name b) maps))
     | x::xs -> x::(spec_to_virt xs maps)
     | [] -> [] in

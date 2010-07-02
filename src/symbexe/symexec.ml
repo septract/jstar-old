@@ -20,10 +20,18 @@ open Spec
 open Cfg_core
 open Specification
 open Methdec_core
+open Lexing
 (* global variables *)
+
+module Jimple_line_node_id_table = 
+  Map.Make(struct 
+	     type t = int 
+	     let compare = compare
+             end)
 
 let curr_logic : Psyntax.logic ref = ref Psyntax.empty_logic
 let curr_abs_rules : Psyntax.logic ref = ref Psyntax.empty_logic
+let table : (Lexing.position * Lexing.position) Jimple_line_node_id_table.t ref = ref Jimple_line_node_id_table.empty
 
 
 
@@ -287,6 +295,21 @@ let param_sub il =
 
 let id_clone h = (form_clone (fst h), snd h)
 
+let return_jimple_start_line node_id = 
+  match Jimple_line_node_id_table.find node_id !table with
+  | (start_pos, end_pos) -> start_pos.pos_lnum
+    
+let return_jimple_start_character node_id = 
+  match Jimple_line_node_id_table.find node_id !table with
+  | (start_pos, end_pos) -> start_pos.pos_cnum - start_pos.pos_bol + 1
+    
+let return_jimple_end_line node_id = 
+  match Jimple_line_node_id_table.find node_id !table with
+  | (start_pos, end_pos) -> end_pos.pos_lnum
+    
+let return_jimple_end_character node_id = 
+  match Jimple_line_node_id_table.find node_id !table with
+  | (start_pos, end_pos) -> end_pos.pos_cnum - end_pos.pos_bol + 1
 
 
 let call_jsr_static (sheap,id) spec il node = 
@@ -304,9 +327,13 @@ let call_jsr_static (sheap,id) spec il node =
 	     Sepprover.pprint_counter_example (); 
 	   Format.flush_str_formatter ());
         System.warning();
-	Format.printf "\n\nERROR: While executing node %d:\n   %a\n"  
+	Format.printf "\n\nERROR: While executing node %d:\n   %a\n start line number:%d    character: %d \n end line number:%d    character: %d\n"  
 	  (node.sid) 
-	  Pprinter_core.pp_stmt_core node.skind;
+	  Pprinter_core.pp_stmt_core node.skind
+      (return_jimple_start_line node.sid) 
+      (return_jimple_start_character node.sid)
+      (return_jimple_end_line node.sid) 
+      (return_jimple_end_character node.sid);
 	Sepprover.print_counter_example ();
 	System.reset(); 
 	[]
@@ -322,7 +349,8 @@ exception Contained
 
 
 let check_postcondition heaps sheap =
-  let sheap_noid=fst sheap in  
+  let sheap_noid=fst sheap in
+  let node = snd sheap in
   try 
     let heap,id = List.find (fun (heap,id) -> (frame !curr_logic (form_clone sheap_noid) heap)!=None) heaps in
     if Config.symb_debug() then 
@@ -332,7 +360,12 @@ let check_postcondition heaps sheap =
     (*	add_edge id idd "";*)
   with Not_found -> 
     System.warning();
-    let _= Printf.printf "\n\nERROR: cannot prove post\n"  in
+    let _= Printf.printf "\n\nERROR: cannot prove post\n start line number:%d    character: %d \n end line number:%d    character: %d\n" 
+      (return_jimple_start_line node.id) 
+      (return_jimple_start_character node.id)
+      (return_jimple_end_line node.id) 
+      (return_jimple_end_character node.id)
+    in
     Sepprover.print_counter_example ();
     System.reset();
     List.iter (fun heap -> 
@@ -528,7 +561,8 @@ let verify_ensures (name : string) (stmts: stmt_core list) (post : Psyntax.pform
 
 
 let check_and_get_frame (heap,id) sheap =
-  let sheap_noid=fst sheap in  
+  let sheap_noid=fst sheap in 
+  let node = snd sheap in
   let frame = frame_inner !curr_logic (form_clone sheap_noid) heap in
   match frame with 
     Some frame -> 
@@ -540,7 +574,11 @@ let check_and_get_frame (heap,id) sheap =
                         frame
   | None -> 
                  (System.warning();
-                 let _= Printf.printf "\n\nERROR: cannot prove frame for old expression\n"  in
+                 let _= Printf.printf "\n\nERROR: cannot prove frame for old expression\n start line number:%d    character: %d \n end line number:%d    character: %d\n"
+                    (return_jimple_start_line node.id) 
+                    (return_jimple_start_character node.id)
+                    (return_jimple_end_line node.id) 
+                    (return_jimple_end_character node.id) in 
                  Sepprover.print_counter_example ();
                  System.reset();
                  let idd = add_error_heap_node heap in 
