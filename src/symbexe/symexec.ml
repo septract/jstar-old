@@ -360,11 +360,14 @@ let check_postcondition heaps sheap =
     (*	add_edge id idd "";*)
   with Not_found -> 
     System.warning();
-    let _= Printf.printf "\n\nERROR: cannot prove post\n start line number:%d    character: %d \n end line number:%d    character: %d\n" 
-      (return_jimple_start_line node.id) 
-      (return_jimple_start_character node.id)
-      (return_jimple_end_line node.id) 
-      (return_jimple_end_character node.id)
+    let node_cfg_sid = match node.cfg with
+        | None -> -1
+        | Some cfg -> cfg.sid in
+    let _= Printf.printf "\n\nERROR: cannot prove post\n start line number:%d    character: %d \n end line number:%d    character: %d\n"
+      (return_jimple_start_line node_cfg_sid) 
+      (return_jimple_start_character node_cfg_sid)
+      (return_jimple_end_line node_cfg_sid) 
+      (return_jimple_end_character node_cfg_sid)
     in
     Sepprover.print_counter_example ();
     System.reset();
@@ -574,11 +577,14 @@ let check_and_get_frame (heap,id) sheap =
                         frame
   | None -> 
                  (System.warning();
+                 let node_cfg_sid = match node.cfg with
+                  | None -> -1
+                  | Some cfg -> cfg.sid in
                  let _= Printf.printf "\n\nERROR: cannot prove frame for old expression\n start line number:%d    character: %d \n end line number:%d    character: %d\n"
-                    (return_jimple_start_line node.id) 
-                    (return_jimple_start_character node.id)
-                    (return_jimple_end_line node.id) 
-                    (return_jimple_end_character node.id) in 
+                    (return_jimple_start_line node_cfg_sid) 
+                    (return_jimple_start_character node_cfg_sid)
+                    (return_jimple_end_line node_cfg_sid) 
+                    (return_jimple_end_character node_cfg_sid) in 
                  Sepprover.print_counter_example ();
                  System.reset();
                  let idd = add_error_heap_node heap in 
