@@ -1,0 +1,37 @@
+BCSUFFIX = .cma
+NCSUFFIX = .cmxa
+TRASH = *.annot *.output
+INCDIRS = $(addprefix ../, $(INCLUDES))
+
+INCLIBS = $(addsuffix $(NCSUFFIX), $(addprefix $(LIB)/, $(INCLUDES))) 
+
+INCBLIBS = $(addsuffix $(BCSUFFIX), $(addprefix $(LIB)/, $(INCLUDES))) 
+
+.PHONY: default
+default: prebuild native-code
+
+.PHONY: prebuild
+prebuild: $(INCLIBS)
+
+
+$(LIB)/%$(NCSUFFIX) : ../%/*.ml 
+	cd ../$*; make 	     
+
+$(LIB)/%$(BCSUFFIX) : ../%/*.ml 
+	cd ../$*; make byte-code	     
+
+
+.PHONY: prebuild_byte
+prebuild_byte: $(INCBLIBS)
+
+.PHONY: debug
+debug: prebuild_byte byte-code
+
+.PHONY: all
+all: default debug
+
+dummy:
+
+include OcamlMakefile
+
+

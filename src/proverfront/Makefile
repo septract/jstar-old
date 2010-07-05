@@ -33,10 +33,10 @@ PROVERSOURCE = run.ml
 TESTPROVERSOURCE = inductive.ml test.ml
 
 
-DEFAULT_ARGS = LIBS="str utils prover_syntax sepprover symbexe_syntax jimple_syntax parser" \
-       OCAMLLDFLAGS="-g -I $(LIB)" \
+DEFAULT_ARGS = LIBS="str utils prover_syntax prover symbexe_syntax jimple_syntax parsing" \
+       OCAMLLDFLAGS=" -I $(LIB)" \
        INCDIRS="../utils ../prover_syntax ../prover ../parsing"
-       OCAMLFLAGS="-g" \
+       OCAMLFLAGS="" \
        TRASH=""
 
 MAIN = $(DEFAULT_ARGS) SOURCES="$(PROVERSOURCE)" \
@@ -60,6 +60,7 @@ debug: toplevel.byte testharness.byte
 
 prebuild: 
 	@(cd ../prover; make)
+	@(cd ../parsing; make)
 
 all: toplevel testharness
 
