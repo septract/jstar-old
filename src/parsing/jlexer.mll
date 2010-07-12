@@ -136,6 +136,7 @@ let keyword_al = [
   ("abstraction",ABSRULE);
   ("equiv",EQUIV);
   ( "inductive" , INDUCTIVE );
+  ("nop", NOP);
 ]
 
 
@@ -221,6 +222,8 @@ let string_constant = '"' string_char* '"'
 
 rule token = parse
    | newline { new_line lexbuf; token lexbuf }
+   | "/*Source Line Pos Tag" { SOURCE_POS_TAG }
+   | "*/" { SOURCE_POS_TAG_CLOSE }
    | "/*" { nest lexbuf; comment lexbuf; token lexbuf } 
    | ignored_helper  { token lexbuf }
    | "," { COMMA }

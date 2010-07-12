@@ -24,4 +24,8 @@ let dotty_print = ref false
 
 let sym_debug = ref true
 
-let symb_debug() = !sym_debug 
+let symb_debug() = !sym_debug
+  
+let eclipse = ref false
+  
+let eclipse_mode() = !eclipse

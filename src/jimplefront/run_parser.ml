@@ -47,11 +47,15 @@ let set_dotty_flag () =
 
 let set_grouped () =
   Symexec.set_group true
+  
+let set_eclipse () =
+   Config.eclipse := true
 
 let arg_list =[ 
 ("-v", Arg.Unit(set_verbose ), "run in verbose mode" );
 ("-q", Arg.Unit(set_quiet ), "run in quiet mode" );
-  ("-template", Arg.Unit(set_specs_template_mode ), "create empty specs template" );
+("-e", Arg.Unit(set_eclipse), "run in eclipse");
+("-template", Arg.Unit(set_specs_template_mode ), "create empty specs template" );
 ("-f", Arg.String(set_program_file_name ), "program file name" );
 ("-l", Arg.String(set_logic_file_name ), "logic file name" );
 ("-s", Arg.String(set_spec_file_name ), "spec file name" );
@@ -82,13 +86,13 @@ let parse_program () =
   (* Replace specialinvokes of <init> after news with virtual invokes of <init>*)
   let program = program in 
   let rec spec_to_virt x maps = match x with 
-    DOS_stm(Assign_stmt(x,New_simple_exp(y)),start_pos,end_pos)::xs -> 
-      DOS_stm(Assign_stmt(x,New_simple_exp(y)),start_pos,end_pos)::(spec_to_virt xs ((x,y)::maps))  
-  | DOS_stm(Invoke_stmt(Invoke_nostatic_exp(Special_invoke,b,(Method_signature (c1,c2,Identifier_name "<init>",c4)),d)),start_pos, end_pos)
+    DOS_stm(Assign_stmt(x,New_simple_exp(y)),source_pos)::xs -> 
+      DOS_stm(Assign_stmt(x,New_simple_exp(y)),source_pos)::(spec_to_virt xs ((x,y)::maps))  
+  | DOS_stm(Invoke_stmt(Invoke_nostatic_exp(Special_invoke,b,(Method_signature (c1,c2,Identifier_name "<init>",c4)),d)),source_pos)
     ::xs 
     when List.mem (Var_name b,Class_name c1) maps
     ->
-      DOS_stm(Invoke_stmt(Invoke_nostatic_exp(Virtual_invoke,b,(Method_signature (c1,c2,Identifier_name "<init>",c4)),d)),start_pos, end_pos)
+      DOS_stm(Invoke_stmt(Invoke_nostatic_exp(Virtual_invoke,b,(Method_signature (c1,c2,Identifier_name "<init>",c4)),d)),source_pos)
       ::(spec_to_virt xs (List.filter (fun x -> fst x <> Var_name b) maps))
     | x::xs -> x::(spec_to_virt xs maps)
     | [] -> [] in
