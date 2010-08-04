@@ -17,4 +17,4 @@ clean:
 	cd proverfront; make clean
 	cd symbexe; make clean
 	cd jimplefront;  make clean
-	rm ../lib/*.a
+	rm -f ../lib/*.a
