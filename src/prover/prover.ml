@@ -121,7 +121,7 @@ let rec apply_rule_list
 
 let check_imp logic seq = 
     try 
-      ignore (apply_rule_list logic [seq] Clogic.true_sequent Clogic.true_sequent); true
+      ignore (apply_rule_list logic [seq] Smt.true_sequent_pimp Smt.true_sequent_pimp); true
     with  
       Failed -> false
     | Failed_eg x -> prover_counter_example := x ; false
