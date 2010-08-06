@@ -13,18 +13,18 @@ class java.util.LinkedList
 
   java.lang.Object removeFirst() :
     { length(_l) != numeric_const(0) * ls(@this:,nil(),_l) }
-    { _x=$ret_var * _l = cons(_x,_l2) * ls(@this:,nil(),_l2) };
+    { _x=$ret_v1 * _l = cons(_x,_l2) * ls(@this:,nil(),_l2) };
 
   int size() :
     { ls(@this:,nil(),_l) }
-    { length(_l)=$ret_var * ls(@this:,nil(),_l) };
+    { length(_l)=$ret_v1 * ls(@this:,nil(),_l) };
 }
 
 class java.sql.DriverManager 
 {
   java.sql.Connection getConnection(java.lang.String, java.lang.String, java.lang.String) static:
     { }
-    { DBConnection($ret_var, {connection=sql(@parameter0:,@parameter1:,@parameter2:)})}; 
+    { DBConnection($ret_v1, {connection=sql(@parameter0:,@parameter1:,@parameter2:)})}; 
 }
 
 class java.sql.Connection
@@ -54,7 +54,7 @@ class DBPool {
 
   java.sql.Connection getResource() : 
        { DBPool$(@this:, {type=_t}) } 
-       { DBPool$(@this:, {type=_t}) * DBConnection($ret_var, {connection=_t})  };
+       { DBPool$(@this:, {type=_t}) * DBConnection($ret_v1, {connection=_t})  };
 
 }
 

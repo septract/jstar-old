@@ -113,12 +113,13 @@ let keyword_al = [
    ( "cls" , CLS );
    ( "andalso" , ANDALSO );
    ( "export" , EXPORT );
-	 ( "exports" , EXPORTS );
-	 ( "axioms" , AXIOMS );
+   ( "exports" , EXPORTS );
+   ( "axioms" , AXIOMS );
    ( "define" , DEFINE );
   ("import",IMPORT);
   ("False",FALSE);
   ("True",TRUE);
+  ("Emp",EMP);
   ("Implication",IMPLICATION);
   ("Frame",FRAME);
   ("Garbage",GARBAGE);
@@ -135,9 +136,15 @@ let keyword_al = [
   ("or",ORTEXT);
   ("abstraction",ABSRULE);
   ("equiv",EQUIV);
-  ( "inductive" , INDUCTIVE );
-  ("nop", NOP);
+  ("inductive" , INDUCTIVE );
+  ("nop",NOOP);
+  ("label",LABEL);
+  ("end",END);
+  ("assign",ASSIGN);
+  ("Specification",SPECIFICATION);
 ]
+
+
 
 
 (* to store the position of the beginning of a comment *)
@@ -217,6 +224,8 @@ let integer_constant = (dec_constant | hex_constant | oct_constant) 'L'?
 let float_constant = ((dec_constant '.' dec_constant) (('e'|'E') ('+'|'-')? dec_constant)? ('f'|'F')?)  | ('#' (('-'? "Infinity") | "NaN") ('f' | 'F')? ) 
 
 let string_constant = '"' string_char* '"'
+
+let core_label = (first_id_char | escape_char) (simple_id_char | escape_char)* | "<clinit>" | "<init>"
 
 (* Translation of section Tokens of jimple.scc *)
 
@@ -298,7 +307,7 @@ rule token = parse
 			let s= String.sub s 1 (String.length s - 2) in 
 			try List.assoc s keyword_al
 			with Not_found -> STRING_CONSTANT s }
-
+			
   | _ { raise (Failure (error_message (Illegal_character ((Lexing.lexeme lexbuf).[0])) lexbuf))}
 and comment = parse 
   | "/*"  { nest lexbuf; comment lexbuf }

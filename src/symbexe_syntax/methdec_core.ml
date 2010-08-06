@@ -1,6 +1,6 @@
 (********************************************************
    This file is part of jStar 
-	src/symbexe/methdec_core.ml
+	src/symbexe_syntax/methdec_core.ml
    Release 
         $Release$
    Version 
@@ -24,7 +24,6 @@ type core_statement =
   | Throw_stmt_core of Psyntax.args
   | End
 
-
 type stmt_core = { 
   (*labels: labels; *)
   mutable skind: core_statement;
@@ -33,6 +32,11 @@ type stmt_core = {
   mutable preds: stmt_core list  (* this is filled when the cfg is done *)
  }
 
+type symb_question = 
+  | Specification of string * spec * core_statement list 
+  
+type symb_test = 
+  | Nothing_here_yet
 
 
 let num_stmts = ref 0 

@@ -75,8 +75,10 @@ let escape_for_dot_label s =
 
 (* stmtsname is a list of programs and names, such that each program's
    cfg is printed in a subgraph with its name.*)
-let print_icfg_dotty (stmtsname : (stmt_core list * string) list) (filename : string) : unit =
-  (* Print an edge between to stmts *)
+let print_icfg_dotty 
+     (stmtsname : (stmt_core list * string) list) 
+     (filename : string) : unit =
+  (* Print an edge between two stmts *)
   let d_cfgedge chan src dest =
     Printf.fprintf chan "\t\t%i -> %i\n" src.sid dest.sid in
   (* Print a node and edges to its successors *)
