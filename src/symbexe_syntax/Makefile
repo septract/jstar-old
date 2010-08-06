@@ -3,9 +3,10 @@ ifndef LIB
 endif
 export LIB
 
-SOURCES = spec.ml
+SOURCES = spec.ml methdec_core.ml pprinter_core.ml
 INCLUDES = utils prover_syntax 
 RESULT = "$(LIB)/symbexe_syntax"
 OCAMLLDFLAGS="-a"
 
 include ../Makefile.jstar
+
