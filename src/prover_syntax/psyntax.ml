@@ -191,6 +191,26 @@ and string_args_fldlist ppf fdl =
   | (f,a)::fdl -> Format.fprintf ppf "%s=%a;@ %a" f string_args a string_args_fldlist fdl
 
 
+let rec get_vars arg : Vars.var list = 
+  match arg with
+  | Arg_var v -> [v]
+  | Arg_string s -> []
+  | Arg_op (name, args) -> List.flatten (List.map get_vars args)
+
+
+let rec string_args_sexp ppf arg = 
+  match arg with 
+  | Arg_var v -> Format.fprintf ppf "%s" (string_var v)
+  | Arg_string s -> Format.fprintf ppf "\"%s\""  s 
+  | Arg_op ("builtin_plus",[a1;a2]) -> Format.fprintf ppf "(+ %a %a)" string_args a1 string_args a2
+  | Arg_op ("tuple",al) -> Format.fprintf ppf "(%a)" string_args_list al
+  | Arg_op (name,args) -> Format.fprintf ppf "(%s %a)" name string_args_list args 
+and string_args_list ppf argsl = 
+  match argsl with 
+    [] -> Format.fprintf ppf ""
+  | [a] -> Format.fprintf ppf "%a" string_args a
+  | a::al -> Format.fprintf ppf "%a,@ %a" string_args a string_args_list al
+
 
 
 let rec fv_args args set = 

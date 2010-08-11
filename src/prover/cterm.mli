@@ -81,6 +81,8 @@ val blank_pattern_vars : term_structure -> term_structure
 val pp_ts : Format.formatter -> term_structure -> unit 
 val pp_ts_nonemp : Format.formatter -> term_structure -> bool
 
+val get_pargs : bool -> term_structure -> representative list -> representative -> Psyntax.args
+
 val pp_c : term_structure -> Format.formatter -> representative -> unit
 val has_pp_c : term_structure -> representative -> bool
 
