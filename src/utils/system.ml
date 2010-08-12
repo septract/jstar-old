@@ -68,11 +68,11 @@ let find_file_from_dirs dirs fname =
 
 
 let warning () =
-  if !colortty then  Printf.printf "%c[%d;%dm"  (Char.chr 0x1B ) 1 31 else ()
+  if !colortty then  Format.printf "%c[%d;%dm"  (Char.chr 0x1B ) 1 31 else ()
 
 let good () =
-  if !colortty then Printf.printf "%c[%d;%dm"  (Char.chr 0x1B ) 1 32 else ()
+  if !colortty then Format.printf "%c[%d;%dm"  (Char.chr 0x1B ) 1 32 else ()
 
 let reset () =
-  if !colortty then Printf.printf "%c[%dm" (Char.chr 0x1B) 0 else ()
+  if !colortty then Format.printf "%c[%dm" (Char.chr 0x1B) 0 else ()
 
