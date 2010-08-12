@@ -60,8 +60,12 @@ let make_smttype_pred (p : string * Psyntax.args) : smt_type =
   match a with Arg_op ("tuple",al) -> SMT_Pred(s,(length al))
 
 
+let smt_union_list (l : smttypeset list) : smttypeset = 
+  fold_right SMTTypeSet.union l SMTTypeSet.empty        
 
-(* Functions to convert various things to sexps *)
+
+
+(* Functions to convert various things to sexps & get types *)
 
 let string_sexp_eq (a : Psyntax.args * Psyntax.args) : string =
   match a with a1, a2 -> 
@@ -79,19 +83,21 @@ let string_sexp_neq (a : Psyntax.args * Psyntax.args) : string =
   Format.flush_str_formatter()
 
   
-let string_sexp_pred (p : string * Psyntax.args) : string = 
+let string_sexp_pred (p : string * Psyntax.args) : (string * smttypeset)= 
   match p with s, a -> 
+  let types = fold_right (fun x -> SMTTypeSet.add (SMT_Var(x))) (get_vars a) SMTTypeSet.empty in 
+  let types = SMTTypeSet.add (make_smttype_pred p) types in 
   match a with Arg_op ("tuple",al) ->
        Format.fprintf Format.str_formatter "(%s %a)"
              s string_args_list al; 
-       Format.flush_str_formatter()
+       ( Format.flush_str_formatter(), types )
 
 
 let rec string_sexp_form 
     (ts : term_structure)
     (form : formula) 
     : (string * smttypeset) = 
-  (* Construct equalities and inequalities from obligation *)  
+  (* Construct equalities and inequalities *)  
   let eqs = map (fun (a1,a2) -> ((get_pargs false ts [] a1),
                                    (get_pargs false ts [] a2))) form.eqs in 
   let neqs = map (fun (a1,a2) -> ((get_pargs false ts [] a1),
@@ -99,36 +105,36 @@ let rec string_sexp_form
   let eq_sexp = String.concat " " (map string_sexp_eq eqs) in 
   let neq_sexp = String.concat " " (map string_sexp_eq neqs) in 
   
+  let eq_types = fold_right (fun x -> SMTTypeSet.add (SMT_Var(x))) 
+                 (flatten (map get_vars (unzipmerge (eqs@neqs)))) 
+                 SMTTypeSet.empty in 
+  
   let disj_list, disj_type_list = 
      unzip (map (fun (f1,f2) -> 
                   let f1s, f1v = string_sexp_form ts f1 in 
                   let f2s, f2v = string_sexp_form ts f2 in 
                   ( String.concat "" ["(or "; f1s; f2s; ")"], 
-                                    SMTTypeSet.union f1v f2v ) ) form.disjuncts)
-  in 
+                                    SMTTypeSet.union f1v f2v ) ) form.disjuncts) in 
   let disj_sexp = String.concat " " disj_list in 
-  let disj_types = fold_right SMTTypeSet.union disj_type_list SMTTypeSet.empty in 
+  let disj_types = smt_union_list disj_type_list in 
   
-  let plain_sexp = String.concat " " 
-                    ( map string_sexp_pred
-                    ( RMSet.map_to_list form.plain 
-                      (fun (s,r) -> (s, get_pargs false ts [] r)))) in 
-                      
-  let plain_types = 
-     fold_right SMTTypeSet.add  
-                (RMSet.map_to_list form.plain 
-                         (fun (s,r) -> (make_smttype_pred (s, get_pargs false ts [] r)) )) 
-                SMTTypeSet.empty in 
-        
+  let plain_list, plain_type_list = 
+     unzip ( map string_sexp_pred
+            ( RMSet.map_to_list form.plain 
+            (fun (s,r) -> (s, get_pargs false ts [] r)))) in 
+  let plain_sexp = String.concat " " plain_list in 
+
+  let plain_types = smt_union_list plain_type_list in                     
+
+  let types = smt_union_list [eq_types; disj_types; plain_types]in 
 
   let form_sexp = String.concat " " [ "(and true "; 
                                          eq_sexp; 
                                          neq_sexp; 
                                          disj_sexp; 
-                                         plain_sexp; ")" ] 
-  in
+                                         plain_sexp; ")" ]  in
 
-  (form_sexp, SMTTypeSet.union disj_types plain_types) 
+  (form_sexp, types) 
 
 
 let string_sexp_decl (t : smt_type) : string = 
@@ -146,12 +152,12 @@ let string_sexp_decl (t : smt_type) : string =
 let smt_command 
     (cmd : string) 
     : string = 
-  Format.printf "SMT command: %s\n" cmd; 
+  if !(Debug.debug_ref) then Format.printf "SMT command: %s\n" cmd; 
   output_string smtin cmd; 
   output_string smtin "\n"; 
   flush smtin; 
   let r = (input_line smtout) in
-  Format.printf "Result: %s\n" r;
+  if !(Debug.debug_ref) then Format.printf "Result: %s\n" r;
   if (String.length r >= 6) && (String.sub r 0 6) = "(error" then 
     raise (SMT_error r)
   else r  
@@ -174,20 +180,13 @@ let finish_him
     let asm_neq_sexp = String.concat " " (map string_sexp_neq neqs) in
     
     let eq_types = fold_right (fun x -> SMTTypeSet.add (SMT_Var(x))) 
-                              (flatten (map get_vars (unzipmerge eqs))) 
+                              (flatten (map get_vars (unzipmerge (eqs@neqs)))) 
                               SMTTypeSet.empty in 
-          
-    let neq_types = fold_right (fun x -> SMTTypeSet.add (SMT_Var(x))) 
-                               (flatten (map get_vars (unzipmerge neqs))) 
-                               SMTTypeSet.empty in 
     
     let asm_sexp, asm_types = string_sexp_form ts asm in 
     let obl_sexp, obl_types = string_sexp_form ts obl in
     
-    let types = fold_right (SMTTypeSet.union) 
-                           [eq_types; neq_types; asm_types; obl_types] 
-                           SMTTypeSet.empty 
-    in 
+    let types = smt_union_list [eq_types; asm_types; obl_types] in 
     
     SMTTypeSet.iter (fun x -> smt_command (string_sexp_decl x);()) types; 
 
@@ -214,12 +213,6 @@ let finish_him
   
 
   
-(*  let r = String.create 250 in
-  let n = input smtout r 0 250 in 
-  print_string (String.sub r 0 n); 
-  flush Pervasives.stdout;
-  false *)
-
 let true_sequent_pimp (seq : sequent) : bool =  
   seq.obligation.spat = RMSet.empty && 
   (* First try to avoid calling the SMT *)
@@ -229,7 +222,7 @@ let true_sequent_pimp (seq : sequent) : bool =
      seq.obligation.neqs = [] )
      ||
   (* Call the SMT if the other check fails *)
-  ( Format.printf "Calling SMT to prove\n %a\n" Clogic.pp_sequent seq; 
+  ( if !(Debug.debug_ref) then Format.printf "Calling SMT to prove\n %a\n" Clogic.pp_sequent seq; 
     (*flush Pervasives.stdout;*)
     finish_him seq.ts seq.assumption seq.obligation) )
   
