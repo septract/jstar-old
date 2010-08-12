@@ -18,8 +18,6 @@ open Congruence
 open Unix
 open List
 
-let readme, writeme = Unix.pipe ()
-
 let solver_path="/Users/md466/bin/z3"
 
 let smtout, smtin = Unix.open_process solver_path
