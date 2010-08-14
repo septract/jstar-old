@@ -40,9 +40,9 @@ let main () =
   Arg.parse arg_list (fun s ->()) usage_msg;
 
   if !program_file_name="" then 
-    Printf.printf "File name not specified. Can't continue....\n %s \n" usage_msg
+    Format.printf "File name not specified. Can't continue....\n %s \n" usage_msg
   else if !logic_file_name="" then
-    Printf.printf "Logic file name not specified. Can't continue....\n %s \n" usage_msg
+    Format.printf "Logic file name not specified. Can't continue....\n %s \n" usage_msg
   else 
     let l1,l2 = (load_logic (System.getenv_dirlist "JSTAR_LOGIC_LIBRARY") !logic_file_name) in 
     let logic = l1,l2, Psyntax.default_pure_prover in
@@ -55,29 +55,29 @@ let main () =
     | Psyntax.Implication (heap1,heap2) ->
 	Format.printf "Check implication\n %a\n ===> \n %a\n" Psyntax.string_form heap1   Psyntax.string_form heap2;
 	if (Sepprover.implies_opt logic (Sepprover.convert heap1) heap2)
-	then Printf.printf("Holds!\n\n") else Printf.printf("Does not hold!\n\n");
+	then Format.printf("Holds!\n\n") else Format.printf("Does not hold!\n\n");
 	if !(Debug.debug_ref) then Prover.pprint_proof stdout
     | Psyntax.Frame (heap1, heap2)  -> 
 	Format.printf "Find frame for\n %a\n ===> \n %a\n" Psyntax.string_form heap1   Psyntax.string_form heap2;
 	let x = Sepprover.frame_opt logic 
 	    (Sepprover.convert heap1) heap2 in 
-	(match x with None -> Printf.printf "Can't find frame!" | Some x -> List.iter (fun form -> Format.printf "Frame:\n %a\n" Sepprover.string_inner_form  form) x);
-	Printf.printf "\n";
+	(match x with None -> Format.printf "Can't find frame!" | Some x -> List.iter (fun form -> Format.printf "Frame:\n %a\n" Sepprover.string_inner_form  form) x);
+	Format.printf "\n";
 	if !(Debug.debug_ref) then Prover.pprint_proof stdout
     | Psyntax.Abs (heap1)  ->
 	Format.printf "Abstract@\n  @[%a@]@\nresults in@\n  " Psyntax.string_form heap1;
 	let x = Sepprover.abs_opt logic (Sepprover.convert heap1) in 
 	List.iter (fun form -> Format.printf "%a\n" Sepprover.string_inner_form form) x;
-	Printf.printf "\n";
+	Format.printf "\n";
 	if !(Debug.debug_ref) then Prover.pprint_proof stdout
     | Psyntax.Inconsistency (heap1) ->
 	if Sepprover.inconsistent_opt logic (Sepprover.convert heap1) 
-	then Printf.printf("Inconsistent!\n\n") else Printf.printf("Consistent!\n\n");
+	then Format.printf("Inconsistent!\n\n") else Format.printf("Consistent!\n\n");
 	if !(Debug.debug_ref) then Prover.pprint_proof stdout
     | Psyntax.Equal (heap,arg1,arg2) -> ()
 (*	if Prover.check_equal logic heap arg1 arg2 
-	then Printf.printf("Equal!\n\n") else Printf.printf("Not equal!\n\n")*) 
-    | _ -> Printf.printf "Currently unsupported"
+	then Format.printf("Equal!\n\n") else Format.printf("Not equal!\n\n")*) 
+    | _ -> Format.printf "Currently unsupported"
   )
       question_list
 

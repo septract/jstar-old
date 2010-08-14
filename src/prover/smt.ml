@@ -17,6 +17,7 @@ open Cterm
 open Congruence
 open Unix
 open List
+open Backtrack
 
 let solver_path="/Users/md466/bin/z3"
 
@@ -39,6 +40,8 @@ let rec nstr (s : string) (n : int) : string =
   | 0 -> ""
   | _ -> s^(nstr s (n-1))
 
+
+(* Datatype to hold smt type annotations (which btw are essentially guesses) *)
 
 type smt_type = 
   | SMT_Var of Vars.var
@@ -68,16 +71,14 @@ let smt_union_list (l : smttypeset list) : smttypeset =
 let string_sexp_eq (a : Psyntax.args * Psyntax.args) : string =
   match a with a1, a2 -> 
   Format.fprintf Format.str_formatter "(= %a %a)" 
-                 Psyntax.string_args_sexp a1 
-                 Psyntax.string_args_sexp a2;
+                 Psyntax.string_args_sexp a1 Psyntax.string_args_sexp a2;
   Format.flush_str_formatter()
 
 
 let string_sexp_neq (a : Psyntax.args * Psyntax.args) : string =
   match a with a1, a2 -> 
   Format.fprintf Format.str_formatter "(distinct %a %a)" 
-                 Psyntax.string_args_sexp a1 
-                 Psyntax.string_args_sexp a2;
+                 Psyntax.string_args_sexp a1 Psyntax.string_args_sexp a2;
   Format.flush_str_formatter()
 
   
@@ -131,7 +132,6 @@ let rec string_sexp_form
                                          neq_sexp; 
                                          disj_sexp; 
                                          plain_sexp; ")" ]  in
-
   (form_sexp, types) 
 
 
@@ -146,7 +146,6 @@ let string_sexp_decl (t : smt_type) : string =
   
 
 (* Main SMT functions *)
-
 let smt_command 
     (cmd : string) 
     : string = 
@@ -162,6 +161,7 @@ let smt_command
 
 
 
+(* try to establish that a pure sequent is valid using the SMT solver *)
 let finish_him 
     (ts : term_structure)
     (asm : formula)
@@ -181,11 +181,13 @@ let finish_him
                               (flatten (map get_vars (unzipmerge (eqs@neqs)))) 
                               SMTTypeSet.empty in 
     
+    (* Construct sexps and types for assumption and obligation *)
     let asm_sexp, asm_types = string_sexp_form ts asm in 
     let obl_sexp, obl_types = string_sexp_form ts obl in
     
     let types = smt_union_list [eq_types; asm_types; obl_types] in 
     
+    (* declare variables and predicates *)
     SMTTypeSet.iter (fun x -> smt_command (string_sexp_decl x);()) types; 
 
     (* Construct and run the query *)                    
@@ -210,10 +212,9 @@ let finish_him
     false
   
 
-  
 let true_sequent_pimp (seq : sequent) : bool =  
   seq.obligation.spat = RMSet.empty && 
-  (* First try to avoid calling the SMT *)
+  (* First try to discharge the sequent without calling the SMT *)
   (( seq.obligation.plain = RMSet.empty && 
      seq.obligation.disjuncts = [] && 
      seq.obligation.eqs = [] && 
@@ -225,3 +226,13 @@ let true_sequent_pimp (seq : sequent) : bool =
     finish_him seq.ts seq.assumption seq.obligation) )
   
 
+(* Update the congruence closure using the SMT solver *)
+(* WARNING: Not sure how *)
+let ask_the_audience 
+    (ts : term_structure)
+    (form : formula)
+    : term_structure = 
+(*  let v = List.map (fun i -> (i,(A.get ts.classlist i)))
+	                   (inter_list 0 (A.size rs - 1))  in *)
+  Format.printf "Calling SMT to update congruence closure\n"; 
+  raise No_match

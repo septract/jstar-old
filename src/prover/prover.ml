@@ -19,6 +19,7 @@ open Misc
 open Debug
 open Psyntax
 open Backtrack
+open Smt
 
 let prover_counter_example : Clogic.sequent list ref = ref []
 let print_counter_example ()  = 
@@ -54,11 +55,6 @@ let rec apply_rule_list_once
       try 
 	Clogic.apply_rule (Clogic.convert_rule rule) seq (*ep*)
       with No_match -> apply_rule_list_once rules seq ep
-
-
-let ask_the_audience ep ts p1 rs = 
-  raise No_match
-(* TODO: This should be dealt with by SMT. *)
 
 
 let rec sequents_backtrack  f (seqss : Clogic.sequent list list) xs
@@ -103,13 +99,7 @@ let apply_rule_list
 	   try 
 	     search (apply_rule_list_once rules seq ep)
 	   with No_match -> 
-	     (* Do expensive rewrites and try again *)
-(*	     let seq = rewrites_sequent rwm ep abs true seq in *)
-(* Looks like dead code *)
-(*	     try 
-	       search (apply_rule_list_once rules seq ep)
-	     with No_match -> *)
-         try
+               try
 		 if may_finish seq then 
 		   [seq]
 		 else 
@@ -118,11 +108,16 @@ let apply_rule_list
 		 try 
 		   search (Clogic.apply_or_right seq)
 		 with No_match -> 
-		   raise (Failed_eg [seq])
+	           try 
+	             (*search [[seq]]*)
+	             search [[ {seq with ts = (Smt.ask_the_audience seq.ts seq.obligation)} ]]
+                   with No_match -> 
+   		     raise (Failed_eg [seq])
 	 ) sequents 
       )
   in let res = apply_rule_list_inner sequents n in 
   if true || !(Debug.debug_ref) then Format.fprintf !dump "End time :%f @\n@?" (Sys.time ()); res
+
 
 let check_imp logic seq = 
     try 
