@@ -22,7 +22,7 @@ exception Failed
 
 module RMSet = MultisetImpl(
   struct
-    type t = string * Cterm.representative
+    type t = string * Cterm.term_handle
     let compare (s1,r1) (s2,r2) = 
       if s1 < s2 then 
 	-1
@@ -65,8 +65,8 @@ type formula =
     spat : RMSet.multiset;
     plain : RMSet.multiset;
     disjuncts : (formula * formula) list;
-    eqs : (representative * representative) list;
-    neqs : (representative * representative) list; 
+    eqs : (term_handle * term_handle) list;
+    neqs : (term_handle * term_handle) list; 
   }  
 
 type ts_formula = 
@@ -295,7 +295,7 @@ let add_neqs_list neqs ts : term_structure =
   List.fold_left (fun ts (x,y) -> make_not_equal ts x y) ts neqs
 
 
-  (* As multiple representatives might be equal, 
+  (* As multiple term_handles might be equal, 
      we have to use a comparison based only on the predicate name.  
      The sorting means predicates with the same name will be next 
      to each other. *)
