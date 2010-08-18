@@ -14,11 +14,11 @@
 (*
 TODO list: 
 
-- currently get variable names by traversing the data-structure;
-  should get them from the term structure
-
 - mark things that are constructors as such in the term structure; 
   at the moment they're treated as predicates. 
+  
+- Fix the handling of errors: we should get the SMT back to a vanilla
+  state after faulting. 
 
 *)
 
@@ -49,7 +49,8 @@ let rec unzipmerge xs =
 let unzip (xs : ('a * 'b) list) : ('a list * 'b list) = 
   fold_right (fun (e1,e2) (l1, l2) -> ((e1::l1),(e2::l2)) ) xs ([],[])
 
-  
+
+(* concatenate n instances of string s *)
 let rec nstr (s : string) (n : int) : string =
   match n with 
   | 0 -> ""
@@ -57,7 +58,6 @@ let rec nstr (s : string) (n : int) : string =
   
   
 (* Partition a list into sublists of equal elements *)
-(* Note that this function assumes that eq is an equivalence relation *)
 let rec equiv_partition
     (eq : 'a -> 'a -> bool) 
     (xs : 'a list)
@@ -207,7 +207,7 @@ let smt_test_eq (a1 : Psyntax.args) (a2 : Psyntax.args) : bool =
   (String.length r >= 5) && (String.sub r 0 5) = "unsat"
 
 
-(* try to establish that a pure sequent is valid using the SMT solver *)
+(* try to establish that the pure parts of a sequent are valid using the SMT solver *)
 let finish_him 
     (ts : term_structure)
     (asm : formula)
@@ -245,10 +245,7 @@ let finish_him
     smt_command query;    
                                       
     let r = smt_command "(check-sat)" in 
-
-    (* pop the frame to reset *)
     smt_command "(pop)";
-    
     (* check whether the forumula is unsatisfiable *)
     (String.length r >= 5) && (String.sub r 0 5) = "unsat"
   with SMT_error r -> 
@@ -258,13 +255,27 @@ let finish_him
     false
   
 
-let true_sequent_pimp (seq : sequent) : bool =  
+let true_sequent_smt (seq : sequent) : bool =  
   (Clogic.true_sequent seq)
     ||
   (* Call the SMT if the other check fails *)
-  (if !(Debug.debug_ref) then Format.printf "Calling SMT to prove\n %a\n" Clogic.pp_sequent seq; 
-    finish_him seq.ts seq.assumption seq.obligation)
-  
+  (if !(Debug.debug_ref) 
+   then Format.printf "Calling SMT to prove\n %a\n" Clogic.pp_sequent seq; 
+   Clogic.plain seq.assumption 
+    &&
+   Clogic.plain seq.obligation 
+    && 
+   finish_him seq.ts seq.assumption seq.obligation)
+
+
+let frame_sequent_smt (seq : sequent) : bool = 
+  (seq.obligation = empty) 
+    ||
+  (if !(Debug.debug_ref) 
+   then Format.printf "Calling SMT to get frame from\n %a\n" Clogic.pp_sequent seq; 
+   Clogic.plain seq.obligation
+    && 
+   finish_him seq.ts seq.assumption seq.obligation)
 
 
 

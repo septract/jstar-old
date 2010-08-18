@@ -126,14 +126,14 @@ let apply_rule_list
 
 let check_imp logic seq = 
     try 
-      ignore (apply_rule_list logic [seq] Smt.true_sequent_pimp Smt.true_sequent_pimp); true
+      ignore (apply_rule_list logic [seq] Smt.true_sequent_smt Smt.true_sequent_smt); true
     with  
       Failed -> false
     | Failed_eg x -> prover_counter_example := x ; false
 
 let check_frm logic seq =
   try
-    let leaves = apply_rule_list logic [seq] (fun _ -> false) Clogic.frame_sequent in 
+    let leaves = apply_rule_list logic [seq] (fun _ -> false) Smt.frame_sequent_smt in 
     Some (Clogic.get_frames leaves)
   with 
     Failed -> Format.fprintf !(Debug.dump) "Foo55";None 
