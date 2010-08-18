@@ -81,6 +81,7 @@ let new_ts () =
   tuple = c3;
 } 
 let local_debug = false
+
 let has_pp_c ts c : bool =
   try
     match CMap.find c ts.originals with 
@@ -98,6 +99,7 @@ let has_pp_c ts c : bool =
       -> true
   with Not_found ->
     false 
+
 (* Remove pattern match variables from pretty print where possible *)
 let rec get_pargs norm ts rs rep : Psyntax.args =
   if List.mem rep rs then 
@@ -107,7 +109,7 @@ let rec get_pargs norm ts rs rep : Psyntax.args =
       Arg_op ("CYCLE", [])
     else get_pargs norm ts rs (CC.normalise ts.cc rep)
   else 
-  try 
+  try  
     let fpt = CMap.find (if norm then (CC.normalise ts.cc rep) else rep) ts.originals in 
     match fpt with 
       FArg_var v ->
@@ -135,7 +137,7 @@ let rec get_pargs norm ts rs rep : Psyntax.args =
 	       n, get_pargs true ts (rep::rs) r) 
 	     fld) in 
 	a	  
-  with Not_found -> Arg_op ("NOT_FOUND", [])
+  with Not_found -> Arg_op ("NOT_FOUND", []) 
 
 let pp_c norm ts ppf c : unit =
   try 
@@ -349,6 +351,15 @@ let make_not_equal_t fresh ts t1 t2 =
   make_not_equal ts c1 c2
 
 
+let make_list_equal 
+    (ts : term_structure)
+    (xs : term_handle list) 
+    : term_structure =
+  match xs with 
+  | x::xs -> List.fold_left (fun ts' y -> make_equal ts' x y) ts xs
+  | _ -> ts 
+  
+
 let compress ts =
   (* TODO: This does not correctly update the originals, some will be
      lost by overwriting.  Should refactor to make the originals a
@@ -395,6 +406,18 @@ let get_neqs ts : (Psyntax.args * Psyntax.args ) list =
   let mask = has_pp_c ts in 
   let map = fun c -> get_pargs false ts [] c in 
   CC.get_neqs mask map ts.cc 
+  
+let get_args_rep
+    (ts : term_structure) 
+    : (term_handle * Psyntax.args) list = 
+  let mask = has_pp_c ts in 
+  let map = fun c -> (c, get_pargs false ts [] c) in 
+  CC.get_reps mask map ts.cc
+
+let get_args_all
+    (ts : term_structure) 
+    : Psyntax.args list = 
+  List.map (get_pargs false ts []) (CC.get_consts ts.cc)
 
 let get_term ts r : Psyntax.args = 
   get_pargs true ts [] r

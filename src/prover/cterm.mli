@@ -58,6 +58,8 @@ val unify_not_equal_pattern : term_structure -> pattern -> pattern -> (term_stru
 
 val make_equal : term_structure -> term_handle -> term_handle -> term_structure
 
+val make_list_equal  : term_structure -> term_handle list -> term_structure
+
 val normalise : term_structure -> term_handle -> term_handle 
 
 (*
@@ -85,6 +87,9 @@ val get_pargs : bool -> term_structure -> term_handle list -> term_handle -> Psy
 
 val pp_c : term_structure -> Format.formatter -> term_handle -> unit
 val has_pp_c : term_structure -> term_handle -> bool
+
+val get_args_rep : term_structure -> (term_handle * Psyntax.args) list
+val get_args_all : term_structure -> Psyntax.args list
 
 val get_eqs : term_structure -> (Psyntax.args * Psyntax.args) list
 val get_neqs : term_structure -> (Psyntax.args * Psyntax.args) list

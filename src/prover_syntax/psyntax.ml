@@ -196,6 +196,7 @@ let rec get_vars arg : Vars.var list =
   | Arg_var v -> [v]
   | Arg_string s -> []
   | Arg_op (name, args) -> List.flatten (List.map get_vars args)
+  | Arg_cons (name, args) -> List.flatten (List.map get_vars args)
 
 
 let rec string_args_sexp ppf arg = 
@@ -205,11 +206,11 @@ let rec string_args_sexp ppf arg =
   | Arg_op ("builtin_plus",[a1;a2]) -> Format.fprintf ppf "(+ %a %a)" string_args_sexp a1 string_args a2
   | Arg_op ("tuple",al) -> Format.fprintf ppf "(%a)" string_args_list al
   | Arg_op (name,args) -> Format.fprintf ppf "(%s %a)" name string_args_list args 
-and string_args_list ppf argsl = 
+and string_args_list_sexp ppf argsl = 
   match argsl with 
     [] -> Format.fprintf ppf ""
-  | [a] -> Format.fprintf ppf "%a" string_args a
-  | a::al -> Format.fprintf ppf "%a@ %a" string_args a string_args_list al
+  | [a] -> Format.fprintf ppf "%a" string_args_sexp a
+  | a::al -> Format.fprintf ppf "%a@ %a" string_args_sexp a string_args_list_sexp al
 
 
 

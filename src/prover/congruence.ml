@@ -135,6 +135,9 @@ module type PCC =
 
       val get_eqs : (constant -> bool) -> (constant -> 'a) -> t -> ('a * 'a) list
       val get_neqs : (constant -> bool) -> (constant -> 'a) -> t -> ('a * 'a) list
+      
+      val get_consts : t -> constant list
+      val get_reps : (constant -> bool) -> (constant -> 'a) -> t -> 'a list 
 
       val test : unit -> unit
 
@@ -223,6 +226,14 @@ module PersistentCC ( A : GrowablePersistentArray) : PCC =
    Class List : constant -> constant list
    Lookup : constant -> constant -> complex_eq option
  *)
+
+(* Intuitively: 
+
+  representative - mapping from constant to represntative constant. 
+
+  classlist - mapping from represenative constants to the class of represented. 
+
+*)
     type t = 
 	{ uselist : (use list) A.t;
 	  representative : constant A.t;
@@ -243,8 +254,8 @@ module PersistentCC ( A : GrowablePersistentArray) : PCC =
        lookup = CCMap.empty;
        rev_lookup = A.create (fun i -> []);
        not_equal = CCMap.empty;
-      constructor = A.create (fun i -> Not);
-      unifiable = A.create (fun i -> Standard);
+       constructor = A.create (fun i -> Not);
+       unifiable = A.create (fun i -> Standard);
      }
 
 
@@ -1269,6 +1280,14 @@ module PersistentCC ( A : GrowablePersistentArray) : PCC =
 	  acc := (map (rep ts a),map (rep ts b))::!acc)
 	ts.not_equal
       ; !acc
+
+    let get_consts ts = inter_list 0 (A.size ts.representative - 1)
+
+    let get_reps mask map ts = 
+      List.map map 
+         (List.filter (fun i -> A.get ts.representative i = i && mask i) 
+                      (inter_list 0 (A.size ts.representative - 1)))
+
 
     let rep_uneq ts c d = 
       try 

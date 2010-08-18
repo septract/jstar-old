@@ -19,6 +19,7 @@ open Psyntax
 
 exception Success
 exception Failed
+exception Assm_Contradiction
 
 module RMSet = MultisetImpl(
   struct
