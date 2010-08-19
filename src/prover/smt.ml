@@ -30,24 +30,43 @@ open Unix
 open List
 open Backtrack
 
-let solver_path="/Users/md466/bin/z3"
-
-(* 
-capture the error output to stop z3 from moaning about 
-the absence of an X server. 
-*)
-let smtout, smtin, smterr = Unix.open_process_full solver_path (environment())
-
 exception SMT_error of string
+
+let smt_run = ref false;; 
+let smt_fdepth = ref 0;; 
+let smtout = ref Pervasives.stdin;; 
+let smtin = ref Pervasives.stdout;;
+let smterr = ref Pervasives.stdin;;
+
+let solver_path = ref "z3";;
+
+
+let smt_init 
+    (path : string) 
+    : unit = 
+  if !(Debug.debug_ref) then Format.printf "Initialising SMT\n"; 
+  let o, i, e = Unix.open_process_full path (environment()) in 
+  smtout := o;
+  smtin := i;
+  smterr := e;
+  smt_run := true; 
+  if !(Debug.debug_ref) then Format.printf "SMT running...\n"
+
 
 let rec unzipmerge xs = 
   match xs with 
-    [] -> []
+  | [] -> []
   | ((a,b)::xs) -> a::b::(unzipmerge xs)
 
 
 let unzip (xs : ('a * 'b) list) : ('a list * 'b list) = 
   fold_right (fun (e1,e2) (l1, l2) -> ((e1::l1),(e2::l2)) ) xs ([],[])
+  
+
+let rec do_n (n : int) (f : unit -> unit) : unit =
+  match n with 
+  | 0 -> () 
+  | n -> f() ; do_n (n-1) f
 
 
 (* concatenate n instances of string s *)
@@ -79,7 +98,6 @@ let rec list_to_pairs
 
 
 (* Datatype to hold smt type annotations (which btw are essentially guesses) *)
-
 type smt_type = 
   | SMT_Var of Vars.var
   | SMT_Pred of string * int 
@@ -187,23 +205,33 @@ let smt_command
     (cmd : string) 
     : string = 
   if !(Debug.debug_ref) then Format.printf "SMT command: %s\n" cmd; 
-  output_string smtin cmd; 
-  output_string smtin "\n"; 
-  flush smtin; 
-  let r = (input_line smtout) in
+  output_string !smtin cmd; 
+  output_string !smtin "\n"; 
+  flush !smtin; 
+  let r = (input_line !smtout) in
   if !(Debug.debug_ref) then Format.printf "Result: %s\n" r;
   if (String.length r >= 6) && (String.sub r 0 6) = "(error" then 
     raise (SMT_error r)
   else r  
 
 
+let smt_push () : unit = 
+  smt_command "(push)"; 
+  smt_fdepth := (!smt_fdepth + 1)
+
+  
+let smt_pop () : unit = 
+  smt_command "(pop)";
+  smt_fdepth := (!smt_fdepth - 1) 
+
+
 (* Check whether two args are equal under the current assumptions *)
 let smt_test_eq (a1 : Psyntax.args) (a2 : Psyntax.args) : bool = 
-  smt_command "(push)"; 
+  smt_push; 
   let test_query = String.concat " " ["(assert"; string_sexp_neq (a1,a2); ")"] in 
   smt_command test_query; 
   let r = smt_command "(check-sat)" in 
-  smt_command "(pop)"; 
+  smt_pop; 
   (String.length r >= 5) && (String.sub r 0 5) = "unsat"
 
 
@@ -215,7 +243,7 @@ let finish_him
     : bool = 
   try
     (* Push a frame to allow reuse of prover *)
-    smt_command "(push)"; 
+    smt_push; 
   
     (* Construct equalities and ineqalities from ts *)
     let eqs = filter (fun (a,b) -> a <> b) (get_eqs ts) in
@@ -245,10 +273,11 @@ let finish_him
     smt_command query;    
                                       
     let r = smt_command "(check-sat)" in 
-    smt_command "(pop)";
+    smt_pop;
     (* check whether the forumula is unsatisfiable *)
     (String.length r >= 5) && (String.sub r 0 5) = "unsat"
   with SMT_error r -> 
+    let n = !smt_fdepth in do_n n smt_pop; 
     flush Pervasives.stdout;
     Format.printf "\n"; 
     System.warning(); Format.printf "SMT error: %s" r; System.reset(); 
@@ -259,23 +288,27 @@ let true_sequent_smt (seq : sequent) : bool =
   (Clogic.true_sequent seq)
     ||
   (* Call the SMT if the other check fails *)
+  (if (not !smt_run) then false 
+  else 
   (if !(Debug.debug_ref) 
    then Format.printf "Calling SMT to prove\n %a\n" Clogic.pp_sequent seq; 
    Clogic.plain seq.assumption 
     &&
    Clogic.plain seq.obligation 
     && 
-   finish_him seq.ts seq.assumption seq.obligation)
+   finish_him seq.ts seq.assumption seq.obligation))
 
 
 let frame_sequent_smt (seq : sequent) : bool = 
   (seq.obligation = empty) 
     ||
+  (if (not !smt_run) then false 
+  else 
   (if !(Debug.debug_ref) 
    then Format.printf "Calling SMT to get frame from\n %a\n" Clogic.pp_sequent seq; 
    Clogic.plain seq.obligation
     && 
-   finish_him seq.ts seq.assumption seq.obligation)
+   finish_him seq.ts seq.assumption seq.obligation))
 
 
 
@@ -284,56 +317,64 @@ let ask_the_audience
     (ts : term_structure)
     (form : formula)
     : term_structure = 
-  if !(Debug.debug_ref) then Format.printf "Calling SMT to update congruence closure\n"; 
+  if (not !smt_run) then raise No_match 
+  else try 
+    if !(Debug.debug_ref) then Format.printf "Calling SMT to update congruence closure\n"; 
   
-  smt_command "(push)"; 
+    smt_push; 
+    
+    (* Construct equalities and ineqalities from ts *)
+    let eqs = filter (fun (a,b) -> a <> b) (get_eqs ts) in
+    let neqs = filter (fun (a,b) -> a <> b) (get_neqs ts) in 
+    let ts_eq_sexp = String.concat " " (map string_sexp_eq eqs) in 
+    let ts_neq_sexp = String.concat " " (map string_sexp_neq neqs) in
   
-  (* Construct equalities and ineqalities from ts *)
-  let eqs = filter (fun (a,b) -> a <> b) (get_eqs ts) in
-  let neqs = filter (fun (a,b) -> a <> b) (get_neqs ts) in 
-  let ts_eq_sexp = String.concat " " (map string_sexp_eq eqs) in 
-  let ts_neq_sexp = String.concat " " (map string_sexp_neq neqs) in
+    let ts_types = fold_right (fun x -> SMTTypeSet.add (SMT_Var(x))) 
+                              (flatten (map get_vars (get_args_all ts))) 
+                              SMTTypeSet.empty in 
   
-  let ts_types = fold_right (fun x -> SMTTypeSet.add (SMT_Var(x))) 
-                            (flatten (map get_vars (get_args_all ts))) 
-                            SMTTypeSet.empty in 
+    (* Construct sexps and types for assumption and obligation *)
+    let form_sexp, form_types = string_sexp_form ts form in 
   
-  (* Construct sexps and types for assumption and obligation *)
-  let form_sexp, form_types = string_sexp_form ts form in 
+    let types = smt_union_list [ts_types; form_types] in 
   
-  let types = smt_union_list [ts_types; form_types] in 
-  
-  (* declare variables and predicates *)
-  SMTTypeSet.iter (fun x -> smt_command (string_sexp_decl x);()) types; 
+    (* declare variables and predicates *)
+    SMTTypeSet.iter (fun x -> smt_command (string_sexp_decl x);()) types; 
 
-  (* Assert the assumption *)                    
-  let assm_query = String.concat " " [ "(assert (and "; ts_eq_sexp; 
-                                    ts_neq_sexp; form_sexp; ")) " ] 
-  in smt_command assm_query;    
+    (* Assert the assumption *)                    
+    let assm_query = String.concat " " [ "(assert (and "; ts_eq_sexp; 
+                                      ts_neq_sexp; form_sexp; ")) " ] 
+    in smt_command assm_query;    
 
-  (* check for a contradiction *)
-  let r = smt_command "(check-sat)" in 
-  if (String.length r >= 5) && (String.sub r 0 5) = "unsat" 
-  then (if !(Debug.debug_ref) then Format.printf "SMT found contradiction in assumption\n"; 
-        raise Assm_Contradiction); 
+    (* check for a contradiction *)
+    let r = smt_command "(check-sat)" in 
+    if (String.length r >= 5) && (String.sub r 0 5) = "unsat" 
+    then (if !(Debug.debug_ref) then Format.printf "SMT found contradiction in assumption\n"; 
+          raise Assm_Contradiction); 
 
-  (* check whether there are new equalities to find; otherwise raise No_Match *)
-  smt_command "(push)"; 
-  let reps = get_args_rep ts in 
-  let rep_sexps = String.concat " " (List.map (fun (x,y) -> string_sexp_neq (snd x,snd y)) 
-                                              (list_to_pairs reps) )
-  in 
-  let reps_query = String.concat " " [ "(assert (and "; rep_sexps; "))"] 
-  in 
-  smt_command reps_query; 
-  let r = smt_command "(check-sat)" in 
-  smt_command "(pop)"; 
-  if ((String.length r >= 3) && (String.sub r 0 3) = "sat") then raise No_match; 
+    (* check whether there are new equalities to find; otherwise raise No_Match *)
+    smt_push; 
+    let reps = get_args_rep ts in 
+    let rep_sexps = String.concat " " (List.map (fun (x,y) -> string_sexp_neq (snd x,snd y)) 
+                                                (list_to_pairs reps) )
+    in 
+    let reps_query = String.concat " " [ "(assert (and "; rep_sexps; "))"] 
+    in 
+    smt_command reps_query; 
+    let r = smt_command "(check-sat)" in 
+    smt_pop; 
+    if ((String.length r >= 3) && (String.sub r 0 3) = "sat") then raise No_match; 
 
-  (* Update the term structure using the new equalities *)  
-  let req_equiv = map (map fst)
-                      (equiv_partition (fun x y -> smt_test_eq (snd x) (snd y)) reps) 
-  in 
-  smt_command "(pop)";
-  fold_left make_list_equal ts req_equiv
-
+    (* Update the term structure using the new equalities *)  
+    let req_equiv = map (map fst)
+                        (equiv_partition (fun x y -> smt_test_eq (snd x) (snd y)) reps) 
+    in 
+    smt_pop;
+    fold_left make_list_equal ts req_equiv
+  with SMT_error r -> 
+    let n = !smt_fdepth in do_n n smt_pop; 
+    flush Pervasives.stdout;
+    Format.printf "\n"; 
+    System.warning(); Format.printf "SMT error: %s" r; System.reset(); 
+    raise No_match
+  
