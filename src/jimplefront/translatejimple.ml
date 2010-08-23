@@ -24,7 +24,6 @@ open Symexec
 open Methdec_core
 open Javaspecs
 open Spec
-open Lexing
 
 (* global variables *)
 let curr_static_methodSpecs: Javaspecs.methodSpecs ref = ref Javaspecs.emptyMSpecs
@@ -52,7 +51,8 @@ let get_static_spec si =
   match si with 
   | Method_signature ms ->
       (try 
-	Some (MethodMap.find ms !curr_static_methodSpecs  )
+	      match (MethodMap.find ms !curr_static_methodSpecs) with
+  		      | (spec, pos) -> Some spec 
       with Not_found -> None)
   | _ -> (* this routine is supposed to be called only with method signature*)
       assert false
@@ -62,7 +62,8 @@ let get_dynamic_spec si =
   match si with 
   | Method_signature ms ->
       (try 
-	 Some (MethodMap.find ms !curr_dynamic_methodSpecs  )
+          match (MethodMap.find ms !curr_dynamic_methodSpecs) with
+              | (spec, pos) -> Some spec
        with Not_found -> None)
   | _ -> (* this routine is supposed to be called only with method signature*)
       assert false
@@ -270,7 +271,8 @@ let get_spec_for m fields cname=
   let msi = Methdec.get_msig m cname in
   let spec=
     try 
-      MethodMap.find msi !curr_static_methodSpecs 
+      match (MethodMap.find msi !curr_static_methodSpecs) with
+        | (spec, pos) -> spec
     with  Not_found -> 
       System.warning(); Format.printf "\n\n Error: Cannot find spec for method %s\n\n" (methdec2signature_str m); System.reset();
       assert false
@@ -291,7 +293,8 @@ let get_requires_clause_spec_for m fields cname =
         (* First the the method's dynamic spec *)
         let dynspec = 
                 try
-                        MethodMap.find msi !curr_dynamic_methodSpecs
+                  	match (MethodMap.find msi !curr_dynamic_methodSpecs) with
+                        | (spec, pos) -> spec
                 with Not_found ->
                         System.warning(); Format.printf "\n\n Error: Cannot find spec for method %s\n\n" (methdec2signature_str m); System.reset();
                         assert false
@@ -309,7 +312,8 @@ let get_dyn_spec_for m fields cname =
         (* First the the method's dynamic spec *)
         let dynspec = 
                 try
-                        MethodMap.find msi !curr_dynamic_methodSpecs
+                  	match (MethodMap.find msi !curr_dynamic_methodSpecs) with
+                    	| (spec, pos) -> spec                     
                 with Not_found ->
                         System.warning(); Format.printf "\n\n Error: Cannot find spec for method %s\n\n" (methdec2signature_str m); System.reset();
                         assert false

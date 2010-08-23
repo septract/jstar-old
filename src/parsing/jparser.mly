@@ -66,15 +66,15 @@ let bind_spec_vars (mods,typ,name,args_list) {pre=pre;post=post;excep=excep} =
    post=subst_pform subst post;
    excep=ClassMap.map (subst_pform subst) excep}
 
-let mkDynamic (msig, specs) =
+let mkDynamic (msig, specs, source_pos) =
   let specs = List.map (bind_spec_vars msig) specs in 
-  let msig = msig_simp msig in   
-  Dynamic(msig,specs)
+  let msig = msig_simp msig in
+  Dynamic(msig, specs, source_pos)
 
-let mkStatic (msig, specs) =
+let mkStatic (msig, specs, source_pos) =
   let specs = List.map (bind_spec_vars msig) specs in 
   let msig = msig_simp msig in   
-  Static(msig,specs)
+  Static(msig, specs, source_pos)
   
     
   
@@ -375,10 +375,10 @@ specs:
    | spec     {[$1]}
 
 method_spec:
-   | method_signature_short COLON specs  SEMICOLON  { mkDynamic($1, $3) }
-   | method_signature_short STATIC COLON specs SEMICOLON  { mkStatic($1, $4) }
-   | method_signature_short COLON specs   { mkDynamic($1, $3) }
-   | method_signature_short STATIC COLON specs  { mkStatic($1, $4) }
+   | method_signature_short COLON specs  SEMICOLON source_pos_tag_option { mkDynamic($1, $3, $5) }
+   | method_signature_short STATIC COLON specs SEMICOLON source_pos_tag_option { mkStatic($1, $4, $6) }
+   | method_signature_short COLON specs source_pos_tag_option { mkDynamic($1, $3, $4) }
+   | method_signature_short STATIC COLON specs source_pos_tag_option { mkStatic($1, $4, $5) }
 
 exp_posts:
    | L_BRACE identifier COLON formula R_BRACE exp_posts { ClassMap.add $2 $4 $6 }
@@ -545,11 +545,14 @@ method_body:
 ;
 source_pos_tag:
    | SOURCE_POS_TAG COLON identifier COLON integer_constant identifier COLON integer_constant identifier COLON integer_constant identifier COLON integer_constant identifier COLON full_identifier SOURCE_POS_TAG_CLOSE { ($5, $8, $11, $14) }
-;  
+; 
+source_pos_tag_option:
+   | { None }
+   | source_pos_tag { Some($1) }
+;
 declaration_or_statement:
    | declaration { DOS_dec($1) }
-   | statement source_pos_tag { DOS_stm($1, Some($2)) }
-   | statement { DOS_stm($1, None) }
+   | statement source_pos_tag_option { DOS_stm($1, $2) }
 ;
 declaration_or_statement_list_star:
    | /* empty */ { [] } 
