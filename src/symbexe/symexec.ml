@@ -264,9 +264,6 @@ let remove_id_formset formset =
 
 let parameter n = "@parameter"^(string_of_int n)^":"
 
-let name_ret_var = "$ret_var"
-
-let ret_var = Vars.concretep_str name_ret_var 
 
 
 let rec param_sub il num sub = 
@@ -277,7 +274,7 @@ let rec param_sub il num sub =
 
 
 let param_sub il =
-  let sub' = add ret_var (Arg_var(ret_var))  empty in 
+  let sub' = add Spec.ret_v1 (Arg_var(Spec.ret_v1))  empty in 
   param_sub il 0 sub'
   
 
@@ -328,6 +325,7 @@ let check_postcondition heaps sheap =
       Printf.printf "\n\nPost okay \n";
     (*	let idd = add_good_node ("EXIT: "^(Pprinter.name2str m.name)) in *)
     add_edge_with_proof (snd sheap) id "exit";
+    true
     (*	add_edge id idd "";*)
   with Not_found -> 
     System.warning();
@@ -350,7 +348,27 @@ let check_postcondition heaps sheap =
 			  (Format.str_formatter) "ERROR EXIT: @\n %a" 
 			  Sepprover.pprint_counter_example (); 
 			Format.flush_str_formatter ()))
-      heaps
+      heaps;
+    false
+
+
+(* extract the return value into variable v *)
+let eliminate_ret_var 
+      ( name_ret_var : string)
+      ( v : Vars.var) 
+      ( h : inner_form ) : inner_form   =
+   let ret_var = Vars.concretep_str name_ret_var in 
+   let h = update_var_to v (Arg_var ret_var) h in 
+   kill_var ret_var h
+
+
+(* extract return values called 'name_template' into variables vs *)
+let eliminate_ret_vs
+      ( name_template : string ) 
+      ( vs : Vars.var list )
+      ( h : inner_form ) : inner_form  = 
+  let vs_i = Misc.add_index vs 1 in  
+  List.fold_right (fun (v,i) -> eliminate_ret_var (name_template ^ string_of_int i) v) vs_i h
 
 
 let rec exec n sheap = 
@@ -360,6 +378,7 @@ let rec exec n sheap =
 (*  if Config.symb_debug() then 
     Format.printf "Output to %i with heap@\n   %a@\n" (node_get_id n) (string_ts_form (Rterm.rao_create ())) sheap_noid; *)
   execute_core_stmt n sheap 
+
 
 and execs_with_function n sheaps g = 
  let rec f ls = 
@@ -380,6 +399,7 @@ and execs_one n sheaps =
 	
 and execs n sheaps =
 	execs_with_function n sheaps (fun n -> [n])
+	
 
 and execute_core_stmt n (sheap : formset_entry) : formset_entry list =
   let sheap_noid=fst sheap in
@@ -388,7 +408,7 @@ and execute_core_stmt n (sheap : formset_entry) : formset_entry list =
   if Config.symb_debug() then 
     Format.printf "@\nExecuting statement:@ %a" Pprinter_core.pp_stmt_core stm.skind; 
   if Config.symb_debug() then 
-    Format.printf "@\nwith heap:@\n    %a@\n@\n@."  string_inner_form  sheap_noid; 
+    Format.printf "@\nwith heap :@\n    %a@\n@\n@."  string_inner_form  sheap_noid; 
   (
    if Config.symb_debug() 
    then begin
@@ -453,54 +473,65 @@ and execute_core_stmt n (sheap : formset_entry) : formset_entry list =
     | Goto_stmt_core _ -> execs_one n [sheap]
     | Nop_stmt_core  -> execs_one n [sheap]
     | Assignment_core (vl, spec, il) -> 
-	( match vl with 
-	| [] -> 
-	    let hs=call_jsr_static sheap spec il n in
-	    let hs=add_id_formset_edge (snd sheap) (Debug.toString Pprinter_core.pp_stmt_core n.skind) hs n in
-	    execs_one n hs
-	| [v] ->
-	    let eliminate_ret_var h =
-	      let h = update_var_to v (Arg_var ret_var) h in 
-	      let h = kill_var ret_var h in 
-	      h
-	    in
-	    let hs=call_jsr_static sheap spec il n in
-	    let hs=List.map eliminate_ret_var hs in 
-	    let hs=add_id_formset_edge (snd sheap) (Debug.toString Pprinter_core.pp_stmt_core n.skind)  hs n in
-	    execs_one n hs
-	| _ -> assert false (* TODO be done *)
-	      )
+       ( 
+		let hs=call_jsr_static sheap spec il n in
+		match vl with 
+		| [] -> 
+			let hs=add_id_formset_edge (snd sheap) (Debug.toString Pprinter_core.pp_stmt_core n.skind) hs n in
+			execs_one n hs
+		| vs -> 
+		  	let hs=List.map (eliminate_ret_vs "$ret_v" vs) hs in 
+			let hs=add_id_formset_edge (snd sheap) (Debug.toString Pprinter_core.pp_stmt_core n.skind)  hs n in
+			execs_one n hs
+	    )
     | Throw_stmt_core _ -> assert  false 
     | End -> execs_one n [sheap]
 	  ))
+	
       
 (* implements a work-list fidex point algorithm *)
 (* the queue qu is a list of pairs [(node, expression option)...] the expression
 is used to deal with if statement. It is the expression of the if statement is the predecessor
 of the node is a if_stmt otherwise is None. In the beginning is always None for each node *)
-let verify (mname : string) (stmts : stmt_core list)  (spec : spec) (lo : logic) (abs_rules : logic) =
-
+let verify 
+    (mname : string) 
+    (stmts : stmt_core list)  
+    (spec : spec) 
+    (lo : logic) 
+    (abs_rules : logic) 
+    : bool 
+    =
   (* remove methods that are declared abstraction *)
   curr_logic:= lo;
   curr_abs_rules:=abs_rules;
  
   stmts_to_cfg stmts;
   match stmts with 
-    [] -> assert false
-  | s::stmts -> 
+  | [] -> assert false; false
+  | s::_ -> 
       let id = add_good_node ("Start "^mname) in  
       make_start_node id;
       match Sepprover.convert (spec.pre) with 
-	None -> System.warning(); Printf.printf "False precondition for specification of %s." mname  ;System.reset()
+	None -> System.warning(); Printf.printf "False precondition for specification of %s." mname  ;System.reset(); false
       |	Some pre -> 
 	  let post = execute_core_stmt s (pre, id) in 
 	  let id_exit = add_good_node ("Exit") in 
-	  List.iter 
-	    (fun post -> 
-	      check_postcondition [(spec.post,id_exit)] post) post
+	  List.fold_right (fun succ b -> succ && b)
+                          (List.map (fun post -> check_postcondition [(spec.post,id_exit)] post) post)
+                          true
 
 
-let verify_ensures (name : string) (stmts: stmt_core list) (post : Psyntax.pform) conjoin_with_res_true (oldexp_frames : inner_form list list) lo abs_rules =
+
+let verify_ensures 
+     (name : string) 
+     (stmts: stmt_core list) 
+     (post : Psyntax.pform) 
+     conjoin_with_res_true
+     (oldexp_frames : inner_form list list) 
+     (lo : logic) 
+     (abs_rules : logic) 
+     : unit 
+     =
   (* construct the specification of the ensures clause *)
 	let rec conjoin_disjunctions (d1 : inner_form list) (d2 : inner_form list) : inner_form list =
 		match d1 with
@@ -512,7 +543,7 @@ let verify_ensures (name : string) (stmts: stmt_core list) (post : Psyntax.pform
 	in
 	let oldexp_results = List.fold_left (fun acc oldexp_res -> conjoin_disjunctions oldexp_res acc) [Sepprover.inner_truth] oldexp_frames in
 	  (* substitute $ret_var in the post! *)
-	let post = subst_pform (add ret_var (Arg_var(Vars.concretep_str (name_ret_var^"_post"))) empty) post in
+	let post = subst_pform (add Spec.ret_v1 (Arg_var(Vars.concretep_str (name_ret_v1^"_post"))) empty) post in
 	let ensures_preconds = List.map (fun oldexp_result -> Sepprover.conjoin post oldexp_result) oldexp_results in
 	let ensures_postcond = conjoin_with_res_true post in
 	(* now do the verification *)
@@ -526,9 +557,10 @@ let verify_ensures (name : string) (stmts: stmt_core list) (post : Psyntax.pform
       make_start_node id;
       let post = execs s (List.map (fun pre -> (pre,id)) ensures_preconds) in
       let id_exit = add_good_node ("Exit") in
-      List.iter 
+      List.map 
 	(fun post -> 
-	  check_postcondition [(ensures_postcond,id_exit)] post) post
+	  check_postcondition [(ensures_postcond,id_exit)] post) post;
+      ()
 
 
 let check_and_get_frame (heap,id) sheap =
@@ -562,7 +594,13 @@ let check_and_get_frame (heap,id) sheap =
                  [])
 
 
-let get_frame (stmts : stmt_core list) (pre : Psyntax.pform) (lo : logic) (abs_rules : logic) = 
+let get_frame 
+     (stmts : stmt_core list) 
+     (pre : Psyntax.pform) 
+     (lo : logic) 
+     (abs_rules : logic) 
+     : inner_form list 
+     = 
   curr_logic:= lo;
   curr_abs_rules:=abs_rules;
  

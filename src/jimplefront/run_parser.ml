@@ -177,11 +177,12 @@ let main () =
 	 let (static_method_specs,dynamic_method_specs) = Javaspecs.spec_file_to_method_specs spec_list in
 	 
 	 if Config.symb_debug() then Printf.printf "\n\n Starting symbolic execution...";
-	 Classverification.verify_methods program static_method_specs dynamic_method_specs logic abs_rules ;
+	 Classverification.verify_methods program static_method_specs dynamic_method_specs logic abs_rules;
 	   (*Symexec.compute_fixed_point program apfmap logic abs_rules static_method_specs dynamic_method_specs*)
 	 Symexec.pp_dotty_transition_system () 
        with Assert_failure (e,l,c) -> Printf.printf "Error!!! Assert failure %s line %d character %d\n" e l c
       )
      
+
        
 let _ = main ()

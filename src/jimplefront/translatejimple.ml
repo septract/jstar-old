@@ -102,7 +102,7 @@ let get_spec  (iexp: Jparsetree.invoke_expr) =
 
 
 	
-let retvar_term = Arg_var(ret_var)
+let retvar_term = Arg_var(Spec.ret_v1)
 
 let rec translate_assign_stmt  (v:Jparsetree.variable) (e:Jparsetree.expression) =
   match v, e with 
@@ -373,6 +373,8 @@ let jimple_locals2stattype_rules (locals : local_var list) : sequent_rule list =
 let add_static_type_info logic locals : Psyntax.logic =
 	let rules = jimple_locals2stattype_rules locals in
 	Javaspecs.append_rules logic rules
+	
+
 
 (* implements a work-list fidex point algorithm *)
 (* the queue qu is a list of pairs [(node, expression option)...] the expression
@@ -418,8 +420,13 @@ let compute_fixed_point
                   in
                   List.flatten [meth_body_info;requires_info;old_clause_info;ensures_info]
           ) mdl in (* TODO HERE *)
-  let xs = List.flatten xs in
-  Cfg_core.print_icfg_dotty xs (!file);
+
+  (* Print core files generated from methods *)
+  List.iter (fun (x,y) -> Pprinter_core.print_core !file y x) (List.flatten xs); 
+
+  (* print dot-file representation of CFG *)
+  Cfg_core.print_icfg_dotty (List.flatten xs) (!file);
+
   (* now verify each method *)
   List.iter (fun m ->
 									let meth_sig_str = methdec2signature_str m in
@@ -427,9 +434,10 @@ let compute_fixed_point
                   if Methdec.has_body m then
                           let spec = get_spec_for m fields cname in
                           let body = jimple_stms2core m.bstmts in
-													let l = add_static_type_info lo m.locals in
-													(*let _ = Prover.pprint_sequent_rules l in*)
-                          Symexec.verify meth_sig_str body spec l abs_rules
+			  let l = add_static_type_info lo m.locals in
+			  (*let _ = Prover.pprint_sequent_rules l in*)
+                          Symexec.verify meth_sig_str body spec l abs_rules;
+                          ()
                   else
                           ()
                   ;
@@ -437,18 +445,19 @@ let compute_fixed_point
                   if Methdec.has_requires_clause m then
                           let spec = get_requires_clause_spec_for m fields cname in
                           let body = jimple_stms2core m.req_stmts in
-													let l = add_static_type_info lo m.req_locals in
-                          Symexec.verify (meth_sig_str^" requires clause") body spec l abs_rules
+		          let l = add_static_type_info lo m.req_locals in
+                          Symexec.verify (meth_sig_str^" requires clause") body spec l abs_rules;
+                          ()
                   else
                           ()
                   ;
                   (* verify the ensures clause if present *)
                   if Methdec.has_ensures_clause m then
                           let spec = get_dyn_spec_for m fields cname in
-													let l = add_static_type_info lo m.ens_locals in
+			  let l = add_static_type_info lo m.ens_locals in
                           let frames = List.map (fun oc -> 
-                                let body = jimple_stms2core oc in
-                                Symexec.get_frame body spec.pre l abs_rules) m.old_stmts_list in
+                          let body = jimple_stms2core oc in
+                          Symexec.get_frame body spec.pre l abs_rules) m.old_stmts_list in
                           let body = jimple_stms2core m.ens_stmts in
                           Symexec.verify_ensures (meth_sig_str^" ensures clause") body spec.post conjoin_with_res_true frames l abs_rules
             ) mdl
