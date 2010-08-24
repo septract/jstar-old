@@ -1,1 +1,1 @@
-for file in `ls *_test | sed "s/_test//"` ; do echo "Testing" $file; test_logic  -f $file\_test -l $file\_logic -v; done
+for file in `ls *_test | sed "s/_test//"` ; do echo "Testing" $file; test_logic  -f $file\_test -l $file\_logic; done

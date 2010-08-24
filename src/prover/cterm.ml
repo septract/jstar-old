@@ -14,6 +14,7 @@ open Congruence
 open Vars
 open Psyntax
 
+let cycle_gensym = ref (0)
 
 type term_handle = CC.constant
 
@@ -106,7 +107,9 @@ let rec get_pargs norm ts rs rep : Psyntax.args =
     if rep != CC.normalise ts.cc rep then 
       (* TODO: Add topological sorting to avoid printing this if possible.
          If not possible should introduce a new variable. *)
-      Arg_op ("CYCLE", [])
+      (cycle_gensym := !cycle_gensym + 1; 
+      let cname = Printf.sprintf "CYCLE%i" !cycle_gensym in 
+      Arg_op (cname, []))
     else get_pargs norm ts rs (CC.normalise ts.cc rep)
   else 
   try  

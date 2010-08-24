@@ -108,6 +108,15 @@ let rec list_to_pairs
   | x::xs -> (List.map (fun y -> (x,y)) xs) @ list_to_pairs xs
   | [] -> [] 
 
+let cmd_munge (s : string) : string = 
+  let s = Str.global_replace (Str.regexp "A_") "A_A_" s in 
+  let s = Str.global_replace (Str.regexp "@") "A_" s in 
+  let s = Str.global_replace (Str.regexp "\*") "ST_" s in 
+  s
+  
+let str_munge (s : string ) : string = 
+  let s = Str.global_replace (Str.regexp "[<> ]")  "_" s in 
+  s
 
 (* Datatype to hold smt type annotations (which btw are essentially guesses) *)
 type smt_type = 
@@ -126,7 +135,8 @@ type smttypeset = SMTTypeSet.t
 
 let make_smttype_pred (p : string * Psyntax.args) : smt_type = 
   match p with s, a -> 
-  match a with Arg_op ("tuple",al) -> SMT_Pred(s,(length al))
+  let name = String.concat "" ["pred_"; s] in 
+  match a with Arg_op ("tuple",al) -> SMT_Pred(name,(length al))
 
 
 let smt_union_list (l : smttypeset list) : smttypeset = 
@@ -135,8 +145,15 @@ let smt_union_list (l : smttypeset list) : smttypeset =
 let rec args_smttype (arg : Psyntax.args) : smttypeset = 
   match arg with
   | Arg_var v -> SMTTypeSet.add (SMT_Var(v)) SMTTypeSet.empty
-  | Arg_string s -> SMTTypeSet.empty
+  | Arg_string s -> 
+          let name = String.concat "" ["string_const_"; (str_munge s)] in 
+          SMTTypeSet.add (SMT_Op(name, 0)) SMTTypeSet.empty
+  | Arg_op ("builtin_plus",_) -> SMTTypeSet.empty
+(*  | Arg_op ("numeric_const",[Arg_string(v)]) -> 
+          let name = String.concat "" ["numeric_const_"; v] in 
+          SMTTypeSet.add (SMT_Op(name, 0)) SMTTypeSet.empty *)
   | Arg_op (name, args) -> 
+          let name = String.concat "" ["op_"; name] in 
           let s = SMTTypeSet.add (SMT_Op(name, (length args))) SMTTypeSet.empty in 
           smt_union_list (s::(List.map args_smttype args))
   | Arg_cons (name, args) -> 
@@ -147,17 +164,40 @@ let rec args_smttype (arg : Psyntax.args) : smttypeset =
 
 (* Functions to convert various things to sexps & get types *)
 
+
+let rec string_args_sexp ppf arg = 
+  match arg with 
+  | Arg_var v -> Format.fprintf ppf "%s" (Vars.string_var v)
+  | Arg_string s -> 
+          let name = String.concat "" ["string_const_"; (str_munge s)] in 
+          Format.fprintf ppf "%s" name
+  | Arg_op ("builtin_plus",[a1;a2]) -> Format.fprintf ppf "(+ %a %a)" string_args_sexp a1 string_args_sexp a2
+  | Arg_op ("tuple",al) -> Format.fprintf ppf "(%a)" string_args_list al
+(*  | Arg_op ("numeric_const",[Arg_string(v)]) -> 
+          let name = String.concat "" ["numeric_const_"; v] in 
+          Format.fprintf ppf "%s" name *)
+  | Arg_op (name,args) -> 
+          let name = String.concat "" ["op_"; name] in 
+          Format.fprintf ppf "(%s %a)" name string_args_list_sexp args 
+  | Arg_record _ -> Format.fprintf ppf "" 
+and string_args_list_sexp ppf argsl = 
+  match argsl with 
+    [] -> Format.fprintf ppf ""
+  | [a] -> Format.fprintf ppf "%a" string_args_sexp a
+  | a::al -> Format.fprintf ppf "%a@ %a" string_args_sexp a string_args_list_sexp al
+
+
 let string_sexp_eq (a : Psyntax.args * Psyntax.args) : string =
   match a with a1, a2 -> 
   Format.fprintf Format.str_formatter "(= %a %a)" 
-                 Psyntax.string_args_sexp a1 Psyntax.string_args_sexp a2;
+                 string_args_sexp a1 string_args_sexp a2;
   Format.flush_str_formatter()
 
 
 let string_sexp_neq (a : Psyntax.args * Psyntax.args) : string =
   match a with a1, a2 -> 
   Format.fprintf Format.str_formatter "(distinct %a %a)" 
-                 Psyntax.string_args_sexp a1 Psyntax.string_args_sexp a2;
+                 string_args_sexp a1 string_args_sexp a2;
   Format.flush_str_formatter()
 
   
@@ -166,7 +206,7 @@ let string_sexp_pred (p : string * Psyntax.args) : (string * smttypeset)=
   let types = args_smttype a in 
   let types = SMTTypeSet.add (make_smttype_pred p) types in 
   match a with Arg_op ("tuple",al) ->
-       Format.fprintf Format.str_formatter "(%s %a)"
+       Format.fprintf Format.str_formatter "(pred_%s %a)"
              s string_args_list_sexp al; 
        ( Format.flush_str_formatter(), types )
        
@@ -232,6 +272,7 @@ let smt_command
     (cmd : string) 
     : string = 
   try 
+    let cmd = cmd_munge cmd in 
     if !(Debug.debug_ref) then Format.printf "SMT command: %s\n" cmd; 
     output_string !smtin cmd; 
     output_string !smtin "\n"; 
