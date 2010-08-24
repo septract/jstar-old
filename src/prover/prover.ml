@@ -111,13 +111,12 @@ let apply_rule_list
 		 try 
 		   search (Clogic.apply_or_right seq)
 		 with No_match -> 
-	           try 
-	             let ts' = Smt.ask_the_audience seq.ts seq.obligation in 
+                 try 
+	             let ts' = Smt.ask_the_audience seq.ts seq.assumption in 
 	             search [[ {seq with ts = ts'} ]]
                    with 
                    | Assm_Contradiction -> []
-                   | No_match ->
-                   raise (Failed_eg [seq])
+                   | No_match -> raise (Failed_eg [seq])
 	 ) sequents 
       )
   in let res = apply_rule_list_inner sequents n in 

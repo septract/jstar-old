@@ -20,12 +20,11 @@ let logic_file_name = ref "";;
 
 let f = Debug.debug_ref := false
 
-let arg_list =[ ("-f", Arg.Set_string(program_file_name), "program file name" );
-		("-l", Arg.Set_string(logic_file_name), "logic file name" ); 
+let arg_list =[ ("-f", Arg.Set_string(program_file_name), "program file name");
+		("-l", Arg.Set_string(logic_file_name), "logic file name"); 
 	        ("-v", Arg.Set(Debug.debug_ref), "Verbose proofs");
-	        ("-s", Arg.Set(Smt.smt_run),"Use SMT solver");
-	        ("-p", Arg.Set_string(Smt.solver_path), "SMT solver path");
-	        ]
+	        ("-nosmt", Arg.Clear(Smt.smt_run),"Don't use the SMT solver");
+	        ("-p", Arg.Set_string(Smt.solver_path), "SMT solver path"); ]
 
 
 let main () =
@@ -37,12 +36,12 @@ let main () =
   else if !logic_file_name="" then
     Format.printf "Logic file name not specified. Can't continue....\n %s \n" usage_msg
   else 
+    if !Smt.smt_run then Smt.smt_init !Smt.solver_path; 
+
     let l1,l2 = (load_logic (System.getenv_dirlist "JSTAR_LOGIC_LIBRARY") !logic_file_name) in 
     let logic = l1,l2, Psyntax.default_pure_prover in
     let s = System.string_of_file !program_file_name  in
     let question_list = System.parse_file Jparser.question_file Jlexer.token !program_file_name "Questions" true in
-
-    if !Smt.smt_run then Smt.smt_init !Smt.solver_path; 
 
     List.iter (
     fun question ->

@@ -16,28 +16,14 @@ let program_file_name = ref "";;
 let logic_file_name = ref "";;
 let inductive_file_name = ref "";;
  
-let set_file_name n = 
-  program_file_name := n 
-
-let set_logic_file_name n = 
-  logic_file_name := n 
-
-let set_inductive_file_name n = 
-  inductive_file_name := n 
-
 let f = Debug.debug_ref := false
 
-let set_verbose_mode () =
-  Debug.debug_ref := true
-
-let arg_list =[ ("-f", Arg.String(set_file_name ), "program file name" );
-		("-l", Arg.String(set_logic_file_name ), "logic file name" ); 
-		("-i", Arg.String(set_inductive_file_name ), "inductive file name" );
-	        ("-v", Arg.Unit(set_verbose_mode), "Verbose proofs");]
-
-
-
-
+let arg_list =[ ("-f", Arg.Set_string(program_file_name), "program file name" );
+		("-l", Arg.Set_string(logic_file_name), "logic file name" ); 
+		("-i", Arg.Set_string(inductive_file_name), "inductive file name" );
+	        ("-v", Arg.Set(Debug.debug_ref), "Verbose proofs");
+	        ("-nosmt", Arg.Clear(Smt.smt_run),"Don't use the SMT solver");
+	        ("-p", Arg.Set_string(Smt.solver_path), "SMT solver path"); ]
 
 
 let main () =
@@ -49,6 +35,7 @@ let main () =
   else if !logic_file_name="" then
     Format.printf "Logic file name not specified. Can't continue....@\n %s @\n" usage_msg
   else 
+    if !Smt.smt_run then Smt.smt_init !Smt.solver_path;
     let rl = if !inductive_file_name <> "" then Inductive.convert_inductive_file !inductive_file_name else [] in
     let l1,l2 = load_logic_extra_rules (System.getenv_dirlist "JSTAR_LOGIC_LIBRARY") !logic_file_name rl in
     let logic = l1,l2, Psyntax.default_pure_prover in
@@ -56,6 +43,7 @@ let main () =
     if !(Debug.debug_ref) then Format.printf "Start parsing tests in %s...@\n" !program_file_name;
     let test_list  = Jparser.test_file Jlexer.token (Lexing.from_string s) 
     in if !(Debug.debug_ref) then Format.printf "Parsed %s!@\n" !program_file_name;
+
     List.iter (
     fun test ->
       match test with 

@@ -197,15 +197,17 @@ let rec get_vars arg : Vars.var list =
   | Arg_string s -> []
   | Arg_op (name, args) -> List.flatten (List.map get_vars args)
   | Arg_cons (name, args) -> List.flatten (List.map get_vars args)
+  | Arg_record fldlist -> List.flatten (List.map (fun (f,a) -> get_vars a) fldlist)
 
 
 let rec string_args_sexp ppf arg = 
   match arg with 
   | Arg_var v -> Format.fprintf ppf "%s" (string_var v)
   | Arg_string s -> Format.fprintf ppf "\"%s\""  s 
-  | Arg_op ("builtin_plus",[a1;a2]) -> Format.fprintf ppf "(+ %a %a)" string_args_sexp a1 string_args a2
+  | Arg_op ("builtin_plus",[a1;a2]) -> Format.fprintf ppf "(+ %a %a)" string_args_sexp a1 string_args_sexp a2
   | Arg_op ("tuple",al) -> Format.fprintf ppf "(%a)" string_args_list al
-  | Arg_op (name,args) -> Format.fprintf ppf "(%s %a)" name string_args_list args 
+  | Arg_op (name,args) -> Format.fprintf ppf "(%s %a)" name string_args_list_sexp args 
+  | Arg_record _ -> Format.fprintf ppf "" 
 and string_args_list_sexp ppf argsl = 
   match argsl with 
     [] -> Format.fprintf ppf ""
