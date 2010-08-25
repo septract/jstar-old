@@ -393,6 +393,29 @@ let compute_fixed_point
   let mdl =  Methdec.make_methdecs_of_list cname (Methdec.get_list_methods f) in
   (* get the fields *)
   let fields = Methdec.get_list_fields f in
+    
+  (* Adding specification position for init method statements if they do not have their own *)  
+  List.iter (fun m ->
+    if is_init_method m then
+          let mb = List.map (fun (statement, pos) -> 
+              match pos with 
+                | None -> 
+                  let msi = Methdec.get_msig m cname in
+                  let spec_pos =
+                    try 
+                      match (MethodMap.find msi !curr_static_methodSpecs) with
+                        | (spec, pos) -> pos
+                    with Not_found -> 
+                      try 
+                        match (MethodMap.find msi !curr_dynamic_methodSpecs) with
+                          | (spec, pos) -> pos
+                      with  Not_found -> None in
+                      (statement, spec_pos)
+                | Some _ -> (statement, pos)
+            ) m.bstmts in
+          m.bstmts <- mb
+  ) mdl;
+    
   (* pretty print the cfg's *)
   let xs = 
           List.map (fun m ->
