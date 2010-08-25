@@ -259,7 +259,6 @@ let field_signature2str fs =
 
 %token INDUCTIVE
 
-%token NOOP 
 %token LABEL
 %token END
 %token ASSIGN
@@ -577,7 +576,7 @@ source_pos_tag:
    | SOURCE_POS_TAG COLON identifier COLON integer_constant identifier COLON integer_constant identifier COLON integer_constant identifier COLON integer_constant identifier COLON full_identifier SOURCE_POS_TAG_CLOSE { ($5, $8, $11, $14) }
 ; 
 source_pos_tag_option:
-   | { None }
+   | /* empty */ { None }
    | source_pos_tag { Some($1) }
 ;
 declaration_or_statement:
@@ -1143,7 +1142,7 @@ core_stmt_list:
 
 core_stmt: 
    |  END   { End }
-   |  NOOP  { Nop_stmt_core }
+   |  NOP  { Nop_stmt_core }
    |  ASSIGN core_assn_args spec L_PAREN jargument_list_npv R_PAREN
          { Assignment_core($2, $3, $5) } 
    |  GOTO label_list { Goto_stmt_core $2 } 
