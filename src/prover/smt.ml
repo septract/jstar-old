@@ -68,6 +68,8 @@ let smt_fatal_recover () : unit  =
   smt_run := false 
 
 
+(* Some helper functions *)
+
 let rec unzipmerge xs = 
   match xs with 
   | [] -> []
@@ -104,12 +106,16 @@ let rec equiv_partition
   | [] -> []
 
 
+(* construct all (unordered) pairs of list elements *)
 let rec list_to_pairs 
     (xs : 'a list) 
     : ('a * 'a) list = 
   match xs with 
   | x::xs -> (List.map (fun y -> (x,y)) xs) @ list_to_pairs xs
   | [] -> [] 
+
+
+(* munge out input characters that make z3 die horribly *)
 
 let cmd_munge (s : string) : string = 
   let s = Str.global_replace (Str.regexp "@") "AT_" s in 
@@ -152,9 +158,6 @@ let rec args_smttype (arg : Psyntax.args) : smttypeset =
           let name = String.concat "" ["string_const_"; (str_munge s)] in 
           SMTTypeSet.add (SMT_Op(name, 0)) SMTTypeSet.empty
   | Arg_op ("builtin_plus",_) -> SMTTypeSet.empty
-(*  | Arg_op ("numeric_const",[Arg_string(v)]) -> 
-          let name = String.concat "" ["numeric_const_"; v] in 
-          SMTTypeSet.add (SMT_Op(name, 0)) SMTTypeSet.empty *)
   | Arg_op (name, args) -> 
           let name = String.concat "" ["op_"; name] in 
           let s = SMTTypeSet.add (SMT_Op(name, (length args))) SMTTypeSet.empty in 
@@ -173,10 +176,7 @@ let rec string_args_sexp ppf arg =
           let name = String.concat "" ["string_const_"; (str_munge s)] in 
           Format.fprintf ppf "%s" name
   | Arg_op ("builtin_plus",[a1;a2]) -> Format.fprintf ppf "(+ %a %a)" string_args_sexp a1 string_args_sexp a2
-  | Arg_op ("tuple",al) -> Format.fprintf ppf "(%a)" string_args_list al
-(*  | Arg_op ("numeric_const",[Arg_string(v)]) -> 
-          let name = String.concat "" ["numeric_const_"; v] in 
-          Format.fprintf ppf "%s" name *)
+(*  | Arg_op ("tuple",al) -> Format.fprintf ppf "(%a)" string_args_list al*)
   | Arg_op (name,args) -> 
           let name = String.concat "" ["op_"; name] in 
           Format.fprintf ppf "(%s %a)" name string_args_list_sexp args 
@@ -284,7 +284,6 @@ let smt_command
   with End_of_file -> raise SMT_fatal_error 
   
      
-
 
 let smt_push () : unit = 
   smt_command "(push)"; 
@@ -417,7 +416,7 @@ let ask_the_audience
   
     let types = smt_union_list [ts_types; form_types] in 
   
-    (* declare variables and predicates *)
+    (* declare  predicates *)
     SMTTypeSet.iter (fun x -> smt_command (string_sexp_decl x);()) types; 
 
     (* Assert the assumption *)                    
@@ -427,11 +426,9 @@ let ask_the_audience
 
     (* check for a contradiction *)
     if !(Debug.debug_ref) then Format.printf "[Checking for contradiction in assumption]\n"; 
-    let r = smt_command "(check-sat)" in 
-    match r with 
+    match smt_command "(check-sat)" with 
     | Unsat -> (if !(Debug.debug_ref) then Format.printf "[SMT found contradiction in assumption]\n"; 
-                smt_reset(); 
-                raise Assm_Contradiction)
+                smt_reset(); raise Assm_Contradiction)
     | Sat -> (); 
 
     (* check whether there are any new equalities to find; otherwise raise No_Match *)
@@ -441,14 +438,11 @@ let ask_the_audience
     let rep_sexps = String.concat " " (List.map (fun (x,y) -> string_sexp_neq (snd x,snd y)) 
                                                 (list_to_pairs reps) )
     in 
-    let reps_query = String.concat " " [ "(assert (and true "; rep_sexps; "))"] 
-    in 
-    smt_command reps_query; 
-    let r = smt_command "(check-sat)" in 
-    smt_pop(); 
-    match r with 
+    smt_command (String.concat " " [ "(assert (and true "; rep_sexps; "))"]); 
+    match smt_command "(check-sat)"  with 
     | Sat -> (smt_reset(); raise No_match) 
     | Unsat -> (); 
+    smt_pop(); 
 
     (* Update the term structure using the new equalities *)  
     if !(Debug.debug_ref) then Format.printf "[Identifying new equalities]\n"; 
