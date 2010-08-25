@@ -17,8 +17,7 @@ TODO list:
 - mark things that are constructors as such in the term structure; 
   at the moment they're treated as predicates. 
   
-- Fix the handling of errors: we should get the SMT back to a vanilla
-  state after faulting. 
+- parse responses from the smt correctly
 
 *)
 
@@ -29,6 +28,7 @@ open Congruence
 open Unix
 open List
 open Backtrack
+open Smtsyntax
 
 exception SMT_error of string
 exception SMT_fatal_error
@@ -38,7 +38,8 @@ let smt_fdepth = ref 0;;
 let smtout = ref Pervasives.stdin;; 
 let smtin = ref Pervasives.stderr;;
 let smterr = ref Pervasives.stdin;;
-(*let smtout_IO = ref (IO.input_channel smtout);; *)
+
+let smtout_lex = ref (Lexing.from_string "");; 
 
 let solver_path = ref "z3";;
 
@@ -51,6 +52,7 @@ let smt_init
   smtout := o;
   smtin := i;
   smterr := e;
+  smtout_lex := Lexing.from_channel !smtout; 
   smt_run := true; 
   if !(Debug.debug_ref) then Format.printf "SMT running...\n"
 
@@ -58,7 +60,7 @@ let smt_init
 let smt_fatal_recover () : unit  = 
   System.warning();
   Format.printf "Oh noes! The SMT solver died for some reason. This shouldn't happen.\n"; 
-  Format.printf "Turning the SMT for this example..."; 
+  Format.printf "Turning off the SMT for this example..."; 
   Unix.close_process_full (!smtout, !smtin, !smterr); 
   Format.printf "SMT off.\n"; 
   System.reset(); 
@@ -267,18 +269,18 @@ let string_sexp_decl (t : smt_type) : string =
 (* Main SMT functions *)
 let smt_command 
     (cmd : string) 
-    : string = 
+    : smt_response = 
   try 
     let cmd = cmd_munge cmd in 
     if !(Debug.debug_ref) then Format.printf "SMT command: %s\n" cmd; 
     output_string !smtin cmd; 
     output_string !smtin "\n"; 
     flush !smtin; 
-    let r = (input_line !smtout) in
-    if !(Debug.debug_ref) then Format.printf "Result: %s\n" r;
-    if (String.length r >= 6) && (String.sub r 0 6) = "(error" then 
-      raise (SMT_error r)
-    else r  
+    let response = Smtparse.main Smtlex.token !smtout_lex in 
+    Lexing.flush_input !smtout_lex; 
+    match response with 
+    | Error e -> raise (SMT_error e)
+    | _ -> response
   with End_of_file -> raise SMT_fatal_error 
   
      
@@ -305,9 +307,9 @@ let smt_test_eq (a1 : Psyntax.args) (a2 : Psyntax.args) : bool =
   smt_command test_query; 
   let r = smt_command "(check-sat)" in 
   smt_pop(); 
-  if (String.length r >= 5) && (String.sub r 0 5) = "unsat" then 
-    (if !(Debug.debug_ref) then Format.printf "Found new equality\n"; true)
-  else false
+  match r with 
+  | Unsat -> (if !(Debug.debug_ref) then Format.printf "Found new equality\n"; true)
+  | Sat -> false
     
 
 
@@ -349,7 +351,9 @@ let finish_him
     let r = smt_command "(check-sat)" in 
     smt_pop();
     (* check whether the forumula is unsatisfiable *)
-    (String.length r >= 5) && (String.sub r 0 5) = "unsat"
+    match r with 
+    | Unsat -> true
+    | Sat -> false
   with 
   | SMT_error r -> 
     smt_reset(); 
@@ -423,11 +427,12 @@ let ask_the_audience
 
     (* check for a contradiction *)
     if !(Debug.debug_ref) then Format.printf "[Checking for contradiction in assumption]\n"; 
-        let r = smt_command "(check-sat)" in 
-    if (String.length r >= 5) && (String.sub r 0 5) = "unsat" 
-    then (if !(Debug.debug_ref) then Format.printf "[SMT found contradiction in assumption]\n"; 
-          smt_reset(); 
-          raise Assm_Contradiction); 
+    let r = smt_command "(check-sat)" in 
+    match r with 
+    | Unsat -> (if !(Debug.debug_ref) then Format.printf "[SMT found contradiction in assumption]\n"; 
+                smt_reset(); 
+                raise Assm_Contradiction)
+    | Sat -> (); 
 
     (* check whether there are any new equalities to find; otherwise raise No_Match *)
     if !(Debug.debug_ref) then Format.printf "[Checking whether any new equalities exist]\n"; 
@@ -441,7 +446,9 @@ let ask_the_audience
     smt_command reps_query; 
     let r = smt_command "(check-sat)" in 
     smt_pop(); 
-    if ((String.length r >= 3) && (String.sub r 0 3) = "sat") then (smt_reset(); raise No_match); 
+    match r with 
+    | Sat -> (smt_reset(); raise No_match) 
+    | Unsat -> (); 
 
     (* Update the term structure using the new equalities *)  
     if !(Debug.debug_ref) then Format.printf "[Identifying new equalities]\n"; 

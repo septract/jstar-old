@@ -4,7 +4,7 @@ endif
 export LIB
 
 SOURCES = congruence.ml cterm.mli cterm.ml clogic.mli clogic.ml \
-         smtparse.mly smtlex.mll smt.ml prover.ml sepprover.ml 
+         smtsyntax.ml smtparse.mly smtlex.mll smt.ml prover.ml sepprover.ml 
 INCLUDES = utils prover_syntax
 RESULT = "$(LIB)/prover"
 OCAMLLDFLAGS="-a"
