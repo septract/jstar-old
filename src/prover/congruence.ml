@@ -139,6 +139,9 @@ module type PCC =
       val get_consts : t -> constant list
       val get_reps : (constant -> bool) -> (constant -> 'a) -> t -> 'a list 
 
+      (* surjective mapping from constants to integers *)
+      val const_int : constant -> t -> int 
+
       val test : unit -> unit
 
       val delete : t -> constant -> t
@@ -1293,6 +1296,10 @@ module PersistentCC ( A : GrowablePersistentArray) : PCC =
       try 
 	ignore (make_equal ts c d); false
       with Contradiction -> true
+      
+
+    let const_int const ts = const
+
 
     let eq_term (ts : t) (term1 : curry_term) (term2 : curry_term) : bool = 
       normalize ts term1 = normalize ts term2 

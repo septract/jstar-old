@@ -38,6 +38,7 @@ let smt_fdepth = ref 0;;
 let smtout = ref Pervasives.stdin;; 
 let smtin = ref Pervasives.stderr;;
 let smterr = ref Pervasives.stdin;;
+(*let smtout_IO = ref (IO.input_channel smtout);; *)
 
 let solver_path = ref "z3";;
 
@@ -109,16 +110,16 @@ let rec list_to_pairs
   | [] -> [] 
 
 let cmd_munge (s : string) : string = 
-  let s = Str.global_replace (Str.regexp "A_") "A_A_" s in 
-  let s = Str.global_replace (Str.regexp "@") "A_" s in 
-  let s = Str.global_replace (Str.regexp "\*") "ST_" s in 
+  let s = Str.global_replace (Str.regexp "@") "AT_" s in 
+  let s = Str.global_replace (Str.regexp "\*") "STAR_" s in
   s
   
 let str_munge (s : string ) : string = 
-  let s = Str.global_replace (Str.regexp "[<> ]")  "_" s in 
+  let s = Str.global_replace (Str.regexp "[<> @\*]")  "_" s in 
   s
 
 (* Datatype to hold smt type annotations (which btw are essentially guesses) *)
+
 type smt_type = 
   | SMT_Var of Vars.var
   | SMT_Pred of string * int 
@@ -158,12 +159,10 @@ let rec args_smttype (arg : Psyntax.args) : smttypeset =
           smt_union_list (s::(List.map args_smttype args))
   | Arg_cons (name, args) -> 
           smt_union_list (List.map args_smttype args)
-  | Arg_record fldlist -> 
-          smt_union_list (List.map (fun (f,a) -> args_smttype a) fldlist)
+  | Arg_record fldlist -> SMTTypeSet.empty
 
 
 (* Functions to convert various things to sexps & get types *)
-
 
 let rec string_args_sexp ppf arg = 
   match arg with 
@@ -217,10 +216,10 @@ let rec string_sexp_form
     (form : formula) 
     : (string * smttypeset) = 
   (* Construct equalities and inequalities *)  
-  let eqs = map (fun (a1,a2) -> ((get_pargs false ts [] a1),
-                                   (get_pargs false ts [] a2))) form.eqs in 
-  let neqs = map (fun (a1,a2) -> ((get_pargs false ts [] a1),
-                                    (get_pargs false ts [] a2))) form.neqs in 
+  let eqs = map (fun (a1,a2) -> ((get_pargs_norecs false ts [] a1),
+                                   (get_pargs_norecs false ts [] a2))) form.eqs in 
+  let neqs = map (fun (a1,a2) -> ((get_pargs_norecs false ts [] a1),
+                                    (get_pargs_norecs false ts [] a2))) form.neqs in 
   let eq_sexp = String.concat " " (map string_sexp_eq eqs) in 
   let neq_sexp = String.concat " " (map string_sexp_eq neqs) in 
   
@@ -239,7 +238,7 @@ let rec string_sexp_form
   let plain_list, plain_type_list = 
      unzip ( map string_sexp_pred
             ( RMSet.map_to_list form.plain 
-            (fun (s,r) -> (s, get_pargs false ts [] r)))) in 
+            (fun (s,r) -> (s, get_pargs_norecs false ts [] r)))) in 
   let plain_sexp = String.concat " " plain_list in 
 
   let plain_types = smt_union_list plain_type_list in                     
@@ -247,10 +246,8 @@ let rec string_sexp_form
   let types = smt_union_list [eq_types; disj_types; plain_types]in 
 
   let form_sexp = String.concat " " [ "(and true "; 
-                                         eq_sexp; 
-                                         neq_sexp; 
-                                         disj_sexp; 
-                                         plain_sexp; ")" ]  in
+                                      eq_sexp; neq_sexp; 
+                                      disj_sexp; plain_sexp; ")" ]  in
   (form_sexp, types) 
 
 
@@ -308,7 +305,10 @@ let smt_test_eq (a1 : Psyntax.args) (a2 : Psyntax.args) : bool =
   smt_command test_query; 
   let r = smt_command "(check-sat)" in 
   smt_pop(); 
-  (String.length r >= 5) && (String.sub r 0 5) = "unsat"
+  if (String.length r >= 5) && (String.sub r 0 5) = "unsat" then 
+    (if !(Debug.debug_ref) then Format.printf "Found new equality\n"; true)
+  else false
+    
 
 
 (* try to establish that the pure parts of a sequent are valid using the SMT solver *)
@@ -322,8 +322,8 @@ let finish_him
     smt_push(); 
   
     (* Construct equalities and ineqalities from ts *)
-    let eqs = filter (fun (a,b) -> a <> b) (get_eqs ts) in
-    let neqs = filter (fun (a,b) -> a <> b) (get_neqs ts) in 
+    let eqs = filter (fun (a,b) -> a <> b) (get_eqs_norecs ts) in
+    let neqs = filter (fun (a,b) -> a <> b) (get_neqs_norecs ts) in 
     let asm_eq_sexp = String.concat " " (map string_sexp_eq eqs) in 
     let asm_neq_sexp = String.concat " " (map string_sexp_neq neqs) in
     
@@ -401,8 +401,8 @@ let ask_the_audience
     smt_push(); 
     
     (* Construct equalities and ineqalities from ts *)
-    let eqs = filter (fun (a,b) -> a <> b) (get_eqs ts) in
-    let neqs = filter (fun (a,b) -> a <> b) (get_neqs ts) in 
+    let eqs = filter (fun (a,b) -> a <> b) (get_eqs_norecs ts) in
+    let neqs = filter (fun (a,b) -> a <> b) (get_neqs_norecs ts) in 
     let ts_eq_sexp = String.concat " " (map string_sexp_eq eqs) in 
     let ts_neq_sexp = String.concat " " (map string_sexp_neq neqs) in
   
@@ -418,7 +418,7 @@ let ask_the_audience
 
     (* Assert the assumption *)                    
     let assm_query = String.concat " " [ "(assert (and true "; ts_eq_sexp; 
-                                      ts_neq_sexp; form_sexp; ")) " ] 
+                                         ts_neq_sexp; form_sexp; ")) " ] 
     in smt_command assm_query;    
 
     (* check for a contradiction *)

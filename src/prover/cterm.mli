@@ -84,6 +84,7 @@ val pp_ts : Format.formatter -> term_structure -> unit
 val pp_ts_nonemp : Format.formatter -> term_structure -> bool
 
 val get_pargs : bool -> term_structure -> term_handle list -> term_handle -> Psyntax.args
+val get_pargs_norecs : bool -> term_structure -> term_handle list -> term_handle -> Psyntax.args
 
 val pp_c : term_structure -> Format.formatter -> term_handle -> unit
 val has_pp_c : term_structure -> term_handle -> bool
@@ -93,6 +94,9 @@ val get_args_all : term_structure -> Psyntax.args list
 
 val get_eqs : term_structure -> (Psyntax.args * Psyntax.args) list
 val get_neqs : term_structure -> (Psyntax.args * Psyntax.args) list
+
+val get_eqs_norecs : term_structure -> (Psyntax.args * Psyntax.args) list
+val get_neqs_norecs : term_structure -> (Psyntax.args * Psyntax.args) list
 
 val get_term : term_structure -> term_handle-> Psyntax.args
 val kill_var : term_structure -> Vars.var -> term_structure 

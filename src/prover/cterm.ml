@@ -107,8 +107,7 @@ let rec get_pargs norm ts rs rep : Psyntax.args =
     if rep != CC.normalise ts.cc rep then 
       (* TODO: Add topological sorting to avoid printing this if possible.
          If not possible should introduce a new variable. *)
-      (cycle_gensym := !cycle_gensym + 1; 
-      let cname = Printf.sprintf "CYCLE%i" !cycle_gensym in 
+     (let cname = Printf.sprintf "CYCLE%i" (CC.const_int rep ts.cc) in 
       Arg_op (cname, []))
     else get_pargs norm ts rs (CC.normalise ts.cc rep)
   else 
@@ -141,6 +140,45 @@ let rec get_pargs norm ts rs rep : Psyntax.args =
 	     fld) in 
 	a	  
   with Not_found -> Arg_op ("NOT_FOUND", []) 
+
+
+(* Remove pattern match variables from pretty print where possible *)
+let rec get_pargs_norecs norm ts rs rep : Psyntax.args =
+  if List.mem rep rs then 
+    if rep != CC.normalise ts.cc rep then 
+      (* TODO: Add topological sorting to avoid printing this if possible.
+         If not possible should introduce a new variable. *)
+     (let cname = Printf.sprintf "CYCLE%i" (CC.const_int rep ts.cc) in 
+      Arg_op (cname, []))
+    else get_pargs_norecs norm ts rs (CC.normalise ts.cc rep)
+  else 
+  try  
+    let fpt = CMap.find (if norm then (CC.normalise ts.cc rep) else rep) ts.originals in 
+    match fpt with 
+      FArg_var v ->
+	begin 
+	  match v with 
+	    EVar _ -> Arg_var v
+	  | PVar _ -> Arg_var v
+	  | AnyVar _ -> 
+	      let nrep = if local_debug then rep else (CC.normalise ts.cc rep) in 
+	      if nrep <> rep then 
+		get_pargs_norecs norm ts (rep::rs) (CC.normalise ts.cc rep) 
+	      else
+		Arg_var v
+	end
+    | FArg_op (n,ops) -> 
+	Arg_op(n, List.map (get_pargs_norecs true ts (rep::rs)) ops)
+    | FArg_cons (n,ops) ->
+	Arg_cons (n, List.map (get_pargs_norecs true ts (rep::rs)) ops)
+    | FArg_string s ->
+	Arg_string s
+    | FArg_record fld ->
+        (let rname = Printf.sprintf "RECORD%i" (CC.const_int rep ts.cc) in 
+         Arg_op (rname, []))
+  with Not_found -> Arg_op ("NOT_FOUND", []) 
+
+
 
 let pp_c norm ts ppf c : unit =
   try 
@@ -410,17 +448,30 @@ let get_neqs ts : (Psyntax.args * Psyntax.args ) list =
   let map = fun c -> get_pargs false ts [] c in 
   CC.get_neqs mask map ts.cc 
   
+  
+let get_eqs_norecs ts : (Psyntax.args * Psyntax.args ) list = 
+  let mask = has_pp_c ts in 
+  let map = fun c -> get_pargs_norecs false ts [] c in 
+  CC.get_eqs mask map ts.cc 
+
+
+let get_neqs_norecs ts : (Psyntax.args * Psyntax.args ) list = 
+  let mask = has_pp_c ts in 
+  let map = fun c -> get_pargs_norecs false ts [] c in 
+  CC.get_neqs mask map ts.cc 
+  
+  
 let get_args_rep
     (ts : term_structure) 
     : (term_handle * Psyntax.args) list = 
   let mask = has_pp_c ts in 
-  let map = fun c -> (c, get_pargs false ts [] c) in 
+  let map = fun c -> (c, get_pargs_norecs false ts [] c) in 
   CC.get_reps mask map ts.cc
 
 let get_args_all
     (ts : term_structure) 
     : Psyntax.args list = 
-  List.map (get_pargs false ts []) (CC.get_consts ts.cc)
+  List.map (get_pargs_norecs false ts []) (CC.get_consts ts.cc)
 
 let get_term ts r : Psyntax.args = 
   get_pargs true ts [] r
