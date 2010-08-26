@@ -13,7 +13,7 @@
 
 
 {
-open Smtparse        (* The type token is defined in parser.mli *)
+open Smtparse
 }
 
 let  quote = '\''

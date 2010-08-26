@@ -12,12 +12,17 @@
  ********************************************************)
  
 (*
-TODO list: 
+SMT TODO list: 
 
 - mark things that are constructors as such in the term structure; 
   at the moment they're treated as predicates. 
   
-- parse responses from the smt correctly
+- get rid of some of the gratuatous calls to the Format module & 
+  do all the sexp construction through string-catenation 
+  
+- check that the SMT has started correctly; at the moment this is 
+  assumed and a fault is raised only when the prover tries to read 
+  the SMT's output. 
 
 *)
 
@@ -27,7 +32,6 @@ open Cterm
 open Congruence
 open Unix
 open List
-open Backtrack
 open Smtsyntax
 
 exception SMT_error of string
@@ -41,17 +45,15 @@ let smterr = ref Pervasives.stdin;;
 
 let smtout_lex = ref (Lexing.from_string "");; 
 
+
+(* use z3 by default. Can be overridden by the -p command line option *)
 let solver_path = ref "z3";;
 
 
-let smt_init 
-    (path : string) 
-    : unit = 
+let smt_init (path : string) : unit = 
   if !(Debug.debug_ref) then Format.printf "Initialising SMT\n"; 
   let o, i, e = Unix.open_process_full path (environment()) in 
-  smtout := o;
-  smtin := i;
-  smterr := e;
+  smtout := o;  smtin := i;  smterr := e;
   smtout_lex := Lexing.from_channel !smtout; 
   smt_run := true; 
   if !(Debug.debug_ref) then Format.printf "SMT running...\n"
@@ -78,12 +80,7 @@ let rec unzipmerge xs =
 
 let unzip (xs : ('a * 'b) list) : ('a list * 'b list) = 
   fold_right (fun (e1,e2) (l1, l2) -> ((e1::l1),(e2::l2)) ) xs ([],[])
-  
 
-let rec do_n (n : int) (f : unit -> unit) : unit =
-  match n with 
-  | 0 -> () 
-  | n -> f() ; do_n (n-1) f
 
 
 (* concatenate n instances of string s *)
@@ -100,7 +97,7 @@ let rec equiv_partition
     : 'a list list = 
   match xs with 
   | x::xs -> 
-     let (e, xs') = List.partition (eq x) xs in 
+     let (e, xs') = partition (eq x) xs in 
      let eqs = equiv_partition eq xs' in 
      (x::e) :: eqs
   | [] -> []
@@ -111,11 +108,12 @@ let rec list_to_pairs
     (xs : 'a list) 
     : ('a * 'a) list = 
   match xs with 
-  | x::xs -> (List.map (fun y -> (x,y)) xs) @ list_to_pairs xs
+  | x::xs -> (map (fun y -> (x,y)) xs) @ list_to_pairs xs
   | [] -> [] 
 
 
 (* munge out input characters that make z3 die horribly *)
+(* We should probably handle this in a more principled way *)
 
 let cmd_munge (s : string) : string = 
   let s = Str.global_replace (Str.regexp "@") "AT_" s in 
@@ -126,7 +124,7 @@ let str_munge (s : string ) : string =
   let s = Str.global_replace (Str.regexp "[<> @\*]")  "_" s in 
   s
 
-(* Datatype to hold smt type annotations (which btw are essentially guesses) *)
+(* Datatype to hold smt type annotations *)
 
 type smt_type = 
   | SMT_Var of Vars.var
@@ -142,28 +140,19 @@ module SMTTypeSet =
 type smttypeset = SMTTypeSet.t
 
 
-let make_smttype_pred (p : string * Psyntax.args) : smt_type = 
-  match p with s, a -> 
-  let name = String.concat "" ["pred_"; s] in 
-  match a with Arg_op ("tuple",al) -> SMT_Pred(name,(length al))
-
-
 let smt_union_list (l : smttypeset list) : smttypeset = 
   fold_right SMTTypeSet.union l SMTTypeSet.empty        
 
 let rec args_smttype (arg : Psyntax.args) : smttypeset = 
   match arg with
-  | Arg_var v -> SMTTypeSet.add (SMT_Var(v)) SMTTypeSet.empty
+  | Arg_var v -> SMTTypeSet.singleton (SMT_Var(v)) 
   | Arg_string s -> 
-          let name = String.concat "" ["string_const_"; (str_munge s)] in 
-          SMTTypeSet.add (SMT_Op(name, 0)) SMTTypeSet.empty
+          SMTTypeSet.singleton (SMT_Op("string_const_"^(str_munge s), 0))
   | Arg_op ("builtin_plus",_) -> SMTTypeSet.empty
   | Arg_op (name, args) -> 
-          let name = String.concat "" ["op_"; name] in 
-          let s = SMTTypeSet.add (SMT_Op(name, (length args))) SMTTypeSet.empty in 
-          smt_union_list (s::(List.map args_smttype args))
-  | Arg_cons (name, args) -> 
-          smt_union_list (List.map args_smttype args)
+          let s = SMTTypeSet.singleton (SMT_Op(("op_"^name), (length args))) in 
+          smt_union_list (s::(map args_smttype args))
+  | Arg_cons (name, args) -> smt_union_list (map args_smttype args)
   | Arg_record fldlist -> SMTTypeSet.empty
 
 
@@ -172,14 +161,11 @@ let rec args_smttype (arg : Psyntax.args) : smttypeset =
 let rec string_args_sexp ppf arg = 
   match arg with 
   | Arg_var v -> Format.fprintf ppf "%s" (Vars.string_var v)
-  | Arg_string s -> 
-          let name = String.concat "" ["string_const_"; (str_munge s)] in 
-          Format.fprintf ppf "%s" name
-  | Arg_op ("builtin_plus",[a1;a2]) -> Format.fprintf ppf "(+ %a %a)" string_args_sexp a1 string_args_sexp a2
-(*  | Arg_op ("tuple",al) -> Format.fprintf ppf "(%a)" string_args_list al*)
+  | Arg_string s -> Format.fprintf ppf "%s" ("string_const_"^(str_munge s))
+  | Arg_op ("builtin_plus",[a1;a2]) -> 
+          Format.fprintf ppf "(+ %a %a)" string_args_sexp a1 string_args_sexp a2
   | Arg_op (name,args) -> 
-          let name = String.concat "" ["op_"; name] in 
-          Format.fprintf ppf "(%s %a)" name string_args_list_sexp args 
+          Format.fprintf ppf "(%s %a)" ("op_"^name) string_args_list_sexp args 
   | Arg_record _ -> Format.fprintf ppf "" 
 and string_args_list_sexp ppf argsl = 
   match argsl with 
@@ -202,13 +188,13 @@ let string_sexp_neq (a : Psyntax.args * Psyntax.args) : string =
   Format.flush_str_formatter()
 
   
-let string_sexp_pred (p : string * Psyntax.args) : (string * smttypeset)= 
-  match p with s, a -> 
-  let types = args_smttype a in 
-  let types = SMTTypeSet.add (make_smttype_pred p) types in 
-  match a with Arg_op ("tuple",al) ->
-       Format.fprintf Format.str_formatter "(pred_%s %a)"
-             s string_args_list_sexp al; 
+let string_sexp_pred (p : string * Psyntax.args) : (string * smttypeset) = 
+  match p with name, args -> 
+  let name = "pred_"^name in 
+  match args with Arg_op ("tuple",al) ->
+  let types = SMTTypeSet.add (SMT_Pred(name,(length al))) (args_smttype args) in 
+       Format.fprintf Format.str_formatter "(%s %a)"
+             name string_args_list_sexp al; 
        ( Format.flush_str_formatter(), types )
        
 
@@ -225,15 +211,14 @@ let rec string_sexp_form
   let eq_sexp = String.concat " " (map string_sexp_eq eqs) in 
   let neq_sexp = String.concat " " (map string_sexp_eq neqs) in 
   
-  let eq_types = smt_union_list (map args_smttype (unzipmerge (eqs@neqs))) 
-  in 
+  let eq_types = smt_union_list (map args_smttype (unzipmerge (eqs@neqs))) in 
   
   let disj_list, disj_type_list = 
      unzip (map (fun (f1,f2) -> 
                   let f1s, f1v = string_sexp_form ts f1 in 
                   let f2s, f2v = string_sexp_form ts f2 in 
-                  ( String.concat "" ["(or "; f1s; f2s; ")"], 
-                                    SMTTypeSet.union f1v f2v ) ) form.disjuncts) in 
+                  ( "(or " ^ f1s ^ " " ^ f2s ^ ")", 
+                    SMTTypeSet.union f1v f2v ) ) form.disjuncts) in 
   let disj_sexp = String.concat " " disj_list in 
   let disj_types = smt_union_list disj_type_list in 
   
@@ -247,17 +232,15 @@ let rec string_sexp_form
 
   let types = smt_union_list [eq_types; disj_types; plain_types]in 
 
-  let form_sexp = String.concat " " [ "(and true "; 
-                                      eq_sexp; neq_sexp; 
-                                      disj_sexp; plain_sexp; ")" ]  in
+  let form_sexp = "(and true " ^ eq_sexp ^ " " ^ neq_sexp ^ " " ^ 
+                                 disj_sexp ^ " " ^ plain_sexp ^ ")"  in
   (form_sexp, types) 
 
 
 let string_sexp_decl (t : smt_type) : string = 
   ( match t with 
     | SMT_Var v -> Format.fprintf Format.str_formatter 
-                          "(declare-fun %s () Int)\n" 
-                          (Vars.string_var v)
+                          "(declare-fun %s () Int)" (Vars.string_var v)
     | SMT_Pred (s,i) -> Format.fprintf Format.str_formatter
                           "(declare-fun %s (%s) Bool)" s (nstr "Int " i)
     | SMT_Op (s,i) -> Format.fprintf Format.str_formatter
@@ -266,7 +249,7 @@ let string_sexp_decl (t : smt_type) : string =
   Format.flush_str_formatter()
   
 
-(* Main SMT functions *)
+(* Main SMT IO functions *)
 let smt_command 
     (cmd : string) 
     : smt_response = 
@@ -277,39 +260,61 @@ let smt_command
     output_string !smtin "\n"; 
     flush !smtin; 
     let response = Smtparse.main Smtlex.token !smtout_lex in 
-    Lexing.flush_input !smtout_lex; 
+    Lexing.flush_input !smtout_lex; (* not sure why this is necessary *)
     match response with 
     | Error e -> raise (SMT_error e)
     | _ -> response
   with End_of_file -> raise SMT_fatal_error 
-  
-     
+
+
+let smt_assert (ass : string) : unit =
+  match smt_command ("(assert " ^ ass ^ " )") with 
+  | Success -> ()
+  | _ -> raise (SMT_error "Assertion failed!")
+
+
+let smt_check_sat () : bool =
+  match smt_command "(check-sat)" with 
+  | Sat -> true
+  | Unsat -> false
+  | Unknown -> false
+
+
+let smt_check_unsat () : bool =
+  match smt_command "(check-sat)" with 
+  | Unsat -> true
+  | Sat -> false
+  | Unknown -> false
+
 
 let smt_push () : unit = 
-  smt_command "(push)"; 
-  smt_fdepth := (!smt_fdepth + 1)
+  match smt_command "(push)" with 
+  | Success -> smt_fdepth := (!smt_fdepth + 1) 
+  | _ -> raise (SMT_error "Push failed!")
 
   
 let smt_pop () : unit = 
-  smt_command "(pop)";
-  smt_fdepth := (!smt_fdepth - 1) 
+  match smt_command "(pop)" with 
+  | Success -> smt_fdepth := (!smt_fdepth - 1) 
+  | _ -> raise (SMT_error "Pop failed!")
 
 
 let smt_reset () : unit = 
-  let n = !smt_fdepth in do_n n smt_pop
+  let rec do_n (n : int) (f : unit -> unit) : unit =
+     match n with 
+     | 0 -> () 
+     | n -> f() ; do_n (n-1) f
+  in 
+  do_n !smt_fdepth smt_pop; 
+  smt_fdepth := 0
 
 
 (* Check whether two args are equal under the current assumptions *)
 let smt_test_eq (a1 : Psyntax.args) (a2 : Psyntax.args) : bool = 
   smt_push(); 
-  let test_query = String.concat " " ["(assert"; string_sexp_neq (a1,a2); ")"] in 
-  smt_command test_query; 
-  let r = smt_command "(check-sat)" in 
-  smt_pop(); 
-  match r with 
-  | Unsat -> (if !(Debug.debug_ref) then Format.printf "Found new equality\n"; true)
-  | Sat -> false
-    
+  smt_assert (string_sexp_neq (a1,a2)); 
+  let r = smt_check_unsat() in 
+  smt_pop(); r 
 
 
 (* try to establish that the pure parts of a sequent are valid using the SMT solver *)
@@ -340,19 +345,13 @@ let finish_him
     SMTTypeSet.iter (fun x -> smt_command (string_sexp_decl x);()) types; 
 
     (* Construct and run the query *)                    
-    let query = String.concat " " [ "(assert (not (=> (and true "; 
-                                      asm_eq_sexp; asm_neq_sexp; asm_sexp; ") "; 
-                                      obl_sexp; 
-                                     ")))"] 
-    in                         
-    smt_command query;    
+    let query = "(not (=> (and true " ^ asm_eq_sexp ^ " " ^ asm_neq_sexp ^ " " ^ 
+                                        asm_sexp ^ ") " ^ obl_sexp ^ "))" 
+    in smt_assert query;    
                                       
-    let r = smt_command "(check-sat)" in 
-    smt_pop();
     (* check whether the forumula is unsatisfiable *)
-    match r with 
-    | Unsat -> true
-    | Sat -> false
+    let r = smt_check_unsat() in 
+    smt_pop(); r 
   with 
   | SMT_error r -> 
     smt_reset(); 
@@ -397,9 +396,9 @@ let ask_the_audience
     (ts : term_structure)
     (form : formula)
     : term_structure = 
-  if (not !smt_run) then raise No_match 
+  if (not !smt_run) then raise Backtrack.No_match 
   else try 
-    if !(Debug.debug_ref) then Format.printf "[Calling SMT to update congruence closure]\n"; 
+    if !(Debug.debug_ref) then Format.printf "Calling SMT to update congruence closure\n"; 
   
     smt_push(); 
     
@@ -416,36 +415,29 @@ let ask_the_audience
   
     let types = smt_union_list [ts_types; form_types] in 
   
-    (* declare  predicates *)
+    (* declare predicates *)
     SMTTypeSet.iter (fun x -> smt_command (string_sexp_decl x);()) types; 
 
     (* Assert the assumption *)                    
-    let assm_query = String.concat " " [ "(assert (and true "; ts_eq_sexp; 
-                                         ts_neq_sexp; form_sexp; ")) " ] 
-    in smt_command assm_query;    
+    let assm_query = "(and true " ^ ts_eq_sexp ^" "^ ts_neq_sexp ^" "^ form_sexp ^ ")"
+    in smt_assert assm_query;    
 
     (* check for a contradiction *)
     if !(Debug.debug_ref) then Format.printf "[Checking for contradiction in assumption]\n"; 
-    match smt_command "(check-sat)" with 
-    | Unsat -> (if !(Debug.debug_ref) then Format.printf "[SMT found contradiction in assumption]\n"; 
-                smt_reset(); raise Assm_Contradiction)
-    | Sat -> (); 
-
-    (* check whether there are any new equalities to find; otherwise raise No_Match *)
-    if !(Debug.debug_ref) then Format.printf "[Checking whether any new equalities exist]\n"; 
+    if smt_check_unsat() then (smt_reset(); raise Assm_Contradiction);
+    
+    (* check whether there are any new equalities to find; otherwise raise Backtrack.No_match *)
+    if !(Debug.debug_ref) then Format.printf "[Checking for new equalities]\n"; 
     smt_push(); 
     let reps = get_args_rep ts in 
-    let rep_sexps = String.concat " " (List.map (fun (x,y) -> string_sexp_neq (snd x,snd y)) 
+    let rep_sexps = String.concat " " (map (fun (x,y) -> string_sexp_neq (snd x,snd y)) 
                                                 (list_to_pairs reps) )
     in 
-    smt_command (String.concat " " [ "(assert (and true "; rep_sexps; "))"]); 
-    match smt_command "(check-sat)"  with 
-    | Sat -> (smt_reset(); raise No_match) 
-    | Unsat -> (); 
+    smt_assert ( "(and true " ^ rep_sexps ^ " )" ); 
+    if smt_check_sat() then (smt_reset(); raise Backtrack.No_match); 
     smt_pop(); 
 
     (* Update the term structure using the new equalities *)  
-    if !(Debug.debug_ref) then Format.printf "[Identifying new equalities]\n"; 
     let req_equiv = map (map fst)
                         (equiv_partition (fun x y -> smt_test_eq (snd x) (snd y)) reps) 
     in 
@@ -456,8 +448,8 @@ let ask_the_audience
     smt_reset(); 
     System.warning(); Format.printf "SMT error: %s\n" r; System.reset(); 
     Format.print_flush(); 
-    raise No_match
+    raise Backtrack.No_match
   | SMT_fatal_error -> 
     smt_fatal_recover(); 
-    raise No_match
+    raise Backtrack.No_match
   
