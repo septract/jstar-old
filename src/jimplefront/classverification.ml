@@ -42,7 +42,7 @@ let verify_exports_implications implications logic_with_where_pred_defs =
 	) implications
 
 (* Check both proof obligations (Implication and Parent consistency) for each axiom in 'implications'. *)
-let verify_axioms_implications class_name jimple_file implications axiom_map logic =
+let verify_axioms_implications class_name jimple_file implications axiom_map (logic : logic) =
 	let abstract_class_or_interface = is_class_abstract jimple_file || is_interface jimple_file in
 	let parents = parent_classes_and_interfaces jimple_file in
 	let conjunct = Jlogic.mk_type (Arg_var Support_syntax.this_var) class_name in 
@@ -86,7 +86,7 @@ let verify_methods
 		(static_method_specs : Javaspecs.methodSpecs)
 		(dynamic_method_specs : Javaspecs.methodSpecs)
 		(logic : logic)
-		(abslogic : logic) =
+		(abslogic : logic) : unit =
 	let Jimple_global_types.JFile(_,_,class_name,_,_,_) = jimple_file in
 	let parents = parent_classes_and_interfaces jimple_file in
 	let static_specs = MethodMap.fold (fun (cn,a,b,c) spec list -> if cn=class_name then ((cn,a,b,c),spec)::list else list) static_method_specs [] in

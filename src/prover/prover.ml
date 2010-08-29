@@ -74,7 +74,7 @@ let rec sequents_backtrack  f (seqss : Clogic.sequent list list) xs
 	  Format.fprintf !dump "Backtracking!@\n"; sequents_backtrack f seqss (x @ xs)
 
 let apply_rule_list 
-    logic 
+    (logic : logic) 
     (sequents : Clogic.sequent list) 
     (must_finish : Clogic.sequent -> bool) 
     (may_finish : Clogic.sequent -> bool) 
@@ -82,7 +82,7 @@ let apply_rule_list
     =
 (* Clear pretty print buffer *)
   Buffer.clear buffer_dump;
-  let rules,rwm,ep = logic in 
+(*  let rules,rwm,ep = logic in *)
   let n = 0 in
   if true || !(Debug.debug_ref) then
     (List.iter (fun seq -> Format.fprintf !dump "Goal@ %a@\n@\n" Clogic.pp_sequent seq) sequents;
@@ -91,17 +91,17 @@ let apply_rule_list
     let search seqss = 
       sequents_backtrack 
 	(fun seqs->apply_rule_list_inner seqs (n+1)) seqss [] in
-    let sequents = map_option (Clogic.simplify_sequent rwm) sequents in 
+    let sequents = map_option (Clogic.simplify_sequent logic.rw_rules) sequents in 
   (* Apply rules lots *)
     List.flatten 
       (List.map 
 	 (fun seq ->
-	   Format.fprintf !dump "%s>@[%a@]@\n@." (String.make n '-') Clogic.pp_sequent  seq;
+	   Format.fprintf !dump "%s>@[%a@]@\n@." (String.make n '-') Clogic.pp_sequent seq;
 	   if must_finish seq then 
 	     [seq]
 	   else 
 	   try 
-	     search (apply_rule_list_once rules seq ep)
+	     search (apply_rule_list_once logic.seq_rules seq logic.ext_prover)
 	   with No_match -> 
 	     (* Do expensive rewrites and try again *)
 (*	     let seq = rewrites_sequent rwm ep abs true seq in *)
@@ -124,14 +124,14 @@ let apply_rule_list
   in let res = apply_rule_list_inner sequents n in 
   if true || !(Debug.debug_ref) then Format.fprintf !dump "End time :%f @\n@?" (Sys.time ()); res
 
-let check_imp logic seq = 
+let check_imp (logic : logic) (seq : sequent) : bool = 
     try 
       ignore (apply_rule_list logic [seq] Clogic.true_sequent Clogic.true_sequent); true
     with  
       Failed -> false
     | Failed_eg x -> prover_counter_example := x ; false
 
-let check_frm logic seq =
+let check_frm (logic : logic) (seq : sequent) : Clogic.ts_formula list option =
   try
     let leaves = apply_rule_list logic [seq] (fun _ -> false) Clogic.frame_sequent in 
     Some (Clogic.get_frames leaves)
@@ -144,7 +144,10 @@ let check_implication_frame_pform logic heap pheap  =
   check_frm logic (Clogic.make_implies heap pheap)
 
 
-let check_implication_pform logic heap pheap  =  
+let check_implication_pform 
+    (logic : logic) 
+    (heap : ts_formula) 
+    (pheap : pform) : bool =  
   check_imp logic (Clogic.make_implies heap pheap)
 
 

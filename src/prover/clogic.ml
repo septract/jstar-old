@@ -966,7 +966,7 @@ let convert_with_eqs fresh pform =
 let convert fresh ts pform = 
   convert_without_eqs fresh  ts (convert_to_inner pform)
 
-let make_implies heap pheap = 
+let make_implies (heap : ts_formula) (pheap : pform) : sequent = 
   let ts,form = break_ts_form heap in 
   let rh,ts = convert false ts pheap in  
   {ts = ts;

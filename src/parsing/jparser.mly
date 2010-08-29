@@ -243,6 +243,7 @@ let field_signature2str fs =
 %token INCONSISTENCY
 %token RULE
 %token PURERULE
+%token CONSTRUCTOR
 %token PRED
 %token REWRITERULE
 %token EMPRULE
@@ -1031,7 +1032,7 @@ equiv_rule:
    | EQUIV identifier_op COLON formula BIMP formula without_simp  { EquivRule($2,mkEmpty,$4,$6,$7) } 
 
 rule:
-   | IMPORT STRING_CONSTANT SEMICOLON { ImportEntry($2) }
+   |  IMPORT STRING_CONSTANT SEMICOLON { ImportEntry($2) }
    |  RULE identifier_op COLON sequent without where IF sequent_list_or_list { NormalEntry(SeqRule($4,$8,$2,$5,$6)) }
    |  REWRITERULE identifier_op COLON identifier L_PAREN jargument_list R_PAREN EQUALS jargument ifclause without_simp where 
 	 { NormalEntry(RewriteRule({function_name=$4;

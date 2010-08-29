@@ -11,6 +11,7 @@
       LICENSE.txt
  ********************************************************)
 open Load_logic
+open Psyntax
 
 let program_file_name = ref "";;
 let logic_file_name = ref "";;
@@ -51,7 +52,7 @@ let main () =
   else 
     let rl = if !inductive_file_name <> "" then Inductive.convert_inductive_file !inductive_file_name else [] in
     let l1,l2 = load_logic_extra_rules (System.getenv_dirlist "JSTAR_LOGIC_LIBRARY") !logic_file_name rl in
-    let logic = l1,l2, Psyntax.default_pure_prover in
+    let logic = { seq_rules = l1; rw_rules=l2; ext_prover = Psyntax.default_pure_prover;} in
     let s = System.string_of_file !program_file_name  in
     if !(Debug.debug_ref) then Format.printf "Start parsing tests in %s...@\n" !program_file_name;
     let test_list  = Jparser.test_file Jlexer.token (Lexing.from_string s) 
