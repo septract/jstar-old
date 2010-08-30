@@ -238,14 +238,15 @@ let rec string_sexp_form
 
 
 let string_sexp_decl (t : smt_type) : string = 
-  ( match t with 
+  begin 
+    match t with 
     | SMT_Var v -> Format.fprintf Format.str_formatter 
                           "(declare-fun %s () Int)" (Vars.string_var v)
     | SMT_Pred (s,i) -> Format.fprintf Format.str_formatter
                           "(declare-fun %s (%s) Bool)" s (nstr "Int " i)
     | SMT_Op (s,i) -> Format.fprintf Format.str_formatter
                           "(declare-fun %s (%s) Int)" s (nstr "Int " i)
-  ); 
+  end; 
   Format.flush_str_formatter()
   
 
