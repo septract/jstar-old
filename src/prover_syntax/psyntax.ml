@@ -525,7 +525,7 @@ let expand_equiv_rules rules =
 	      list
 	  else
 	    list
-    | SeqRule _ | RewriteRule _ -> x::list
+    | SeqRule _ | RewriteRule _ | ConsDecl _ -> x::list
   in
   List.fold_right equiv_rule_to_seq_rule rules []
 
@@ -708,12 +708,14 @@ type logic = {
   seq_rules : sequent_rule list;
   rw_rules : rewrite_rule list; 
   ext_prover : external_prover; 
+  consdecl : string list;
 }
 
 let empty_logic : logic = {
   seq_rules = [];
   rw_rules = [];
   ext_prover = default_pure_prover; 
+  consdecl = []
 }
 
 let pprint_sequent_rules logic =

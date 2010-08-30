@@ -138,12 +138,12 @@ let main () =
 	 (fun s ->  Sys.set_signal s (Sys.Signal_handle (fun x -> Symexec.pp_dotty_transition_system (); exit x)))
         signals;
        try 
-	 let l1,l2 = Load_logic.load_logic  (System.getenv_dirlist "JSTAR_LOGIC_LIBRARY") !logic_file_name
+	 let l1,l2,cn = Load_logic.load_logic  (System.getenv_dirlist "JSTAR_LOGIC_LIBRARY") !logic_file_name
 	 in 
-	 let logic = {empty_logic with seq_rules = l1; rw_rules = l2} in 
+	 let logic = {empty_logic with seq_rules = l1; rw_rules = l2; consdecl = cn} in 
 	
-	 let l1,l2 = Load_logic.load_logic  (System.getenv_dirlist "JSTAR_LOGIC_LIBRARY") !absrules_file_name in 
-	 let abs_rules = {empty_logic with seq_rules = l1; rw_rules = l2} in
+	 let l1,l2,cn = Load_logic.load_logic  (System.getenv_dirlist "JSTAR_LOGIC_LIBRARY") !absrules_file_name in 
+	 let abs_rules = {empty_logic with seq_rules = l1; rw_rules = l2; consdecl = cn} in
 	 
 	 let spec_list : (Spec_def.class_spec list) = Load.import_flatten 
 	     (System.getenv_dirlist "JSTAR_SPECS_LIBRARY")

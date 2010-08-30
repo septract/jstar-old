@@ -45,8 +45,8 @@ let main () =
   else if !logic_file_name="" then
     Printf.printf "Logic file name not specified. Can't continue....\n %s \n" usage_msg
   else 
-    let l1,l2 = (load_logic (System.getenv_dirlist "JSTAR_LOGIC_LIBRARY") !logic_file_name) in 
-    let logic = {empty_logic with seq_rules = l1; rw_rules=l2} in
+    let l1,l2,cn = (load_logic (System.getenv_dirlist "JSTAR_LOGIC_LIBRARY") !logic_file_name) in 
+    let logic = {empty_logic with seq_rules = l1; rw_rules=l2; consdecl = cn} in
 (*    let s = System.string_of_file !program_file_name  in*)
     let question_list = System.parse_file Jparser.question_file Jlexer.token !program_file_name "Questions" true in
 

@@ -126,6 +126,8 @@ let apply_rule_list
 
 let check_imp (logic : logic) (seq : sequent) : bool = 
     try 
+      let ts = List.fold_right Cterm.add_constructor logic.consdecl seq.ts in 
+      let seq = {seq with ts = ts} in 
       ignore (apply_rule_list logic [seq] Clogic.true_sequent Clogic.true_sequent); true
     with  
       Failed -> false
@@ -133,6 +135,8 @@ let check_imp (logic : logic) (seq : sequent) : bool =
 
 let check_frm (logic : logic) (seq : sequent) : Clogic.ts_formula list option =
   try
+    let ts = List.fold_right Cterm.add_constructor logic.consdecl seq.ts in 
+    let seq = {seq with ts = ts} in 
     let leaves = apply_rule_list logic [seq] (fun _ -> false) Clogic.frame_sequent in 
     Some (Clogic.get_frames leaves)
   with 
