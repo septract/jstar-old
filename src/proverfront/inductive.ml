@@ -70,10 +70,10 @@ let rec convert_inddefs = function
 
 let convert_inductive_file filename =
     let l = string_of_file filename in 
-    if !(Debug.debug_ref) then Printf.printf "Start parsing inductive definitions in %s...\n" filename;
+    if Config.parse_debug() then Printf.printf "Start parsing inductive definitions in %s...\n" filename;
     let inductive_list  = Jparser.inductive_file Jlexer.token (Lexing.from_string l) in 
     let inductive_rules = convert_inddefs inductive_list in
-    if !(Debug.debug_ref) then Printf.printf "Parsed %s!\n" filename;
-    if !(Debug.debug_ref) then List.iter print_inddef inductive_list;
-    if !(Debug.debug_ref) then List.iter print_inductive_rule inductive_rules;
+    if Config.parse_debug() then Printf.printf "Parsed %s!\n" filename;
+    if Config.parse_debug() then List.iter print_inddef inductive_list;
+    if Config.parse_debug() then List.iter print_inductive_rule inductive_rules;
     inductive_rules

@@ -936,7 +936,7 @@ formula:
        {if List.length $3 =1 then [P_SPred($1,$3 @ [mkArgRecord []])] else [P_SPred($1,$3)] }
    | full_identifier L_PAREN jargument_list R_PAREN {if List.length $3 =1 then [P_SPred($1,$3 @ [mkArgRecord []])] else [P_SPred($1,$3)] }
    | formula MULT formula { pconjunction $1 $3 }
-   | formula OR formula { if Config.symb_debug() then parse_warning "deprecated use of |"  ; pconjunction (purify $1) $3 }
+   | formula OR formula { if Config.parse_debug() then parse_warning "deprecated use of |"  ; pconjunction (purify $1) $3 }
    | formula OROR formula { mkOr ($1,$3) }
    | lvariable COLON identifier { [P_PPred("type", [Arg_var($1);Arg_string($3)])] }
    | jargument binop_cmp jargument { Support_syntax.bop_to_prover_pred $2 $1 $3 }
@@ -954,7 +954,7 @@ formula_npv:
        {if List.length $3 =1 then [P_SPred($1,$3 @ [mkArgRecord []])] else [P_SPred($1,$3)] }
    | full_identifier L_PAREN jargument_list_npv R_PAREN {if List.length $3 =1 then [P_SPred($1,$3 @ [mkArgRecord []])] else [P_SPred($1,$3)] }
    | formula_npv MULT formula_npv { pconjunction $1 $3 }
-   | formula_npv OR formula_npv { if Config.symb_debug() then parse_warning "deprecated use of |"  ; pconjunction (purify $1) $3 }
+   | formula_npv OR formula_npv { if Config.parse_debug() then parse_warning "deprecated use of |"  ; pconjunction (purify $1) $3 }
    | formula_npv OROR formula_npv { mkOr ($1,$3) }
    | lvariable_npv COLON identifier { [P_PPred("type", [Arg_var $1;Arg_string($3)])] }
    | jargument_npv binop_cmp jargument_npv { Support_syntax.bop_to_prover_pred $2 $1 $3 }
@@ -980,7 +980,7 @@ spatial_list:
 sequent:
    | spatial_list OR formula VDASH formula { ($1,$3,$5) }
 /* used as the collapse form is || is a reserved token */
-   | spatial_list OROR formula VDASH formula {  if Config.symb_debug() then parse_warning "deprecated use of |" ; ($1,$3,$5) }
+   | spatial_list OROR formula VDASH formula {  if Config.parse_debug() then parse_warning "deprecated use of |" ; ($1,$3,$5) }
 
 sequent_list:
    |  /* empty */ { [] }

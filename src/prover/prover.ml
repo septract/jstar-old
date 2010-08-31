@@ -69,9 +69,9 @@ let rec sequents_backtrack  f (seqss : Clogic.sequent list list) xs
       try f seqs 
       with 
 	Failed ->  
-	  Format.fprintf !dump "Backtracking!@\n"; sequents_backtrack f seqss xs
+	  Format.fprintf !proof_dump "Backtracking!@\n"; sequents_backtrack f seqss xs
       | Failed_eg x -> 
-	  Format.fprintf !dump "Backtracking!@\n"; sequents_backtrack f seqss (x @ xs)
+	  Format.fprintf !proof_dump "Backtracking!@\n"; sequents_backtrack f seqss (x @ xs)
 
 let apply_rule_list 
     (logic : logic) 
@@ -84,9 +84,9 @@ let apply_rule_list
   Buffer.clear buffer_dump;
 (*  let rules,rwm,ep = logic in *)
   let n = 0 in
-  if true || !(Debug.debug_ref) then
-    (List.iter (fun seq -> Format.fprintf !dump "Goal@ %a@\n@\n" Clogic.pp_sequent seq) sequents;
-     Format.fprintf !dump "Start time :%f @\n" (Sys.time ()));
+  if true || Config.verb_proof()  then
+    (List.iter (fun seq -> Format.fprintf !proof_dump "Goal@ %a@\n@\n" Clogic.pp_sequent seq) sequents;
+     Format.fprintf !proof_dump "Start time :%f @\n" (Sys.time ()));
   let rec apply_rule_list_inner sequents n : Clogic.sequent list = 
     let search seqss = 
       sequents_backtrack 
@@ -96,7 +96,7 @@ let apply_rule_list
     List.flatten 
       (List.map 
 	 (fun seq ->
-	   Format.fprintf !dump "%s>@[%a@]@\n@." (String.make n '-') Clogic.pp_sequent seq;
+	   Format.fprintf !proof_dump "%s>@[%a@]@\n@." (String.make n '-') Clogic.pp_sequent seq;
 	   if must_finish seq then 
 	     [seq]
 	   else 
@@ -122,7 +122,7 @@ let apply_rule_list
 	 ) sequents 
       )
   in let res = apply_rule_list_inner sequents n in 
-  if true || !(Debug.debug_ref) then Format.fprintf !dump "End time :%f @\n@?" (Sys.time ()); res
+  if true || Config.verb_proof()  then Format.fprintf !proof_dump "End time :%f @\n@?" (Sys.time ()); res
 
 let check_imp (logic : logic) (seq : sequent) : bool = 
     try 
@@ -140,8 +140,8 @@ let check_frm (logic : logic) (seq : sequent) : Clogic.ts_formula list option =
     let leaves = apply_rule_list logic [seq] (fun _ -> false) Clogic.frame_sequent in 
     Some (Clogic.get_frames leaves)
   with 
-    Failed -> Format.fprintf !(Debug.dump) "Foo55";None 
-  | Failed_eg x -> Format.fprintf !(Debug.dump) "Foo44"; prover_counter_example := x; None 
+    Failed -> Format.fprintf !(Debug.proof_dump) "Foo55";None 
+  | Failed_eg x -> Format.fprintf !(Debug.proof_dump) "Foo44"; prover_counter_example := x; None 
 
 
 let check_implication_frame_pform logic heap pheap  =  

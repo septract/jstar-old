@@ -34,11 +34,6 @@ let set_program_file_name n =
   program_file_name := n ;
   Support_symex.file := Filename.basename n
 
-let set_verbose () = 
-  Config.verbose := true 
-
-let set_quiet () =
-  Config.sym_debug := false
 
 let set_specs_template_mode () = 
   Config.specs_template_mode := true 
@@ -50,11 +45,10 @@ let set_grouped () =
   Symexec.set_group true
   
 let set_eclipse () =
-   Config.eclipse := true
+   Config.eclipse_ref := true
 
-let arg_list =[ 
-("-v", Arg.Unit(set_verbose ), "run in verbose mode" );
-("-q", Arg.Unit(set_quiet ), "run in quiet mode" );
+let arg_list = Config.args_default @ 
+[ 
 ("-e", Arg.Unit(set_eclipse), "run in eclipse");
 ("-template", Arg.Unit(set_specs_template_mode ), "create empty specs template" );
 ("-f", Arg.String(set_program_file_name ), "program file name" );
@@ -114,7 +108,6 @@ let parse_program () =
 let main () =
   let usage_msg="Usage: -l <logic_file_name>  -a <abstraction_file_name>  -s <spec_file_name>  -f <class_file_program>" in 
   Arg.parse arg_list (fun s ->()) usage_msg;
-  Debug.debug_ref:=!Config.verbose;
 
   if !program_file_name="" then
     Printf.printf "Program file name not specified. Can't continue....\n %s \n" usage_msg

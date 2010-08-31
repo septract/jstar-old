@@ -733,7 +733,7 @@ module PersistentCC ( A : GrowablePersistentArray) : PCC =
       ts
 
     let make_constructor (ts : t) (a : constant) : t = 
-      assert (A.get ts.constructor (rep ts a) = Not);  (* FIXME: is this needed? *)
+      (*assert (A.get ts.constructor (rep ts a) = Not);*)  (* FIXME: is this needed? *)
       let ts = {ts with constructor = A.set ts.constructor (rep ts a) Self} in
       let ts,p = make_uses_constructor a (ts,[]) in 
       propogate ts p 
