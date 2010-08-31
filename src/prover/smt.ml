@@ -70,18 +70,6 @@ let smt_fatal_recover () : unit  =
   smt_run := false 
 
 
-(* Some helper functions *)
-
-let rec unzipmerge xs = 
-  match xs with 
-  | [] -> []
-  | ((a,b)::xs) -> a::b::(unzipmerge xs)
-
-
-let unzip (xs : ('a * 'b) list) : ('a list * 'b list) = 
-  fold_right (fun (e1,e2) (l1, l2) -> ((e1::l1),(e2::l2)) ) xs ([],[])
-
-
 
 (* concatenate n instances of string s *)
 let rec nstr (s : string) (n : int) : string =
@@ -211,10 +199,11 @@ let rec string_sexp_form
   let eq_sexp = String.concat " " (map string_sexp_eq eqs) in 
   let neq_sexp = String.concat " " (map string_sexp_eq neqs) in 
   
-  let eq_types = smt_union_list (map args_smttype (unzipmerge (eqs@neqs))) in 
+  let eqneqs = (let a,b = split (eqs@neqs) in a@b) in 
+  let eq_types = smt_union_list (map args_smttype eqneqs) in 
   
   let disj_list, disj_type_list = 
-     unzip (map (fun (f1,f2) -> 
+     split (map (fun (f1,f2) -> 
                   let f1s, f1v = string_sexp_form ts f1 in 
                   let f2s, f2v = string_sexp_form ts f2 in 
                   ( "(or " ^ f1s ^ " " ^ f2s ^ ")", 
@@ -223,7 +212,7 @@ let rec string_sexp_form
   let disj_types = smt_union_list disj_type_list in 
   
   let plain_list, plain_type_list = 
-     unzip ( map string_sexp_pred
+     split ( map string_sexp_pred
             ( RMSet.map_to_list form.plain 
             (fun (s,r) -> (s, get_pargs_norecs false ts [] r)))) in 
   let plain_sexp = String.concat " " plain_list in 

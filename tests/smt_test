@@ -1,0 +1,3 @@
+Implication: 
+  (a + b) != (b + a) |-  !p(d)
+? True
