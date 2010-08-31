@@ -25,11 +25,6 @@ let symb_debug() = !symb_debug_ref
 let eclipse_ref = ref false
 let eclipse_mode() = !eclipse_ref
 
-(*
-let debug_ref = ref false
-let debug() = !debug_ref
-*)
-
 let verb_proof_ref = ref false
 let verb_proof() = !verb_proof_ref
 

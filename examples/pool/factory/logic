@@ -2,14 +2,14 @@ import "field_logic";
 
 
 rule ls_val_exists :
-| | ls(?x,?y,?v) |- | ls(?x,?y,?v2)
+| ls(?x,?y,?v) |- ls(?x,?y,?v2)
 if
-ls(?x,?y,?v) | | |- ?v2=?v| 
+ls(?x,?y,?v) | |- ?v2=?v 
 
 rule ls_tail_exists :
-| | ls(?x,?y,?v) |- | ls(?x,?y2,?v)
+| ls(?x,?y,?v) |- ls(?x,?y2,?v)
 if
-ls(?x,?y,?v) | | |- ?y2=?y |
+ls(?x,?y,?v) | |- ?y2=?y
 
 
 
@@ -32,13 +32,13 @@ rewrite union_add_2 :
 union(?z,add(?x,?y)) = add(?x,union(?z,?y))
 
 rule setof :
-| | |- setof(?x) = setof(?y) |
+| |- setof(?x) = setof(?y)
 without 
  ?x=?y |- ?x!=?y
 if
-| | |- ?x=?y |
+| |- ?x=?y
 or
-| | |- setof(?x) = setof(?y) * ?x!=?y |
+| |- setof(?x) = setof(?y) * ?x!=?y
 
 
 
@@ -47,39 +47,39 @@ or
 ********************************/
 
 rule iterresleft_add:
-| | IterRes(add(?x,?y),?z,?t) |- |
+| IterRes(add(?x,?y),?z,?t) |-
 if
-| | IterRes(?y,?z,?t) * Resource(?z,{handle=?x; type = ?t}) |- |
+| IterRes(?y,?z,?t) * Resource(?z,{handle=?x; type = ?t}) |-
 
 rule iterresright_add:
-| | |- | IterRes(add(?x,?y),?z,?t)
+| |- IterRes(add(?x,?y),?z,?t)
 if
-| | |- | IterRes(?y,?z,?t) * Resource(?z,{handle=?x; type = ?t}) 
+| |- IterRes(?y,?z,?t) * Resource(?z,{handle=?x; type = ?t}) 
 
 rule iterresleft_union:
-| | IterRes(union(?x,?y),?z,?t) |- |
+| IterRes(union(?x,?y),?z,?t) |-
 if
-| | IterRes(?y,?z,?t) * IterRes(?x,?z,?t) |- |
+| IterRes(?y,?z,?t) * IterRes(?x,?z,?t) |-
 
 rule iterresright_union:
-| | |- | IterRes(union(?x,?y),?z,?t) 
+| |- IterRes(union(?x,?y),?z,?t) 
 if
-| | |- | IterRes(?y,?z,?t) * IterRes(?x,?z,?t) 
+| |- IterRes(?y,?z,?t) * IterRes(?x,?z,?t) 
 
 rule iterresright_empty:
-| | |- | IterRes(empty(),?z,?t) 
+| |- IterRes(empty(),?z,?t) 
 if
-| | |- | 
+| |- 
 
 rule iterresleft_empty:
-| | IterRes(empty(),?z,?t) |- | 
+| IterRes(empty(),?z,?t) |- 
 if
-| | |- | 
+| |- 
 
 rule iterres_elim:
-| | IterRes(?x,?z,?t) |- | IterRes(?x,?z2,?t2) 
+| IterRes(?x,?z,?t) |- IterRes(?x,?z2,?t2) 
 if
-IterRes(?x,?z,?t) | | |- ?z=?z2 * ?t=?t2| 
+IterRes(?x,?z,?t) | |- ?z=?z2 * ?t=?t2 
 
 
 
@@ -88,6 +88,6 @@ IterRes(?x,?z,?t) | | |- ?z=?z2 * ?t=?t2|
 //Some hacks
 
 rule ResourceFactory :
-  | | ResourceFactory(?x,?y) |- | ResourceFactory(?x,?z)
+  | ResourceFactory(?x,?y) |- ResourceFactory(?x,?z)
 if
- ResourceFactory(?x,?y) | |  |- ?y=?z| 
+ ResourceFactory(?x,?y) | |- ?y=?z 

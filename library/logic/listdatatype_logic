@@ -28,26 +28,26 @@ rewrite app_nil2:
  ***********************************/
 
 rule app_is_emp_left : 
-     | app(?x,?y) = empty() | |- | 
+     | app(?x,?y) = empty() |- 
 without
   ?x = empty()
 if
-     | ?x = empty() * ?y = empty() | |- | 
+     | ?x = empty() * ?y = empty() |- 
 
 rule app_is_emp_right : 
-     | | |- app(?x,?y) = empty() | 
+     | |- app(?x,?y) = empty() 
 without
  ?x = empty() * ?y = empty() |-
 if
-     | | |- ?x = empty() * ?y = empty() |
+     | |- ?x = empty() * ?y = empty() 
 
 rule app_neq_emp_left : 
-     | app(?x,?y) != empty() | |- | 
+     | app(?x,?y) != empty() |- 
 if
-     | | (?x != empty()|) || (?y != empty() | )  |- | 
+     | ?x != empty() || ?y != empty() |- 
 
 
 rule app_neq_emp_right : 
-     | | |- app(?x,?y) != empty() | 
+     | |- app(?x,?y) != empty() 
 if
-     | | |- | (?x != empty() |) || (?y != empty() | ) 
+     | |- ?x != empty() || ?y != empty()  
