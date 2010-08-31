@@ -20,7 +20,6 @@ open Spec
 open Cfg_core
 open Specification
 open Methdec_core
-open Lexing
 (* global variables *)
 
 let curr_logic : Psyntax.logic ref = ref Psyntax.empty_logic
@@ -301,7 +300,7 @@ let call_jsr_static (sheap,id) spec il node =
 	Format.printf "\n\nERROR: %s :\n   %a\n"  
       error_text
 	  Pprinter_core.pp_stmt_core node.skind; 
-      Printing.printf (Some node.sid) error_text;
+      Printing.eclipse_print (Some node.sid) error_text;
       
 	Sepprover.print_counter_example ();
 	System.reset(); 
@@ -336,7 +335,7 @@ let check_postcondition heaps sheap =
     let error_text = "cannot prove post" in 
     let _= Printf.printf "\n\nERROR: %s\n" error_text  in
     Sepprover.print_counter_example ();
-    Printing.printf (Some node_cfg_sid) error_text;
+    Printing.eclipse_print (Some node_cfg_sid) error_text;
     System.reset();
     List.iter (fun heap -> 
                  let form = Sepprover.convert (fst heap) in 
@@ -584,7 +583,7 @@ let check_and_get_frame (heap,id) sheap =
                  let error_text = "cannot prove frame for old expression" in
                  let _= Printf.printf "\n\nERROR: %s\n" error_text in 
                  Sepprover.print_counter_example ();
-                 Printing.printf (Some node_cfg_sid) error_text;
+                 Printing.eclipse_print (Some node_cfg_sid) error_text;
                  System.reset();
                  let idd = add_error_heap_node heap in 
 		 add_edge_with_proof (snd sheap) idd 

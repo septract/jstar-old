@@ -378,7 +378,7 @@ let is_method_abstract (method_signature : method_signature) spec_list =
 	try
 		let _ = List.find (fun ms ->
 			match ms with
-				| Spec_def.Static ((_,ty,mn,ps),_) -> ty=rt && mn=name && ps=params
+                | Spec_def.Static ((_,ty,mn,ps),_,_) -> ty=rt && mn=name && ps=params
 				| _ -> false
 		) cs.methodspecs in
 		false
@@ -386,7 +386,7 @@ let is_method_abstract (method_signature : method_signature) spec_list =
 		try
 			let _ = List.find (fun ms ->
 				match ms with
-					| Spec_def.Dynamic ((mods,ty,mn,ps),_) -> ty=rt && mn=name && ps=params && List.mem Jparsetree.Abstract mods
+					| Spec_def.Dynamic ((mods,ty,mn,ps),_,_) -> ty=rt && mn=name && ps=params && List.mem Jparsetree.Abstract mods
 					| _ -> false
 			) cs.methodspecs in
 			true
@@ -404,7 +404,7 @@ module MethodSet =
     let compare = compare
   end)
 
-type methodSpecs = spec MethodMap.t
+type methodSpecs = (spec * Printing.source_pos_tag option) MethodMap.t
 
 let emptyMSpecs : methodSpecs = MethodMap.empty
 let addMSpecs msig spec mmap : methodSpecs = MethodMap.add msig spec mmap
@@ -422,15 +422,15 @@ let class_spec_to_ms cs (smmap,dmmap) =
     (fun (smmap,dmmap) pre_spec
       -> 
 	match pre_spec with 
-	  Dynamic (ms,spec) -> 
+	  Dynamic (ms,spec,pos) -> 
 	    (match ms with 
 	      (mods,a,b,c) -> 
-		(smmap,addMSpecs (cn,a,b,c) (spec_list_to_spec spec) dmmap)
+		(smmap,addMSpecs (cn,a,b,c) ((spec_list_to_spec spec),pos) dmmap)
 	    )
-	| Spec_def.Static (ms,spec) -> 
+   | Spec_def.Static (ms,spec,pos) -> 
 	    (match ms with 
 	      (mods,a,b,c) -> 
-		(addMSpecs (cn,a,b,c) (spec_list_to_spec spec) smmap,dmmap)
+		(addMSpecs (cn,a,b,c) ((spec_list_to_spec spec),pos) smmap,dmmap)
 	    )
     ) 
     (smmap,dmmap) cs.methodspecs 
@@ -506,14 +506,14 @@ let fix_spec_inheritance_gaps classes mmap spec_file exclude_function spec_type 
 	let rec propagate_specs cn specs_parents =
 		match specs_parents with
 			| [] -> ()
-			| (rt,name,params,spec)::others ->
-					let samesig,othersigs = List.partition (fun (a,b,c,d) -> rt=a && name=b && params=c) ((rt,name,params,spec)::others) in
+			| (rt,name,params,spec,pos)::others ->
+					let samesig,othersigs = List.partition (fun (a,b,c,d,e) -> rt=a && name=b && params=c) ((rt,name,params,spec,pos)::others) in
 					let msig = (cn,rt,name,params) in
 					let _ = if MethodMap.mem msig (!mmapr) || Jparsetree.constructor name || exclude_function msig then
 										()
 									else
 										if same_elements samesig then
-											mmapr := MethodMap.add msig spec (!mmapr)
+											mmapr := MethodMap.add msig (spec,pos) (!mmapr)
 										else
 											(warning(); if Config.symb_debug() then Printf.printf "\n\nThere is no %s spec listed for %s, and its parents do not agree on one!\n" spec_type (Pprinter.signature2str (Method_signature msig)); reset();)
 					in
@@ -524,7 +524,7 @@ let fix_spec_inheritance_gaps classes mmap spec_file exclude_function spec_type 
 			| [] -> ()
 			| cn :: classes ->
 					let parents = parent_classes_and_interfaces cn spec_file in
-					let specs_parents = MethodMap.fold (fun (classname,a,b,c) spec list -> if List.mem classname parents then (a,b,c,spec)::list else list) (!mmapr) [] in
+					let specs_parents = MethodMap.fold (fun (classname,a,b,c) (spec,pos) list -> if List.mem classname parents then (a,b,c,spec,pos)::list else list) (!mmapr) [] in
 					let _ = propagate_specs cn specs_parents in  
 					fix_inner classes
 	in
@@ -536,15 +536,15 @@ let fix_gaps (smmap,dmmap) spec_file =
   let dmmapr = ref dmmap in 
   let smmapr = ref smmap in 
   let _ = MethodMap.iter 
-      (fun key spec -> 
-	if MethodMap.mem key (!dmmapr) then () else dmmapr := MethodMap.add key (static_to_dynamic spec) (!dmmapr)
+      (fun key (spec,pos) -> 
+	if MethodMap.mem key (!dmmapr) then () else dmmapr := MethodMap.add key ((static_to_dynamic spec),pos) (!dmmapr)
       ) smmap in
   let _ = MethodMap.iter 
-      (fun (cn,a,b,c) spec -> 
+      (fun (cn,a,b,c) (spec,pos) -> 
 	if MethodMap.mem (cn,a,b,c) (!smmapr) || is_interface cn spec_file || is_method_abstract (cn,a,b,c) spec_file then () 
 	else
-		smmapr := MethodMap.add (cn,a,b,c) (dynamic_to_static (Pprinter.class_name2str cn) spec) (!smmapr);
-		dmmapr := MethodMap.add (cn,a,b,c) (filter_dollar_spec spec) !dmmapr
+		smmapr := MethodMap.add (cn,a,b,c) ((dynamic_to_static (Pprinter.class_name2str cn) spec),pos) (!smmapr);
+		dmmapr := MethodMap.add (cn,a,b,c) ((filter_dollar_spec spec),pos) !dmmapr
   ) dmmap in
 	(* Secondly, we fix the gaps created by inheritance *)
 	let classes = topological_sort (parent_relation spec_file) in
