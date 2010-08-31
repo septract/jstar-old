@@ -1,0 +1,3 @@
+Implication:  |- lseg(a(),b())
+
+Abduction:  |- lseg(a(),b())

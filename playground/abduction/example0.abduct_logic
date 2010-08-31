@@ -1,0 +1,10 @@
+/*
+emp |- emp -| lseg(a,b)
+-----------------------
+emp |- lseg(a,b) -| emp
+*/
+
+rule test1:
+  | |- lseg(?a,?b) -|
+if
+  | |-  -| lseg(?a,?b)
