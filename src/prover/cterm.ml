@@ -445,7 +445,7 @@ let rewrite (ts : term_structure) (rm : rewrite_rule list) (query : term_structu
 		  raise Backtrack.No_match
 		end
 	      else 
-		Format.fprintf !(Debug.dump) "Making %a = %a using %s@\n" 
+		Format.fprintf !(Debug.proof_dump) "Making %a = %a using %s@\n" 
 		  (pp_c ts) c (pp_c ts) x r.rewrite_name;
 (*	        CC.print ts.cc;*)
 		let ts = make_equal ts x c in

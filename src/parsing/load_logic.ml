@@ -25,7 +25,7 @@ let load_logic_extra_rules
       (fun (sl,rm,cn) rule ->
 	match rule with
 	| SeqRule(r) -> 
-	    if !(Debug.debug_ref) 
+	    if Config.verb_proof() 
 	    then 
 	      Format.printf "Loaded rule:@\n%a@\n" 
 		string_psr r; 

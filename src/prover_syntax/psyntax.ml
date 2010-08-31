@@ -558,7 +558,7 @@ type inductive_stmt = IndImport of string | IndDef of inductive
     (*************************************
        Syntactic representation of terms
     **************************************)
-    let debug f = Debug.debug_ref := f
+(*    let debug f = Config.debug_ref := f   *)
     
     type var = Vars.var
 

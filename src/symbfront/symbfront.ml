@@ -30,8 +30,8 @@ let set_question_name n =  question_file_name := n
 let set_logic_file_name n =  logic_file_name := n 
 let set_absrules_file_name n =  absrules_file_name := n 
 
-let arg_list = [ 
-  ("-f", Arg.String(set_question_name ), "question file name" );
+let arg_list = Config.args_default @ 
+  [ ("-f", Arg.String(set_question_name ), "question file name" );
   ("-l", Arg.String(set_logic_file_name ), "logic file name" );
   ("-a", Arg.String(set_absrules_file_name ), "abstraction rules file name" );
 ]

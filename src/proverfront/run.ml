@@ -25,14 +25,9 @@ let set_file_name n =
 let set_logic_file_name n = 
   logic_file_name := n 
 
-let f = Debug.debug_ref := false
-
-let set_verbose_mode () =
-  Debug.debug_ref := true
-
-let arg_list =[ ("-f", Arg.String(set_file_name ), "program file name" );
-		("-l", Arg.String(set_logic_file_name ), "logic file name" ); 
-	        ("-v", Arg.Unit(set_verbose_mode), "Verbose proofs");]
+let arg_list = Config.args_default @ 
+  [ ("-f", Arg.String(set_file_name ), "program file name");
+    ("-l", Arg.String(set_logic_file_name ), "logic file name"); ]
 
 
 
@@ -57,24 +52,24 @@ let main () =
 	Format.printf "Check implication\n %a\n ===> \n %a\n" Psyntax.string_form heap1   Psyntax.string_form heap2;
 	if (Sepprover.implies_opt logic (Sepprover.convert heap1) heap2)
 	then Printf.printf("Holds!\n\n") else Printf.printf("Does not hold!\n\n");
-	if !(Debug.debug_ref) then Prover.pprint_proof stdout
+	if Config.verb_proof() then Prover.pprint_proof stdout
     | Psyntax.Frame (heap1, heap2)  -> 
 	Format.printf "Find frame for\n %a\n ===> \n %a\n" Psyntax.string_form heap1   Psyntax.string_form heap2;
 	let x = Sepprover.frame_opt logic 
 	    (Sepprover.convert heap1) heap2 in 
 	(match x with None -> Printf.printf "Can't find frame!" | Some x -> List.iter (fun form -> Format.printf "Frame:\n %a\n" Sepprover.string_inner_form  form) x);
 	Printf.printf "\n";
-	if !(Debug.debug_ref) then Prover.pprint_proof stdout
+	if Config.verb_proof() then Prover.pprint_proof stdout
     | Psyntax.Abs (heap1)  ->
 	Format.printf "Abstract@\n  @[%a@]@\nresults in@\n  " Psyntax.string_form heap1;
 	let x = Sepprover.abs_opt logic (Sepprover.convert heap1) in 
 	List.iter (fun form -> Format.printf "%a\n" Sepprover.string_inner_form form) x;
 	Printf.printf "\n";
-	if !(Debug.debug_ref) then Prover.pprint_proof stdout
+	if Config.verb_proof() then Prover.pprint_proof stdout
     | Psyntax.Inconsistency (heap1) ->
 	if Sepprover.inconsistent_opt logic (Sepprover.convert heap1) 
 	then Printf.printf("Inconsistent!\n\n") else Printf.printf("Consistent!\n\n");
-	if !(Debug.debug_ref) then Prover.pprint_proof stdout
+	if Config.verb_proof() then Prover.pprint_proof stdout
     | Psyntax.Equal (heap,arg1,arg2) -> ()
 (*	if Prover.check_equal logic heap arg1 arg2 
 	then Printf.printf("Equal!\n\n") else Printf.printf("Not equal!\n\n")*) 

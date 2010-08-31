@@ -26,15 +26,11 @@ let set_logic_file_name n =
 let set_inductive_file_name n = 
   inductive_file_name := n 
 
-let f = Debug.debug_ref := false
-
-let set_verbose_mode () =
-  Debug.debug_ref := true
-
-let arg_list =[ ("-f", Arg.String(set_file_name ), "program file name" );
-		("-l", Arg.String(set_logic_file_name ), "logic file name" ); 
-		("-i", Arg.String(set_inductive_file_name ), "inductive file name" );
-	        ("-v", Arg.Unit(set_verbose_mode), "Verbose proofs");]
+let arg_list = Config.args_default @ 
+  [ ("-f", Arg.String(set_file_name ), "program file name" );
+    ("-l", Arg.String(set_logic_file_name ), "logic file name" ); 
+    ("-i", Arg.String(set_inductive_file_name ), "inductive file name" );
+  ] 
 
 
 
@@ -54,9 +50,9 @@ let main () =
     let l1,l2,cn = load_logic_extra_rules (System.getenv_dirlist "JSTAR_LOGIC_LIBRARY") !logic_file_name rl in
     let logic = {empty_logic with seq_rules = l1; rw_rules=l2; consdecl = cn;} in
     let s = System.string_of_file !program_file_name  in
-    if !(Debug.debug_ref) then Format.printf "Start parsing tests in %s...@\n" !program_file_name;
+    if Config.verb_proof() then Format.printf "Start parsing tests in %s...@\n" !program_file_name;
     let test_list  = Jparser.test_file Jlexer.token (Lexing.from_string s) 
-    in if !(Debug.debug_ref) then Format.printf "Parsed %s!@\n" !program_file_name;
+    in if Config.verb_proof() then Format.printf "Parsed %s!@\n" !program_file_name;
     List.iter (
     fun test ->
       match test with 
@@ -71,7 +67,7 @@ let main () =
 	      Psyntax.string_form heap1 
 	      Psyntax.string_form heap2
 	)
-(*	if !(Debug.debug_ref) then Prover.pprint_proof stdout*)
+(*	if Config.verb_proof() then Prover.pprint_proof stdout*)
 	  
     | Psyntax.TFrame (heap1, heap2, result)  -> 
 (*	Format.printf "Find frame for\n %s\n ===> \n %s\n" (Psyntax.string_form heap1) (Psyntax.string_form heap2);*)
@@ -112,7 +108,7 @@ let main () =
 	| false,true -> Format.printf "Test failed! Prover could not prove@ %a@ inconsistent.@\n" 
 	      Psyntax.string_form heap1
 	);
-(*	if !(Debug.debug_ref) then Prover.pprint_proof stdout*)
+(*	if Config.verb_proof() then Prover.pprint_proof stdout*)
     | Psyntax.TEqual (heap,arg1,arg2,result) -> ()
 (*	if Prover.check_equal logic heap arg1 arg2 
 	then Format.printf("Equal!\n\n") else Format.printf("Not equal!\n\n")*)
