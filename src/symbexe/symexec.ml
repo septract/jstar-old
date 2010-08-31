@@ -173,7 +173,7 @@ let add_edge src dest label =
   graphe := edge::!graphe;
   src.edges <- edge::src.edges;
   explore_node src;
-  if !x = 5 then (x:=0; pp_dotty_transition_system ()) else x :=!x+1
+  if !x = 0 then (x:=0; pp_dotty_transition_system ()) else x :=!x+1
 
 
 let add_edge_with_proof src dest label = 
@@ -185,7 +185,7 @@ let add_edge_with_proof src dest label =
   let edge = (label, "", src, dest, Some f) in 
   graphe := edge::!graphe;
   src.edges <- edge::src.edges;
-  if !x = 5 then (x:=0; pp_dotty_transition_system ()) else x :=!x+1
+  if !x = 0 then (x:=0; pp_dotty_transition_system ()) else x :=!x+1
 
 (*let add_edge_with_string_proof src dest label proof = 
   let f = fresh_file() in
@@ -470,7 +470,7 @@ and execute_core_stmt n (sheap : formset_entry) : formset_entry list =
     | Nop_stmt_core  -> execs_one n [sheap]
     | Assignment_core (vl, spec, il) -> 
        ( 
-		let h s=call_jsr_static sheap spec il n in
+		let hs=call_jsr_static sheap spec il n in
 		match vl with 
 		| [] -> 
 			let hs=add_id_formset_edge (snd sheap) (Debug.toString Pprinter_core.pp_stmt_core n.skind) hs n in
@@ -508,14 +508,13 @@ let verify
       let id = add_good_node ("Start "^mname) in  
       make_start_node id;
       match Sepprover.convert (spec.pre) with 
-	None -> System.warning(); Printf.printf "False precondition for specification of %s." mname  ;System.reset(); false
+        None -> System.warning(); Printf.printf "False precondition for specification of %s." mname; System.reset(); false
       |	Some pre -> 
-	  let post = execute_core_stmt s (pre, id) in 
-	  let id_exit = add_good_node ("Exit") in 
-	  List.fold_right (fun succ b -> succ && b)
+        let post = execute_core_stmt s (pre, id) in 
+        let id_exit = add_good_node ("Exit") in 
+        List.fold_right (fun succ b -> succ && b)
                           (List.map (fun post -> check_postcondition [(spec.post,id_exit)] post) post)
                           true
-
 
 
 let verify_ensures 

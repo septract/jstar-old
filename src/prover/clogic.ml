@@ -780,7 +780,8 @@ and match_disjunct remove ts form pat_disj cont =
 
 let contains ts form pat : bool  = 
   try 
-    match_form true ts form pat (fun (ts2,_) -> if Cterm.ts_eq ts ts2 (*This checks that no unification has occured in the contains*) then true else  raise Backtrack.No_match)
+    (*match_form true ts form pat (fun (ts2,_) -> if Cterm.ts_eq ts ts2 (*This checks that no unification has occured in the contains*) then true else  raise Backtrack.No_match)*)
+    match_form true ts form pat (fun (ts2,_) -> true)
   with No_match -> 
     false
 
@@ -1006,6 +1007,10 @@ let get_frames_a seqs =
 
 let get_antiframe seq =
   assert (abductive_sequent seq);
+  (*
+  let antiframe, ts = normalise seq.ts seq.antiframe in
+  mk_ts_form ts antiframe
+  *)
   mk_ts_form seq.ts seq.antiframe
 
 let rec get_antiframes seqs ants = 

@@ -18,7 +18,7 @@ export LIB
 
 INCLUDES = 
 
-SYMBEXE_SOURCES = specification.ml  cfg_core.ml symexec.ml
+SYMBEXE_SOURCES = specification.ml cfg_core.ml symexec.ml abduction.ml
 
 TOPLEVEL_SOURCES = $(SYMBEXE_SOURCES)
 

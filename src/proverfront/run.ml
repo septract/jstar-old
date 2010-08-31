@@ -82,15 +82,16 @@ let main () =
     | Psyntax.Equal (heap,arg1,arg2) -> () 
 
     | Psyntax.Abduction (heap1, heap2)  -> 
-	Format.printf "Find antiframe for\n %a\n ===> \n %a \n"  
-	         Psyntax.string_form heap1   Psyntax.string_form heap2;
-	let x = (Sepprover.abduction_opt logic (Sepprover.convert heap1) heap2) in 
-	(match x with 
-	  | None -> Format.printf "Can't find antiframe!\n" 
-	  | Some (f,a) -> 
-		  List.iter (fun form -> Format.printf "Frame:\n %a\n" Sepprover.string_inner_form  form) f;
-		  List.iter (fun form -> Format.printf "Antiframe:\n %a\n" Sepprover.string_inner_form form) a 
-	);
+      Format.printf "Find antiframe for\n %a\n ===> \n %a \n"  
+      Psyntax.string_form heap1   Psyntax.string_form heap2;
+      let x = (Sepprover.abduction_opt logic (Sepprover.convert heap1) heap2) in 
+      (match x with 
+        | None -> Format.printf "Can't find antiframe!\n" 
+        | Some (ls) -> 
+          List.iter (fun (frame, antiframe) -> 
+            Format.printf "Frame:\n %a\n" Sepprover.string_inner_form frame;
+            Format.printf "Antiframe:\n %a\n\n" Sepprover.string_inner_form antiframe) ls;
+      );
 		
 (*	if Prover.check_equal logic heap arg1 arg2 
 	then Format.printf("Equal!\n\n") else Format.printf("Not equal!\n\n")*) 

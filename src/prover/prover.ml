@@ -140,10 +140,11 @@ let check_frm logic seq =
   | Failed_eg x -> Format.fprintf !(Debug.dump) "Foo44"; prover_counter_example := x; None 
 
 
-let check_abduct logic seq : (ts_formula list * ts_formula list) option = 
+let check_abduct logic seq : ((ts_formula * ts_formula) list) option = 
   try 
     let leaves = apply_rule_list logic [seq] (fun _ -> false) Clogic.abductive_sequent in 
-    Some ((Clogic.get_frames_a leaves) , (Clogic.get_antiframes leaves))
+    (* the lists of frames and antiframes have equal lengths *)
+    Some (List.combine (Clogic.get_frames_a leaves) (Clogic.get_antiframes leaves))
   with 
     Failed -> Format.fprintf !(Debug.dump) "Abduction failed"; None
   | Failed_eg x -> Format.fprintf !(Debug.dump) "Abduction failed"; prover_counter_example := x; None 
@@ -159,7 +160,6 @@ let check_implication_pform logic heap pheap  =
 
 let check_abduction_pform logic heap pheap = 
   check_abduct logic (Clogic.make_implies heap pheap)
-(*  check_abd logic (Clogic.make_implies heap pheap) *)
 
 
 let abs logic ts_form  = 
@@ -193,10 +193,11 @@ let check_frame logic ts_form1 ts_form2 =
   check_frm logic seq 
 
 
-let check_inconsistency logic ts_form   = assert false
+(* let check_inconsistency logic ts_form   = assert false *)
 (*  check_implication_inner logic ts heap1 ([],[],[False]) *)
-
-
+(* TODO: Check whether this makes sense *)
+let check_inconsistency logic ts_form =
+  check_implication logic ts_form (Clogic.convert_with_eqs false mkFalse)
 
 
 let check_implies_list fl1 pf =
