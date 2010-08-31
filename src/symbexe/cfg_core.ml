@@ -17,9 +17,6 @@
 open Pprinter_core
 open Methdec_core
 
-let cfg_debug () = false
-
-
 (* Call with non-empty statement list *)
 let stmts_to_cfg stmts =
   (* Fill in the CFG info for a stmt
@@ -35,7 +32,7 @@ let stmts_to_cfg stmts =
     let addSucc (n: stmt_core) =
       assert (not (List.memq n s.succs));
       assert (not (List.memq s n.preds));
-      if cfg_debug() then Printf.printf "\nAdding %i in %i.succ, and %i in %i.preds\n" n.sid s.sid s.sid n.sid;
+      if Config.cfg_debug() then Printf.printf "\nAdding %i in %i.succ, and %i in %i.preds\n" n.sid s.sid s.sid n.sid;
       n.preds <- s::n.preds;
       s.succs <- n::s.succs in
     let addOptionSucc (n: stmt_core option) =
@@ -90,7 +87,7 @@ let print_icfg_dotty
       (escape_for_dot_label (Debug.toString pp_stmt_core s.skind));
     List.iter (d_cfgedge chan s) s.succs  in
 
-  if cfg_debug () then ignore (Printf.printf "\n\nPrinting iCFG as dot file...");
+  if Config.cfg_debug () then (Printf.printf "\n\nPrinting iCFG as dot file...");
   let chan = open_out (filename ^ ".icfg.dot") in
   Printf.fprintf chan "digraph iCFG {\n\tnode [shape=box,  labeljust=l]\n";
   List.iter 
@@ -103,7 +100,7 @@ let print_icfg_dotty
     stmtsname;
   Printf.fprintf chan  "}\n";
   close_out chan;
-  if cfg_debug() then ignore (Printf.printf "\n\n Printing dot file done!")
+  if Config.cfg_debug() then (Printf.printf "\n\n Printing dot file done!")
 
 (* ================== END of Printing dotty files ================== *)
 
