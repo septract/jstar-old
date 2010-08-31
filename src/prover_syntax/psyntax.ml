@@ -499,6 +499,7 @@ type rules =
   | SeqRule of sequent_rule
   | RewriteRule of rewrite_rule
   | EquivRule of equiv_rule
+  | ConsDecl of string
 
 type question =
   |  Implication of pform * pform 
@@ -532,7 +533,7 @@ let expand_equiv_rules rules =
 	      list
 	  else
 	    list
-    | SeqRule _ | RewriteRule _ -> x::list
+    | SeqRule _ | RewriteRule _ | ConsDecl _ -> x::list
   in
   List.fold_right equiv_rule_to_seq_rule rules []
 
@@ -565,7 +566,7 @@ type inductive_stmt = IndImport of string | IndDef of inductive
     (*************************************
        Syntactic representation of terms
     **************************************)
-    let debug f = Debug.debug_ref := f
+(*    let debug f = Config.debug_ref := f   *)
     
     type var = Vars.var
 
@@ -711,9 +712,19 @@ let default_pure_prover : external_prover =
     | _ -> false) , 
   (fun x y -> [])
 
-type logic = sequent_rule list * rewrite_rule list * external_prover
+type logic = {
+  seq_rules : sequent_rule list;
+  rw_rules : rewrite_rule list; 
+  ext_prover : external_prover; 
+  consdecl : string list;
+}
 
-let empty_logic : logic = [],[], default_pure_prover
+let empty_logic : logic = {
+  seq_rules = [];
+  rw_rules = [];
+  ext_prover = default_pure_prover; 
+  consdecl = []
+}
 
 let pprint_sequent_rules logic =
 	let (rules,_,_) = logic in

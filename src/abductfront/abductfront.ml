@@ -18,6 +18,7 @@ open Printf
 open Methdec_core
 open Pprinter_core
 open Load_logic
+open Psyntax
 
 let question_file_name = ref "";;
 let symexec_logic_file_name = ref "";;
@@ -53,12 +54,12 @@ let main () : unit =
   else if !absrules_file_name="" then
     printf "Abstraction rules file name not specified. Can't continue....\n %s \n" usage_msg
   else
-    let l1,l2 = (load_logic (System.getenv_dirlist "JSTAR_LOGIC_LIBRARY") !symexec_logic_file_name) in 
-    let symexec_lo = l1,l2, Psyntax.default_pure_prover in
-    let l1,l2 = (load_logic (System.getenv_dirlist "JSTAR_LOGIC_LIBRARY") !abduct_logic_file_name) in 
-    let abduct_lo = l1,l2, Psyntax.default_pure_prover in
-    let l1,l2 = Load_logic.load_logic  (System.getenv_dirlist "JSTAR_LOGIC_LIBRARY") !absrules_file_name in 
-    let abs_rules = (l1,l2, Psyntax.default_pure_prover) in
+    let l1,l2,cn = (load_logic (System.getenv_dirlist "JSTAR_LOGIC_LIBRARY") !symexec_logic_file_name) in 
+    let symexec_lo = {empty_logic with seq_rules=l1; rw_rules=l2; consdecl=cn} in
+    let l1,l2,cn = (load_logic (System.getenv_dirlist "JSTAR_LOGIC_LIBRARY") !abduct_logic_file_name) in 
+    let abduct_lo = {empty_logic with seq_rules=l1; rw_rules=l2; consdecl=cn} in
+    let l1,l2,cn = Load_logic.load_logic  (System.getenv_dirlist "JSTAR_LOGIC_LIBRARY") !absrules_file_name in 
+    let abs_rules = {empty_logic with seq_rules=l1; rw_rules=l2; consdecl=cn} in
     let question_list = System.parse_file Jparser.symb_question_file Jlexer.token !question_file_name "Question" true in
     List.iter (
     fun question ->

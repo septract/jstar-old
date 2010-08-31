@@ -22,9 +22,11 @@ Implication:
   |-  y("1") = y("2") 
 ? False
 
+/* broken!
 Implication:
   hd(tl(cons(a,cons(x,nil())))) = a  |-  hd(app(nil(),cons(x,y))) = a 
 ? True
+*/
 
 Implication:
   cons(a,x) = x |- tl(tl(x)) = x

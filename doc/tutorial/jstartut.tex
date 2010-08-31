@@ -478,7 +478,7 @@ An example specification for the constructor of class {\tt NodeLL} is:
 %
 The spec above tells us several syntactic conventions used by \jStar.
 \begin{itemize}
-\item An empty formula is is a shorthand for $\true \wedge \emp$.
+\item An empty formula is a shorthand for $\true \wedge \emp$.
 \item Following the Jimple notation, the Java special variable {\bf
     this} is written {\tt @this:}
 \item The {\em points-to} predicate of separation logic is expressed by the
@@ -539,7 +539,7 @@ In separation logic this translates to:
 This specification uses the predicate $NodeLL(a,b)$ denoting an instance of the class {\tt NodeLL}
 and which can be written in separation logic as:
 \[
-  NodeLL(a,b) \;\; = \;\; a.{\it next} \psto b * x.{\it content} \psto c' 
+  NodeLL(a,b) \;\; = \;\; a.{\it next} \psto b * a.{\it content} \psto c' 
 \]
 The formula
 $LL(x)$ denotes either a list with only one element or a list with
@@ -746,7 +746,7 @@ static specification, with the single specification.
      { _X=return * Val$(@this:, {content=_X}) };
 \end{verbatim}
 %
-A property postfixed by \J~@~ is interpret by \jStar \ as the
+A property postfixed by \J~@~ is interpreted by \jStar \ as the
 standard property in the dynamic specification, that is without the
 \J~@~, and as the internal property for the current class in the
 static specification, in this case \JS{Val}\J~@Cell~.
@@ -1011,7 +1011,7 @@ be true implications in separation logic. In other words, it must hold that:
 H*H' \Longrightarrow H*H''
 \]
 When designing abstraction rules
-checking this implication gives a easy sanity condition for the 
+checking this implication gives an easy sanity condition for the 
 soundness of the resulting fixed-point computation.
 
 The syntax for abstraction rules uses the {\tt abstraction} construct and it is as follows:

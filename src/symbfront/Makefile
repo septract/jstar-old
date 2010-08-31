@@ -24,7 +24,7 @@ SYMBFRONT_SOURCES = symbfront.ml
 TOPLEVEL_SOURCES = $(SYMBFRONT_SOURCES)
 
 DEFAULT_ARGS = SOURCES="$(TOPLEVEL_SOURCES)" \
-       LIBS="str unix utils prover_syntax symbexe_syntax jimple_syntax sepprover symbexe parser" \
+       LIBS="str unix utils prover_syntax symbexe_syntax jimple_syntax prover symbexe parsing" \
        OCAMLLDFLAGS="-g -I $(LIB)" \
        INCDIRS="../prover ../prover_syntax ../parsing ../symbexe_syntax ../utils ../jimple_syntax ../symbexe" \
        OCAMLFLAGS="-g" \

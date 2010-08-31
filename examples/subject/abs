@@ -1,67 +1,67 @@
 rule NodeLL_not_nil:
-NodeLL(?x,?y) | ?x!=nil() | |- |
+NodeLL(?x,?y) | ?x!=nil() |-
 if
-| | |- |
+| |-
 
 rule field_not_nil:
-field(?x,?f,?y) | ?x!=nil() | |- |
+field(?x,?f,?y) | ?x!=nil() |-
 if
-| | |- |
+| |-
 
 rule field_not_nil:
-ls(?x,?f,?y) | ?x!=nil() | |- |
+ls(?x,?f,?y) | ?x!=nil() |-
 if
-| | |- |
+| |-
 
 
 rule NodeLL_not_eq:
-NodeLL(?x,?y) * NodeLL(?z,?w) | ?x!=?z | |- |
+NodeLL(?x,?y) * NodeLL(?z,?w) | ?x!=?z |-
 if
-| | |- |
+| |-
 
 rule field_not_eq:
-field(?x,?f,?y) * field(?z,?f,?w) | ?x!=?z | |- |
+field(?x,?f,?y) * field(?z,?f,?w) | ?x!=?z |-
 if
-| | |- |
+| |-
 
 
 /************* Abs3 Rule ***********************/
 /*
 rule ls_obs: 
-     | | ls(?x,?z,cons(?w,?r)) * Observer(?w,{vals=?v; subject=?s}) |- |
+     | ls(?x,?z,cons(?w,?r)) * Observer(?w,{vals=?v; subject=?s}) |-
 if
-     | | lspe(_f,?z,?r) * lsObs(?x,_f,cons(?w,empty()),?v,?s)
-     |- |
+     | lspe(_f,?z,?r) * lsObs(?x,_f,cons(?w,empty()),?v,?s)
+     |-
 
 rule ls_obs_app1:
-| | lsObs(?x,_f,?l,?v,?s) * lsObs(_f,nil(),?l2,?v,?s) |- |
+| lsObs(?x,_f,?l,?v,?s) * lsObs(_f,nil(),?l2,?v,?s) |-
 if
-| | lsObs(?x,nil(),app(?l,?l2),?v,?s) |- |
+| lsObs(?x,nil(),app(?l,?l2),?v,?s) |-
 
 rule ls_obs_app2:
-| | lsObs(?x,_f,?l,?v,?s) * lsObs(_f,?y,?l2,?v,?s) * ls(?y,?o,?p) |- |
+| lsObs(?x,_f,?l,?v,?s) * lsObs(_f,?y,?l2,?v,?s) * ls(?y,?o,?p) |-
 if
-| | lsObs(?x,?y,app(?l,?l2),?v,?s) * ls(?y,?o,?p) |- |
+| lsObs(?x,?y,app(?l,?l2),?v,?s) * ls(?y,?o,?p) |-
 
 rule ls_obs_app2:
-| | lsObs(?x,_f,?l,?v,?s) * lsObs(_f,?y,?l2,?v,?s) * lsObs(?y,?o,?p,?q,?r) |- |
+| lsObs(?x,_f,?l,?v,?s) * lsObs(_f,?y,?l2,?v,?s) * lsObs(?y,?o,?p,?q,?r) |-
 if
-| | lsObs(?x,?y,app(?l,?l2),?v,?s) * lsObs(?y,?o,?p,?q,?r)  |- |
+| lsObs(?x,?y,app(?l,?l2),?v,?s) * lsObs(?y,?o,?p,?q,?r)  |-
 
 rule ls_obs_app3:
-| | lsObs(?x,_f,?l,?v,?s) * lsObs(_f,nil(),?l2,?v,?s) |- |
+| lsObs(?x,_f,?l,?v,?s) * lsObs(_f,nil(),?l2,?v,?s) |-
 if
-| | lsObs(?x,nil(),app(?l,?l2),?v,?s) |- |
+| lsObs(?x,nil(),app(?l,?l2),?v,?s) |-
 
 */
 /*************** Abs1 Rule *******************/
 rule ls_ls:
-| | ls(?x,_x,?s1) * ls(_x,nil(),?s2) |- |   /* this is for empty | true */
+| ls(?x,_x,?s1) * ls(_x,nil(),?s2) |-   /* this is for empty | true */
 where 
   _x notincontext;
   _x notin ?x
 if 
-| | ls(?x,nil(),app(?s1,?s2)) |- |   /* result */
+| ls(?x,nil(),app(?s1,?s2)) |-   /* result */
 
 
 
@@ -70,14 +70,14 @@ if
 
 /*************** Abs2 Rule *******************/
 rule ls_ls_ls:
-| | ls(?x,_x,?s1) * ls(_x,?y,?s2) * ls(?y,?z,?s3) |- |   /* this is for empty | true */
+| ls(?x,_x,?s1) * ls(_x,?y,?s2) * ls(?y,?z,?s3) |-   /* this is for empty | true */
 where 
   _x notincontext;
   _x notin ?x;
   _x notin ?y;
   _x notin ?z
 if 
-| | ls(?x,?y,app(?s1,?s2)) * ls(?y,?z,?s3) |- |   /* result */
+| ls(?x,?y,app(?s1,?s2)) * ls(?y,?z,?s3) |-   /* result */
 
 
 
@@ -105,26 +105,23 @@ rewrite add_cons_empty:
 rewrite app_cons :
   app(cons(?x,?y),?z) = cons(?x,app(?y,?z))
 without		 
- | (?y=empty()|)
-    || (z=empty()|)
+  ?y=empty() || z=empty()
 
 
 rewrite app_app_assoc :
   app(app(?x,?y),?z) = app(?x,app(?y,?z))
 without
-  | (| (?y=empty()|)
-    || (?z=empty()|))
-    || (?x=empty()|)
+  ?y=empty() || ?z=empty() || ?x=empty()
 
 rule ls_pe1:
-| | lspe(?x,?y,empty()) |- |
+| lspe(?x,?y,empty()) |-
 if
-| ?x=?y | |- |
+| ?x=?y |-
 
 rule ls_pe1:
-| | lspe(?x,?y,cons(?s,?t)) |- |
+| lspe(?x,?y,cons(?s,?t)) |-
 if
-| | ls(?x,?y,cons(?s,?t)) |- |
+| ls(?x,?y,cons(?s,?t)) |-
 
 
 
@@ -198,22 +195,22 @@ rewrite true : true() = numeric_const("1")
 
 
 rule numericrule:
-  | numeric_const(?x) = numeric_const(?y) | |- |
+  | numeric_const(?x) = numeric_const(?y) |-
 without 
   ?x=?y
 if
-  | ?x = ?y | |- |
+  | ?x = ?y |-
 
 
 rule numericrule_neq:
-  | numeric_const(?x) != numeric_const(?y) | |- |
+  | numeric_const(?x) != numeric_const(?y) |-
 without 
   ?x!=?y
 if
-  | ?x != ?y | |- |
+  | ?x != ?y |-
 
 
 
 rule zeroone:
-  | "0" = "1" | |- |
+  | "0" = "1" |-
 if

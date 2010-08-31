@@ -26,9 +26,6 @@ let curr_logic : Psyntax.logic ref = ref Psyntax.empty_logic
 let curr_abs_rules : Psyntax.logic ref = ref Psyntax.empty_logic
 
 
-
-
-
 (* ================  transition system ==================  *)
 type ntype = 
     Plain | Good | Error | Abs | UnExplored
@@ -284,8 +281,6 @@ let param_sub il =
 
 let id_clone h = (form_clone (fst h), snd h)
 
-
-
 let call_jsr_static (sheap,id) spec il node = 
   let sub' = param_sub il in
   let sub''= (*freshening_subs*) sub' in
@@ -301,9 +296,12 @@ let call_jsr_static (sheap,id) spec il node =
 	     Sepprover.pprint_counter_example (); 
 	   Format.flush_str_formatter ());
         System.warning();
-	Format.printf "\n\nERROR: While executing node %d:\n   %a\n"  
-	  (node.sid) 
-	  Pprinter_core.pp_stmt_core node.skind;
+      let error_text = Printf.sprintf "While executing node %d" (node.sid) in
+	Format.printf "\n\nERROR: %s :\n   %a\n"  
+      error_text
+	  Pprinter_core.pp_stmt_core node.skind; 
+      Printing.eclipse_print (Some node.sid) error_text;
+      
 	Sepprover.print_counter_example ();
 	System.reset(); 
 	[]
@@ -318,8 +316,9 @@ let call_jsr_static (sheap,id) spec il node =
 exception Contained
 
 
-let check_postcondition heaps sheap : bool =
-  let sheap_noid=fst sheap in  
+let check_postcondition heaps sheap =
+  let sheap_noid=fst sheap in
+  let node = snd sheap in
   try 
     let heap,id = List.find (fun (heap,id) -> (frame !curr_logic (form_clone sheap_noid) heap)!=None) heaps in
     if Config.symb_debug() then 
@@ -330,8 +329,13 @@ let check_postcondition heaps sheap : bool =
     (*	add_edge id idd "";*)
   with Not_found -> 
     System.warning();
-    let _= Printf.printf "\n\nERROR: cannot prove post\n"  in
+    let node_cfg_sid = match node.cfg with
+        | None -> -1
+        | Some cfg -> cfg.sid in
+    let error_text = "cannot prove post" in 
+    let _= Printf.printf "\n\nERROR: %s\n" error_text  in
     Sepprover.print_counter_example ();
+    Printing.eclipse_print (Some node_cfg_sid) error_text;
     System.reset();
     List.iter (fun heap -> 
                  let form = Sepprover.convert (fst heap) in 
@@ -558,8 +562,9 @@ let verify_ensures
       ()
 
 
-let check_and_get_frame (heap,id) sheap : inner_form list =
-  let sheap_noid=fst sheap in  
+let check_and_get_frame (heap,id) sheap =
+  let sheap_noid=fst sheap in 
+  let node = snd sheap in
   let frame = frame_inner !curr_logic (form_clone sheap_noid) heap in
   match frame with 
     Some frame -> 
@@ -571,8 +576,13 @@ let check_and_get_frame (heap,id) sheap : inner_form list =
                         frame
   | None -> 
                  (System.warning();
-                 let _= Printf.printf "\n\nERROR: cannot prove frame for old expression\n"  in
+                 let node_cfg_sid = match node.cfg with
+                  | None -> -1
+                  | Some cfg -> cfg.sid in
+                 let error_text = "cannot prove frame for old expression" in
+                 let _= Printf.printf "\n\nERROR: %s\n" error_text in 
                  Sepprover.print_counter_example ();
+                 Printing.eclipse_print (Some node_cfg_sid) error_text;
                  System.reset();
                  let idd = add_error_heap_node heap in 
 		 add_edge_with_proof (snd sheap) idd 

@@ -15,7 +15,7 @@
 (* Manage methdec infos for a file *) 
 
 open Spec
-open Sepprover
+
 
 type core_statement = 
   | Nop_stmt_core
@@ -31,7 +31,7 @@ type stmt_core = {
   mutable sid: int;  (* this is filled when the cfg is done *)
   mutable succs: stmt_core list; (* this is filled when the cfg is done *)
   mutable preds: stmt_core list;  (* this is filled when the cfg is done *)
-  mutable antiframes: inner_form list  (* antiframe collection *)
+  mutable antiframes: Sepprover.inner_form list  (* antiframe collection *)
  }
 
 type symb_question = 
@@ -39,6 +39,7 @@ type symb_question =
   
 type symb_test = 
   | Nothing_here_yet
+
 
 let num_stmts = ref 0 
 
