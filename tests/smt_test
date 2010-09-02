@@ -1,3 +1,19 @@
 Implication: 
-  (a + b) != (b + a) |-  !p(d)
+  (a + b) != (b + a)  |-  !p(d)
 ? True
+
+Implication: 
+  (a + b) = (c + a)  |-  b = c
+? True 
+
+Implication: 
+  (a < b)  |-  (b < a)
+? False
+
+Implication:
+  |- (a + b) = (b + a)
+? True 
+
+Implication: 
+  (a < b) * (b < c)  |-  (a < c) 
+? True 

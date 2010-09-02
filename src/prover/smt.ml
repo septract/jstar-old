@@ -146,44 +146,57 @@ let rec args_smttype (arg : Psyntax.args) : smttypeset =
 
 (* Functions to convert various things to sexps & get types *)
 
-let rec string_args_sexp ppf arg = 
+let rec string_sexp_args ppf arg = 
   match arg with 
   | Arg_var v -> Format.fprintf ppf "%s" (Vars.string_var v)
   | Arg_string s -> Format.fprintf ppf "%s" ("string_const_"^(str_munge s))
   | Arg_op ("builtin_plus",[a1;a2]) -> 
-          Format.fprintf ppf "(+ %a %a)" string_args_sexp a1 string_args_sexp a2
+          Format.fprintf ppf "(+ %a %a)" string_sexp_args a1 string_sexp_args a2
   | Arg_op (name,args) -> 
-          Format.fprintf ppf "(%s %a)" ("op_"^name) string_args_list_sexp args 
+          Format.fprintf ppf "(%s %a)" ("op_"^name) string_sexp_args_list args 
   | Arg_record _ -> Format.fprintf ppf "" 
-and string_args_list_sexp ppf argsl = 
+and string_sexp_args_list ppf argsl = 
   match argsl with 
     [] -> Format.fprintf ppf ""
-  | [a] -> Format.fprintf ppf "%a" string_args_sexp a
-  | a::al -> Format.fprintf ppf "%a@ %a" string_args_sexp a string_args_list_sexp al
+  | [a] -> Format.fprintf ppf "%a" string_sexp_args a
+  | a::al -> Format.fprintf ppf "%a@ %a" string_sexp_args a string_sexp_args_list al
 
 
 let string_sexp_eq (a : Psyntax.args * Psyntax.args) : string =
-  match a with a1, a2 -> 
+  match a with (a1, a2) -> 
   Format.fprintf Format.str_formatter "(= %a %a)" 
-                 string_args_sexp a1 string_args_sexp a2;
+                 string_sexp_args a1 string_sexp_args a2;
   Format.flush_str_formatter()
 
 
 let string_sexp_neq (a : Psyntax.args * Psyntax.args) : string =
   match a with a1, a2 -> 
   Format.fprintf Format.str_formatter "(distinct %a %a)" 
-                 string_args_sexp a1 string_args_sexp a2;
+                 string_sexp_args a1 string_sexp_args a2;
   Format.flush_str_formatter()
 
   
 let string_sexp_pred (p : string * Psyntax.args) : (string * smttypeset) = 
-  match p with name, args -> 
-  let name = "pred_"^name in 
-  match args with Arg_op ("tuple",al) ->
-  let types = SMTTypeSet.add (SMT_Pred(name,(length al))) (args_smttype args) in 
-       Format.fprintf Format.str_formatter "(%s %a)"
-             name string_args_list_sexp al; 
-       ( Format.flush_str_formatter(), types )
+  match p with 
+  | ("GT",(Arg_op ("tuple",[a1;a2]))) -> 
+      Format.fprintf Format.str_formatter "(> %a)" string_sexp_args_list [a1;a2]; 
+      (Format.flush_str_formatter(), SMTTypeSet.empty)
+  | ("LT",(Arg_op ("tuple",[a1;a2]))) -> 
+      Format.fprintf Format.str_formatter "(< %a)" string_sexp_args_list [a1;a2]; 
+      (Format.flush_str_formatter(), SMTTypeSet.empty)
+  | ("GE",(Arg_op ("tuple",[a1;a2]))) -> 
+      Format.fprintf Format.str_formatter "(>= %a)" string_sexp_args_list [a1;a2]; 
+      (Format.flush_str_formatter(), SMTTypeSet.empty)
+  | ("LE",(Arg_op ("tuple",[a1;a2]))) -> 
+      Format.fprintf Format.str_formatter "(> %a)" string_sexp_args_list [a1;a2]; 
+      (Format.flush_str_formatter(), SMTTypeSet.empty)
+      
+  | name, args -> 
+    let name = "pred_"^name in 
+    match args with Arg_op ("tuple",al) ->
+    let types = SMTTypeSet.add (SMT_Pred(name,(length al))) (args_smttype args) in 
+         Format.fprintf Format.str_formatter "(%s %a)" name string_sexp_args_list al; 
+         ( Format.flush_str_formatter(), types )
        
 
 
