@@ -57,8 +57,6 @@ let arg_list = Config.args_default @
 ("-g", Arg.Unit(set_grouped), "group abstraction nodes" );
 ("-a", Arg.String(set_absrules_file_name ), "abstraction rules file name" );
 ("-dot", Arg.Unit(set_dotty_flag ), "print heaps in dotty format for every node of cfg (default=false) " );
-("-nosmt", Arg.Clear(Smt.smt_run),"Don't use the SMT solver");
-("-p", Arg.Set_string(Smt.solver_path), "SMT solver path");
  ]
 
 
@@ -133,7 +131,7 @@ let main () =
 	 (fun s ->  Sys.set_signal s (Sys.Signal_handle (fun x -> Symexec.pp_dotty_transition_system (); exit x)))
         signals;
        try 
-         if !Smt.smt_run then Smt.smt_init !Smt.solver_path; 
+         if !Config.smt_run then Smt.smt_init !Config.solver_path; 
        
 	 let l1,l2,cn = Load_logic.load_logic  (System.getenv_dirlist "JSTAR_LOGIC_LIBRARY") !logic_file_name
 	 in 

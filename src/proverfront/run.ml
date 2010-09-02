@@ -21,9 +21,7 @@ let logic_file_name = ref "";;
 
 let arg_list = Config.args_default @ 
   [ ("-f", Arg.Set_string(program_file_name), "program file name");
-    ("-l", Arg.Set_string(logic_file_name), "logic file name"); 
-    ("-nosmt", Arg.Clear(Smt.smt_run),"Don't use the SMT solver");
-    ("-p", Arg.Set_string(Smt.solver_path), "SMT solver path"); ]
+    ("-l", Arg.Set_string(logic_file_name), "logic file name"); ]
     
 
 let main () =
@@ -35,7 +33,7 @@ let main () =
   else if !logic_file_name="" then
     Format.printf "Logic file name not specified. Can't continue....\n %s \n" usage_msg
   else 
-    if !Smt.smt_run then Smt.smt_init !Smt.solver_path; 
+    if !Config.smt_run then Smt.smt_init !Config.solver_path; 
 
     let l1,l2,cn = (load_logic (System.getenv_dirlist "JSTAR_LOGIC_LIBRARY") !logic_file_name) in 
     let logic = {empty_logic with seq_rules = l1; rw_rules=l2; consdecl = cn} in

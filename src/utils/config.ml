@@ -37,15 +37,23 @@ let cfg_debug() = !cfg_debug_ref
 let smt_debug_ref = ref false
 let smt_debug() = !smt_debug_ref
 
+let smt_run = ref true 
+let solver_path = ref "z3"
+
+
 let set_debug_char (c : char) : unit = 
   match c with 
   | 'p' -> parse_debug_ref := true
   | 's' -> symb_debug_ref := true
   | 'c' -> cfg_debug_ref := true 
+  | 'm' -> smt_debug_ref := true 
   | _ -> () 
+
 
 let args_default = [
 ("-q", Arg.Clear(symb_debug_ref), "run in quiet mode" );
 ("-v", Arg.Set(verb_proof_ref), "Verbose proofs");
-("-d", Arg.String(String.iter set_debug_char), "Set debug modes")
+("-d", Arg.String(String.iter set_debug_char), "Set debug modes");
+("-nosmt", Arg.Clear(smt_run),"Don't use the SMT solver");
+("-p", Arg.Set_string(solver_path), "SMT solver path"); 
 ] 

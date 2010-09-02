@@ -20,9 +20,7 @@ let inductive_file_name = ref "";;
 let arg_list = Config.args_default @ 
   [ ("-f", Arg.Set_string(program_file_name), "program file name" );
     ("-l", Arg.Set_string(logic_file_name), "logic file name" ); 
-    ("-i", Arg.Set_string(inductive_file_name), "inductive file name" );
-    ("-nosmt", Arg.Clear(Smt.smt_run),"Don't use the SMT solver");
-    ("-p", Arg.Set_string(Smt.solver_path), "SMT solver path"); ]
+    ("-i", Arg.Set_string(inductive_file_name), "inductive file name" ); ]
 
 
 
@@ -35,7 +33,7 @@ let main () =
   else if !logic_file_name="" then
     Format.printf "Logic file name not specified. Can't continue....@\n %s @\n" usage_msg
   else 
-    if !Smt.smt_run then Smt.smt_init !Smt.solver_path;
+    if !Config.smt_run then Smt.smt_init !Config.solver_path;
     let rl = if !inductive_file_name <> "" then Inductive.convert_inductive_file !inductive_file_name else [] in
     let l1,l2,cn = load_logic_extra_rules (System.getenv_dirlist "JSTAR_LOGIC_LIBRARY") !logic_file_name rl in
     let logic = {empty_logic with seq_rules = l1; rw_rules=l2; consdecl = cn;} in

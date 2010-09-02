@@ -37,7 +37,7 @@ open Smtsyntax
 exception SMT_error of string
 exception SMT_fatal_error
 
-let smt_run = ref true;; 
+(*let Config.smt_run = ref true;; *)
 let smt_fdepth = ref 0;; 
 let smtout = ref Pervasives.stdin;; 
 let smtin = ref Pervasives.stderr;;
@@ -47,7 +47,7 @@ let smtout_lex = ref (Lexing.from_string "");;
 
 
 (* use z3 by default. Can be overridden by the -p command line option *)
-let solver_path = ref "z3";;
+(*let solver_path = ref "z3";;*)
 
 
 let smt_init (path : string) : unit = 
@@ -55,7 +55,7 @@ let smt_init (path : string) : unit =
   let o, i, e = Unix.open_process_full path (environment()) in 
   smtout := o;  smtin := i;  smterr := e;
   smtout_lex := Lexing.from_channel !smtout; 
-  smt_run := true; 
+  Config.smt_run := true; 
   if Config.smt_debug() then Format.printf "SMT running...\n"
 
 
@@ -67,7 +67,7 @@ let smt_fatal_recover () : unit  =
   Format.printf "SMT off.\n"; 
   System.reset(); 
   Format.print_flush(); 
-  smt_run := false 
+  Config.smt_run := false 
 
 
 
@@ -372,7 +372,7 @@ let true_sequent_smt (seq : sequent) : bool =
   (Clogic.true_sequent seq)
     ||
   (* Call the SMT if the other check fails *)
-  (if (not !smt_run) then false 
+  (if (not !Config.smt_run) then false 
   else 
   (if Config.smt_debug() 
    then Format.printf "Calling SMT to prove\n %a\n" Clogic.pp_sequent seq; 
@@ -386,7 +386,7 @@ let true_sequent_smt (seq : sequent) : bool =
 let frame_sequent_smt (seq : sequent) : bool = 
   (seq.obligation = empty) 
     ||
-  (if (not !smt_run) then false 
+  (if (not !Config.smt_run) then false 
   else 
   (if Config.smt_debug() 
    then Format.printf "Calling SMT to get frame from\n %a\n" Clogic.pp_sequent seq; 
@@ -401,7 +401,7 @@ let ask_the_audience
     (ts : term_structure)
     (form : formula)
     : term_structure = 
-  if (not !smt_run) then raise Backtrack.No_match 
+  if (not !Config.smt_run) then raise Backtrack.No_match 
   else try 
     if Config.smt_debug() then Format.printf "Calling SMT to update congruence closure\n"; 
   
