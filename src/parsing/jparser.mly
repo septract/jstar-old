@@ -68,15 +68,15 @@ let bind_spec_vars (mods,typ,name,args_list) {pre=pre;post=post;excep=excep} =
    post=subst_pform subst post;
    excep=ClassMap.map (subst_pform subst) excep}
 
-let mkDynamic (msig, specs) =
+let mkDynamic (msig, specs, source_pos) =
   let specs = List.map (bind_spec_vars msig) specs in 
-  let msig = msig_simp msig in   
-  Dynamic(msig,specs)
+  let msig = msig_simp msig in
+  Dynamic(msig, specs, source_pos)
 
-let mkStatic (msig, specs) =
+let mkStatic (msig, specs, source_pos) =
   let specs = List.map (bind_spec_vars msig) specs in 
   let msig = msig_simp msig in   
-  Static(msig,specs)
+  Static(msig, specs, source_pos)
   
     
   
@@ -243,6 +243,7 @@ let field_signature2str fs =
 %token INCONSISTENCY
 %token RULE
 %token PURERULE
+%token CONSTRUCTOR
 %token PRED
 %token REWRITERULE
 %token EMPRULE
@@ -259,7 +260,6 @@ let field_signature2str fs =
 
 %token INDUCTIVE
 
-%token NOOP 
 %token LABEL
 %token END
 %token ASSIGN
@@ -399,10 +399,10 @@ specs_npv:
 
 
 method_spec:
-   | method_signature_short COLON specs  SEMICOLON  { mkDynamic($1, $3) }
-   | method_signature_short STATIC COLON specs SEMICOLON  { mkStatic($1, $4) }
-   | method_signature_short COLON specs   { mkDynamic($1, $3) }
-   | method_signature_short STATIC COLON specs  { mkStatic($1, $4) }
+   | method_signature_short COLON specs  SEMICOLON source_pos_tag_option { mkDynamic($1, $3, $5) }
+   | method_signature_short STATIC COLON specs SEMICOLON source_pos_tag_option { mkStatic($1, $4, $6) }
+   | method_signature_short COLON specs source_pos_tag_option { mkDynamic($1, $3, $4) }
+   | method_signature_short STATIC COLON specs source_pos_tag_option { mkStatic($1, $4, $5) }
 
 exp_posts:
    | L_BRACE identifier COLON formula R_BRACE exp_posts { ClassMap.add $2 $4 $6 }
@@ -575,11 +575,14 @@ method_body:
 ;
 source_pos_tag:
    | SOURCE_POS_TAG COLON identifier COLON integer_constant identifier COLON integer_constant identifier COLON integer_constant identifier COLON integer_constant identifier COLON full_identifier SOURCE_POS_TAG_CLOSE { ($5, $8, $11, $14) }
-;  
+; 
+source_pos_tag_option:
+   | /* empty */ { None }
+   | source_pos_tag { Some($1) }
+;
 declaration_or_statement:
    | declaration { DOS_dec($1) }
-   | statement source_pos_tag { DOS_stm($1, Some($2)) }
-   | statement { DOS_stm($1, None) }
+   | statement source_pos_tag_option { DOS_stm($1, $2) }
 ;
 declaration_or_statement_list_star:
    | /* empty */ { [] } 
@@ -933,7 +936,7 @@ formula:
        {if List.length $3 =1 then [P_SPred($1,$3 @ [mkArgRecord []])] else [P_SPred($1,$3)] }
    | full_identifier L_PAREN jargument_list R_PAREN {if List.length $3 =1 then [P_SPred($1,$3 @ [mkArgRecord []])] else [P_SPred($1,$3)] }
    | formula MULT formula { pconjunction $1 $3 }
-   | formula OR formula { if Config.symb_debug() then parse_warning "deprecated use of |"  ; pconjunction (purify $1) $3 }
+   | formula OR formula { if Config.parse_debug() then parse_warning "deprecated use of |"  ; pconjunction (purify $1) $3 }
    | formula OROR formula { mkOr ($1,$3) }
    | lvariable COLON identifier { [P_PPred("type", [Arg_var($1);Arg_string($3)])] }
    | jargument binop_cmp jargument { Support_syntax.bop_to_prover_pred $2 $1 $3 }
@@ -951,7 +954,7 @@ formula_npv:
        {if List.length $3 =1 then [P_SPred($1,$3 @ [mkArgRecord []])] else [P_SPred($1,$3)] }
    | full_identifier L_PAREN jargument_list_npv R_PAREN {if List.length $3 =1 then [P_SPred($1,$3 @ [mkArgRecord []])] else [P_SPred($1,$3)] }
    | formula_npv MULT formula_npv { pconjunction $1 $3 }
-   | formula_npv OR formula_npv { if Config.symb_debug() then parse_warning "deprecated use of |"  ; pconjunction (purify $1) $3 }
+   | formula_npv OR formula_npv { if Config.parse_debug() then parse_warning "deprecated use of |"  ; pconjunction (purify $1) $3 }
    | formula_npv OROR formula_npv { mkOr ($1,$3) }
    | lvariable_npv COLON identifier { [P_PPred("type", [Arg_var $1;Arg_string($3)])] }
    | jargument_npv binop_cmp jargument_npv { Support_syntax.bop_to_prover_pred $2 $1 $3 }
@@ -977,7 +980,7 @@ spatial_list:
 sequent:
    | spatial_list OR formula VDASH formula { ($1,$3,$5) }
 /* used as the collapse form is || is a reserved token */
-   | spatial_list OROR formula VDASH formula {  if Config.symb_debug() then parse_warning "deprecated use of |" ; ($1,$3,$5) }
+   | spatial_list OROR formula VDASH formula {  if Config.parse_debug() then parse_warning "deprecated use of |" ; ($1,$3,$5) }
 
 sequent_list:
    |  /* empty */ { [] }
@@ -1031,7 +1034,8 @@ equiv_rule:
    | EQUIV identifier_op COLON formula BIMP formula without_simp  { EquivRule($2,mkEmpty,$4,$6,$7) } 
 
 rule:
-   | IMPORT STRING_CONSTANT SEMICOLON { ImportEntry($2) }
+   |  CONSTRUCTOR identifier  { NormalEntry( ConsDecl($2) ) }
+   |  IMPORT STRING_CONSTANT SEMICOLON  { ImportEntry($2) }
    |  RULE identifier_op COLON sequent without where IF sequent_list_or_list { NormalEntry(SeqRule($4,$8,$2,$5,$6)) }
    |  REWRITERULE identifier_op COLON identifier L_PAREN jargument_list R_PAREN EQUALS jargument ifclause without_simp where 
 	 { NormalEntry(RewriteRule({function_name=$4;
@@ -1140,7 +1144,7 @@ core_stmt_list:
 
 core_stmt: 
    |  END   { End }
-   |  NOOP  { Nop_stmt_core }
+   |  NOP  { Nop_stmt_core }
    |  ASSIGN core_assn_args spec L_PAREN jargument_list_npv R_PAREN
          { Assignment_core($2, $3, $5) } 
    |  GOTO label_list { Goto_stmt_core $2 } 

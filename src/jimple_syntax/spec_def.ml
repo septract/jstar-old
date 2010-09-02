@@ -19,8 +19,8 @@ open Spec
 
 
 type methodspec =
-      Dynamic of method_signature_short * (spec list)
-  |   Static of method_signature_short * (spec list)
+      Dynamic of method_signature_short * (spec list) * Printing.source_pos_tag option
+  |   Static of method_signature_short * (spec list) * Printing.source_pos_tag option
 
 type methodspecs =
     methodspec list

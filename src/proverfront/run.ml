@@ -12,20 +12,19 @@
  ********************************************************)
 open Congruence
 open Load_logic
+open Psyntax
 
 let _ = CC.test ()
 
 let program_file_name = ref "";;
 let logic_file_name = ref "";;
 
-let f = Debug.debug_ref := false
-
-let arg_list =[ ("-f", Arg.Set_string(program_file_name), "program file name");
-		("-l", Arg.Set_string(logic_file_name), "logic file name"); 
-	        ("-v", Arg.Set(Debug.debug_ref), "Verbose proofs");
-	        ("-nosmt", Arg.Clear(Smt.smt_run),"Don't use the SMT solver");
-	        ("-p", Arg.Set_string(Smt.solver_path), "SMT solver path"); ]
-
+let arg_list = Config.args_default @ 
+  [ ("-f", Arg.Set_string(program_file_name), "program file name");
+    ("-l", Arg.Set_string(logic_file_name), "logic file name"); 
+    ("-nosmt", Arg.Clear(Smt.smt_run),"Don't use the SMT solver");
+    ("-p", Arg.Set_string(Smt.solver_path), "SMT solver path"); ]
+    
 
 let main () =
   let usage_msg="Usage: -f <file_name> -l <logic_file_name>" in 
@@ -38,9 +37,9 @@ let main () =
   else 
     if !Smt.smt_run then Smt.smt_init !Smt.solver_path; 
 
-    let l1,l2 = (load_logic (System.getenv_dirlist "JSTAR_LOGIC_LIBRARY") !logic_file_name) in 
-    let logic = l1,l2, Psyntax.default_pure_prover in
-    let s = System.string_of_file !program_file_name  in
+    let l1,l2,cn = (load_logic (System.getenv_dirlist "JSTAR_LOGIC_LIBRARY") !logic_file_name) in 
+    let logic = {empty_logic with seq_rules = l1; rw_rules=l2; consdecl = cn} in
+(*    let s = System.string_of_file !program_file_name  in*)
     let question_list = System.parse_file Jparser.question_file Jlexer.token !program_file_name "Questions" true in
 
     List.iter (
@@ -50,24 +49,24 @@ let main () =
 	Format.printf "Check implication\n %a\n ===> \n %a\n" Psyntax.string_form heap1   Psyntax.string_form heap2;
 	if (Sepprover.implies_opt logic (Sepprover.convert heap1) heap2)
 	then Format.printf("Holds!\n\n") else Format.printf("Does not hold!\n\n");
-	if !(Debug.debug_ref) then Prover.pprint_proof stdout
+	if Config.verb_proof() then Prover.pprint_proof stdout
     | Psyntax.Frame (heap1, heap2)  -> 
 	Format.printf "Find frame for\n %a\n ===> \n %a\n" Psyntax.string_form heap1   Psyntax.string_form heap2;
 	let x = Sepprover.frame_opt logic 
 	    (Sepprover.convert heap1) heap2 in 
 	(match x with None -> Format.printf "Can't find frame!" | Some x -> List.iter (fun form -> Format.printf "Frame:\n %a\n" Sepprover.string_inner_form  form) x);
 	Format.printf "\n";
-	if !(Debug.debug_ref) then Prover.pprint_proof stdout
+	if Config.verb_proof() then Prover.pprint_proof stdout
     | Psyntax.Abs (heap1)  ->
 	Format.printf "Abstract@\n  @[%a@]@\nresults in@\n  " Psyntax.string_form heap1;
 	let x = Sepprover.abs_opt logic (Sepprover.convert heap1) in 
 	List.iter (fun form -> Format.printf "%a\n" Sepprover.string_inner_form form) x;
 	Format.printf "\n";
-	if !(Debug.debug_ref) then Prover.pprint_proof stdout
+	if Config.verb_proof() then Prover.pprint_proof stdout
     | Psyntax.Inconsistency (heap1) ->
 	if Sepprover.inconsistent_opt logic (Sepprover.convert heap1) 
 	then Format.printf("Inconsistent!\n\n") else Format.printf("Consistent!\n\n");
-	if !(Debug.debug_ref) then Prover.pprint_proof stdout
+        if Config.verb_proof() then Prover.pprint_proof stdout
     | Psyntax.Equal (heap,arg1,arg2) -> ()
 (*	if Prover.check_equal logic heap arg1 arg2 
 	then Format.printf("Equal!\n\n") else Format.printf("Not equal!\n\n")*) 

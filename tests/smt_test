@@ -7,8 +7,8 @@ Implication:
 ? True 
 
 Implication: 
-  (a < b)  |-  (b < a)
-? False
+  (a < b) * (b < a)  |-  False
+? True
 
 Implication:
   |- (a + b) = (b + a)
@@ -16,4 +16,8 @@ Implication:
 
 Implication: 
   (a < b) * (b < c)  |-  (a < c) 
+? True 
+
+Implication: 
+  |- builtin_mult(b,a) = builtin_mult(a, b)
 ? True 

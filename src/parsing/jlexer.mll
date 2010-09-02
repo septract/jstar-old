@@ -128,6 +128,7 @@ let keyword_al = [
   ("rewrite",REWRITERULE);
   ("emprule",EMPRULE);
   ("purerule",PURERULE);
+  ("constructor",CONSTRUCTOR);
   ("if",IF);
   ("without",WITHOUT);  
   ("notin",NOTIN);  
@@ -137,7 +138,7 @@ let keyword_al = [
   ("abstraction",ABSRULE);
   ("equiv",EQUIV);
   ("inductive" , INDUCTIVE );
-  ("nop",NOOP);
+  ("nop",NOP);
   ("label",LABEL);
   ("end",END);
   ("assign",ASSIGN);

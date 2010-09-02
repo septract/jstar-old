@@ -14,9 +14,7 @@
 open Microsoft.FSharp.Compatibility
 F#*)
 
-let debug_ref = ref false
-
-let debug = !debug_ref
+open Config
 
 let buffer_dump = Buffer.create 10000
 
@@ -32,9 +30,9 @@ let merge_formatters frm1 frm2 =
 
 
 
-let dump = ref (merge_formatters 
+let proof_dump = ref (merge_formatters 
 		  (Format.formatter_of_buffer buffer_dump)
-		  (flagged_formatter Format.std_formatter debug_ref))
+		  (flagged_formatter Format.std_formatter verb_proof_ref))
 
 (*IF-OCAML*)
 exception Unsupported 

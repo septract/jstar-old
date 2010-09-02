@@ -11,19 +11,19 @@
       LICENSE.txt
  ********************************************************)
 open Load_logic
+open Psyntax
 
 let program_file_name = ref "";;
 let logic_file_name = ref "";;
 let inductive_file_name = ref "";;
  
-let f = Debug.debug_ref := false
+let arg_list = Config.args_default @ 
+  [ ("-f", Arg.Set_string(program_file_name), "program file name" );
+    ("-l", Arg.Set_string(logic_file_name), "logic file name" ); 
+    ("-i", Arg.Set_string(inductive_file_name), "inductive file name" );
+    ("-nosmt", Arg.Clear(Smt.smt_run),"Don't use the SMT solver");
+    ("-p", Arg.Set_string(Smt.solver_path), "SMT solver path"); ]
 
-let arg_list =[ ("-f", Arg.Set_string(program_file_name), "program file name" );
-		("-l", Arg.Set_string(logic_file_name), "logic file name" ); 
-		("-i", Arg.Set_string(inductive_file_name), "inductive file name" );
-	        ("-v", Arg.Set(Debug.debug_ref), "Verbose proofs");
-	        ("-nosmt", Arg.Clear(Smt.smt_run),"Don't use the SMT solver");
-	        ("-p", Arg.Set_string(Smt.solver_path), "SMT solver path"); ]
 
 
 let main () =
@@ -37,13 +37,12 @@ let main () =
   else 
     if !Smt.smt_run then Smt.smt_init !Smt.solver_path;
     let rl = if !inductive_file_name <> "" then Inductive.convert_inductive_file !inductive_file_name else [] in
-    let l1,l2 = load_logic_extra_rules (System.getenv_dirlist "JSTAR_LOGIC_LIBRARY") !logic_file_name rl in
-    let logic = l1,l2, Psyntax.default_pure_prover in
+    let l1,l2,cn = load_logic_extra_rules (System.getenv_dirlist "JSTAR_LOGIC_LIBRARY") !logic_file_name rl in
+    let logic = {empty_logic with seq_rules = l1; rw_rules=l2; consdecl = cn;} in
     let s = System.string_of_file !program_file_name  in
-    if !(Debug.debug_ref) then Format.printf "Start parsing tests in %s...@\n" !program_file_name;
+    if Config.verb_proof() then Format.printf "Start parsing tests in %s...@\n" !program_file_name;
     let test_list  = Jparser.test_file Jlexer.token (Lexing.from_string s) 
-    in if !(Debug.debug_ref) then Format.printf "Parsed %s!@\n" !program_file_name;
-
+    in if Config.verb_proof() then Format.printf "Parsed %s!@\n" !program_file_name;
     List.iter (
     fun test ->
       match test with 
@@ -58,7 +57,7 @@ let main () =
 	      Psyntax.string_form heap1 
 	      Psyntax.string_form heap2
 	)
-(*	if !(Debug.debug_ref) then Prover.pprint_proof stdout*)
+(*	if Config.verb_proof() then Prover.pprint_proof stdout*)
 	  
     | Psyntax.TFrame (heap1, heap2, result)  -> 
 (*	Format.printf "Find frame for\n %s\n ===> \n %s\n" (Psyntax.string_form heap1) (Psyntax.string_form heap2);*)
@@ -99,7 +98,7 @@ let main () =
 	| false,true -> Format.printf "Test failed! Prover could not prove@ %a@ inconsistent.@\n" 
 	      Psyntax.string_form heap1
 	);
-(*	if !(Debug.debug_ref) then Prover.pprint_proof stdout*)
+(*	if Config.verb_proof() then Prover.pprint_proof stdout*)
     | Psyntax.TEqual (heap,arg1,arg2,result) -> ()
 (*	if Prover.check_equal logic heap arg1 arg2 
 	then Format.printf("Equal!\n\n") else Format.printf("Not equal!\n\n")*)

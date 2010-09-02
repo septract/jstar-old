@@ -51,18 +51,18 @@ let solver_path = ref "z3";;
 
 
 let smt_init (path : string) : unit = 
-  if !(Debug.debug_ref) then Format.printf "Initialising SMT\n"; 
+  if Config.smt_debug() then Format.printf "Initialising SMT\n"; 
   let o, i, e = Unix.open_process_full path (environment()) in 
   smtout := o;  smtin := i;  smterr := e;
   smtout_lex := Lexing.from_channel !smtout; 
   smt_run := true; 
-  if !(Debug.debug_ref) then Format.printf "SMT running...\n"
+  if Config.smt_debug() then Format.printf "SMT running...\n"
 
 
 let smt_fatal_recover () : unit  = 
   System.warning();
   Format.printf "Oh noes! The SMT solver died for some reason. This shouldn't happen.\n"; 
-  Format.printf "Turning off the SMT for this example..."; 
+  Format.printf "Turning off SMT for this example..."; 
   Unix.close_process_full (!smtout, !smtin, !smterr); 
   Format.printf "SMT off.\n"; 
   System.reset(); 
@@ -105,12 +105,12 @@ let rec list_to_pairs
 
 let cmd_munge (s : string) : string = 
   let s = Str.global_replace (Str.regexp "@") "AT_" s in 
-  let s = Str.global_replace (Str.regexp "\*") "STAR_" s in
   s
   
 let str_munge (s : string ) : string = 
   let s = Str.global_replace (Str.regexp "[<> @\*]")  "_" s in 
   s
+
 
 (* Datatype to hold smt type annotations *)
 
@@ -136,7 +136,11 @@ let rec args_smttype (arg : Psyntax.args) : smttypeset =
   | Arg_var v -> SMTTypeSet.singleton (SMT_Var(v)) 
   | Arg_string s -> 
           SMTTypeSet.singleton (SMT_Op("string_const_"^(str_munge s), 0))
+
   | Arg_op ("builtin_plus",_) -> SMTTypeSet.empty
+  | Arg_op ("builtin_minus",_) -> SMTTypeSet.empty
+  | Arg_op ("builtin_mult",_) -> SMTTypeSet.empty
+
   | Arg_op (name, args) -> 
           let s = SMTTypeSet.singleton (SMT_Op(("op_"^name), (length args))) in 
           smt_union_list (s::(map args_smttype args))
@@ -146,58 +150,56 @@ let rec args_smttype (arg : Psyntax.args) : smttypeset =
 
 (* Functions to convert various things to sexps & get types *)
 
-let rec string_sexp_args ppf arg = 
+let rec string_sexp_args (arg : Psyntax.args) : string = 
   match arg with 
-  | Arg_var v -> Format.fprintf ppf "%s" (Vars.string_var v)
-  | Arg_string s -> Format.fprintf ppf "%s" ("string_const_"^(str_munge s))
+  | Arg_var v -> Vars.string_var v
+  | Arg_string s -> "string_const_"^(str_munge s)
+  
   | Arg_op ("builtin_plus",[a1;a2]) -> 
-          Format.fprintf ppf "(+ %a %a)" string_sexp_args a1 string_sexp_args a2
+          Printf.sprintf "(+ %s %s)" (string_sexp_args a1) (string_sexp_args a2)
+  | Arg_op ("builtin_minus",[a1;a2]) -> 
+          Printf.sprintf "(- %s %s)" (string_sexp_args a1) (string_sexp_args a2)
+  | Arg_op ("builtin_mult",[a1;a2]) -> 
+          Printf.sprintf "(* %s %s)" (string_sexp_args a1) (string_sexp_args a2)
+
   | Arg_op (name,args) -> 
-          Format.fprintf ppf "(%s %a)" ("op_"^name) string_sexp_args_list args 
-  | Arg_record _ -> Format.fprintf ppf "" 
-and string_sexp_args_list ppf argsl = 
+          Printf.sprintf "(%s %s)" ("op_"^name) (string_sexp_args_list args)
+  | Arg_record _ -> ""  (* shouldn't happen as converted to preds *)
+and string_sexp_args_list (argsl : Psyntax.args list) : string = 
   match argsl with 
-    [] -> Format.fprintf ppf ""
-  | [a] -> Format.fprintf ppf "%a" string_sexp_args a
-  | a::al -> Format.fprintf ppf "%a@ %a" string_sexp_args a string_sexp_args_list al
+  | [] -> ""
+  | a::al -> (string_sexp_args a) ^ " " ^ (string_sexp_args_list al)
 
 
 let string_sexp_eq (a : Psyntax.args * Psyntax.args) : string =
   match a with (a1, a2) -> 
-  Format.fprintf Format.str_formatter "(= %a %a)" 
-                 string_sexp_args a1 string_sexp_args a2;
-  Format.flush_str_formatter()
+  Printf.sprintf "(= %s %s)" (string_sexp_args a1) (string_sexp_args a2)
 
 
 let string_sexp_neq (a : Psyntax.args * Psyntax.args) : string =
   match a with a1, a2 -> 
-  Format.fprintf Format.str_formatter "(distinct %a %a)" 
-                 string_sexp_args a1 string_sexp_args a2;
-  Format.flush_str_formatter()
+  Printf.sprintf "(distinct %s %s)" (string_sexp_args a1) (string_sexp_args a2)
 
   
 let string_sexp_pred (p : string * Psyntax.args) : (string * smttypeset) = 
   match p with 
   | ("GT",(Arg_op ("tuple",[a1;a2]))) -> 
-      Format.fprintf Format.str_formatter "(> %a)" string_sexp_args_list [a1;a2]; 
-      (Format.flush_str_formatter(), SMTTypeSet.empty)
+      (Printf.sprintf "(> %s)" (string_sexp_args_list [a1;a2]), SMTTypeSet.empty)
+
   | ("LT",(Arg_op ("tuple",[a1;a2]))) -> 
-      Format.fprintf Format.str_formatter "(< %a)" string_sexp_args_list [a1;a2]; 
-      (Format.flush_str_formatter(), SMTTypeSet.empty)
+      (Printf.sprintf "(< %s)" (string_sexp_args_list [a1;a2]), SMTTypeSet.empty)
+
   | ("GE",(Arg_op ("tuple",[a1;a2]))) -> 
-      Format.fprintf Format.str_formatter "(>= %a)" string_sexp_args_list [a1;a2]; 
-      (Format.flush_str_formatter(), SMTTypeSet.empty)
+      (Printf.sprintf "(>= %s)" (string_sexp_args_list [a1;a2]), SMTTypeSet.empty)
+
   | ("LE",(Arg_op ("tuple",[a1;a2]))) -> 
-      Format.fprintf Format.str_formatter "(> %a)" string_sexp_args_list [a1;a2]; 
-      (Format.flush_str_formatter(), SMTTypeSet.empty)
+      (Printf.sprintf "(<= %s)" (string_sexp_args_list [a1;a2]), SMTTypeSet.empty)
       
-  | name, args -> 
+  | (name, args) -> 
     let name = "pred_"^name in 
     match args with Arg_op ("tuple",al) ->
     let types = SMTTypeSet.add (SMT_Pred(name,(length al))) (args_smttype args) in 
-         Format.fprintf Format.str_formatter "(%s %a)" name string_sexp_args_list al; 
-         ( Format.flush_str_formatter(), types )
-       
+    (Printf.sprintf "(%s %s)" name (string_sexp_args_list al), types)
 
 
 let rec string_sexp_form 
@@ -258,7 +260,7 @@ let smt_command
     : smt_response = 
   try 
     let cmd = cmd_munge cmd in 
-    if !(Debug.debug_ref) then Format.printf "SMT command: %s\n" cmd; 
+    if Config.smt_debug() then Format.printf "SMT command: %s\n" cmd; 
     output_string !smtin cmd; 
     output_string !smtin "\n"; 
     flush !smtin; 
@@ -372,7 +374,7 @@ let true_sequent_smt (seq : sequent) : bool =
   (* Call the SMT if the other check fails *)
   (if (not !smt_run) then false 
   else 
-  (if !(Debug.debug_ref) 
+  (if Config.smt_debug() 
    then Format.printf "Calling SMT to prove\n %a\n" Clogic.pp_sequent seq; 
    Clogic.plain seq.assumption 
     &&
@@ -386,7 +388,7 @@ let frame_sequent_smt (seq : sequent) : bool =
     ||
   (if (not !smt_run) then false 
   else 
-  (if !(Debug.debug_ref) 
+  (if Config.smt_debug() 
    then Format.printf "Calling SMT to get frame from\n %a\n" Clogic.pp_sequent seq; 
    Clogic.plain seq.obligation
     && 
@@ -401,7 +403,7 @@ let ask_the_audience
     : term_structure = 
   if (not !smt_run) then raise Backtrack.No_match 
   else try 
-    if !(Debug.debug_ref) then Format.printf "Calling SMT to update congruence closure\n"; 
+    if Config.smt_debug() then Format.printf "Calling SMT to update congruence closure\n"; 
   
     smt_push(); 
     
@@ -426,11 +428,11 @@ let ask_the_audience
     in smt_assert assm_query;    
 
     (* check for a contradiction *)
-    if !(Debug.debug_ref) then Format.printf "[Checking for contradiction in assumption]\n"; 
+    if Config.smt_debug() then Format.printf "[Checking for contradiction in assumption]\n"; 
     if smt_check_unsat() then (smt_reset(); raise Assm_Contradiction);
     
     (* check whether there are any new equalities to find; otherwise raise Backtrack.No_match *)
-    if !(Debug.debug_ref) then Format.printf "[Checking for new equalities]\n"; 
+    if Config.smt_debug() then Format.printf "[Checking for new equalities]\n"; 
     smt_push(); 
     let reps = get_args_rep ts in 
     let rep_sexps = String.concat " " (map (fun (x,y) -> string_sexp_neq (snd x,snd y)) 

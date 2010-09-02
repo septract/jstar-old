@@ -18,6 +18,7 @@ open Printf
 open Methdec_core
 open Pprinter_core
 open Load_logic
+open Psyntax
 
 let question_file_name = ref "";;
 let logic_file_name = ref "";;
@@ -25,12 +26,14 @@ let absrules_file_name = ref "";;
 
 let proof_succes = ref true;; 
 
-let arg_list = [ 
-  ("-f", Arg.Set_string(question_file_name), "question file name" );
-  ("-l", Arg.Set_string(logic_file_name), "logic file name" );
-  ("-a", Arg.Set_string(absrules_file_name), "abstraction rules file name" );
-  ("-nosmt", Arg.Clear(Smt.smt_run),"Don't use the SMT solver");
-  ("-p", Arg.Set_string(Smt.solver_path), "SMT solver path"); 
+
+let arg_list = Config.args_default @ 
+  [ 
+("-f", Arg.Set_string(question_file_name ), "question file name" );
+("-l", Arg.Set_string(logic_file_name ), "logic file name" );
+("-a", Arg.Set_string(absrules_file_name ), "abstraction rules file name" );
+("-nosmt", Arg.Clear(Smt.smt_run),"Don't use the SMT solver");
+("-p", Arg.Set_string(Smt.solver_path), "SMT solver path"); 
   ]
 
 
@@ -48,10 +51,10 @@ let main () : unit =
   else
     if !Smt.smt_run then Smt.smt_init !Smt.solver_path; 
 
-    let l1,l2 = (load_logic (System.getenv_dirlist "JSTAR_LOGIC_LIBRARY") !logic_file_name) in 
-    let lo = l1,l2, Psyntax.default_pure_prover in
-    let l1,l2 = Load_logic.load_logic  (System.getenv_dirlist "JSTAR_LOGIC_LIBRARY") !absrules_file_name in 
-    let abs_rules = (l1,l2, Psyntax.default_pure_prover) in
+    let l1,l2,cn = (load_logic (System.getenv_dirlist "JSTAR_LOGIC_LIBRARY") !logic_file_name) in 
+    let lo = {empty_logic with seq_rules = l1; rw_rules = l2; consdecl = cn} in
+    let l1,l2,cn = Load_logic.load_logic  (System.getenv_dirlist "JSTAR_LOGIC_LIBRARY") !absrules_file_name in 
+    let abs_rules = {empty_logic with seq_rules = l1; rw_rules = l2; consdecl = cn} in
     let question_list = System.parse_file Jparser.symb_question_file Jlexer.token !question_file_name "Question" true in
     List.iter (
     fun question ->

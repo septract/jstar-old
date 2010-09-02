@@ -276,7 +276,7 @@ let add_eqs_t_list fresh eqs ts : term_structure =
     try 
       make_equal_t fresh ts x y
     with Contradiction -> 
-      Format.fprintf !(Debug.dump) "Trying to make %a and %a equal failed" string_args x string_args y; 
+      Format.fprintf !(Debug.proof_dump) "Trying to make %a and %a equal failed" string_args x string_args y; 
       raise Contradiction 
       ) ts eqs
 
@@ -285,7 +285,7 @@ let add_neqs_t_list fresh neqs ts : term_structure =
     try 
       make_not_equal_t fresh ts x y
     with Contradiction -> 
-      Format.fprintf !(Debug.dump) "Trying to make %a and %a not equal failed" string_args x string_args y; 
+      Format.fprintf !(Debug.proof_dump) "Trying to make %a and %a not equal failed" string_args x string_args y; 
       raise Contradiction 
       ) ts neqs
 
@@ -357,7 +357,7 @@ let rec normalise ts form : formula * term_structure =
 	  None,None -> raise Contradiction
 	| Some (form,ts'), None
 	| None, Some (form,ts') ->
-	    Format.fprintf !(Debug.dump) "Disjunct eliminated! Remaining disjunct:@ %a@\n" (pp_form ts) form ;
+	    Format.fprintf !(Debug.proof_dump) "Disjunct eliminated! Remaining disjunct:@ %a@\n" (pp_form ts) form ;
 	    let nform = (conjunction form nform) in 
 	    f nform
 	      ts'
@@ -603,7 +603,7 @@ type pat_sequent =
   }
       
 let convert_sequent (ps : psequent) : pat_sequent =
-(*  Format.fprintf !(Debug.dump) "Converting sequent: %a@\n" string_pseq ps;*)
+(*  Format.fprintf !(Debug.proof_dump) "Converting sequent: %a@\n" string_pseq ps;*)
   let ps = match ps with
     pm,pa,po -> 
       {
@@ -611,7 +611,7 @@ let convert_sequent (ps : psequent) : pat_sequent =
        assumption_diff = convert_to_inner pa;
        obligation_diff = convert_to_inner po;
      } in 
-(*  Format.fprintf !(Debug.dump) "Produced sequent: %a@ |@ %a@ |-@ %a@\n@\n" pp_sform ps.assumption_same pp_sform ps.assumption_diff pp_sform ps.obligation_diff; *)
+(*  Format.fprintf !(Debug.proof_dump) "Produced sequent: %a@ |@ %a@ |-@ %a@\n@\n" pp_sform ps.assumption_same pp_sform ps.assumption_diff pp_sform ps.obligation_diff; *)
   ps
 
 type inner_sequent_rule =
@@ -644,7 +644,7 @@ let sequent_join fresh (seq : sequent) (pseq : pat_sequent) : sequent option =
       try 
 	convert fresh  seq.ts pseq.assumption_diff 
       with Contradiction -> 
-	Format.fprintf !(Debug.dump) "Failed to add formula to lhs: %a@\n" pp_sform pseq.assumption_diff;
+	Format.fprintf !(Debug.proof_dump) "Failed to add formula to lhs: %a@\n" pp_sform pseq.assumption_diff;
 	raise Contradiction
     in
     let ass = conjunction ass seq.assumption in
@@ -652,7 +652,7 @@ let sequent_join fresh (seq : sequent) (pseq : pat_sequent) : sequent option =
       try 
 	convert fresh ts pseq.assumption_same 
       with Contradiction ->
-	Format.fprintf !(Debug.dump) "Failed to add formula to matched: %a@\n" pp_sform pseq.assumption_same;
+	Format.fprintf !(Debug.proof_dump) "Failed to add formula to matched: %a@\n" pp_sform pseq.assumption_same;
 	assert false in 
     let sam = RMSet.union sam.spat seq.matched in 
     let obs,ts = 
@@ -672,7 +672,7 @@ let sequent_join fresh (seq : sequent) (pseq : pat_sequent) : sequent option =
      ts = ts;
    }
   with Contradiction -> 
-    Format.fprintf !(Debug.dump) "Contradiction detected!!@\n";
+    Format.fprintf !(Debug.proof_dump) "Contradiction detected!!@\n";
     None
 
 let sequent_join_fresh = sequent_join true
@@ -823,7 +823,7 @@ try
     try 
       out_normalise seq.ts ass
     with Contradiction -> 
-      Format.fprintf !(Debug.dump)"Success: %a@\n" pp_sequent seq;  
+      Format.fprintf !(Debug.proof_dump)"Success: %a@\n" pp_sequent seq;  
       raise Success
   in 
   try 
@@ -910,7 +910,7 @@ let apply_rule
 					    assumption = ass})) then
 		  raise No_match
 	      else begin
-		Format.fprintf !(Debug.dump) "Match rule %s@\n" sr.name;
+		Format.fprintf !(Debug.proof_dump) "Match rule %s@\n" sr.name;
 		let seq = 			    
 		  {seq with 
 		   ts = ts;
@@ -967,7 +967,7 @@ let convert_with_eqs fresh pform =
 let convert fresh ts pform = 
   convert_without_eqs fresh  ts (convert_to_inner pform)
 
-let make_implies heap pheap = 
+let make_implies (heap : ts_formula) (pheap : pform) : sequent = 
   let ts,form = break_ts_form heap in 
   let rh,ts = convert false ts pheap in  
   {ts = ts;
