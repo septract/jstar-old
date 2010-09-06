@@ -15,7 +15,7 @@ class java.lang.Integer {
 //}}}
 //{{{ List
 class List {
-  static void <init>() : {} {};
+  static void <init>() : {} {access(@this:,Z)};
   static void add(java.lang.Object) : {} {};
   static int size() : {} {};
   static Iterator iterator() : {} {};
@@ -35,37 +35,33 @@ class List$Node {
 }
 //}}}
 //{{{ Collection
-class Collection {
+interface Collection {
   static void add(java.lang.Object) : 
-      {write(@caller,@this:,_r,_w)}
-      {write(@caller,@this:,_r,_w)};
-  static void remove(java.lang.Object) : 
-      {write(@caller,@this:,_r,_w)}
-      {write(@caller,@this:,_r,_w)};
-  static int size() : 
-      {read(@caller,@this:,_r,_w)}
-      {read(@caller,@this:,_r,_w)};
-  static Iterator iterator() : 
-      {write(@caller,@this:,_r,Z)} 
-      {validIterator($ret_val,{c=@this:;r=_r})};
+      {access(@this:,Z)}
+      {access(@this:,Z)};
+  void remove(java.lang.Object) : 
+      {access(@this:,Z)}
+      {access(@this:,Z)};
+  int size() : 
+      {}
+      {};
+  Iterator iterator() : 
+      {access(@this:,_x)} 
+      {access(@this:,S(_x)) * iterator($ret_val,{c=@this:})};
 }
 //}}}
 //{{{ Iterator
 class Iterator {
-  define trueHasNext(x,c=c;r=r) = write(this, c, r, Z);
-  define falseHasNext(x) = ;
-  define validIterator(x,c=c;r=r) = 
-      trueHasNext(x,{c=c;r=r})
-      || (falseHasNext(x) * write(@caller,_c,_r,Z));
-  static boolean hasNext() : 
-      {falseHasNext(@this:)} 
-      {falseHasNext(@this:) * $ret_val=False} // TODO(rgrig): =False is redundant
+  define iterator(x,c=c) = iteratorWorking(x,{c=c}) || iteratorDone(x,{c=c});
+  boolean hasNext() : 
+      {iterator(@this:)}
+      {iteratorWorking(@this:) * $ret_val=True}
     andalso
-      {trueHasNext(@this:)}
-      {trueHasNext(@this:) * $ret_val=True};
-  static java.lang.Object next() : 
-      {trueHasNext(@this:,{c=_c;r=_r})} // TODO(rgrig): (inner) {} should be optional
-      {validIterator(@this:,{c=_c;r=_r})};
+      {iterator(@this:)}
+      {iteratorDone(@this:) * $ret_val=False};
+  java.lang.Object next() : 
+      {iteratorWorking(@this:)}
+      {iterator(@this:)};
 }
 //}}}
 //{{{ Client

@@ -77,7 +77,7 @@ let log_prove = 1 lsl 3
 let log_exec = 1 lsl 4
 let log_logic = 1 lsl 5
 
-let log_active = 0
+let log_active = log_prove
   (* -1 means all, 0 means one, in general use lor *)
 
 let log x = log_active land x != 0
