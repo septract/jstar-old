@@ -169,7 +169,12 @@ let check_abduction_pform logic heap pheap =
   check_abduct logic (Clogic.make_implies heap pheap)
 
 
-let abs logic ts_form  = 
+(* abstract P by applying frame inference to P => emp *)
+(* result should be collection of abstracted frames F implying P *)
+let abs 
+    (logic : logic) 
+    (ts_form : ts_formula)
+    : ts_formula list  = 
   match check_frm logic  (Clogic.make_implies ts_form []) with 
     Some r -> r
   | None -> 

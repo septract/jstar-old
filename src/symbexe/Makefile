@@ -3,7 +3,8 @@ ifndef LIB
 endif
 export LIB
 
-SOURCES = specification.ml cfg_core.ml symexec.ml abduction.ml
+SOURCES = specification.ml cfg_core.ml symexec.ml 
+   # abduction.ml
 INCLUDES = utils prover_syntax symbexe_syntax prover 
 RESULT = "$(LIB)/symbexe"
 OCAMLLDFLAGS="-a"

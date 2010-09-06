@@ -258,12 +258,14 @@ open Psyntax
 
     let implies_list : inner_form list -> form -> bool 
 	= Prover.check_implies_list 
-	
-	let abduction_opt (l : logic) (i1 : inner_form option) (f2 : form)
+
+(*	
+    let abduction_opt (l : logic) (i1 : inner_form option) (f2 : form)
 	     : ((inner_form * inner_form) list) option = 	
       match i1 with 
 	    None -> assert false; None  (* FIXME: Not sure what to do here *)
 	  | Some inner_form1 -> Prover.check_abduction_pform l inner_form1 f2 
+*)
 		 
 
 (*

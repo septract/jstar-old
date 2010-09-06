@@ -28,7 +28,7 @@ type core_statement =
 type stmt_core = { 
   (*labels: labels; *)
   mutable skind: core_statement;
-  mutable sid: int;  (* this is filled when the cfg is done *)
+  mutable sid: int;  (* picked uniquely by stmt_create *)
   mutable succs: stmt_core list; (* this is filled when the cfg is done *)
   mutable preds: stmt_core list;  (* this is filled when the cfg is done *)
   mutable antiframes: Sepprover.inner_form list  (* antiframe collection *)
@@ -49,7 +49,7 @@ let stmt_create
     (pred_stmts: stmt_core list)  
     (succ_stmts: stmt_core list) 
     : stmt_core = 
-incr num_stmts;
+  incr num_stmts;  (* give each new stmt a unique id *)
   { skind = skind;
     sid = !num_stmts; 
     succs = succ_stmts;

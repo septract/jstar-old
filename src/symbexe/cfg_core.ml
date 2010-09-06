@@ -18,7 +18,7 @@ open Pprinter_core
 open Methdec_core
 
 (* Call with non-empty statement list *)
-let stmts_to_cfg stmts =
+let stmts_to_cfg (stmts : stmt_core list) : unit =
   (* Fill in the CFG info for a stmt
      s  is the statement being filled in. 
      next is the next statment in program order.
