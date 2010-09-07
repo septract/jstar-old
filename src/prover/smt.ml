@@ -50,8 +50,10 @@ let smtout_lex = ref (Lexing.from_string "");;
 (*let solver_path = ref "z3";;*)
 
 
-let smt_init (path : string) : unit = 
+let smt_init () : unit = 
   if Config.smt_debug() then Format.printf "Initialising SMT\n"; 
+  (try Config.solver_path := Sys.getenv "JSTAR_SMT_PATH" with Not_found -> ()); 
+  let path = !Config.solver_path in 
   let o, i, e = Unix.open_process_full path (environment()) in 
   smtout := o;  smtin := i;  smterr := e;
   smtout_lex := Lexing.from_channel !smtout; 

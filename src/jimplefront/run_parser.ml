@@ -131,7 +131,7 @@ let main () =
 	 (fun s ->  Sys.set_signal s (Sys.Signal_handle (fun x -> Symexec.pp_dotty_transition_system (); exit x)))
         signals;
        try 
-         if !Config.smt_run then Smt.smt_init !Config.solver_path; 
+         if !Config.smt_run then Smt.smt_init(); 
        
 	 let l1,l2,cn = Load_logic.load_logic  (System.getenv_dirlist "JSTAR_LOGIC_LIBRARY") !logic_file_name
 	 in 
