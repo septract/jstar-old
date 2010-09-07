@@ -15,16 +15,16 @@ open Vars
 open Psyntax
 
 
-type representative = CC.constant
+type term_handle = CC.constant
 
 type pattern = CC.curry_term
 
 type flattened_args = 
   | FArg_var of Vars.var
   | FArg_string of string
-  | FArg_op of string * representative list
-  | FArg_cons of string * representative list 
-  | FArg_record of (string *  representative) list 
+  | FArg_op of string * term_handle list
+  | FArg_cons of string * term_handle list 
+  | FArg_record of (string *  term_handle) list 
 
 module SMap = Map.Make(
     struct 
@@ -147,13 +147,16 @@ let pp_c norm ts ppf c : unit =
 let pp_ts ppf ts =
   CC.pretty_print (has_pp_c ts) (pp_c false ts) ppf ts.cc 
 
+let pp_ts_nonemp ppf ts =
+  CC.pretty_print_nonemp (has_pp_c ts) (pp_c false ts) ppf ts.cc 
+
 let pp_c ts ppf c = CC.pp_c ts.cc (pp_c true ts) ppf c
 
 
 let rec add_term params pt ts : 'a * term_structure = 
   let (unif : bool),
     (fresh : bool),
-    (lift : representative -> 'a), 
+    (lift : term_handle -> 'a), 
     (app : CC.t -> 'a -> 'a -> 'a * CC.t),
     register_op, register_rec = params in 
 (*  Format.printf "Adding term %a.@\n" string_args pt;*)
@@ -315,7 +318,7 @@ let unifies (ts : term_structure) (pt : pattern) (con : CC.constant) (cont : ter
     =
   CC.unifies ts.cc pt con (fun cc -> cont {ts with cc = cc})
 
-let determined_exists ts c1 c2 : term_structure * (representative * representative) list
+let determined_exists ts c1 c2 : term_structure * (term_handle * term_handle) list
     = 
   let cc,cp1 = CC.determined_exists ts.cc c1 c2 in
   {ts with cc=cc}, cp1
@@ -442,7 +445,7 @@ let rewrite (ts : term_structure) (rm : rewrite_rule list) (query : term_structu
 		  raise Backtrack.No_match
 		end
 	      else 
-		Format.fprintf !(Debug.dump) "Making %a = %a using %s@\n" 
+		Format.fprintf !(Debug.proof_dump) "Making %a = %a using %s@\n" 
 		  (pp_c ts) c (pp_c ts) x r.rewrite_name;
 (*	        CC.print ts.cc;*)
 		let ts = make_equal ts x c in
@@ -505,3 +508,21 @@ let var_not_used_in ts var reps : bool =
       Printf.printf "Don't use non-existential variables in notincontext stuff.";
       assert false 
 
+
+let add_constructor 
+    (fn : string) 
+    (ts : term_structure) 
+    : term_structure  =
+  try 
+    begin
+      let c = SMap.find fn ts.function_symbols in 
+      let cc =  CC.make_constructor ts.cc c in 
+      {ts with cc = cc}  
+    end 
+  with Not_found -> 
+    begin
+      let c,cc = CC.fresh ts.cc in 
+      let cc =  CC.make_constructor cc c in 
+      {ts with cc = cc; function_symbols = SMap.add fn c ts.function_symbols}  
+    end
+    

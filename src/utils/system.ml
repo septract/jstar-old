@@ -13,6 +13,8 @@
 
 open Debug
 
+let colortty = ref (Sys.getenv "TERM" = "xterm-color");;
+
 let getenv variable = 
   try Sys.getenv variable 
   with Not_found -> ""
@@ -68,11 +70,11 @@ let find_file_from_dirs dirs fname =
 
 
 let warning () =
-  Printf.printf "%c[%d;%dm"  (Char.chr 0x1B ) 1 31
+  if !colortty then  Printf.printf "%c[%d;%dm"  (Char.chr 0x1B ) 1 31 else ()
 
 let good () =
-  Printf.printf "%c[%d;%dm"  (Char.chr 0x1B ) 1 32 
+  if !colortty then Printf.printf "%c[%d;%dm"  (Char.chr 0x1B ) 1 32 else ()
 
 let reset () =
-  Printf.printf "%c[%dm" (Char.chr 0x1B) 0 
+  if !colortty then Printf.printf "%c[%dm" (Char.chr 0x1B) 0 else ()
 

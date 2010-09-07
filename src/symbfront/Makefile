@@ -1,7 +1,7 @@
 export OCAMLMAKEFILE = OcamlMakefile
 export OCAMLYACC = ocamlyacc -v
-export OCAMLC = ocamlc.opt -annot
-export OCAMLOPT = ocamlopt.opt -annot
+export OCAMLC = ocamlc.opt -dtypes
+export OCAMLOPT = ocamlopt.opt -dtypes
 export OCAMLDEP = ocamldep.opt
 export OCAMLDOC = ocamldoc.opt
 
@@ -18,42 +18,41 @@ export LIB
 
 INCLUDES = 
 
-SYMBEXE_SOURCES = support_symex.ml jlogic.ml javaspecs.ml methdec.ml translatejimple.ml classverification.ml mkspecs.ml run_parser.ml
+SYMBFRONT_SOURCES = symbfront.ml
 
 
-TOPLEVEL_SOURCES = $(SYMBEXE_SOURCES)
+TOPLEVEL_SOURCES = $(SYMBFRONT_SOURCES)
 
 DEFAULT_ARGS = SOURCES="$(TOPLEVEL_SOURCES)" \
        LIBS="str unix utils prover_syntax symbexe_syntax jimple_syntax prover symbexe parsing" \
-       OCAMLLDFLAGS=" -I $(LIB)" \
+       OCAMLLDFLAGS="-g -I $(LIB)" \
        INCDIRS="../prover ../prover_syntax ../parsing ../symbexe_syntax ../utils ../jimple_syntax ../symbexe" \
-       OCAMLFLAGS="" \
+       OCAMLFLAGS="-g" \
        TRASH=""
 
-MAIN = $(DEFAULT_ARGS) RESULT=$(BIN)/jstar.byte
+MAIN = $(DEFAULT_ARGS) RESULT=$(BIN)/run_symb.byte
 
-MAINOPT = $(DEFAULT_ARGS)  RESULT=$(BIN)/jstar
+MAINOPT = $(DEFAULT_ARGS)  RESULT=$(BIN)/run_symb
 
-default: jstar
+default: run_symb
 
 .PHONY: debug
-debug: jstar.byte
+debug: run_symb.byte
 
-all: jstar jstar.byte
+all: run_symb run_symb.byte
 
 
 prebuild: 
-	@(cd ../jimple_syntax; make)
+	@(cd ../prover; make)
 	@(cd ../symbexe; make)
-	@(cd ../parsing; make)
 
-.PHONY: jstar.byte  
-jstar.byte: prebuild
+.PHONY: run_symb.byte  
+run_symb.byte: prebuild
 	@$(MAKE) -f $(OCAMLMAKEFILE) $(MAIN) 
 
 
-.PHONY: jstar
-jstar: prebuild
+.PHONY: run_symb
+run_symb: prebuild
 	@$(MAKE) -f $(OCAMLMAKEFILE) $(MAINOPT) native-code
 
 clean:

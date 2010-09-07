@@ -1,76 +1,11 @@
-export OCAMLMAKEFILE = OcamlMakefile
-export OCAMLYACC = ocamlyacc -v
-export OCAMLC = ocamlc.opt -annot
-export OCAMLOPT = ocamlopt.opt -annot
-export OCAMLDEP = ocamldep.opt
-export OCAMLDOC = ocamldoc.opt
-
-export FSHARPDIR = /Users/mjp41/FSharp-1.9.6.2
-export MONO = mono
-export FSHARPCOMPILER = $(MONO) $(FSHARPDIR)/bin/fsc.exe --mlcompatibility -r $(FSHARPDIR)/bin/FSharp.PowerPack.dll
-export MAKEDLL = $(FSHARPCOMPILER) -a 
-
-
-INCLUDES = 
-
-ifndef BIN
-	BIN := ../../bin
-endif
-export BIN
-
 ifndef LIB
 	LIB := ../../lib
 endif
 export LIB
 
+SOURCES = psyntax.ml
+INCLUDES = utils
+RESULT = "$(LIB)/prover_syntax"
+OCAMLLDFLAGS="-a"
 
-CORESOURCE = psyntax.ml
-LIBRARYSOURCE = $(CORESOURCE)
-
-LIBRARY = SOURCES="$(LIBRARYSOURCE)" \
-       OCAMLLDFLAGS="-g -a" \
-       INCDIRS="../utils" \
-       OCAMLFLAGS="-g" \
-       RESULT="$(LIB)/prover_syntax.cmxa" \
-       TRASH=""
-BLIBRARY = SOURCES="$(LIBRARYSOURCE)" \
-       OCAMLLDFLAGS="-g -a" \
-       INCDIRS="../utils" \
-       OCAMLFLAGS="-g" \
-       RESULT="$(LIB)/prover_syntax.cma" \
-       TRASH=""
-
-.PHONY: default
-default: prover_syntax.cmxa
-
-.PHONY: debug
-debug: prover_syntax.cma
-
-.PHONY: prebuild
-prebuild: 
-	@(cd ../utils; make)
-
-.PHONY: all
-all: default
-
-
-prover_syntax.cmxa: prebuild
-	@$(MAKE) -f $(OCAMLMAKEFILE) $(LIBRARY) native-code
-
-prover_syntax.cma: prebuild
-	@$(MAKE) -f $(OCAMLMAKEFILE) $(BLIBRARY) byte-code
-
-clean:
-	$(MAKE) -f $(OCAMLMAKEFILE) $(LIBRARY) clean
-	$(MAKE) -f $(OCAMLMAKEFILE) $(BLIBRARY) clean
-	rm -f *.annot doc/*.html doc/*.css doc/test.odoc logic_parser.output *~ *.dll *.exe *.cmi *.cmx *.o logic_parser.ml logic_lexer.ml logic_parser.mli logic_lexer.mli .depend
-
-prover.dll: $(CORESOURCE)
-	$(FSHARPCOMPILER) -a $(CORESOURCE) -o prover.dll
-
-.depend:
-	$(OCAMLDEP) $(INCLUDES) *.mli *.ml > .depend
-
-dummy:
-
-include .depend
+include ../Makefile.jstar

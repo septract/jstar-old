@@ -11,16 +11,16 @@ class OLIST
 		{ OL(@this:,{l=_a}) };
 	abstract int first() :
 		{ OL(@this:,{l=cons(_e,_a)}) }
-		{ OL(@this:,{l=cons(_e,_a)}) * $ret_var=_e };
+		{ OL(@this:,{l=cons(_e,_a)}) * $ret_v1=_e };
 	abstract int has(int) :
 		{ OL(@this:,{l=_a}) }
-		{ OL(@this:,{l=_a}) * $ret_var=elem(@parameter0:,_a) };
+		{ OL(@this:,{l=_a}) * $ret_v1=elem(@parameter0:,_a) };
 	abstract int count() :
 		{ OL(@this:,{l=_a}) }
-		{ OL(@this:,{l=_a}) * $ret_var=len(_a) };
+		{ OL(@this:,{l=_a}) * $ret_v1=len(_a) };
 	abstract int is_empty() :
 		{ OL(@this:,{l=_a}) }
-		{ OL(@this:,{l=_a}) * $ret_var=builtin_eq(_a,empty()) };
+		{ OL(@this:,{l=_a}) * $ret_v1=builtin_eq(_a,empty()) };
 	abstract void count_non_negative() :
 		{ OL(@this:,{l=_a}) }
 		{ OL(@this:,{l=_a}) };

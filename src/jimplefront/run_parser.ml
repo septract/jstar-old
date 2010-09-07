@@ -15,6 +15,7 @@ open Debug
 open Format
 open Jparsetree
 open Jimple_global_types
+open Psyntax
 
 let program_file_name = ref ""
 let logic_file_name = ref ""
@@ -35,11 +36,6 @@ let set_program_file_name n =
   program_file_name := n ;
   Support_symex.file := Filename.basename n
 
-let set_verbose () = 
-  Config.verbose := true 
-
-let set_quiet () =
-  Config.sym_debug := false
 
 let set_specs_template_mode () = 
   Config.specs_template_mode := true 
@@ -49,11 +45,14 @@ let set_dotty_flag () =
 
 let set_grouped () =
   Symexec.set_group true
+  
+let set_eclipse () =
+   Config.eclipse_ref := true
 
-let arg_list =[ 
-("-v", Arg.Unit(set_verbose ), "run in verbose mode" );
-("-q", Arg.Unit(set_quiet ), "run in quiet mode" );
-  ("-template", Arg.Unit(set_specs_template_mode ), "create empty specs template" );
+let arg_list = Config.args_default @ 
+[ 
+("-e", Arg.Unit(set_eclipse), "run in eclipse");
+("-template", Arg.Unit(set_specs_template_mode ), "create empty specs template" );
 ("-f", Arg.String(set_program_file_name ), "program file name" );
 ("-l", Arg.String(set_logic_file_name ), "logic file name" );
 ("-s", Arg.String(set_spec_file_name ), "spec file name" );
@@ -72,13 +71,13 @@ let parse_program () =
   (* Replace specialinvokes of <init> after news with virtual invokes of <init>*)
   let program = program in 
   let rec spec_to_virt x maps = match x with 
-    DOS_stm(Assign_stmt(x,New_simple_exp(y)))::xs -> 
-      DOS_stm(Assign_stmt(x,New_simple_exp(y)))::(spec_to_virt xs ((x,y)::maps))  
-  | DOS_stm(Invoke_stmt(Invoke_nostatic_exp(Special_invoke,b,(Method_signature (c1,c2,Identifier_name "<init>",c4)),d)))
+    DOS_stm(Assign_stmt(x,New_simple_exp(y)),source_pos)::xs -> 
+      DOS_stm(Assign_stmt(x,New_simple_exp(y)),source_pos)::(spec_to_virt xs ((x,y)::maps))  
+  | DOS_stm(Invoke_stmt(Invoke_nostatic_exp(Special_invoke,b,(Method_signature (c1,c2,Identifier_name "<init>",c4)),d)),source_pos)
     ::xs 
     when List.mem (Var_name b,Class_name c1) maps
     ->
-      DOS_stm(Invoke_stmt(Invoke_nostatic_exp(Virtual_invoke,b,(Method_signature (c1,c2,Identifier_name "<init>",c4)),d)))
+      DOS_stm(Invoke_stmt(Invoke_nostatic_exp(Virtual_invoke,b,(Method_signature (c1,c2,Identifier_name "<init>",c4)),d)),source_pos)
       ::(spec_to_virt xs (List.filter (fun x -> fst x <> Var_name b) maps))
     | x::xs -> x::(spec_to_virt xs maps)
     | [] -> [] in
@@ -122,12 +121,12 @@ let main () =
        List.iter 
 	 (fun s ->  Sys.set_signal s (Sys.Signal_handle (fun x -> Symexec.pp_dotty_transition_system (); exit x)))
          signals;
-       let l1,l2 = Load_logic.load_logic  (System.getenv_dirlist "JSTAR_LOGIC_LIBRARY") !logic_file_name
+       let l1,l2,cn = Load_logic.load_logic  (System.getenv_dirlist "JSTAR_LOGIC_LIBRARY") !logic_file_name
        in 
-       let logic = (l1,l2,Psyntax.default_pure_prover) in 
+       let logic = {empty_logic with seq_rules=l1; rw_rules=l2; consdecl=cn} in 
       
-       let l1,l2 = Load_logic.load_logic  (System.getenv_dirlist "JSTAR_LOGIC_LIBRARY") !absrules_file_name in 
-       let abs_rules = (l1,l2, Psyntax.default_pure_prover) in
+       let l1,l2,cn = Load_logic.load_logic  (System.getenv_dirlist "JSTAR_LOGIC_LIBRARY") !absrules_file_name in 
+       let abs_rules = {empty_logic with seq_rules=l1; rw_rules=l2; consdecl=cn} in
        
        let spec_list : (Spec_def.class_spec list) = Load.import_flatten 
            (System.getenv_dirlist "JSTAR_SPECS_LIBRARY")
@@ -147,11 +146,10 @@ let main () =
          (* Since where predicates are local to the exports clause, we discard them after exports clause verification *)
        let logic = Javaspecs.add_exported_implications_to_logic spec_list logic in
        if log log_logic then
-         let s,_,_ = logic in
          fprintf 
-            logf 
-            "@[<2>Augmented logic sequent rules%a@."
-            (pp_list Psyntax.pp_sequent_rule) s;
+             logf 
+             "@[<2>Augmented logic sequent rules%a@."
+             (pp_list Psyntax.pp_sequent_rule) logic.seq_rules;
        (* End of exports clause treatment *)
       
        (* Axioms clause treatment *)
@@ -177,6 +175,7 @@ let main () =
        Symexec.pp_dotty_transition_system () 
       )
      
+
        
 let _ = 
   main ()

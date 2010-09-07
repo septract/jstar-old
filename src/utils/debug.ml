@@ -77,7 +77,7 @@ let log_prove = 1 lsl 3
 let log_exec = 1 lsl 4
 let log_logic = 1 lsl 5
 
-let log_active = -1 
+let log_active = 0 
   (* -1 means all, 0 means one, in general use lor *)
 
 let log x = log_active land x != 0
@@ -85,9 +85,9 @@ let log x = log_active land x != 0
 let logf = std_formatter
 
 
-(* TODO(rgrig): Review the following code. *)
-
+(* TODO(rgrig): Review. *)
 let debug = false
+
 
 let buffer_dump = Buffer.create 10000
 
@@ -103,7 +103,7 @@ let merge_formatters frm1 frm2 =
 
 
 
-let dump = ref (merge_formatters 
+let proof_dump = ref (merge_formatters 
 		  (Format.formatter_of_buffer buffer_dump)
 		  (flagged_formatter Format.std_formatter debug))
 
@@ -121,6 +121,16 @@ let unsupported () = failwith "Assert false"
 F#*)
 
 let pp_list pp f = List.iter (pp f)
+
+let rec form_format sep emp f ppf list = 
+  match list with 
+    [] -> Format.fprintf ppf "%s" emp
+  | [x] -> Format.fprintf ppf "%a" f x
+  | x::xs -> Format.fprintf ppf "@[%a@]@ %s @[%a@]" f x sep (form_format sep emp f) xs 
+
+
+let rec form_format_optional start sep emp f ppf list = 
+  Format.fprintf ppf "%s@ @[%a@]" start (form_format sep emp f) list 
 
 let rec list_format sep f ppf = function
   | [] -> ()

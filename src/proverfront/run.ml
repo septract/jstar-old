@@ -14,6 +14,7 @@ open Congruence
 open Debug
 open Format
 open Load_logic
+open Psyntax
 
 let _ = CC.test ()
 
@@ -27,12 +28,9 @@ let set_file_name n =
 let set_logic_file_name n = 
   logic_file_name := n 
 
-let set_verbose_mode () =
-  verbose := true
-
-let arg_list =[ ("-f", Arg.String(set_file_name ), "program file name" );
-		("-l", Arg.String(set_logic_file_name ), "logic file name" ); 
-	        ("-v", Arg.Unit(set_verbose_mode), "Verbose proofs");]
+let arg_list = Config.args_default @ 
+  [ ("-f", Arg.String(set_file_name ), "program file name");
+    ("-l", Arg.String(set_logic_file_name ), "logic file name"); ]
 
 
 
@@ -45,8 +43,8 @@ let main () =
   else if !logic_file_name="" then
     printf "Logic file name not specified. Can't continue....\n %s \n" usage_msg
   else 
-    let l1,l2 = (load_logic (System.getenv_dirlist "JSTAR_LOGIC_LIBRARY") !logic_file_name) in 
-    let logic = l1,l2, Psyntax.default_pure_prover in
+    let l1,l2,cn = (load_logic (System.getenv_dirlist "JSTAR_LOGIC_LIBRARY") !logic_file_name) in 
+    let logic = {empty_logic with seq_rules = l1; rw_rules=l2; consdecl = cn} in
 (*    let s = System.string_of_file !program_file_name  in*)
     let question_list = System.parse_file Jparser.question_file Jlexer.token !program_file_name "Questions" in
 

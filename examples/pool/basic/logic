@@ -2,14 +2,14 @@ import "field_logic";
 
 
 rule ls_val_exists :
-| | ls(?x,?y,?v) |- | ls(?x,?y,?v2)
+| ls(?x,?y,?v) |- ls(?x,?y,?v2)
 if
-ls(?x,?y,?v) | | |- ?v2=?v| 
+ls(?x,?y,?v) | |- ?v2=?v 
 
 rule ls_tail_exists :
-| | ls(?x,?y,?v) |- | ls(?x,?y2,?v)
+| ls(?x,?y,?v) |- ls(?x,?y2,?v)
 if
-ls(?x,?y,?v) | | |- ?y2=?y |
+| ls(?x,?y,?v) |- ?y2=?y 
 
 
 
@@ -34,13 +34,13 @@ rewrite union_add_2 :
 union(?z,add(?x,?y)) = add(?x,union(?z,?y))
 
 rule setof :
-| | |- setof(?x) = setof(?y) |
+| |- setof(?x) = setof(?y) 
 without 
  ?x=?y |- ?x!=?y
 if
-| | |- ?x=?y |
+| |- ?x=?y 
 or
-| | |- setof(?x) = setof(?y) * ?x!=?y |
+| |- setof(?x) = setof(?y) * ?x!=?y 
 
 
 
@@ -55,43 +55,43 @@ or
  ********************************/
 
 rule iterresleft_add:
-| | DBSet(add(?x,?y),?t) |- |
+| DBSet(add(?x,?y),?t) |-
 if
-| | DBSet(?y,?t) * DBConnection(?x,{connection = ?t}) |- |
+| DBSet(?y,?t) * DBConnection(?x,{connection = ?t}) |-
 
 rule iterresright_add:
-| | |- | DBSet(add(?x,?y),?t)
+| |- DBSet(add(?x,?y),?t)
 if
-| | |- | DBSet(?y,?t) * DBConnection(?x,{connection = ?t}) 
+| |- DBSet(?y,?t) * DBConnection(?x,{connection = ?t}) 
 
 rule iterresleft_union:
-| | DBSet(union(?x,?y),?t) |- |
+| DBSet(union(?x,?y),?t) |-
 if
-| | DBSet(?y,?t) * DBSet(?x,?t) |- |
+| DBSet(?y,?t) * DBSet(?x,?t) |-
 
 rule iterresright_union:
-| | |- | DBSet(union(?x,?y),?t) 
+| |- DBSet(union(?x,?y),?t) 
 if
-| | |- | DBSet(?y,?t) * DBSet(?x,?t) 
+| |- DBSet(?y,?t) * DBSet(?x,?t) 
 
 rule iterresright_empty:
-| | |- | DBSet(empty(),?t) 
+| |- DBSet(empty(),?t) 
 if
-| | |- | 
+| |- 
 
 rule iterresleft_empty:
-| | DBSet(empty(),?t) |- | 
+| DBSet(empty(),?t) |- 
 if
-| | |- | 
+| |- 
 
 rule DBSet :
-  | | DBSet(?x,?y) |- | DBSet(?z,?y)
+  | DBSet(?x,?y) |- DBSet(?z,?y)
 without
  |- ?x!=?z
 if
-  DBSet(?x,?y) | | |- ?x=?z | 
+  DBSet(?x,?y) | |- ?x=?z 
 or
-  | | DBSet(?x,?y) |- ?x!=?z | DBSet(?z,?y)
+  | DBSet(?x,?y) |- ?x!=?z * DBSet(?z,?y)
 
 
 

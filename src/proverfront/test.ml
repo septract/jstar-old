@@ -16,6 +16,7 @@
 open Debug
 open Format
 open Load_logic
+open Psyntax
 
 let program_file_name = ref ""
 let logic_file_name = ref ""
@@ -31,13 +32,11 @@ let set_logic_file_name n =
 let set_inductive_file_name n = 
   inductive_file_name := n 
 
-let set_verbose_mode () =
-  verbose := true
-
-let arg_list =[ ("-f", Arg.String(set_file_name ), "program file name" );
-		("-l", Arg.String(set_logic_file_name ), "logic file name" ); 
-		("-i", Arg.String(set_inductive_file_name ), "inductive file name" );
-	        ("-v", Arg.Unit(set_verbose_mode), "Verbose proofs");]
+let arg_list = Config.args_default @ 
+  [ ("-f", Arg.String(set_file_name ), "program file name" );
+    ("-l", Arg.String(set_logic_file_name ), "logic file name" ); 
+    ("-i", Arg.String(set_inductive_file_name ), "inductive file name" );
+  ] 
 
 
 
@@ -54,8 +53,8 @@ let main () =
     printf "Logic file name not specified. Can't continue....@\n %s @\n" usage_msg
   else 
     let rl = if !inductive_file_name <> "" then Inductive.convert_inductive_file !inductive_file_name else [] in
-    let l1,l2 = load_logic_extra_rules (System.getenv_dirlist "JSTAR_LOGIC_LIBRARY") !logic_file_name rl in
-    let logic = l1,l2, Psyntax.default_pure_prover in
+    let l1,l2,cn = load_logic_extra_rules (System.getenv_dirlist "JSTAR_LOGIC_LIBRARY") !logic_file_name rl in
+    let logic = {empty_logic with seq_rules = l1; rw_rules=l2; consdecl = cn;} in
     let s = System.string_of_file !program_file_name  in
     if log log_phase then 
       fprintf logf "@[<4>Parsing tests in@ %s.@." !program_file_name;
@@ -75,7 +74,6 @@ let main () =
 	      Psyntax.string_form heap1 
 	      Psyntax.string_form heap2
 	)
-	  
     | Psyntax.TFrame (heap1, heap2, result)  -> 
 (*	Format.printf "Find frame for\n %s\n ===> \n %s\n" (Psyntax.string_form heap1) (Psyntax.string_form heap2);*)
 	let x = Sepprover.frame_opt logic 

@@ -20,8 +20,8 @@ open Spec
 
 
 type methodspec =
-      Dynamic of method_signature_short * (spec list)
-  |   Static of method_signature_short * (spec list)
+      Dynamic of method_signature_short * (spec list) * Printing.source_pos_tag option
+  |   Static of method_signature_short * (spec list) * Printing.source_pos_tag option
 
 type methodspecs =
     methodspec list
@@ -52,8 +52,8 @@ type class_spec = {
 
 let pp_methodspec f m =
   let (t, s, sp) = match m with
-    | Dynamic (s, sp) -> ("dynamic", s, sp)
-    | Static (s, sp) -> ("static", s, sp) in
+    | Dynamic (s, sp, _) -> ("dynamic", s, sp)
+    | Static (s, sp, _) -> ("static", s, sp) in
   Format.fprintf f "@\n@[<2>%a" pp_method_signature_short s;
   List.iter (fun x -> Format.fprintf f "@\n@[<2>%s%a@]" t spec2str x) sp;
   Format.fprintf f "@]"

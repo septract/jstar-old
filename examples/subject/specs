@@ -11,15 +11,15 @@ void <init>() static: { } { };
 // What we have already traversed is not shown in the pre. 
  boolean hasNext() : 
 { Iterator(@this:,_x) } 
-{ $ret_var=false() * _x=nil() * Iterator(@this:,nil())
-  || $ret_var=true() * _x!=nil() * Iterator(@this:,_x) };
+{ $ret_v1=false() * _x=nil() * Iterator(@this:,nil())
+  || $ret_v1=true() * _x!=nil() * Iterator(@this:,_x) };
 
 
 java.lang.Object next() :
 { ls(_x,_y,_v1) * Iterator(@this:,_x) }
-{ $ret_var=_v * _v1=cons(_v,empty()) * ls(_x,_y,cons(_v,empty())) * Iterator(@this:,_y)
+{ $ret_v1=_v * _v1=cons(_v,empty()) * ls(_x,_y,cons(_v,empty())) * Iterator(@this:,_y)
   ||
-  $ret_var=_v * _v1=cons(_v,_v2) *  ls(_x,_x1,cons(_v,empty())) * ls(_x1,_y,_v2) * Iterator(@this:,_x1)
+  $ret_v1=_v * _v1=cons(_v,_v2) *  ls(_x,_x1,cons(_v,empty())) * ls(_x1,_y,_v2) * Iterator(@this:,_x1)
 };
 
 
@@ -37,15 +37,15 @@ void <init>() static: { } { @this: = nil() };
 // Iterator(x,y) means the iterator x is currently at position y
 java.util.Iterator iterator() :
   { lspe(@this:,nil(),_v)}
-  { _I=$ret_var * lspe(@this:,nil(),_v) * Iterator(_I,@this:)};
+  { _I=$ret_v1 * lspe(@this:,nil(),_v) * Iterator(_I,@this:)};
 
 int size() :
   { lspe(@this:,nil(),_v)}
-  { length(_v)=$ret_var * ls(@this:,nil(),_v)};
+  { length(_v)=$ret_v1 * ls(@this:,nil(),_v)};
 
 java.lang.Object remove(int) :
 { @parameter0: < length(_v1) * ls(@this:,nil(),_v1)} 
-{ @this: = $ret_var * _v1=app(_v2, cons(_v3,_v4)) * length(_v2) = @parameter0: * lspe(@this:,nil(),app(_v2,_v4)) };
+{ @this: = $ret_v1 * _v1=app(_v2, cons(_v3,_v4)) * length(_v2) = @parameter0: * lspe(@this:,nil(),app(_v2,_v4)) };
 
 // ddino: this is strange. I don't understand why we need this that return boolean???????
 // I cannot find it in the code!!!!

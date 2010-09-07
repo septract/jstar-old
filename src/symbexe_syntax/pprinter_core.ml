@@ -1,6 +1,6 @@
 (********************************************************
    This file is part of jStar 
-	src/symbexe/pprinter_core.ml
+	src/symbexe_syntax/pprinter_core.ml
    Release 
         $Release$
    Version 
@@ -10,12 +10,14 @@
    jStar is distributed under a BSD license,  see, 
       LICENSE.txt
  ********************************************************)
-open Psyntax
 open Core
+open Psyntax
 open Spec
 
 (** Pretty printer for core programs. Note that this handles a lot more
   than the data structure in core.ml. *)
+
+let core_debug () = false
 
 let rec args2str  arg = 
   match arg with 
@@ -64,14 +66,14 @@ and list_form2str  list =
 let variable_list2str lv =
   Debug.list_format "," Vars.pp_var lv
 
-let pp_stmt_core ppf = 
+let pp_stmt_core (ppf: Format.formatter) : core_statement -> unit = 
   function
   | Nop_stmt_core -> 
       Format.fprintf ppf "nop;"
   | Label_stmt_core l ->  
-      Format.fprintf ppf "%s:" l 
+      Format.fprintf ppf "label %s;" l 
   | Assignment_core (v,spec,e)-> 
-      Format.fprintf ppf "%a@ @[%a@]@[(%a)@];"
+      Format.fprintf ppf "assign %a@ @[%a@]@[(%a)@];"
 	(fun ppf v -> match v with [] -> () | _ -> Format.fprintf ppf "%a@ :=@ " variable_list2str v) v	
 	spec2str spec
 	string_args_list e
@@ -83,5 +85,7 @@ let pp_stmt_core ppf =
       Format.fprintf ppf 
 	"throw %a;"
 	string_args a
-  | End -> Format.fprintf ppf "End"
+  | End -> Format.fprintf ppf "end;"
+
+
 

@@ -22,7 +22,7 @@ exception Failed
 
 module RMSet = MultisetImpl(
   struct
-    type t = string * Cterm.representative
+    type t = string * Cterm.term_handle
     let compare (s1,r1) (s2,r2) = 
       if s1 < s2 then 
 	-1
@@ -65,8 +65,8 @@ type formula =
     spat : RMSet.multiset;
     plain : RMSet.multiset;
     disjuncts : (formula * formula) list;
-    eqs : (representative * representative) list;
-    neqs : (representative * representative) list; 
+    eqs : (term_handle * term_handle) list;
+    neqs : (term_handle * term_handle) list; 
   }  
 
 type ts_formula = 
@@ -91,35 +91,63 @@ let update_var_to ts_form v e =
 let pp_rmset_pre pre ts ppf s = 
   let rec f s = 
     if RMSet.has_more s then 
+      begin
       let (n,x),s = RMSet.remove s in 
       Format.fprintf ppf "@[%s%s%a@]" pre n (pp_c ts) x;
-      if RMSet.has_more s then 
-	begin Format.fprintf ppf "@ *@ "; f s end
+      if RMSet.has_more s then begin Format.fprintf ppf "@ *@ "; f s end
+      end
   in f s
 
+let pp_rmset_nonemp ts ppf s = RMSet.has_more s 
+  
 let pp_rmset ts ppf s = 
   pp_rmset_pre "" ts ppf s 
 
+
+let rec pp_form_nonemp ts ppf form = 
+  (match form.eqs with [] -> false | _ -> true) ||
+  (match form.neqs with [] -> false | _ -> true) ||
+  (pp_rmset_nonemp ts ppf form.spat) ||
+  (pp_rmset_nonemp ts ppf form.plain) || 
+  (match form.disjuncts with [] -> false | _ -> true)
+
+
 let rec pp_form ts ppf form = 
-  List.iter
-    (fun (r1,r2) -> 
-      Format.fprintf ppf "@[%a=%a@]@ *@ " (pp_c ts) r1 (pp_c ts) r2)
-    form.eqs;
-  List.iter
-    (fun (r1,r2) -> 
-      Format.fprintf ppf "@[%a!=%a@]@ *@ " (pp_c ts) r1 (pp_c ts) r2)
-    form.neqs;
+  Debug.list_format "*"
+    (fun ppf (r1,r2) -> 
+      Format.fprintf ppf "@[%a=%a@]" (pp_c ts) r1 (pp_c ts) r2)
+      ppf form.eqs; 
+  let bef = (match form.eqs with [] -> false | _ -> true) in 
+
+  if bef && (match form.neqs with [] -> false | _ -> true) 
+  then Format.fprintf ppf " * ";
+  Debug.list_format "*" 
+(*    (match form.eqs with [] -> "" | _ -> "*")  *)
+    (fun ppf (r1,r2) -> 
+      Format.fprintf ppf "@[%a=%a@]" (pp_c ts) r1 (pp_c ts) r2)
+      ppf form.neqs;
+  let bef = bef || (match form.neqs with [] -> false | _ -> true) in
 
   (* Print spatial *)  
+  if bef && pp_rmset_nonemp ts ppf form.spat 
+  then Format.fprintf ppf " * ";
   pp_rmset ts ppf form.spat; 
+  let bef = bef || (pp_rmset_nonemp ts ppf form.spat) in
+
   (* Print plain *)
+  if bef && pp_rmset_nonemp ts ppf form.plain 
+  then Format.fprintf ppf " * ";
   pp_rmset_pre "!" ts ppf form.plain; 
+  let bef = bef || (pp_rmset_nonemp ts ppf form.plain) in
+
   (* Print disjuncts *)
-  List.iter 
-    (fun (d1,d2) -> 
-      Format.fprintf ppf "*@ @[(@[%a@]@ ||@ @[%a@])@]" (pp_form ts) d1 (pp_form ts) d2
-  )
-    form.disjuncts
+  if bef && (match form.disjuncts with [] -> false | _ -> true) 
+  then Format.fprintf ppf " * ";
+  Debug.list_format "*"
+    (fun ppf (d1,d2) -> 
+      Format.fprintf ppf "@[(@[%a@]@ ||@ @[%a@])@]" (pp_form ts) d1 (pp_form ts) d2)
+    ppf form.disjuncts
+
 
 
 let pp_smset_pre pre ppf s = 
@@ -131,37 +159,63 @@ let pp_smset_pre pre ppf s =
 	begin Format.fprintf ppf "@ *@ "; f s end
   in f s
 
+
 let pp_smset ppf s = 
   pp_smset_pre "" ppf s 
+  
+  
+let pp_smset_nonemp ppf s = 
+  SMSet.has_more s
 
 let rec pp_sform ppf form = 
-  List.iter
-    (fun (r1,r2) -> 
-      Format.fprintf ppf "@[%a=%a@]@ *@ " string_args r1 string_args r2)
-    form.seqs;
-  List.iter
-    (fun (r1,r2) -> 
-      Format.fprintf ppf "@[%a!=%a@]@ *@ " string_args r1 string_args r2)
-    form.sneqs;
+  Debug.list_format "*"
+    (fun ppf (r1,r2) -> 
+      Format.fprintf ppf "@[%a=%a@]" string_args r1 string_args r2)
+      ppf form.seqs; 
+  let bef = (match form.seqs with [] -> false | _ -> true) in 
+  
+  if bef || (match form.sneqs with [] -> false | _ -> true) 
+  then Format.fprintf ppf " * ";
+  Debug.list_format "*"
+    (fun ppf (r1,r2) -> 
+      Format.fprintf ppf "@[%a=%a@]" string_args r1 string_args r2)
+      ppf form.sneqs;
+  let bef = bef || (match form.sneqs with [] -> false | _ -> true) in 
 
   (* Print spatial *)  
-  pp_smset ppf form.sspat; 
+  if bef && pp_smset_nonemp ppf form.sspat 
+  then Format.fprintf ppf " * ";
+  pp_smset ppf form.sspat ; 
+  let bef = bef || (pp_smset_nonemp ppf form.sspat) in
+
   (* Print plain *)
+  if bef && pp_smset_nonemp ppf form.splain 
+  then Format.fprintf ppf " * " ;
   pp_smset_pre "!" ppf form.splain; 
+  let bef = bef || (pp_smset_nonemp ppf form.splain) in
+
   (* Print disjuncts *)
-  List.iter 
-    (fun (d1,d2) -> 
-      Format.fprintf ppf "*@ @[(@[%a@]@ ||@ @[%a@])@]" pp_sform d1 pp_sform d2
-  )
-    form.sdisjuncts
+  if bef && (match form.sdisjuncts with [] -> false | _ -> true) 
+  then Format.fprintf ppf " * " ;
+  Debug.list_format "*"
+    (fun ppf (d1,d2) -> 
+      Format.fprintf ppf "*@ @[(@[%a@]@ ||@ @[%a@])@]" pp_sform d1 pp_sform d2)
+    ppf form.sdisjuncts 
+
 
 
 let pp_ts_form ppf ts_form =
   let ts = ts_form.ts in 
+
   (* Print term_structure *)
   Cterm.pp_ts ppf ts;
+ 
+  if Cterm.pp_ts_nonemp ppf ts && pp_form_nonemp ts ppf ts_form.form 
+  then Format.fprintf ppf " * ";
+
   (* Print eqs and neqs *)  
   pp_form ts ppf ts_form.form
+
 
 let conjunction form1 form2 : formula=
   {
@@ -221,7 +275,7 @@ let add_eqs_t_list fresh eqs ts : term_structure =
     try 
       make_equal_t fresh ts x y
     with Contradiction -> 
-      Format.fprintf !(Debug.dump) "Trying to make %a and %a equal failed" string_args x string_args y; 
+      Format.fprintf !(Debug.proof_dump) "Trying to make %a and %a equal failed" string_args x string_args y; 
       raise Contradiction 
       ) ts eqs
 
@@ -230,7 +284,7 @@ let add_neqs_t_list fresh neqs ts : term_structure =
     try 
       make_not_equal_t fresh ts x y
     with Contradiction -> 
-      Format.fprintf !(Debug.dump) "Trying to make %a and %a not equal failed" string_args x string_args y; 
+      Format.fprintf !(Debug.proof_dump) "Trying to make %a and %a not equal failed" string_args x string_args y; 
       raise Contradiction 
       ) ts neqs
 
@@ -241,7 +295,7 @@ let add_neqs_list neqs ts : term_structure =
   List.fold_left (fun ts (x,y) -> make_not_equal ts x y) ts neqs
 
 
-  (* As multiple representatives might be equal, 
+  (* As multiple term_handles might be equal, 
      we have to use a comparison based only on the predicate name.  
      The sorting means predicates with the same name will be next 
      to each other. *)
@@ -302,7 +356,7 @@ let rec normalise ts form : formula * term_structure =
 	  None,None -> raise Contradiction
 	| Some (form,ts'), None
 	| None, Some (form,ts') ->
-	    Format.fprintf !(Debug.dump) "Disjunct eliminated! Remaining disjunct:@ %a@\n" (pp_form ts) form ;
+	    Format.fprintf !(Debug.proof_dump) "Disjunct eliminated! Remaining disjunct:@ %a@\n" (pp_form ts) form ;
 	    let nform = (conjunction form nform) in 
 	    f nform
 	      ts'
@@ -510,9 +564,14 @@ let empty_sequent () =
 
 let pp_sequent ppf seq = 
   Format.fprintf ppf 
-    "@[%a@]@ |@ @[%a%a@]@ |-@ @[%a@]"  
-    (pp_rmset seq.ts) seq.matched
-    pp_ts seq.ts
+    "@[%a@]@ |@ @[%a"
+    (pp_rmset seq.ts) seq.matched 
+    pp_ts seq.ts ;
+
+  if pp_ts_nonemp ppf seq.ts && pp_form_nonemp ppf seq.ts seq.assumption
+  then Format.fprintf ppf " * "; 
+
+  Format.fprintf ppf "%a@]@ |-@ @[%a@]"  
     (pp_form seq.ts) seq.assumption
     (pp_form seq.ts) seq.obligation
 
@@ -531,7 +590,6 @@ let true_sequent (seq : sequent) : bool =
 let frame_sequent (seq : sequent) : bool = 
   (seq.obligation = empty) 
 
-
 (* Stolen from Prover just for refactor *)
 type sequent_rule = psequent * (psequent list list) * string * ((* without *) pform * pform) * (where list)
 
@@ -544,7 +602,7 @@ type pat_sequent =
   }
       
 let convert_sequent (ps : psequent) : pat_sequent =
-(*  Format.fprintf !(Debug.dump) "Converting sequent: %a@\n" string_pseq ps;*)
+(*  Format.fprintf !(Debug.proof_dump) "Converting sequent: %a@\n" string_pseq ps;*)
   let ps = match ps with
     pm,pa,po -> 
       {
@@ -552,7 +610,7 @@ let convert_sequent (ps : psequent) : pat_sequent =
        assumption_diff = convert_to_inner pa;
        obligation_diff = convert_to_inner po;
      } in 
-(*  Format.fprintf !(Debug.dump) "Produced sequent: %a@ |@ %a@ |-@ %a@\n@\n" pp_sform ps.assumption_same pp_sform ps.assumption_diff pp_sform ps.obligation_diff; *)
+(*  Format.fprintf !(Debug.proof_dump) "Produced sequent: %a@ |@ %a@ |-@ %a@\n@\n" pp_sform ps.assumption_same pp_sform ps.assumption_diff pp_sform ps.obligation_diff; *)
   ps
 
 type inner_sequent_rule =
@@ -585,7 +643,7 @@ let sequent_join fresh (seq : sequent) (pseq : pat_sequent) : sequent option =
       try 
 	convert fresh  seq.ts pseq.assumption_diff 
       with Contradiction -> 
-	Format.fprintf !(Debug.dump) "Failed to add formula to lhs: %a@\n" pp_sform pseq.assumption_diff;
+	Format.fprintf !(Debug.proof_dump) "Failed to add formula to lhs: %a@\n" pp_sform pseq.assumption_diff;
 	raise Contradiction
     in
     let ass = conjunction ass seq.assumption in
@@ -593,7 +651,7 @@ let sequent_join fresh (seq : sequent) (pseq : pat_sequent) : sequent option =
       try 
 	convert fresh ts pseq.assumption_same 
       with Contradiction ->
-	Format.fprintf !(Debug.dump) "Failed to add formula to matched: %a@\n" pp_sform pseq.assumption_same;
+	Format.fprintf !(Debug.proof_dump) "Failed to add formula to matched: %a@\n" pp_sform pseq.assumption_same;
 	assert false in 
     let sam = RMSet.union sam.spat seq.matched in 
     let obs,ts = 
@@ -613,7 +671,7 @@ let sequent_join fresh (seq : sequent) (pseq : pat_sequent) : sequent option =
      ts = ts;
    }
   with Contradiction -> 
-    Format.fprintf !(Debug.dump) "Contradiction detected!!@\n";
+    Format.fprintf !(Debug.proof_dump) "Contradiction detected!!@\n";
     None
 
 let sequent_join_fresh = sequent_join true
@@ -764,7 +822,7 @@ try
     try 
       out_normalise seq.ts ass
     with Contradiction -> 
-      Format.fprintf !(Debug.dump)"Success: %a@\n" pp_sequent seq;  
+      Format.fprintf !(Debug.proof_dump)"Success: %a@\n" pp_sequent seq;  
       raise Success
   in 
   try 
@@ -824,7 +882,11 @@ with Success -> None
 
 (* TODO Doesn't use obligation equalities to help with match. 
    *)
-let apply_rule (sr : inner_sequent_rule) (seq : sequent) : sequent list list = 
+let apply_rule 
+     (sr : inner_sequent_rule) 
+     (seq : sequent) 
+     : sequent list list 
+     = 
   (* Should reset any matching variables in the ts to avoid clashes. *)
   let ts = blank_pattern_vars seq.ts in 
   (* Match obligation *)
@@ -847,7 +909,7 @@ let apply_rule (sr : inner_sequent_rule) (seq : sequent) : sequent list list =
 					    assumption = ass})) then
 		  raise No_match
 	      else begin
-		Format.fprintf !(Debug.dump) "Match rule %s@\n" sr.name;
+		Format.fprintf !(Debug.proof_dump) "Match rule %s@\n" sr.name;
 		let seq = 			    
 		  {seq with 
 		   ts = ts;
@@ -888,7 +950,7 @@ let get_frame seq =
 
 let rec get_frames seqs frms = 
   match seqs with 
-    [] -> frms
+  | [] -> frms
   | seq::seqs ->  get_frames seqs ((get_frame seq)::frms)
 
 let get_frames seqs = 
@@ -904,7 +966,7 @@ let convert_with_eqs fresh pform =
 let convert fresh ts pform = 
   convert_without_eqs fresh  ts (convert_to_inner pform)
 
-let make_implies heap pheap = 
+let make_implies (heap : ts_formula) (pheap : pform) : sequent = 
   let ts,form = break_ts_form heap in 
   let rh,ts = convert false ts pheap in  
   {ts = ts;
