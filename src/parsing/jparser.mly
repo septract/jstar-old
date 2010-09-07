@@ -22,7 +22,7 @@ open Lexing
 open Parsing 
 open Jimple_global_types
 open Spec
-open Methdec_core
+open Core
 open Load
 open Spec_def
 open Psyntax
@@ -45,11 +45,13 @@ let msig_simp (mods,typ,name,args_list) =
   let args_list = List.map fst args_list in
   (mods,typ,name,args_list) 
 
-let bind_spec_vars (mods,typ,name,args_list) {pre=pre;post=post;excep=excep} =
+let bind_spec_vars 
+    (mods,typ,name,args_list) 
+    {pre=pre;post=post;excep=excep;invariants=invariants} =
   (* Make substitution to normalise names *)
   let subst = Psyntax.empty in 
   let subst = Psyntax.add (newPVar("this")) (Arg_var(Support_syntax.this_var)) subst in 
-  (* For each name that is given convert to normalised param name*)
+  (* For each name that is given convert to normalised param name. *)
   let _,subst = 
     List.fold_left 
       (fun (n,subst) arg_opt -> 
@@ -66,7 +68,8 @@ let bind_spec_vars (mods,typ,name,args_list) {pre=pre;post=post;excep=excep} =
 
   {pre=subst_pform subst pre;
    post=subst_pform subst post;
-   excep=ClassMap.map (subst_pform subst) excep}
+   excep=ClassMap.map (subst_pform subst) excep;
+   invariants=LabelMap.map (subst_pform subst) invariants }
 
 let mkDynamic (msig, specs, source_pos) =
   let specs = List.map (bind_spec_vars msig) specs in 
@@ -100,81 +103,146 @@ let field_signature2str fs =
   | _ -> assert false
 
 
+let add_invariant (label, formula) map =
+  let old =
+    try LabelMap.find label map
+    with Not_found -> mkFalse in
+  LabelMap.add label (old &&& formula) map
+
 %} /* declarations */
 
 /* ============================================================= */
 /* tokens */
-%token REQUIRES
-%token OLD
-%token ENSURES
-%token AS
+%token ABS
 %token ABSRULE
-%token EQUIV
-%token LEADSTO
 %token ABSTRACT
-%token FINAL 
-%token NATIVE 
-%token PUBLIC 
-%token PROTECTED 
-%token PRIVATE 
-%token STATIC 
-%token SYNCHRONIZED 
-%token TRANSIENT 
-%token VOLATILE 
-%token STRICTFP 
-%token ENUM 
+%token AND 
+%token ANDALSO 
 %token ANNOTATION 
-%token CLASS 
-%token INTERFACE 
-%token VOID 
+%token AS
+%token AT_IDENTIFIER 
+%token AXIOMS
+%token BANG
+%token BIMP
 %token BOOLEAN  
+%token BREAKPOINT  
 %token BYTE 
-%token SHORT 
+%token CASE 
+%token CATCH 
 %token CHAR 
-%token INT 
-%token LONG 
-%token FLOAT 
+%token CLASS 
+%token CLS 
+%token CMP 
+%token CMPEQ 
+%token CMPG 
+%token CMPGE 
+%token CMPGT 
+%token CMPL 
+%token CMPLE 
+%token CMPLT 
+%token CMPNE 
+%token COLON
+%token COLON_EQUALS 
+%token COMMA 
+%token DEFAULT 
+%token DEFINE
+%token DIV 
+%token DOT 
 %token DOUBLE 
-%token NULL_TYPE 
-%token UNKNOWN 
-%token EXTENDS 
+%token EMPRULE
+%token ENSURES
+%token ENTERMONITOR 
+%token ENUM 
+%token EOF
+%token EQUALS 
+%token EQUIV
+%token EXITMONITOR 
 %token EXPORT
 %token EXPORTS
-%token AXIOMS
-%token IMPLEMENTS 
-%token BREAKPOINT  
-%token CASE 
-%token BANG
-%token CATCH 
-%token CMP 
-%token CMPG 
-%token CMPL 
-%token DEFAULT 
-%token ENTERMONITOR 
-%token EXITMONITOR 
+%token EXTENDS 
+%token FALSE
+%token FINAL 
+%token FLOAT 
+%token FLOAT_CONSTANT 
+%token FRAME
+%token FROM 
+%token FULL_IDENTIFIER 
+%token GARBAGE
 %token GOTO 
+%token IDENTIFIER 
 %token IF 
+%token IMP
+%token IMPLEMENTS 
+%token IMPLICATION
+%token IMPORT 
+%token INCONSISTENCY
+%token INDUCTIVE
 %token INSTANCEOF  
+%token INT 
+%token INTEGER_CONSTANT 
+%token INTEGER_CONSTANT_LONG 
+%token INTERFACE 
 %token INTERFACEINVOKE 
+%token INVARIANT
+%token L_BRACE 
+%token L_BRACKET 
+%token L_PAREN 
+%token LEADSTO
 %token LENGTHOF 
+%token LONG 
 %token LOOKUPSWITCH 
 %token MAPSTO
+%token MINUS 
+%token MOD 
+%token MULT 
+%token NATIVE 
 %token NEG 
 %token NEW 
 %token NEWARRAY 
 %token NEWMULTIARRAY 
 %token NOP 
+%token NOTIN
+%token NOTINCONTEXT
+%token NULL 
+%token NULL_TYPE 
+%token OLD
+%token OR 
+%token OROR 
+%token ORTEXT
+%token PLUS 
+%token PRED
+%token PRIVATE 
+%token PROTECTED 
+%token PUBLIC 
+%token PURERULE
+%token QUESTIONMARK 
+%token QUOTE
+%token QUOTED_NAME 
+%token R_BRACE 
+%token R_BRACKET 
+%token R_BRACKET 
+%token R_PAREN 
+%token REQUIRES
 %token RET 
 %token RETURN 
+%token REWRITERULE
+%token RULE
+%token SEMICOLON 
+%token SHL 
+%token SHORT 
+%token SHR 
 %token SPECIALINVOKE 
+%token STATIC 
 %token STATICINVOKE 
+%token STRICTFP 
+%token STRING_CONSTANT 
+%token SYNCHRONIZED 
 %token TABLESWITCH   
 %token THROW  
 %token THROWS 
-%token VIRTUALINVOKE 
-%token NULL 
-%token FROM 
 %token TO 
+%token TRANSIENT 
+%token UNKNOWN 
 %token WITH 
 %token CLS 
 %token COMMA 
@@ -213,10 +281,15 @@ let field_signature2str fs =
 %token SHL 
 %token SHR 
 %token USHR 
-%token PLUS 
-%token MINUS 
-%token WAND
 %token VDASH
+%token VIRTUALINVOKE 
+%token VOID 
+%token VOLATILE 
+%token WAND
+%token WHERE
+%token WITH 
+%token WITHOUT
+%token XOR 
 %token MULT 
 %token DIV 
 %token L_BRACKET 
@@ -258,16 +331,24 @@ let field_signature2str fs =
 %token IMPORT 
 %token SPECIFICATION
 
-%token INDUCTIVE
+%type <float> FLOAT_CONSTANT 
 
+%type <int> INTEGER_CONSTANT 
+%type <int> INTEGER_CONSTANT_LONG 
 %token LABEL
 %token END
 %token ASSIGN
 
 
-/* ============================================================= */
+%type <string> AT_IDENTIFIER 
+%type <string> FULL_IDENTIFIER 
+%type <string> IDENTIFIER 
+%type <string> QUOTED_NAME 
+%type <string> STRING_CONSTANT 
 
-%left IDENFIFIER
+/* === associativity and precedence === */
+
+%left IDENTIFIER
 %left AT_IDENTIFIER
 %left QUOTED_NAME
 %left FULL_IDENTIFIER
@@ -324,7 +405,7 @@ let field_signature2str fs =
 %type <Spec.spec> spec
 
 %start symb_question_file
-%type <Methdec_core.symb_question list> symb_question_file 
+%type <Core.symb_question list> symb_question_file 
 
 %% /* rules */
 
@@ -386,17 +467,24 @@ methods_specs:
    | /*empty*/ { [] }
 
 spec:
-   | L_BRACE formula R_BRACE L_BRACE formula R_BRACE exp_posts  {  {pre=$2;post=$5;excep=$7}  }
+   | L_BRACE formula R_BRACE L_BRACE formula R_BRACE exp_posts invariants 
+     {  {pre=$2;post=$5;excep=$7;invariants=$8} } 
 specs:
    | spec ANDALSO specs  { $1 :: $3 }
    | spec     {[$1]}
 
+invariant:
+  | INVARIANT identifier COLON formula SEMICOLON { ($2, $4) }
+
+invariants:
+  | invariant invariants { add_invariant $1 $2 }
+  | /* empty */ { LabelMap.empty }
+
 spec_npv:
-   | L_BRACE formula_npv R_BRACE L_BRACE formula_npv R_BRACE exp_posts_npv  {  {pre=$2;post=$5;excep=$7}  }
+   | L_BRACE formula_npv R_BRACE L_BRACE formula_npv R_BRACE exp_posts_npv  {  {pre=$2;post=$5;excep=$7;invariants=LabelMap.empty}  }
 specs_npv:
    | spec_npv ANDALSO specs_npv  { $1 :: $3 }
    | spec_npv     {[$1]}
-
 
 method_spec:
    | method_signature_short COLON specs  SEMICOLON source_pos_tag_option { mkDynamic($1, $3, $5) }
@@ -676,10 +764,6 @@ array_descriptor_list_plus:
 array_descriptor:
   L_BRACKET immediate_question_mark R_BRACKET { $2 }
 ;
-variable_list:
-	 | /*empty*/  {[]}
-	 | variable variable_list { $1 :: $2 } 
-;
 variable:
    |reference {Var_ref($1)}
    |local_name {Var_name($1)}
@@ -791,11 +875,6 @@ binop_val_no_multor:
    | DIV {Div}   
 //   | OR  {Jparsetree.Or}    
 ;
-binop_val:
-   | OR  {Jparsetree.Or}    
-   | MULT {Mult}
-   | binop_val_no_multor {$1}
-;
 binop_cmp:
    | CMP {Cmp}   
    | CMPG {Cmpg}  
@@ -849,6 +928,7 @@ lvariable_npv:
 lvariable_list_ne_npv:
    |  lvariable_npv    { [$1] }
    |  lvariable_npv COMMA lvariable_list_ne_npv  { $1 :: $3 }
+;
 
 lvariable_list_npv:
    |  {[]}

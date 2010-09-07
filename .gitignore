@@ -1,2 +1,4 @@
-.depend
 *.core
+*.swp
+.depend
+tags

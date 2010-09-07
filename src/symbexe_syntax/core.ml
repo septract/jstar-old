@@ -24,33 +24,9 @@ type core_statement =
   | Throw_stmt_core of Psyntax.args
   | End
 
-type stmt_core = { 
-  (*labels: labels; *)
-  mutable skind: core_statement;
-  mutable sid: int;  (* this is filled when the cfg is done *)
-  mutable succs: stmt_core list; (* this is filled when the cfg is done *)
-  mutable preds: stmt_core list  (* this is filled when the cfg is done *)
- }
-
 type symb_question = 
   | Specification of string * spec * core_statement list 
   
 type symb_test = 
   | Nothing_here_yet
-
-
-let num_stmts = ref 0 
-
-
-let stmt_create 
-    (skind: core_statement)  
-    (pred_stmts: stmt_core list)  
-    (succ_stmts: stmt_core list) 
-    : stmt_core = 
-incr num_stmts;
-  { skind = skind;
-    sid = !num_stmts; 
-    succs = succ_stmts;
-    preds = pred_stmts }
-
 
