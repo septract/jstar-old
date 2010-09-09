@@ -10,12 +10,18 @@
    jStar is distributed under a BSD license,  see, 
       LICENSE.txt
  ********************************************************)
+
+(* TODO(rgrig): Factor the common parts of test.ml and run.ml. *)
+
+open Debug
+open Format
 open Load_logic
 open Psyntax
 
-let program_file_name = ref "";;
-let logic_file_name = ref "";;
-let inductive_file_name = ref "";;
+let program_file_name = ref ""
+let logic_file_name = ref ""
+let inductive_file_name = ref ""
+let verbose = ref false
  
 let set_file_name n = 
   program_file_name := n 
@@ -42,17 +48,18 @@ let main () =
   Arg.parse arg_list (fun s ->()) usage_msg;
 
   if !program_file_name="" then 
-    Format.printf "Test file name not specified. Can't continue....@\n %s @\n" usage_msg
+    printf "Test file name not specified. Can't continue....@\n %s @\n" usage_msg
   else if !logic_file_name="" then
-    Format.printf "Logic file name not specified. Can't continue....@\n %s @\n" usage_msg
+    printf "Logic file name not specified. Can't continue....@\n %s @\n" usage_msg
   else 
     let rl = if !inductive_file_name <> "" then Inductive.convert_inductive_file !inductive_file_name else [] in
     let l1,l2,cn = load_logic_extra_rules (System.getenv_dirlist "JSTAR_LOGIC_LIBRARY") !logic_file_name rl in
     let logic = {empty_logic with seq_rules = l1; rw_rules=l2; consdecl = cn;} in
     let s = System.string_of_file !program_file_name  in
-    if Config.verb_proof() then Format.printf "Start parsing tests in %s...@\n" !program_file_name;
-    let test_list  = Jparser.test_file Jlexer.token (Lexing.from_string s) 
-    in if Config.verb_proof() then Format.printf "Parsed %s!@\n" !program_file_name;
+    if log log_phase then 
+      fprintf logf "@[<4>Parsing tests in@ %s.@." !program_file_name;
+    let test_list  = Jparser.test_file Jlexer.token (Lexing.from_string s) in
+    if log log_phase then fprintf logf "@[<4>Parsed@ %s.@." !program_file_name;
     List.iter (
     fun test ->
       match test with 
@@ -67,8 +74,6 @@ let main () =
 	      Psyntax.string_form heap1 
 	      Psyntax.string_form heap2
 	)
-(*	if Config.verb_proof() then Prover.pprint_proof stdout*)
-	  
     | Psyntax.TFrame (heap1, heap2, result)  -> 
 (*	Format.printf "Find frame for\n %s\n ===> \n %s\n" (Psyntax.string_form heap1) (Psyntax.string_form heap2);*)
 	let x = Sepprover.frame_opt logic 
@@ -108,7 +113,6 @@ let main () =
 	| false,true -> Format.printf "Test failed! Prover could not prove@ %a@ inconsistent.@\n" 
 	      Psyntax.string_form heap1
 	);
-(*	if Config.verb_proof() then Prover.pprint_proof stdout*)
     | Psyntax.TEqual (heap,arg1,arg2,result) -> ()
 (*	if Prover.check_equal logic heap arg1 arg2 
 	then Format.printf("Equal!\n\n") else Format.printf("Not equal!\n\n")*)

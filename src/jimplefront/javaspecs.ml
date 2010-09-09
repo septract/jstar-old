@@ -12,7 +12,7 @@
  ********************************************************)
 
 
-(* Support functions for simbolic execution and misc conversion facilities *)
+(* Support functions for symbolic execution and misc conversion facilities *)
 
 
 open Vars
@@ -443,10 +443,11 @@ let remove_this_type_info prepure =
     | _ -> true 
   in List.filter is_this_type prepure
 
-let static_to_dynamic spec = 
-  match spec with 
-    {pre=pre; post=post; excep=excep} 
-      ->  {pre=remove_this_type_info pre; post=post; excep=excep}
+let static_to_dynamic {pre=pre; post=post; excep=excep; invariants=invariants} =
+  { pre=remove_this_type_info pre; 
+    post=post; 
+    excep=excep; 
+    invariants=invariants (* TODO INV *) }
 
 let rec filtertype_spat classname spat =
   match spat with
@@ -489,17 +490,17 @@ and filterdollar x = List.map (filterdollar_at) x
 
 let dynamic_to_static cn spec = 
   match spec with
-    {pre=f1; post=f2; excep=excep}
+    {pre=f1; post=f2; excep=excep; invariants=invariants}
       -> {pre=filtertype cn f1; 
 	  post=filtertype cn f2; 
-	  excep=ClassMap.map (filtertype cn) excep}
+	  excep=ClassMap.map (filtertype cn) excep;
+          invariants=LabelMap.map (filtertype cn) invariants (* TODO INV *) }
 
-let filter_dollar_spec spec = 
-  match spec with
-    {pre=f1; post=f2; excep=excep}
-      -> {pre=filterdollar f1; 
-	  post=filterdollar f2; 
-	  excep=ClassMap.map filterdollar excep}
+let filter_dollar_spec {pre=f1; post=f2; excep=excep; invariants=invariants} =
+  { pre=filterdollar f1; 
+    post=filterdollar f2; 
+    excep=ClassMap.map filterdollar excep;
+    invariants=LabelMap.map filterdollar invariants (* TODO INV *) }
 
 let fix_spec_inheritance_gaps classes mmap spec_file exclude_function spec_type =
 	let mmapr = ref mmap in
@@ -553,7 +554,8 @@ let fix_gaps (smmap,dmmap) spec_file =
   (!smmapr,!dmmapr)
 
 
-let spec_file_to_method_specs sf =
+let spec_file_to_method_specs 
+    (sf : Spec_def.class_spec list) : (methodSpecs * methodSpecs) =
   let rec sf_2_ms_inner sf (pairmmap) = 
     match sf with 
       [] -> pairmmap
@@ -684,6 +686,11 @@ let add_subtype_and_objsubtype_rules spec_list logic =
 
 
 let refinement_this (logic : logic) (spec1 : spec) (spec2 : spec) (cname : class_name): bool =
-    refinement_extra logic spec1 spec2 (objtype this_var (Pprinter.class_name2str cname))
+(*DBG  Format.fprintf Format.err_formatter "@[<2>===first===@\n";
+  spec2str Format.err_formatter spec1;
+  Format.fprintf Format.err_formatter "@]@\n@[<2>===second===@\n";
+  spec2str Format.err_formatter spec2;
+  Format.fprintf Format.err_formatter "@]@."; *)
+  refinement_extra logic spec1 spec2 (objtype this_var (Pprinter.class_name2str cname))
 
 

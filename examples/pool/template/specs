@@ -86,12 +86,12 @@ class ConnectionPool
 	    field(x, <ConnectionPool: java.lang.String password>, _password); 
 
   void <init>(java.lang.String,java.lang.String,java.lang.String) static:
-    { } 
+    { }
     { PoolInternalEmpty$ResourcePool(@this:,{})
        * PoolData$ConnectionPool(@this:,{type=sql(@parameter0:,@parameter1:,@parameter2:)}) };
 
   void <init>(java.lang.String,java.lang.String,java.lang.String) :
-    { } 
+    { }
     { Pool(@this:,{type=sql(@parameter0:,@parameter1:,@parameter2:)}) };
 
 
