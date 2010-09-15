@@ -11,30 +11,38 @@
       LICENSE.txt
  ********************************************************)
 (* File to read an inductive file (and later its imports). *)
+
+open Debug
+open Format
+open Load
 open Prover
 open Psyntax
 open System
-open Load
 
-let print_inductive_con inductive_con =
+let print_inductive_con f inductive_con =
   let (heap, name, args) = inductive_con.con_def in
-  Format.printf "\t%s: %a => %s\n" inductive_con.con_name Psyntax.string_form heap name
+  fprintf f "@\n@[<4>%s: %a@ => %s@]" 
+      inductive_con.con_name 
+      Psyntax.string_form heap 
+      name
 
-let print_inductive inductive =
-  Printf.printf "Inductive(%s):\n" inductive.ind_name;
-  List.iter print_inductive_con inductive.ind_cons
+let print_inductive f inductive =
+  fprintf f "@\n@[<2>Inductive(%s):" inductive.ind_name;
+  List.iter (print_inductive_con f) inductive.ind_cons;
+  fprintf f "@]"
 
-let print_inddef = function
-  | IndImport s -> Printf.printf "Import %s;\n" s
-  | IndDef inductive -> print_inductive inductive
+let print_inddef f = function
+  | IndImport s -> fprintf f "@\nImport %s;" s
+  | IndDef inductive -> print_inductive f inductive
 
-let print_inductive_rule = function
-  | ImportEntry s -> Printf.printf "Import %s;\n" s
-  | NormalEntry (SeqRule (_,_,name,_,_)) -> Printf.printf "Inductive rule: %s;\n" name
-  | NormalEntry _ -> Printf.printf "Other rule;\n"
+let print_inductive_rule f = function
+  | ImportEntry s -> fprintf f "@\nImport %s;" s
+  | NormalEntry (SeqRule (_,_,name,_,_)) -> 
+      fprintf f "@\nInductive rule: %s;" name
+  | NormalEntry _ -> fprintf f "@\nOther rule;\n"
 
 (*
-let print_inductive_rule r = Printf.printf "Inductive rule\n%a\n" (Logic.string_rule r)
+let print_inductive_rule r = printf "Inductive rule\n%a\n" (Logic.string_rule r)
 *)
 let convert_inductive_con inductive_con =
   let (heap, name, args) = inductive_con.con_def in
@@ -70,10 +78,14 @@ let rec convert_inddefs = function
 
 let convert_inductive_file filename =
     let l = string_of_file filename in 
-    if !(Debug.debug_ref) then Printf.printf "Start parsing inductive definitions in %s...\n" filename;
+    if log log_phase then 
+      fprintf logf "@[<4>Parsing inductive definitions in@ %s.@." filename;
     let inductive_list  = Jparser.inductive_file Jlexer.token (Lexing.from_string l) in 
     let inductive_rules = convert_inddefs inductive_list in
-    if !(Debug.debug_ref) then Printf.printf "Parsed %s!\n" filename;
-    if !(Debug.debug_ref) then List.iter print_inddef inductive_list;
-    if !(Debug.debug_ref) then List.iter print_inductive_rule inductive_rules;
+    if log log_phase then fprintf logf "@[<4>Parsed@ %s.@." filename;
+    if log log_load then (
+      fprintf logf "@[";
+      List.iter (print_inddef logf) inductive_list;
+      List.iter (print_inductive_rule logf) inductive_rules;
+      fprintf logf "@.");
     inductive_rules

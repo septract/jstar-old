@@ -4,7 +4,7 @@ build:
 	cd src; make
 
 test:
-	cd examples; make test
+	cd unit_tests; make test
 
 clean:
 	rm -f lib/*.a

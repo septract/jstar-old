@@ -12,7 +12,7 @@
  ********************************************************)
 
 
-(* Support functions for simbolic execution and misc conversion facilities *)
+(* Support functions for symbolic execution and misc conversion facilities *)
 
 
 open Vars
@@ -32,9 +32,11 @@ exception Class_defines_external_spec
 
 (* ================ General stuff =================== *)
 
-let append_rules logic rules : Psyntax.logic = 
-	let old_rules,rm,f = logic in
-	(old_rules @ rules,rm,f)
+let append_rules (logic : logic) (rules : sequent_rule list) : Psyntax.logic = 
+(*	let old_rules,rm,f = logic in
+	(old_rules @ rules,rm,f) *)
+  {logic with seq_rules = logic.seq_rules @ rules}
+
 	
 let rec same_elements list =
 	match list with
@@ -53,7 +55,7 @@ let not_null name = not_null1 (Arg_var name)
 exception BadAPF of string
 
 (* Add rules for the relationship between an apf and apf entry, as well as the apf entry and the body *)
-let add_apf_to_logic logic apfdefines classname : Psyntax.logic = 
+let add_apf_to_logic (logic : logic) apfdefines classname : Psyntax.logic = 
   let make_rules_from_defs (name,receiver,parameters, definition, global) rules = 
 (* special variables to match the record as pattern matcher isn't that clever *)
     let recvar = Vars.fresha () in 
@@ -95,17 +97,16 @@ let add_apf_to_logic logic apfdefines classname : Psyntax.logic =
       [] -> rules
     | apf::apfdefines -> inner apfdefines (make_rules_from_defs apf rules)
   in 
-  let rules,rm,f = logic in 
-  let rules = inner apfdefines rules in 
-  (rules,rm,f)
+  let rules = inner apfdefines logic.seq_rules in 
+  {logic with seq_rules = rules}
 
-let augmented_logic_for_class class_name sf logic =
-  let rec add_globals_and_apf_info sf logic = 
+let augmented_logic_for_class class_name sf (logic : logic) : logic =
+  let rec add_globals_and_apf_info sf (logic : logic) : logic = 
     match sf with
       cs::sf ->
-				let apfs_to_add = if class_name=cs.classname then cs.apf else (List.filter (fun (a,b,x,y,w) -> w) cs.apf) in
-				let logic = add_apf_to_logic logic apfs_to_add (Pprinter.class_name2str cs.classname) in 
-				add_globals_and_apf_info sf logic
+         let apfs_to_add = if class_name=cs.classname then cs.apf else (List.filter (fun (a,b,x,y,w) -> w) cs.apf) in
+	 let logic = add_apf_to_logic logic apfs_to_add (Pprinter.class_name2str cs.classname) in 
+	             add_globals_and_apf_info sf logic
     | [] -> logic
 	in add_globals_and_apf_info sf logic
 
@@ -224,7 +225,7 @@ let rules_for_implication imp prov : sequent_rule list =
 (* =================== Exports clause stuff =============================*)
 
 (* Augment the logic with definitions of the secret 'where' predicates. See paper on exports. *)
-let logic_with_where_pred_defs exportLocal_predicates logic =
+let logic_with_where_pred_defs exportLocal_predicates (logic : logic) : logic =
 	List.fold_left (fun logic where_pred_def ->
 			let (name, args, body) = where_pred_def in
 			let sub = List.fold_left (fun sub argname -> add argname (Arg_var (Vars.fresha ())) sub) empty args in
@@ -237,8 +238,7 @@ let logic_with_where_pred_defs exportLocal_predicates logic =
 			let evarsubst = subst_kill_vars_to_fresh_exist sparevars in 
 			let pdefinition = subst_pform pvarsubst defn in 
 			let edefinition = subst_pform evarsubst defn in
-			let rules,rm,f = logic in
-			let rules = rules @
+			let rules = logic.seq_rules @
 				(mk_seq_rule (([],[pred],[]),
 					[[[],pdefinition,([])]],
 					("exports_body_left_" ^ name))
@@ -248,7 +248,7 @@ let logic_with_where_pred_defs exportLocal_predicates logic =
 					("exports_body_right_" ^ name))
 				:: [])
 			in
-			(rules,rm,f)
+			{logic with seq_rules = rules}
 		) logic exportLocal_predicates
 	
 (* Yields the logic augmented with 'where' predicate defs and the implications which are to be checked. *)
@@ -345,7 +345,7 @@ let spec_file_to_axiom_map2 spec_list =
 	!axiommap
 
 (* Add the axioms of all classes in the spec file to the logic *)
-let add_axiom_implications_to_logic spec_list logic : Psyntax.logic = 
+let add_axiom_implications_to_logic spec_list (logic : logic) : logic = 
 	let classlist = a_topological_ordering_of_all_classes spec_list in
 	let axiommap = spec_file_to_axiom_map2 spec_list in
 	let new_rules = List.fold_right (fun cl rules ->
@@ -443,10 +443,11 @@ let remove_this_type_info prepure =
     | _ -> true 
   in List.filter is_this_type prepure
 
-let static_to_dynamic spec = 
-  match spec with 
-    {pre=pre; post=post; excep=excep} 
-      ->  {pre=remove_this_type_info pre; post=post; excep=excep}
+let static_to_dynamic {pre=pre; post=post; excep=excep; invariants=invariants} =
+  { pre=remove_this_type_info pre; 
+    post=post; 
+    excep=excep; 
+    invariants=invariants (* TODO INV *) }
 
 let rec filtertype_spat classname spat =
   match spat with
@@ -489,17 +490,17 @@ and filterdollar x = List.map (filterdollar_at) x
 
 let dynamic_to_static cn spec = 
   match spec with
-    {pre=f1; post=f2; excep=excep}
+    {pre=f1; post=f2; excep=excep; invariants=invariants}
       -> {pre=filtertype cn f1; 
 	  post=filtertype cn f2; 
-	  excep=ClassMap.map (filtertype cn) excep}
+	  excep=ClassMap.map (filtertype cn) excep;
+          invariants=LabelMap.map (filtertype cn) invariants (* TODO INV *) }
 
-let filter_dollar_spec spec = 
-  match spec with
-    {pre=f1; post=f2; excep=excep}
-      -> {pre=filterdollar f1; 
-	  post=filterdollar f2; 
-	  excep=ClassMap.map filterdollar excep}
+let filter_dollar_spec {pre=f1; post=f2; excep=excep; invariants=invariants} =
+  { pre=filterdollar f1; 
+    post=filterdollar f2; 
+    excep=ClassMap.map filterdollar excep;
+    invariants=LabelMap.map filterdollar invariants (* TODO INV *) }
 
 let fix_spec_inheritance_gaps classes mmap spec_file exclude_function spec_type =
 	let mmapr = ref mmap in
@@ -553,7 +554,8 @@ let fix_gaps (smmap,dmmap) spec_file =
   (!smmapr,!dmmapr)
 
 
-let spec_file_to_method_specs sf =
+let spec_file_to_method_specs 
+    (sf : Spec_def.class_spec list) : (methodSpecs * methodSpecs) =
   let rec sf_2_ms_inner sf (pairmmap) = 
     match sf with 
       [] -> pairmmap
@@ -684,6 +686,11 @@ let add_subtype_and_objsubtype_rules spec_list logic =
 
 
 let refinement_this (logic : logic) (spec1 : spec) (spec2 : spec) (cname : class_name): bool =
-    refinement_extra logic spec1 spec2 (objtype this_var (Pprinter.class_name2str cname))
+(*DBG  Format.fprintf Format.err_formatter "@[<2>===first===@\n";
+  spec2str Format.err_formatter spec1;
+  Format.fprintf Format.err_formatter "@]@\n@[<2>===second===@\n";
+  spec2str Format.err_formatter spec2;
+  Format.fprintf Format.err_formatter "@]@."; *)
+  refinement_extra logic spec1 spec2 (objtype this_var (Pprinter.class_name2str cname))
 
 

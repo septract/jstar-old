@@ -445,7 +445,7 @@ let rewrite (ts : term_structure) (rm : rewrite_rule list) (query : term_structu
 		  raise Backtrack.No_match
 		end
 	      else 
-		Format.fprintf !(Debug.dump) "Making %a = %a using %s@\n" 
+		Format.fprintf !(Debug.proof_dump) "Making %a = %a using %s@\n" 
 		  (pp_c ts) c (pp_c ts) x r.rewrite_name;
 (*	        CC.print ts.cc;*)
 		let ts = make_equal ts x c in
@@ -508,3 +508,21 @@ let var_not_used_in ts var reps : bool =
       Printf.printf "Don't use non-existential variables in notincontext stuff.";
       assert false 
 
+
+let add_constructor 
+    (fn : string) 
+    (ts : term_structure) 
+    : term_structure  =
+  try 
+    begin
+      let c = SMap.find fn ts.function_symbols in 
+      let cc =  CC.make_constructor ts.cc c in 
+      {ts with cc = cc}  
+    end 
+  with Not_found -> 
+    begin
+      let c,cc = CC.fresh ts.cc in 
+      let cc =  CC.make_constructor cc c in 
+      {ts with cc = cc; function_symbols = SMap.add fn c ts.function_symbols}  
+    end
+    

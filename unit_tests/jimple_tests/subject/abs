@@ -1,0 +1,216 @@
+rule NodeLL_not_nil:
+NodeLL(?x,?y) | ?x!=nil() |-
+if
+| |-
+
+rule field_not_nil:
+field(?x,?f,?y) | ?x!=nil() |-
+if
+| |-
+
+rule field_not_nil:
+ls(?x,?f,?y) | ?x!=nil() |-
+if
+| |-
+
+
+rule NodeLL_not_eq:
+NodeLL(?x,?y) * NodeLL(?z,?w) | ?x!=?z |-
+if
+| |-
+
+rule field_not_eq:
+field(?x,?f,?y) * field(?z,?f,?w) | ?x!=?z |-
+if
+| |-
+
+
+/************* Abs3 Rule ***********************/
+/*
+rule ls_obs: 
+     | ls(?x,?z,cons(?w,?r)) * Observer(?w,{vals=?v; subject=?s}) |-
+if
+     | lspe(_f,?z,?r) * lsObs(?x,_f,cons(?w,empty()),?v,?s)
+     |-
+
+rule ls_obs_app1:
+| lsObs(?x,_f,?l,?v,?s) * lsObs(_f,nil(),?l2,?v,?s) |-
+if
+| lsObs(?x,nil(),app(?l,?l2),?v,?s) |-
+
+rule ls_obs_app2:
+| lsObs(?x,_f,?l,?v,?s) * lsObs(_f,?y,?l2,?v,?s) * ls(?y,?o,?p) |-
+if
+| lsObs(?x,?y,app(?l,?l2),?v,?s) * ls(?y,?o,?p) |-
+
+rule ls_obs_app2:
+| lsObs(?x,_f,?l,?v,?s) * lsObs(_f,?y,?l2,?v,?s) * lsObs(?y,?o,?p,?q,?r) |-
+if
+| lsObs(?x,?y,app(?l,?l2),?v,?s) * lsObs(?y,?o,?p,?q,?r)  |-
+
+rule ls_obs_app3:
+| lsObs(?x,_f,?l,?v,?s) * lsObs(_f,nil(),?l2,?v,?s) |-
+if
+| lsObs(?x,nil(),app(?l,?l2),?v,?s) |-
+
+*/
+/*************** Abs1 Rule *******************/
+rule ls_ls:
+| ls(?x,_x,?s1) * ls(_x,nil(),?s2) |-   /* this is for empty | true */
+where 
+  _x notincontext;
+  _x notin ?x
+if 
+| ls(?x,nil(),app(?s1,?s2)) |-   /* result */
+
+
+
+/*************** End Abs1 Rule *******************/
+
+
+/*************** Abs2 Rule *******************/
+rule ls_ls_ls:
+| ls(?x,_x,?s1) * ls(_x,?y,?s2) * ls(?y,?z,?s3) |-   /* this is for empty | true */
+where 
+  _x notincontext;
+  _x notin ?x;
+  _x notin ?y;
+  _x notin ?z
+if 
+| ls(?x,?y,app(?s1,?s2)) * ls(?y,?z,?s3) |-   /* result */
+
+
+
+
+
+
+
+
+/*****************Rewrite rules for app and empty and cons **********/
+rewrite hd_cons :
+  hd(cons(?x,?y)) = ?x
+
+rewrite tl_cons : 
+  tl(cons(?x,?y)) = ?y
+
+rewrite app_empty_1 :
+  app(empty(),?x) = ?x
+
+rewrite app_empty_2 :
+  app(?x,empty()) = ?x
+
+rewrite add_cons_empty: 
+  app(cons(?x,empty()), ?y) = cons(?x,?y)
+
+rewrite app_cons :
+  app(cons(?x,?y),?z) = cons(?x,app(?y,?z))
+without		 
+  ?y=empty() || z=empty()
+
+
+rewrite app_app_assoc :
+  app(app(?x,?y),?z) = app(?x,app(?y,?z))
+without
+  ?y=empty() || ?z=empty() || ?x=empty()
+
+rule ls_pe1:
+| lspe(?x,?y,empty()) |-
+if
+| ?x=?y |-
+
+rule ls_pe1:
+| lspe(?x,?y,cons(?s,?t)) |-
+if
+| ls(?x,?y,cons(?s,?t)) |-
+
+
+
+
+/*********************************************
+   Rules for trying to forget data. 
+
+  ********************************************/
+rewrite hack1 : 
+  app(_y,cons(_x,?y)) = app(elist(_y,s(_x)), ?y)
+
+rewrite hack2 : 
+  app(_z,app(_x,?y)) = app(elist(_z,_x), ?y)
+
+rewrite hack3 : 
+  cons(_z,app(_x,?y)) = app(elist(s(_z),_x), ?y)
+
+rewrite hack4 : 
+  cons(_z,cons(_x,?y)) = app(elist(s(_z),s(_x)), ?y)
+
+rewrite hack5_1 : 
+  elist(_x,_y) = id(?w)
+without 
+  elist(_x,_y) = id(?q)
+where 
+  _x notincontext;
+  _y notincontext
+
+
+rewrite hack5_2 : 
+  elist(s(_x),_y) = id(?w)
+without 
+  elist(s(_x),_y) = id(?q)
+where 
+  _x notincontext;
+  _y notincontext
+
+
+rewrite hack5_3 : 
+  elist(s(_x),s(_y)) = id(?w)
+without 
+  elist(s(_x),s(_y)) = id(?q)
+where 
+  _x notincontext;
+  _y notincontext
+
+rewrite hack5_4 : 
+  elist(_x,s(_y)) = id(?w)
+without 
+  elist(_x,s(_y)) = id(?q)
+where 
+  _x notincontext;
+  _y notincontext
+
+
+rewrite hack5 : 
+  id(?w) = ?w
+
+  
+
+
+
+
+
+
+
+rewrite false: false() = numeric_const("0")
+
+rewrite true : true() = numeric_const("1")
+
+
+
+rule numericrule:
+  | numeric_const(?x) = numeric_const(?y) |-
+without 
+  ?x=?y
+if
+  | ?x = ?y |-
+
+
+rule numericrule_neq:
+  | numeric_const(?x) != numeric_const(?y) |-
+without 
+  ?x!=?y
+if
+  | ?x != ?y |-
+
+
+
+rule zeroone:
+  | "0" = "1" |-
+if

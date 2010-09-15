@@ -39,6 +39,10 @@ let freshp_str vn =
   gensym := !gensym + 1;
   PVar(!gensym,vn)
 
+let fresha_str vn = 
+  gensym := !gensym + 1;
+  AnyVar(!gensym,vn)
+
 
 module StrVarHash = 
   Hashtbl.Make(struct 
@@ -67,16 +71,11 @@ let concretee_str vn =
     return
 
 
-let fresha_str vn = 
-  gensym := !gensym + 1;
-  AnyVar(!gensym,vn)
-
 let freshen var = 
   match var with 
     PVar (i,v) -> freshp_str v
   | EVar (i,v) -> freshe_str v
   | AnyVar (i,v) -> fresha_str v 
-
 
 
 

@@ -15,9 +15,10 @@
 
 open List
 open Printf
-open Methdec_core
+open Core
 open Pprinter_core
 open Load_logic
+open Psyntax
 
 let question_file_name = ref "";;
 let logic_file_name = ref "";;
@@ -29,8 +30,8 @@ let set_question_name n =  question_file_name := n
 let set_logic_file_name n =  logic_file_name := n 
 let set_absrules_file_name n =  absrules_file_name := n 
 
-let arg_list = [ 
-  ("-f", Arg.String(set_question_name ), "question file name" );
+let arg_list = Config.args_default @ 
+  [ ("-f", Arg.String(set_question_name ), "question file name" );
   ("-l", Arg.String(set_logic_file_name ), "logic file name" );
   ("-a", Arg.String(set_absrules_file_name ), "abstraction rules file name" );
 ]
@@ -48,18 +49,23 @@ let main () : unit =
   else if !absrules_file_name="" then
     printf "Abstraction rules file name not specified. Can't continue....\n %s \n" usage_msg
   else
-    let l1,l2 = (load_logic (System.getenv_dirlist "JSTAR_LOGIC_LIBRARY") !logic_file_name) in 
-    let lo = l1,l2, Psyntax.default_pure_prover in
-    let l1,l2 = Load_logic.load_logic  (System.getenv_dirlist "JSTAR_LOGIC_LIBRARY") !absrules_file_name in 
-    let abs_rules = (l1,l2, Psyntax.default_pure_prover) in
-    let question_list = System.parse_file Jparser.symb_question_file Jlexer.token !question_file_name "Question" true in
+    let l1,l2,cn = (load_logic (System.getenv_dirlist "JSTAR_LOGIC_LIBRARY") !logic_file_name) in 
+    let lo = {empty_logic with seq_rules = l1; rw_rules = l2; consdecl = cn} in
+    let l1,l2,cn = Load_logic.load_logic  (System.getenv_dirlist "JSTAR_LOGIC_LIBRARY") !absrules_file_name in 
+    let abs_rules = {empty_logic with seq_rules = l1; rw_rules = l2; consdecl = cn} in
+    let question_list = 
+      System.parse_file 
+          Jparser.symb_question_file 
+          Jlexer.token 
+          !question_file_name 
+          "Question" in
     List.iter (
     fun question ->
       match question with 
       
        | Specification(mname,spec,core)  ->
           Format.printf "Method: %s\nSpec: %a"  mname  Spec.spec2str spec; 
-       	  let stmts_core = map (fun x -> Methdec_core.stmt_create x [] []) core in 
+       	  let stmts_core = map Cfg_core.mk_node core in 
           if Symexec.verify mname stmts_core spec lo abs_rules then
           Format.printf "Good specification!\n\n" else Format.printf "Bad specification!\n\n" 
           

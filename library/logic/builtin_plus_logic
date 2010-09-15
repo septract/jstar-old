@@ -3,18 +3,18 @@
  ******************/
 
 rule builtin_plus_inj_first :
-| | |- builtin_plus(?t,?g) = builtin_plus(?t,?h) | 
+| |- builtin_plus(?t,?g) = builtin_plus(?t,?h) 
 without
   ?g = ?h
 if
-| | |- ?g = ?h | 
+| |- ?g = ?h  
 
 rule builtin_plus_inj_second :
-| | |- builtin_plus(?g,?t) = builtin_plus(?h,?t) | 
+| |- builtin_plus(?g,?t) = builtin_plus(?h,?t)  
 without
   ?g = ?h
 if
-| | |- ?g = ?h | 
+| |- ?g = ?h 
 
 
 
@@ -27,8 +27,8 @@ rewrite builtin_plus_comm :
 */
 
 rule bp :
-  | | |- builtin_plus(?x,?x) = builtin_plus(?y,?y) | 
+  | |- builtin_plus(?x,?x) = builtin_plus(?y,?y) 
 without 
   ?x = ?y |- 
 if
-  | | |- ?x=?y | 
+  | |- ?x=?y 

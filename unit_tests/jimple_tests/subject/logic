@@ -1,0 +1,698 @@
+rule test :
+| !LT(?t,?w) |- ls(Pred(?t),?x,?y,?z)
+without 
+ !LT(Pred(?t),?w)
+if
+| !LT(?t,?w) * !LT(Pred(?t),?w) |- ls(Pred(?t),?x,?y,?z)
+
+/*****************************
+ *  Rule for length
+ *****************************/
+/*
+rule ls_len1 :
+| LT(?i,?n) | ls(?n,?x,?y,?v) |- ls(Pred(?i),?x,_x,_v1) * NodeLL(_x,_y,_v) * ls(_k,_y,?y,_v2)
+if
+| LT(?i,?n) * _k= MINUS(?n,?i)  *  ?v=app(app(_v1,_v),_v2) | ls(Pred(?i),?x,_x,_v1) * NodeLL(_x,_y,_v) * ls(_k,_y,?y,_v2) |-  ls(Pred(?i),?x,_x,_v1) * NodeLL(_x,_y,_v) * ls(_k,_y,?y,_v2)
+*/
+
+rule ls_len2 :
+| !LT(?i,?n) * ls(?n,?x,?y,?v) |- 
+if
+| !LT(?i,?n) * _k= MINUS(?n,?i) *  ?v=app(app(v1,v),v2) * ls(Pred(?i),?x,x2,v1) * NodeLL(x2,y2,v) * ls(_k,y2,?y,v2) |- 
+
+
+rule ls_pe : 
+| |- lspe(nil(),nil())
+if
+| |- 
+
+
+/*************************************
+ * Rules for list splitting and unrolling
+ *************************************/
+
+
+rule ls_val_exists :
+| ls(?x,?y,?v) |- ls(?x,?y,?v2)
+if
+ls(?x,?y,?v) | |- ?v2=?v
+
+
+rule ls_ls_ls :
+ls(?z,?w,?b) | ls(?x,?y,?v) |- ls(?x,?z,?v1)
+if
+| ?v1=app(?v,_v2) * ls(?x,?y,?v) |- ls(?x,?y,?v) * ls(?y,?z,_v2);
+
+rule ls_ls_nil :
+| ls(?x,?y,?v) |- ls(?x,nil(),?v1)
+if
+| ?v1=app(?v,_v2) * ls(?x,?y,?v) |- ls(?x,?y,?v) * ls(?y,nil(),_v2);
+
+
+
+/********
+ * Rules for Node exists params 
+ *******/
+rule node_val_exists :
+| NodeLL(?x,?y,?v) |- NodeLL(?x,?y2,?v2)
+if
+NodeLL(?x,?y,?v) | |- ?v2=?v * ?y2=?y 
+
+
+
+
+/*************************************
+ * Rule for unpacking Nodell 
+ *************************************/
+
+rule field_remove1a:
+|  NodeLL(?x,?e1,?v) |- field(?x,"<NodeLL: NodeLL next>",?e2) 
+if
+ field(?x,"<NodeLL: NodeLL next>",?e1) | field(?x,"<NodeLL: java.lang.String content>",?v) 
+     |-  ?e1=?e2 
+
+
+rule field_remove1b:
+| NodeLL(?x,?e1,?w) |- field(?x,"<NodeLL: java.lang.String content>",?e2) 
+if
+ field(?x,"<NodeLL: java.lang.String content>",?w) | field(?x,"<NodeLL: NodeLL next>",?e1)
+     |-  ?w=?e2 
+
+
+
+rule field_remove2:
+| field(?x,"<NodeLL: NodeLL next>",?e1) * field(?x,"<NodeLL: java.lang.String content>",?y) |- 
+if
+| NodeLL(?x,?e1,?y) |- 
+
+
+/*************************************
+ * Simple subtraction rules 
+ *************************************/
+
+
+rule field_remove1:
+| field(?x,?f,?y) |- field(?x,?f,?t) 
+without 
+  ?y!=?t
+if
+field(?x,?f,?y) | |- ?y=?t
+
+
+/*************************************
+ * rules for contradictions 
+ *************************************/
+rule field_field_contradiction1 :
+field(?x,?f,?y) * field(?x,?f,?z) | |- 
+if
+
+rule ls_field_contradiction1 :
+ls(?n,?x,?t,?v) * field(?x,"<NodeLL: NodeLL next>",?z) | |- 
+if
+
+rule ls_field_contradiction2 :
+ls(?n,?x,?t,?v) * field(?x,"<NodeLL: java.lang.String content>",?z) | |- 
+if
+
+rule ls_node_contradiction :
+ls(?n,?x,?t,?v) * NodeLL(?x,?z,?v1) | |- 
+if
+
+
+
+rule ls_contradiction3 :
+ls(nil(),?x,?z) | |-
+if
+
+rule ls_contradiction4 :
+| |- ls(nil(),?x,?z) 
+if
+| |- x!=x 
+
+
+
+
+
+
+/*****************************
+ *  Rule for Object
+ *****************************/
+rule obj:
+| Obj(?x,?y) |- Obj(?x,_z)
+if 
+| ?y = _z * Obj(?x,?y) |- Obj(?x,_z)
+
+// ddino: I dunno why but I need to have ?z instead of _z!!!
+rule iterator:
+| Iterator(?x,?y) |- Iterator(?x,?z)
+if 
+Iterator(?x,?y) | |- ?y=?z 
+
+rule observer:
+| Observer(?x,?y) |- Observer(?x,?z)
+if 
+Observer(?x,?y) | |- ?y=?z 
+
+
+rule observer_obj:
+| Observer(?x,?y) |- Obj(?x,_z)
+if 
+| Obj(?x,?y) |- Obj(?x,_z)
+
+
+
+
+
+/*****************************
+ *  Rule for minus
+ *****************************/
+rule minus_hack1 :
+| |- MINUS(?t,?g) = MINUS(?t,?h) 
+if
+| |- ?g = ?h 
+
+rule minus_hack2 :
+| |- MINUS(?t,?g) = MINUS(?t,?h) 
+if
+| |- ?g = ?h 
+
+
+
+
+
+
+/*****************************
+ *  Hacks for APF stuff
+ *****************************/
+
+rule sub_eq_hack : 
+| |- !subeq({content=?x; oldcon=?z},{content=?y})
+if
+| |- ?x=?y
+
+rule sub_eq_hack : 
+| |- !subeq({content=?x},{content=?y})
+if
+| |- ?x=?y
+
+rule sub_eq_hack2 : 
+| |- !subeq({content=?x},{content=?y; oldcon=_z})
+if
+| |- ?x=?y
+
+rule visitor_hack :
+| Visitor(?x,?y) |- Visitor(?x,_y)
+if
+| ?y=_y * Visitor(?x,?y) |- Visitor(?x,_y)
+
+rule visited_hack1 :
+| Visited(?x,?y,?z) |- Visited(?x,_y,?w)
+if
+| ?y=_y * Visited(?x,?y,?z) |- Visited(?x,_y,?w)
+
+rule visited_hack2 :
+| Visited(?x,?y,?z) |- Visited(?x,?w,_y)
+if
+| ?z=_y * Visited(?x,?y,?z) |- * Visited(?x,?w,_y)
+
+rule ast_hack :
+| Ast(?x,{content=?y}) |- Ast(?x,{content=_y})
+if
+| ?y=_y * Ast(?x,{content=?y}) |- Ast(?x,{content=_y})
+
+rule observer :
+| Observer(?x,?y) |- Observer(?x,?z)
+if
+Observer(?x,?y) | |- ?y=?z
+
+
+
+/*************************************
+ * Rule for obj
+ *************************************/
+rule object:
+| Obj(?t,?u) |- Obj(?t,_u)
+if
+| ?u=_u * Obj(?t,?u) |- Obj(?t,_u)
+
+
+/*************************************
+ * Pure rules
+ *************************************/
+/*
+purerule not_null :
+mapsto(?x,?f,?y) 
+if
+?x != null()
+
+purerule not_null :
+mapsto(?x,?f,?f1,?f2,?y) 
+if
+?x != null()
+*/
+
+/*************************************
+ *  Empty rules
+ *************************************/
+/*
+emprule ls_emp:
+ls(?n,?x,?x,?v)
+if
+True
+
+emprule ls_nil:
+ls(?n,nil(),?x,?v)
+if
+?x=nil()
+*/
+
+/*************************************
+ *  Some rewrite rules 
+ *************************************/
+
+rewrite hd_cons :
+  hd(cons(?x,?y)) = ?x
+
+rewrite tl_cons : 
+  tl(cons(?x,?y)) = ?y
+
+rewrite app_empty_1 :
+  app(empty(),?x) = ?x
+
+rewrite app_empty_2 :
+  app(?x,empty()) = ?x
+
+rewrite app_cons :
+  app(cons(?x,?y),?z) = cons(?x,app(?y,?z))
+without
+  ?z=empty()
+
+
+rewrite app_app_assoc :
+  app(app(?x,?y),?z) = app(?x,app(?y,?z))
+without
+    ?y=empty()
+    || ?z=empty()
+    || ?x=empty()
+
+rule cons_eq_empty_contrad :
+  | cons(?x,?y) = empty() |- 
+if
+
+
+rule cons_eq_left :
+  | cons(?x,?y) = cons(?z,?w) |- 
+without
+  ?x=?z 
+if
+  | ?x=?z * ?w=?y |- 
+
+rule cons_eq_left :
+  | cons(?x,?y) = cons(?z,?w) |- 
+without
+  ?y=?w 
+if
+  | ?x=?z * ?w=?y |- 
+
+rule cons_eq_right :
+  | |- cons(?x,?y) = cons(?z,?w) 
+without
+  ?x=?z * ?y=?w
+if
+  | |- ?x=?z * ?w=?y 
+
+
+rule app_eq_empty :
+  | app(?x,?y) = empty()  |- 
+without 
+  ?x = empty() * ?y=empty()
+if
+  | ?x = empty() * ?y = empty()  |- 
+
+
+/* *******  Valuer  *********/
+/*
+rewrite value_string_string:
+  app(_x,_y) = _t
+where 
+      _x,_y notin context
+*/
+
+
+/*
+rewrite value_string_single:
+  app(_z,single(?x)) = _t
+where 
+      ?x notin context
+
+
+rewrite value_abs2_single_string:
+  app(single(?x),_z) = _t
+where 
+      ?x notin context
+
+
+rewrite value_single_single:
+  app(single(?x),single(?z)) = _t
+where 
+      ?x,?z notin context
+
+*/
+
+/*
+rewrite value_nested1:
+  app(_x,app(_y,_z)) = _t
+where 
+      _x,_y,_z notin context
+
+rewrite value_nested2:
+  app(app(_y,_z),_x) = _t
+where 
+      _x,_y,_z notin context
+*/
+
+/*
+rule app_exists_left_eq :
+   | |- app(_x,?y) = app(?x,?z) 
+without
+  _x != ?x
+if
+   | |- _x = ?x * ?y=?z 
+or
+   | |- _x != ?x * app(_x,?y) = app(?x,?z) 
+
+rule app_exists_right_eq :
+   | |- app(?y,_x) = app(?z,?x) 
+without
+  _x != ?x
+if
+   | |- _x = ?x * ?y=?z 
+or
+   | |- _x != ?x * app(?y,_x) = app(?z,?x) 
+*/
+
+
+
+
+
+/*********
+ *  false and true rules
+ *********/
+rewrite false: false() = numeric_const("0")
+
+rewrite true : true() = numeric_const("1")
+
+
+rule numericrule:
+  | numeric_const(?x) = numeric_const(?y) |- 
+without
+  ?x=?y 
+if
+  | ?x = ?y |-
+
+rule zeroone:
+  | "0" = "1" |- 
+if
+
+
+/*******
+*  Append guessing
+*******/
+rule app_inj_left :
+| |- app(?x,?y) = app(?x,?w)
+without 
+  ?y=?w
+if
+ | |- ?y = ?w
+
+rule app_inj_right :
+| |- app(?y,?x) = app(?w,?x)
+without 
+  ?y=?w
+if
+ | |- ?y = ?w
+
+
+/*
+rule app_left_guess:
+| |- app(?x,?y) = app(_z,?w)  
+without
+  ?x!=_z || ?x=_z
+if
+| |- ?x=_z * app(?x,?y) = app(_z,?w) 
+or
+| |- ?x!=_z * app(?x,?y) = app(_z,?w)
+
+rule app_right_guess:
+| |- app(?x,?y) = app(?z,_w) 
+without
+  ?y!=_w 
+if
+| |- ?y=_w * app(?x,?y) = app(?z,_w) 
+or
+| |- ?y!=_w * app(?x,?y) = app(?z,_w) 
+*/
+
+
+rule app_left_guess:
+| |- app(?x,?y) = app(_z,?w)  
+without
+  ?x=_z
+if
+ | |- ?x=_z * app(?x,?y) = app(_z,?w)
+/*
+or
+| |- ?x!=_z * app(?x,?y) = app(_z,?w) 
+*/
+
+rule app_right_guess:
+| |- app(?x,?y) = app(?z,_w)  
+if
+| |- ?y=_w * app(?x,?y) = app(?z,_w) 
+/*
+or
+| |- ?y!=_w * app(?x,?y) = app(?z,_w) 
+*/
+
+
+rule app_guess_full:
+| |- x = app(_v1,_v2) 
+where
+  _v1,_v2 notincontext
+if
+| x = app(_v1,_v2) |- 
+
+rule app_guess_more :
+| |- app(?t,?s) = app(_x,_y)
+without
+  ?t!=_x
+if
+| |- ?t=_x * ?s=_y 
+or
+| |- ?t!=_x * ?s!=_y * app(?t,?s) = app(_x,_y) 
+
+
+rule ObsSet_1 :
+| ObsSet(?O, ?v, ?s) |- ObsSet(?O, ?v2, ?s2)
+if
+ObsSet(?O, ?v, ?s) | |- ?v2=?v * ?s2=?s 
+
+rule setof_exists :
+| |- setof(?x) = setof(_y) 
+without
+  _y!=?x
+if
+| |- ?x = _y  
+or 
+| |- setof(?x) = setof(_y) * _y!=?x 
+
+
+rule simp :
+| !LT(length(?t),length(app(?t,cons(?z,?w)))) |-
+if
+| |-
+
+rewrite setof_size :
+ size(setof(?l)) = length(?l)
+
+rule LT_GE :
+ | !LT(?x,?y) * !GE(?x,?y) |- 
+if
+
+
+
+rule  foo:
+ | add(x,v) = setof(l) |- 
+if
+ | l = app(v1,cons(x,v2)) * setof(app(v1,v2)) = v |-
+
+rule Iterator :
+ | Iterator(?x,?y) |- Iterator(?x,?z)
+if
+ Iterator(?x,?y) | |- ?y=?z 
+
+
+rule ls_guess:
+ |  ls(?x,?y,?v) |- ls(?x,_w,?v2) 
+without 
+  ?y=_w
+if
+ ls(?x,?y,?v) | |- ?y=_w * ?v=?v2 
+or
+ | app(v3,v4) = ?v * ls(?x,z,v3) * lspe(z,?y,v4) |- z=_w * ls(?x,_w,?v2) 
+
+rule ls_neq:
+ ls(?x,?y,?v) | |- 
+without
+ ?x!=?y
+if
+ | ?x!=?y |-
+
+rule exist_neq :
+  | |- ?x!=_y 
+where 
+  _y notincontext
+if
+  | ?x!=_y |- 
+  
+
+
+/****************
+ *  setof
+ ****************/
+rewrite app_setof :
+setof(app(?x,?y)) = union(setof(?x),setof(?y))
+
+rewrite cons_setof :
+setof(cons(?x,?y)) = add(?x,setof(?y))
+
+rewrite emp_setof :
+setof(empty()) = empty()
+
+rewrite union_add_1 :
+union(add(?x,?y),?z) = add(?x,union(?y,?z))
+
+rewrite union_add_2 :
+union(?z,add(?x,?y)) = add(?x,union(?z,?y))
+
+rewrite add_defn :
+  add(?x,?y) = app(?y,cons(?x,empty()))
+
+/******************************
+ *  Iterated Resources
+********************************/
+
+rule iterresleft_add:
+| ObsSet(cons(?x,?y),?z,?s) |-
+if
+| ObsSet(?y,?z,?s) * Observer(?x,{vals=?z; subject=?s}) |-
+
+rule iterresright_add:
+| |- ObsSet(cons(?x,?y),?z,?s)
+if
+| |- ObsSet(?y,?z,?s) * Observer(?x,{vals=?z; subject=?s}) 
+
+rule iterresleft_union:
+| ObsSet(app(?x,?y),?z,?s) |-
+without
+  ?x=empty() || ?y=empty()
+if
+| ObsSet(?y,?z,?s) * ObsSet(?x,?z,?s) |-
+
+rule iterresright_union:
+| |- ObsSet(app(?x,?y),?z,?s) 
+without
+  ?x=empty() || ?y=empty()
+if
+| |- ObsSet(?y,?z,?s) * ObsSet(?x,?z,?s) 
+
+rule iterresright_empty:
+| |- ObsSet(empty(),?z,?s) 
+if
+| |- 
+
+rule iterresleft_empty:
+| ObsSet(empty(),?z,?s) |- 
+if
+| |- 
+
+rule ls_contradiction1:
+| ls(?x,?y,empty()) |-
+if
+
+rule ls_contradiction2:
+| |- ls(?x,?y,empty()) 
+if
+| |- x!=x
+
+rule ls_pe1:
+| lspe(?x,?y,empty()) |-
+if
+| ?x=?y |-
+
+rule ls_pe2:
+| lspe(?x,?y,cons(?s,?t)) |-
+if
+| ls(?x,?y,cons(?s,?t)) |-
+
+rule ls_pe3:
+| lspe(?x,?y,?z) |-
+if
+| ls(?x,?y,?z) |- ;
+| ?x=?y * ?z=empty() |- 
+
+rule ls_pe4:
+| |- lspe(?x,?y,?z) 
+if
+| |- ?x!=?y * ls(?x,?y,?z) 
+or
+| |- ?x=?y * ?z=empty() 
+
+rule ls_obs:
+| lsObs(?x,?x,cons(?s,?t),?a,?b) |-
+if
+
+
+rule ls_obs:
+| lsObs(?x,?y,?t,?a,?b) |- ls(?x,?y,?t) 
+if
+| ObsSet(?t,?a,?b) |- 
+
+rule ls_obs_match:
+| lsObs(?x,?y,?t,?a,?b) |- lsObs(?x,?y,?t2,?a,?b)
+if
+lsObs(?x,?y,?t,?a,?b) |  |- ?t=?t2  
+
+rule Subject:
+| SubjectObs(?s,?f) |-  SubjectObs(?s,?f2)
+if
+SubjectObs(?s,?f) | |- ?f=?f2 
+
+rule subeq_hack:
+| |- !subeq(?f,?f2) 
+if
+| |- ?f=?f2 
+
+
+rule length: 
+ | |- length(_x) = numeric_const("0")
+if 
+ | |- _x=empty()
+
+rule length_guess :
+ | |- length(_x) = length(?y) 
+without 
+ |- _x=?y || _x != ?y 
+if
+ | |- _x = ?y
+or 
+ | |- length(_x) = length(?y) * _x != ?y
+
+
+
+rewrite elist_rem :
+  elist(?x,?y) = app(?x,?y)
+
+
+rewrite single_rem : 
+  s(?x) = cons(?x,empty())

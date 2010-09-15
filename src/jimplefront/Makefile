@@ -1,7 +1,7 @@
 export OCAMLMAKEFILE = OcamlMakefile
 export OCAMLYACC = ocamlyacc -v
-export OCAMLC = ocamlc.opt -dtypes
-export OCAMLOPT = ocamlopt.opt -dtypes
+export OCAMLC = ocamlc.opt -annot
+export OCAMLOPT = ocamlopt.opt -annot
 export OCAMLDEP = ocamldep.opt
 export OCAMLDOC = ocamldoc.opt
 

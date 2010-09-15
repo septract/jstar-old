@@ -1,0 +1,55 @@
+//Basic definitions of fields
+import "field_logic";
+
+//Constants for booleans
+import "boolean_logic";
+
+//Definitions for builtin_plus
+import "builtin_plus_logic";
+
+//Definitions of remove zeros
+import "removeZero.logic";
+
+//Definitions of sum
+import "sum.logic";
+
+
+//Datatype definition for abstract syntax tree
+import "plus_const_datatype.logic";
+
+
+
+
+
+/******************************************* 
+ *  Subeq hacks
+ ********************************************/
+
+rule sub_eq_hack : 
+| |- !subeq({content=?x},{content=?y})
+if
+| |- ?x=?y 
+
+
+rule arg_record_hack :
+| |- {context=?t;content=?x} = {content=?y;context=?s} 
+if
+| |- ?t=?s * ?x=?y
+
+rule subeq_forget :
+| |- !subeq(?x,?y) 
+if
+| |- ?x=?y 
+
+
+/*********************************************
+ *   Visitor hacks
+ ********************************************/
+rule exists_foo_Visitor :
+  | Visitor(?x,?y) |- Visitor(?x,?z) 
+if
+ Visitor(?x,?y) | |- ?y=?z 
+
+rule ast_not_null : 
+     | Ast(nil(),_) |- 
+if

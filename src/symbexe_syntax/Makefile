@@ -3,7 +3,7 @@ ifndef LIB
 endif
 export LIB
 
-SOURCES = spec.ml methdec_core.ml pprinter_core.ml
+SOURCES = spec.ml core.ml pprinter_core.ml cfg_core.ml 
 INCLUDES = utils prover_syntax 
 RESULT = "$(LIB)/symbexe_syntax"
 OCAMLLDFLAGS="-a"
