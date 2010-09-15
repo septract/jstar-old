@@ -70,10 +70,17 @@ let eclipse_print node_id error_text =
   if Config.eclipse_mode() then
     match node_id with
       | Some id -> make_json_source_pos id error_text
-      | None -> () 
-    
+      | None -> ()   
 
 let eclipse_print_spec pos error_text =
   if Config.eclipse_mode() then 
     make_json_spec_source_pos pos error_text
+    
+let eclipse_print_start_counter_example () =
+  if Config.eclipse_mode() then 
+    Printf.printf "\njson_counter_example_begin\n"
+    
+let eclipse_print_end_counter_example () =
+  if Config.eclipse_mode() then 
+    Printf.printf "\njson_counter_example_end\n"
 

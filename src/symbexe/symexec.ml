@@ -300,9 +300,8 @@ let call_jsr_static (sheap,id) spec il node =
 	Format.printf "\n\nERROR: %s :\n   %a\n"  
       error_text
 	  Pprinter_core.pp_stmt_core node.skind; 
-      Printing.eclipse_print (Some node.sid) error_text;
-      
-	Sepprover.print_counter_example ();
+    Sepprover.print_counter_example ();
+    Printing.eclipse_print (Some node.sid) error_text;
 	System.reset(); 
 	[]
 	(*assert false*)

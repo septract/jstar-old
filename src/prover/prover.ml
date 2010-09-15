@@ -22,9 +22,12 @@ open Backtrack
 
 let prover_counter_example : Clogic.sequent list ref = ref []
 let print_counter_example ()  = 
+  Printing.eclipse_print_start_counter_example();
   Format.printf "Needed to prove:@   @[%a@]@\n@\n"
     (Debug.list_format "\nor" Clogic.pp_sequent)
-    !prover_counter_example
+    !prover_counter_example;
+  Printing.eclipse_print_end_counter_example()
+  
 
 let pprint_counter_example ppf () = 
   Format.fprintf ppf "Needed to prove:@   @[%a@]@\n@\n"
