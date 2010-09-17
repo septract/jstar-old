@@ -21,3 +21,7 @@ Implication:
 Implication: 
   |- builtin_mult(b,a) = builtin_mult(a, b)
 ? True 
+
+Implication: 
+  |- (x + builtin_mult(k,x)) = builtin_mult((k + 1), x)
+? True 

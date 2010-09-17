@@ -886,7 +886,7 @@ jargument_npv:
    | lvariable_npv {Arg_var ($1)}
    | identifier L_PAREN jargument_list_npv R_PAREN {Arg_op($1,$3) }        
    | INTEGER_CONSTANT {Arg_string(string_of_int $1)} 
-   | MINUS INTEGER_CONSTANT {Arg_string("-" ^(string_of_int $2))}
+   | MINUS INTEGER_CONSTANT {Arg_string(string_of_int $2)}
    | STRING_CONSTANT {Arg_string($1)} 
    | field_signature {Arg_string(field_signature2str $1)}
    | L_BRACE fldlist_npv R_BRACE {mkArgRecord $2}
@@ -908,7 +908,7 @@ jargument:
    | lvariable {Arg_var ($1)}
    | identifier L_PAREN jargument_list R_PAREN {Arg_op($1,$3) }        
    | INTEGER_CONSTANT {Arg_string(string_of_int $1)} 
-   | MINUS INTEGER_CONSTANT {Arg_string("-" ^(string_of_int $2))}
+   | MINUS INTEGER_CONSTANT {Arg_string(string_of_int $2)}
    | STRING_CONSTANT {Arg_string($1)} 
    | field_signature {Arg_string(field_signature2str $1)}
    | L_BRACE fldlist R_BRACE {mkArgRecord $2}

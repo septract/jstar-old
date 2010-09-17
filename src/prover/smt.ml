@@ -137,7 +137,9 @@ let rec args_smttype (arg : Psyntax.args) : smttypeset =
   match arg with
   | Arg_var v -> SMTTypeSet.singleton (SMT_Var(v)) 
   | Arg_string s -> 
-          SMTTypeSet.singleton (SMT_Op("string_const_"^(str_munge s), 0))
+          let rxp = (Str.regexp "^\(-?[0-9]+\)") in 
+          if Str.string_match rxp s 0 then SMTTypeSet.empty 
+          else SMTTypeSet.singleton (SMT_Op("string_const_"^(str_munge s), 0))
 
   | Arg_op ("builtin_plus",_) -> SMTTypeSet.empty
   | Arg_op ("builtin_minus",_) -> SMTTypeSet.empty
@@ -155,7 +157,10 @@ let rec args_smttype (arg : Psyntax.args) : smttypeset =
 let rec string_sexp_args (arg : Psyntax.args) : string = 
   match arg with 
   | Arg_var v -> Vars.string_var v
-  | Arg_string s -> "string_const_"^(str_munge s)
+  | Arg_string s -> 
+          let rxp = (Str.regexp "^\(-?[0-9]+\)") in 
+          if Str.string_match rxp s 0 then (Str.matched_group 1 s)
+          else "string_const_"^(str_munge s)
   
   | Arg_op ("builtin_plus",[a1;a2]) -> 
           Printf.sprintf "(+ %s %s)" (string_sexp_args a1) (string_sexp_args a2)
@@ -244,16 +249,10 @@ let rec string_sexp_form
 
 
 let string_sexp_decl (t : smt_type) : string = 
-  begin 
-    match t with 
-    | SMT_Var v -> Format.fprintf Format.str_formatter 
-                          "(declare-fun %s () Int)" (Vars.string_var v)
-    | SMT_Pred (s,i) -> Format.fprintf Format.str_formatter
-                          "(declare-fun %s (%s) Bool)" s (nstr "Int " i)
-    | SMT_Op (s,i) -> Format.fprintf Format.str_formatter
-                          "(declare-fun %s (%s) Int)" s (nstr "Int " i)
-  end; 
-  Format.flush_str_formatter()
+  match t with 
+  | SMT_Var v -> Printf.sprintf "(declare-fun %s () Int)" (Vars.string_var v)
+  | SMT_Pred (s,i) -> Printf.sprintf "(declare-fun %s (%s) Bool)" s (nstr "Int " i)
+  | SMT_Op (s,i) -> Printf.sprintf "(declare-fun %s (%s) Int)" s (nstr "Int " i)
   
 
 (* Main SMT IO functions *)
@@ -262,7 +261,8 @@ let smt_command
     : smt_response = 
   try 
     let cmd = cmd_munge cmd in 
-    if Config.smt_debug() then Format.printf "SMT command: %s\n" cmd; 
+    if Config.smt_debug() then Format.printf "%s\n" cmd; 
+    Format.print_flush(); 
     output_string !smtin cmd; 
     output_string !smtin "\n"; 
     flush !smtin; 
