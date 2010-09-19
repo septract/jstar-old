@@ -23,7 +23,7 @@ let mk_evar i s = EVar (i, s)
 let mk_anyvar i s = AnyVar (i, s)
 
 let gensym = ref 0
-let fresh mk = incr gensym; mk !gensym
+let fresh mk s = incr gensym; mk !gensym s
 let freshp_str = fresh mk_pvar
 let freshe_str = fresh mk_evar
 let fresha_str = fresh mk_anyvar
@@ -55,6 +55,7 @@ let freshen = function
   | EVar (_,v) -> freshe_str v
   | AnyVar (_,v) -> fresha_str v 
 
+
 let pp_var f =
   let p = function 0 -> "" | n -> sprintf "_%d" n in
   function 
@@ -63,4 +64,3 @@ let pp_var f =
     | AnyVar (n,vn) -> fprintf f "a_%s%s" vn (p n)
 
 let string_var = Debug.string_of pp_var
-
