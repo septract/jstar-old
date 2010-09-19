@@ -230,7 +230,7 @@ let statement2str = function
 
 let declaration_or_statement2str =function
   |  DOS_dec d -> declaration2str d
-  |  DOS_stm s -> statement2str s
+  |  DOS_stm (s,_) -> statement2str s
 
 
 let catch_clause2str = function

@@ -10,7 +10,7 @@ class CELL
 		{ C$(@this:,{val=@parameter0:}) };
 	int value() :
 		{ C$(@this:,{val=_v}) }
-		{ C$(@this:,{val=_v}) * $ret_var=_v };
+		{ C$(@this:,{val=_v}) * $ret_v1=_v };
 }
 
 
@@ -26,5 +26,5 @@ class BCELL
 		{ C$(@this:,{val=@parameter0:}) };
 	int value() :
 		{ C$(@this:,{val=_v}) }
-		{ C$(@this:,{val=_v}) * $ret_var=_v };
+		{ C$(@this:,{val=_v}) * $ret_v1=_v };
 }

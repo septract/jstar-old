@@ -206,13 +206,6 @@ let mk_this : Vars.var =
 let mk_res : Vars.var =
   Vars.concretep_str res_var_name
 
-(* define the constant name for the return variable. *)
-(*let name_ret_var mname = (Pprinter.name2str mname)^"$"^"ret_var"*)
-let name_ret_var = "$ret_var"
-
-let ret_var = Vars.concretep_str name_ret_var 
-
-
 let make_field_signature  cname ty n =
   Field_signature(cname,ty,n)
 	

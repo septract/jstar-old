@@ -42,11 +42,11 @@ let unnest x =
 let error_message e lb = 
   match e with 
     Illegal_character c -> 
-      Printf.sprintf "Illegal character %c  found at line %d character %d.\n" 
+      Printf.sprintf "Illegal character %c found at line %d character %d.\n" 
 	c 
 	lb.lex_curr_p.pos_lnum 
 	(lb.lex_curr_p.pos_cnum - lb.lex_curr_p.pos_bol)
-  | Unterminated_comment -> Printf.sprintf "Unterminatated comment started at line %d character %d in %s.\n"
+  | Unterminated_comment -> Printf.sprintf "Unterminated comment started at line %d character %d in %s.\n"
 	!nest_start_pos.pos_lnum 
 	(!nest_start_pos.pos_cnum  - !nest_start_pos.pos_bol)
 	lb.lex_curr_p.pos_fname
@@ -61,18 +61,22 @@ let kwd_or_else =
     "andalso", ANDALSO;
     "annotation", ANNOTATION;
     "as", AS;
+    "assign", ASSIGN;
     "axioms", AXIOMS;
     "boolean", BOOLEAN;
-    "breakpoint", BREAKPOINT; 
+    "breakpoint", BREAKPOINT;
     "byte", BYTE;
     "case", CASE;
     "catch", CATCH;
     "char", CHAR;
     "class", CLASS;
     "cls", CLS;
+    "constructor", CONSTRUCTOR;
     "define", DEFINE;
     "double", DOUBLE;
+    "Emp", EMP;
     "emprule", EMPRULE;
+    "end", END;
     "ensures", ENSURES;
     "enum", ENUM;
     "equiv", EQUIV;
@@ -90,13 +94,14 @@ let kwd_or_else =
     "implements", IMPLEMENTS;
     "Implication", IMPLICATION;
     "import", IMPORT;
-    "invariant", INVARIANT;
     "Inconsistency", INCONSISTENCY;
     "inductive", INDUCTIVE;
-    "instanceof", INSTANCEOF ;
+    "instanceof", INSTANCEOF;
     "int", INT;
     "interface", INTERFACE;
     "interfaceinvoke", INTERFACEINVOKE;
+    "invariant", INVARIANT;
+    "label", LABEL;
     "lengthof", LENGTHOF;
     "long", LONG;
     "lookupswitch", LOOKUPSWITCH;
@@ -104,8 +109,9 @@ let kwd_or_else =
     "new", NEW;
     "newarray", NEWARRAY;
     "newmultiarray", NEWMULTIARRAY;
-    "notin", NOTIN;  
-    "notincontext", NOTINCONTEXT;  
+    "nop", NOP;
+    "notin", NOTIN;
+    "notincontext", NOTINCONTEXT;
     "null", NULL;
     "null_type", NULL_TYPE;
     "old", OLD;
@@ -120,12 +126,13 @@ let kwd_or_else =
     "rule", RULE;
     "short", SHORT;
     "specialinvoke", SPECIALINVOKE;
+    "Specification", SPECIFICATION;
     "static", STATIC;
     "staticinvoke", STATICINVOKE;
     "strictfp", STRICTFP;
     "synchronized", SYNCHRONIZED;
-    "tableswitch", TABLESWITCH;  
-    "throw", THROW ;
+    "tableswitch", TABLESWITCH;
+    "throw", THROW;
     "throws", THROWS;
     "to", TO;
     "transient", TRANSIENT;
@@ -140,6 +147,7 @@ let kwd_or_else =
   ];
   fun d s ->
   try Hashtbl.find keyword_table s with Not_found -> d
+
 
 (* to store the position of the beginning of a comment *)
 (*let comment_start_pos = ref []*)
@@ -211,7 +219,12 @@ let identifier =
 
 let quoted_name = quote quotable_char+ quote
 
-let at_identifier = '@' (("parameter" dec_digit+ ':') | "this" ':' | "caughtexception") 
+let at_identifier = 
+  '@' (
+    ("parameter" dec_digit+ ':') 
+    | "this" ':' 
+    | "caughtexception" 
+    | "caller") 
 	
 let integer_constant = (dec_constant | hex_constant | oct_constant) 'L'? 
 
@@ -221,6 +234,8 @@ let float_constant = ((dec_constant '.' dec_constant) (('e'|'E') ('+'|'-')? dec_
 
 rule token = parse
   | newline { new_line lexbuf; token lexbuf }
+  | "/*Source Line Pos Tag" { SOURCE_POS_TAG }
+  | "*/" { SOURCE_POS_TAG_CLOSE }
   | "/*" { nest lexbuf; comment lexbuf; token lexbuf } 
   | ignored_helper  { token lexbuf }
   | "," { COMMA }
@@ -287,7 +302,7 @@ and comment = parse
   | "/*"  { nest lexbuf; comment lexbuf }
   | "*/"  { if unnest lexbuf then comment lexbuf }
   | newline  { new_line lexbuf; comment lexbuf }
-  | eof      { raise (Failure (error_message Unterminated_comment lexbuf))}
+  | eof      { failwith (error_message Unterminated_comment lexbuf)}
   | _     { comment lexbuf; }
 
 

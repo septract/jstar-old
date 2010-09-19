@@ -1,1 +1,0 @@
-java -jar $SOOT_JAR -cp .:$RT_JAR Collection List Iterator Client -f J -d .

@@ -27,8 +27,7 @@ let import_flatten_extra_rules dirs filename extra_rules fileparser =
     let filename = 
       try 
 	System.find_file_from_dirs dirs filename 
-      with Not_found  ->  eprintf "Cannot find file: %s@\n" filename; raise Exit
-    in   
+      with Not_found  ->  (failwith "Cannot find file " ^ filename) in
     if List.mem filename already_included then 
       (if log log_phase then 
         fprintf logf "@[<4>File %s@ already included.@." filename;

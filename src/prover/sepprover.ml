@@ -57,7 +57,7 @@ open Psyntax
 
 
     let string_inner_form : Format.formatter -> inner_form -> unit = 
-      Clogic.pp_ts_form 
+      Clogic.pp_ts_formula
      
     (******************************************
        Entailment operations
@@ -95,9 +95,13 @@ open Psyntax
 	  | Some inner_form1 -> 
 	      Prover.check_implication_frame_pform logic inner_form1 form2
 
-    let frame_inner : logic -> inner_form -> inner_form -> inner_form list option
-      = fun logic inner_form1 inner_form2 -> 
-	Prover.check_frame logic inner_form1 inner_form2
+    let frame_inner 
+         (l : logic)
+         (i1 : inner_form)
+         (i2 : inner_form )
+         : inner_form list option
+         = 
+	Prover.check_frame l i1 i2
 
     let abs : logic -> inner_form -> inner_form list 
       = Prover.abs

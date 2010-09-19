@@ -1,6 +1,6 @@
 (********************************************************
    This file is part of jStar 
-	src/symbexe/core.ml
+	src/symbexe_syntax/methdec_core.ml
    Release 
         $Release$
    Version 
@@ -11,13 +11,22 @@
       LICENSE.txt
  ********************************************************)
 
-(** The `core' language. See also cfg_core.ml and pprinter_core.ml. *)
+
+(* Manage methdec infos for a file *) 
+
+open Spec
 
 type core_statement = 
   | Nop_stmt_core
   | Label_stmt_core of  string 
-  | Assignment_core of Vars.var list * Spec.spec * Psyntax.args list
+  | Assignment_core of Vars.var list * spec * Psyntax.args list
   | Goto_stmt_core of string list  
   | Throw_stmt_core of Psyntax.args
   | End
+
+type symb_question = 
+  | Specification of string * spec * core_statement list 
+  
+type symb_test = 
+  | Nothing_here_yet
 

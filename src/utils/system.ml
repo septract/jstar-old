@@ -13,6 +13,8 @@
 
 open Debug
 
+let colortty = ref (Sys.getenv "TERM" = "xterm-color");;
+
 let getenv variable = 
   try Sys.getenv variable 
   with Not_found -> ""

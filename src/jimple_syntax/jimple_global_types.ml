@@ -11,12 +11,13 @@
       LICENSE.txt
  ********************************************************)
 open Jparsetree
+open Printing
 open Spec
 (***************************************************
  from jparsetree
 ***************************************************)
 
-type statement = 
+type statement_inner = 
    | Label_stmt of  label_name 
    | Breakpoint_stmt
    | Entermonitor_stmt of  immediate
@@ -33,7 +34,9 @@ type statement =
    | Return_stmt of immediate option
    | Throw_stmt of immediate
    | Invoke_stmt of invoke_expr   
-	 | Spec_stmt of Vars.var list * spec
+   | Spec_stmt of Vars.var list * spec
+     
+type statement = statement_inner * source_location option
 
 type declaration_or_statement =
   |  DOS_dec of declaration
