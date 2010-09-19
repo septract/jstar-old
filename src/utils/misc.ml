@@ -90,10 +90,6 @@ let lift_option f =
 (* Similar to the one in Haskell. *)
 let curry f a b = f (a, b)
     
-let rec inter_list (i : int) (j : int) : int list =  
-  if i > j then [] else (i :: inter_list (i+1) j) 
-
-
 let rec add_index 
     ( xs : 'a list ) 
     ( i : int ) : ('a * int) list = 

@@ -1,4 +1,3 @@
-val cfg_debug : unit -> bool
 type cfg_node = {
   skind : Core.core_statement;
   sid : int;

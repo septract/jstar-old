@@ -17,7 +17,6 @@ module MultisetImpl (A : Map.OrderedType) :
     type t = A.t
     type multiset
 
-    exception Empty 
 
 (* Checks if the multiset is empty *)
     val is_empty : multiset -> bool 

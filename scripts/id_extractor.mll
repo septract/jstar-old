@@ -7,7 +7,7 @@ rule id hash = parse
   | _ { id hash lexbuf }
 and id_decl hash = parse
   | "(*" { comment lexbuf; id_decl hash lexbuf }
-  | ("val"|"exception"|"type") [' ' '\t']+ (id_re as x) [^'\n']* 
+  | ("val"|"exception") [' ' '\t']+ (id_re as x) [^'\n']* 
     { Hashtbl.replace hash x (); id_decl hash lexbuf }
   | eof { () }
   | _ { id_decl hash lexbuf }

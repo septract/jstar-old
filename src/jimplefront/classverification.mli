@@ -1,4 +1,3 @@
-val is_class_abstract : Jimple_global_types.jimple_file -> bool
 val is_interface : Jimple_global_types.jimple_file -> bool
 val parent_classes_and_interfaces :
   Jimple_global_types.jimple_file -> Jparsetree.class_name list

@@ -1,10 +1,8 @@
-exception Success
 exception Failed
 module RMSet :
   sig
     type t = string * Cterm.term_handle
     type multiset
-    exception Empty
     val is_empty : multiset -> bool
     val has_more : multiset -> bool
     val next : multiset -> multiset
@@ -25,7 +23,6 @@ module SMSet :
   sig
     type t = string * Psyntax.args list
     type multiset
-    exception Empty
     val is_empty : multiset -> bool
     val has_more : multiset -> bool
     val next : multiset -> multiset

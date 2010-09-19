@@ -1,5 +1,3 @@
-val colortty : bool ref
-val getenv : string -> string
 val getenv_dirlist : string -> string list
 val string_of_file : string -> string
 val parse_file : ('a -> Lexing.lexbuf -> 'b) -> 'a -> string -> string -> 'b

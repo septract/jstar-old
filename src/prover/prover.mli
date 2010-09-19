@@ -2,7 +2,6 @@ val pprint_counter_example : Format.formatter -> unit -> unit
 val print_counter_example : unit -> unit
 val pprint_proof : Format.formatter -> unit
 val string_of_proof : unit -> string
-exception Failed_eg of Clogic.sequent list
 val check_implication_frame_pform :
   Psyntax.logic ->
   Clogic.ts_formula -> Psyntax.pform -> Clogic.ts_formula list option

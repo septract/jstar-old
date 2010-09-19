@@ -1,6 +1,5 @@
 type ts_excep_post = Sepprover.inner_form Spec.ClassMap.t
 val spec_conjunction : Spec.spec -> Spec.spec -> Spec.spec
-exception Check_fails
 val sub_spec : Psyntax.varmap -> Spec.spec -> Spec.spec
 val jsr :
   Psyntax.logic ->
