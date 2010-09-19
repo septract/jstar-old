@@ -17,15 +17,16 @@ exception Give_up
 
 open Jparsetree
 
-open Vars
-open Lexing
-open Parsing 
-open Jimple_global_types
-open Spec
 open Core
+open Jimple_global_types
+open Lexing
 open Load
-open Spec_def
+open Parsing 
+open Printing
 open Psyntax
+open Spec
+open Spec_def
+open Vars
 
 
 
@@ -662,7 +663,8 @@ method_body:
    | L_BRACE declaration_or_statement_list_star catch_clause_list_star R_BRACE  {Some($2,$3)}
 ;
 source_pos_tag:
-   | SOURCE_POS_TAG COLON identifier COLON integer_constant identifier COLON integer_constant identifier COLON integer_constant identifier COLON integer_constant identifier COLON full_identifier SOURCE_POS_TAG_CLOSE { ($5, $8, $11, $14) }
+   | SOURCE_POS_TAG COLON identifier COLON integer_constant identifier COLON integer_constant identifier COLON integer_constant identifier COLON integer_constant identifier COLON full_identifier SOURCE_POS_TAG_CLOSE 
+   { {begin_line=$5; begin_column=$8; end_line=$11; end_column=$14} }
 ; 
 source_pos_tag_option:
    | /* empty */ { None }

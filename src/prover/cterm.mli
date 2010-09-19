@@ -11,6 +11,7 @@
       LICENSE.txt
  ********************************************************)
 open Congruence
+open Format
 open Psyntax
 
 type term_structure
@@ -78,10 +79,10 @@ val make_not_equal_t : bool -> term_structure -> Psyntax.args -> Psyntax.args ->
 
 val blank_pattern_vars : term_structure -> term_structure
 
-val pp_ts : Format.formatter -> term_structure -> unit 
-val pp_ts_nonemp : Format.formatter -> term_structure -> bool
+val pp_ts' : Printing.sep_wrapper -> formatter -> bool -> term_structure -> bool
+val pp_ts : formatter -> term_structure -> unit 
 
-val pp_c : term_structure -> Format.formatter -> term_handle -> unit
+val pp_c : term_structure -> formatter -> term_handle -> unit
 val has_pp_c : term_structure -> term_handle -> bool
 
 val get_eqs : term_structure -> (Psyntax.args * Psyntax.args) list

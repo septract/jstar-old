@@ -14,14 +14,15 @@
 (** data types for specifications *)
 
 open Jparsetree
-open Vars
+open Printing
 open Psyntax
 open Spec
+open Vars
 
 
 type methodspec =
-      Dynamic of method_signature_short * (spec list) * Printing.source_pos_tag option
-  |   Static of method_signature_short * (spec list) * Printing.source_pos_tag option
+      Dynamic of method_signature_short * (spec list) * source_location option
+  |   Static of method_signature_short * (spec list) * source_location option
 
 type methodspecs =
     methodspec list

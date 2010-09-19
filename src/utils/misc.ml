@@ -100,3 +100,21 @@ let rec add_index
   match xs with  | []     ->  [] 
                  | y::ys  ->  ( (y,i) :: (add_index ys (i+1)) ) 
 
+(* TODO(rgrig): This module should go away when we move to ocaml 3.12.
+ *
+ * A few helpers for dealing with maps. This is a workaround for the lack of
+ * some functions in the standard Map.S module. Whenever you define a map
+ * [module M = Map.Make (...)] you can also define [module MH = MapHelper (M)].
+ * Normal functions like [M.fold] are used as before, but you can also say
+ * things like [MH.filter].
+ *
+ * If you tend o repeat yourself when dealing with Maps, then please consider
+ * adding a function here.
+ *)
+module MapHelper = functor (M : Map.S) -> struct
+  (* The running time is O(m+n lg n), where m is the size of map and n the size
+   * of the result. It is possible in principle to achieve O(m), but the Map.S
+   * interface makes it hard/impossible. *)
+  let filter (p : M.key -> 'a -> bool) (map : 'a M.t) : 'a M.t =
+    M.fold (fun k v a -> if p k v then M.add k v a else a) map M.empty
+end
