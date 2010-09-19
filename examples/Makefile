@@ -12,7 +12,7 @@ endif
 
 ifndef SUBDIRSDEF
    SUBDIRSDEF = foo
-   SUBDIRS = popl2008 pool visitor traditional multinh linkedlist subject ll.inv
+   SUBDIRS = popl2008 pool visitor traditional multinh linkedlist subject
 endif
 
 ifndef DIR

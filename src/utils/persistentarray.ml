@@ -74,7 +74,7 @@ module GrowablePersistentImpl : GrowablePersistentArray =
       match !a with 
 	RealArray (a',f) as n -> 
 	  let old = Array.get a' i in 
-	  if old != x then  
+	  if old <> x then  
 	    begin
 	      Array.set a' i x;
 	      let na = ref n,ir in
@@ -118,6 +118,6 @@ module GrowablePersistentImpl : GrowablePersistentArray =
       let (a,ir) = t in 
       let size = ir in 
       (a,size+n)
-      
+
   end
 

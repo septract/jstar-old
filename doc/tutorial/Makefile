@@ -11,4 +11,4 @@ jstartut.aux : jstartut.tex
 	pdflatex jstartut.tex
 
 clean: 
-	rm -f jstartut.{aux,bbl,blg,log}
+	rm -f jstartut.aux jstartut.bbl jstartut.blg jstartut.log

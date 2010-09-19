@@ -30,6 +30,12 @@ module MultisetImpl (A : Map.OrderedType) :
 (* Restart search in multiset *)
     val restart : multiset -> multiset
 
+(** [MultisetImpl.iter f m] applies function [f] in turn to all the
+ * elements of [m] in increasing order. *)
+    val iter : (t -> unit) -> multiset -> unit
+
+    val fold : ('a -> t -> 'a) -> 'a -> multiset -> 'a
+
 (* Convert a normal list to this kind of multiset *)
     val lift_list : t list -> multiset
 (* union of two multisets, restarts interator of new multiset *)

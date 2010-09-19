@@ -13,15 +13,32 @@
 
 (* In this file we can put all global flags *)
 
-(** Flag for verbose mode *)
-let verbose = ref false 
-
 (** Flag for empty creating specs template *)
 let specs_template_mode = ref false
 
 (** Flag to print heaps on every node in the cfg *)
 let dotty_print = ref false
 
-let sym_debug = ref false
+let symb_debug_ref = ref false
+let symb_debug() = !symb_debug_ref
+  
+let eclipse_ref = ref false
+let eclipse_mode() = !eclipse_ref
 
-let symb_debug() = !sym_debug 
+let verb_proof_ref = ref false
+let verb_proof() = !verb_proof_ref
+
+let parse_debug_ref = ref false
+let parse_debug() = !parse_debug_ref
+
+let set_debug_char (c : char) : unit = 
+  match c with 
+  | 'p' -> parse_debug_ref := true
+  | 's' -> symb_debug_ref := true 
+  | _ -> () 
+
+let args_default = [
+("-q", Arg.Clear(symb_debug_ref), "run in quiet mode" );
+("-v", Arg.Set(verb_proof_ref), "Verbose proofs");
+("-d", Arg.String(String.iter set_debug_char), "Set debug modes")
+] 

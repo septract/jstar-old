@@ -14,8 +14,8 @@
 (** Data structures for representing flowgraphs of the core languages.
   Also, utilities to build such flowgraphs and to pretty-print them. *)
 
-open Pprinter_core
 open Core
+open Pprinter_core
 
 let cfg_debug () = false
 
@@ -63,8 +63,10 @@ let stmts_to_cfg (stmts : cfg_node list) : unit =
 
 (* stmtsname is a list of programs and names, such that each program's
    cfg is printed in a subgraph with its name.*)
-let print_icfg_dotty (stmtsname : (cfg_node list * string) list) (filename : string) : unit =
-  (* Print an edge between to stmts *)
+let print_icfg_dotty 
+     (stmtsname : (cfg_node list * string) list) 
+     (filename : string) : unit =
+  (* Print an edge between two stmts *)
   let d_cfgedge chan src dest =
     Printf.fprintf chan "\t\t%i -> %i\n" src.sid dest.sid in
   (* Print a node and edges to its successors *)
@@ -91,5 +93,21 @@ let print_icfg_dotty (stmtsname : (cfg_node list * string) list) (filename : str
   close_out chan;
   if cfg_debug() then ignore (Printf.printf "\n\n Printing dot file done!")
 (* pretty printing flowgraphs (to .dot) }}} *)
+
+(* Print a sequence of core statements to a file *)
+let print_core 
+    (filename : string) 
+    (mname: string) 
+    (stmts : cfg_node list) : unit =
+
+  if core_debug () then ignore (Printf.printf "\n\nPrinting core file for method %s..." mname); 
+  
+  (* FIXME: Don't understand why I can't use Format.formatter_of_out_channel *)
+  let cstr = Format.flush_str_formatter 
+     (List.iter (fun x -> pp_stmt_core Format.str_formatter x.skind;
+	             Format.pp_print_newline Format.str_formatter () ) stmts) in 
+  let chan = open_out (filename ^ "." ^ mname ^ ".core") in 
+  Printf.fprintf chan "%s" cstr; 
+  close_out chan; 
 
 

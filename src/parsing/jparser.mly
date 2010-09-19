@@ -17,14 +17,17 @@ exception Give_up
 
 open Jparsetree
 
-open Vars
-open Lexing
-open Parsing 
+open Core
 open Jimple_global_types
-open Spec
+open Lexing
 open Load
-open Spec_def
+open Parsing 
+open Printing
 open Psyntax
+open Spec
+open Spec_def
+open Vars
+
 
 
 let newPVar x = concretep_str x
@@ -69,15 +72,15 @@ let bind_spec_vars
    excep=ClassMap.map (subst_pform subst) excep;
    invariants=LabelMap.map (subst_pform subst) invariants }
 
-let mkDynamic (msig, specs) =
+let mkDynamic (msig, specs, source_pos) =
   let specs = List.map (bind_spec_vars msig) specs in 
-  let msig = msig_simp msig in   
-  Dynamic(msig,specs)
+  let msig = msig_simp msig in
+  Dynamic(msig, specs, source_pos)
 
-let mkStatic (msig, specs) =
+let mkStatic (msig, specs, source_pos) =
   let specs = List.map (bind_spec_vars msig) specs in 
   let msig = msig_simp msig in   
-  Static(msig,specs)
+  Static(msig, specs, source_pos)
   
     
   
@@ -240,9 +243,44 @@ let add_invariant (label, formula) map =
 %token THROWS 
 %token TO 
 %token TRANSIENT 
-%token TRUE
-%token UNDERSCORE 
 %token UNKNOWN 
+%token WITH 
+%token CLS 
+%token COMMA 
+%token L_BRACE 
+%token R_BRACE 
+%token SEMICOLON 
+%token L_BRACKET 
+%token R_BRACKET 
+%token L_PAREN 
+%token R_PAREN 
+%token COLON
+%token DOT 
+%token QUOTE
+%token <int> INTEGER_CONSTANT 
+%token <int> INTEGER_CONSTANT_LONG 
+%token <float> FLOAT_CONSTANT 
+%token <string> STRING_CONSTANT 
+%token <string> QUOTED_NAME 
+%token <string> IDENTIFIER 
+%token <string> AT_IDENTIFIER 
+%token <string> FULL_IDENTIFIER 
+%token <string> CORE_LABEL
+%token COLON_EQUALS 
+%token EQUALS 
+%token AND 
+%token OR 
+%token OROR 
+%token XOR 
+%token MOD 
+%token CMPEQ 
+%token CMPNE 
+%token CMPGT 
+%token CMPGE 
+%token CMPLT 
+%token CMPLE 
+%token SHL 
+%token SHR 
 %token USHR 
 %token VDASH
 %token VIRTUALINVOKE 
@@ -253,11 +291,55 @@ let add_invariant (label, formula) map =
 %token WITH 
 %token WITHOUT
 %token XOR 
+%token MULT 
+%token DIV 
+%token L_BRACKET 
+%token R_BRACKET 
+%token UNDERSCORE 
+%token QUESTIONMARK 
+%token IMP
+%token BIMP
+%token SOURCE_POS_TAG
+%token SOURCE_POS_TAG_CLOSE
+
+
+%token EOF
+
+
+%token ANDALSO 
+%token DEFINE
+
+%token FALSE
+%token TRUE
+%token IMPLICATION
+%token FRAME
+%token ABS
+%token INCONSISTENCY
+%token RULE
+%token PURERULE
+%token CONSTRUCTOR
+%token PRED
+%token REWRITERULE
+%token EMPRULE
+%token IF
+%token WITHOUT
+%token WHERE
+%token NOTIN
+%token NOTINCONTEXT
+%token ORTEXT
+%token GARBAGE
+%token EMP
+%token IMPORT 
+%token SPECIFICATION
 
 %type <float> FLOAT_CONSTANT 
 
 %type <int> INTEGER_CONSTANT 
 %type <int> INTEGER_CONSTANT_LONG 
+%token LABEL
+%token END
+%token ASSIGN
+
 
 %type <string> AT_IDENTIFIER 
 %type <string> FULL_IDENTIFIER 
@@ -311,7 +393,6 @@ let add_invariant (label, formula) map =
 %start rule_file
 %type <Psyntax.rules Load.importoption list> rule_file
 
-
 %start question_file
 %type <Psyntax.question list> question_file
 
@@ -321,7 +402,15 @@ let add_invariant (label, formula) map =
 %start inductive_file
 %type <Psyntax.inductive_stmt list> inductive_file
 
+%start spec
+%type <Spec.spec> spec
+
+%start symb_question_file
+%type <Core.symb_question list> symb_question_file 
+
 %% /* rules */
+
+
 
 file:
    | modifier_list_star file_type class_name extends_clause implements_clause file_body
@@ -392,15 +481,26 @@ invariants:
   | invariant invariants { add_invariant $1 $2 }
   | /* empty */ { LabelMap.empty }
 
+spec_npv:
+   | L_BRACE formula_npv R_BRACE L_BRACE formula_npv R_BRACE exp_posts_npv  {  {pre=$2;post=$5;excep=$7;invariants=LabelMap.empty}  }
+specs_npv:
+   | spec_npv ANDALSO specs_npv  { $1 :: $3 }
+   | spec_npv     {[$1]}
+
 method_spec:
-   | method_signature_short COLON specs  SEMICOLON  { mkDynamic($1, $3) }
-   | method_signature_short STATIC COLON specs SEMICOLON  { mkStatic($1, $4) }
-   | method_signature_short COLON specs  { mkDynamic($1, $3) }
-   | method_signature_short STATIC COLON specs { mkStatic($1, $4) }
+   | method_signature_short COLON specs  SEMICOLON source_pos_tag_option { mkDynamic($1, $3, $5) }
+   | method_signature_short STATIC COLON specs SEMICOLON source_pos_tag_option { mkStatic($1, $4, $6) }
+   | method_signature_short COLON specs source_pos_tag_option { mkDynamic($1, $3, $4) }
+   | method_signature_short STATIC COLON specs source_pos_tag_option { mkStatic($1, $4, $5) }
 
 exp_posts:
    | L_BRACE identifier COLON formula R_BRACE exp_posts { ClassMap.add $2 $4 $6 }
    | /*empty */ { ClassMap.empty }
+
+exp_posts_npv:
+   | L_BRACE identifier COLON formula_npv R_BRACE exp_posts_npv { ClassMap.add $2 $4 $6 }
+   | /*empty */ { ClassMap.empty }
+
 
 modifier:
    | ABSTRACT      {Abstract} 
@@ -527,6 +627,7 @@ identifier:
   | FALSE   { "False" }
   | TRUE   { "True" }
   | GARBAGE   { "Garbage" }
+  | EMP    { "Emp"}
 /*  | IMPLICATION   { "Implication" }
   | FRAME   { "Frame" }
   | INCONSISTENCY   { "Inconsistency" }*/
@@ -561,9 +662,17 @@ method_body:
    | SEMICOLON {None}
    | L_BRACE declaration_or_statement_list_star catch_clause_list_star R_BRACE  {Some($2,$3)}
 ;
+source_pos_tag:
+   | SOURCE_POS_TAG COLON identifier COLON integer_constant identifier COLON integer_constant identifier COLON integer_constant identifier COLON integer_constant identifier COLON full_identifier SOURCE_POS_TAG_CLOSE 
+   { {begin_line=$5; begin_column=$8; end_line=$11; end_column=$14} }
+; 
+source_pos_tag_option:
+   | /* empty */ { None }
+   | source_pos_tag { Some($1) }
+;
 declaration_or_statement:
    | declaration { DOS_dec($1) }
-   | statement { DOS_stm($1) }
+   | statement source_pos_tag_option { DOS_stm($1, $2) }
 ;
 declaration_or_statement_list_star:
    | /* empty */ { [] } 
@@ -817,6 +926,17 @@ lvariable_npv:
    | at_identifier { newPVar($1) }
    | identifier { newVar($1) }
 ;
+
+lvariable_list_ne_npv:
+   |  lvariable_npv    { [$1] }
+   |  lvariable_npv COMMA lvariable_list_ne_npv  { $1 :: $3 }
+;
+
+lvariable_list_npv:
+   |  {[]}
+   | lvariable_list_ne_npv { $1 }
+;
+
 fldlist: 
    | identifier EQUALS jargument { [($1,$3)] }
    | /*empty*/ { [] }
@@ -844,7 +964,7 @@ paramlist:
 /* Code for matching where not allowing question mark variables:
    no pattern vars*/
 jargument_npv:
-   | RETURN { Arg_var (newPVar(Support_syntax.name_ret_var)) }
+   | RETURN { Arg_var (newPVar(Spec.name_ret_v1)) }
    | lvariable_npv {Arg_var ($1)}
    | identifier L_PAREN jargument_list_npv R_PAREN {Arg_op($1,$3) }        
    | INTEGER_CONSTANT {Arg_string(string_of_int $1)} 
@@ -866,7 +986,7 @@ jargument_list_npv:
 
 
 jargument:
-   | RETURN { Arg_var (newPVar(Support_syntax.name_ret_var)) }
+   | RETURN { Arg_var (newPVar(Spec.name_ret_v1)) }
    | lvariable {Arg_var ($1)}
    | identifier L_PAREN jargument_list R_PAREN {Arg_op($1,$3) }        
    | INTEGER_CONSTANT {Arg_string(string_of_int $1)} 
@@ -888,7 +1008,8 @@ jargument_list:
 
   
 formula: 
-   |  { [] }
+   | /*empty*/  { [] }
+   | EMP  { [] }
    | FALSE { mkFalse}
    | GARBAGE { mkGarbage}
    | lvariable DOT jargument MAPSTO  jargument { [P_SPred("field", [Arg_var $1; $3; $5] )] }
@@ -897,7 +1018,7 @@ formula:
        {if List.length $3 =1 then [P_SPred($1,$3 @ [mkArgRecord []])] else [P_SPred($1,$3)] }
    | full_identifier L_PAREN jargument_list R_PAREN {if List.length $3 =1 then [P_SPred($1,$3 @ [mkArgRecord []])] else [P_SPred($1,$3)] }
    | formula MULT formula { pconjunction $1 $3 }
-   | formula OR formula { if Config.symb_debug() then parse_warning "deprecated use of |"  ; pconjunction (purify $1) $3 }
+   | formula OR formula { if Config.parse_debug() then parse_warning "deprecated use of |"  ; pconjunction (purify $1) $3 }
    | formula OROR formula { mkOr ($1,$3) }
    | lvariable COLON identifier { [P_PPred("type", [Arg_var($1);Arg_string($3)])] }
    | jargument binop_cmp jargument { Support_syntax.bop_to_prover_pred $2 $1 $3 }
@@ -905,7 +1026,8 @@ formula:
    | L_PAREN formula R_PAREN { $2 }
 
 formula_npv: 
-   |  { [] }
+   | /*empty*/ { [] }
+   | EMP  { []}
    | FALSE { mkFalse}
    | GARBAGE { mkGarbage}
    | lvariable_npv DOT jargument_npv MAPSTO  jargument_npv { [P_SPred("field", [Arg_var $1; $3; $5] )] }
@@ -914,7 +1036,7 @@ formula_npv:
        {if List.length $3 =1 then [P_SPred($1,$3 @ [mkArgRecord []])] else [P_SPred($1,$3)] }
    | full_identifier L_PAREN jargument_list_npv R_PAREN {if List.length $3 =1 then [P_SPred($1,$3 @ [mkArgRecord []])] else [P_SPred($1,$3)] }
    | formula_npv MULT formula_npv { pconjunction $1 $3 }
-   | formula_npv OR formula_npv { if Config.symb_debug() then parse_warning "deprecated use of |"  ; pconjunction (purify $1) $3 }
+   | formula_npv OR formula_npv { if Config.parse_debug() then parse_warning "deprecated use of |"  ; pconjunction (purify $1) $3 }
    | formula_npv OROR formula_npv { mkOr ($1,$3) }
    | lvariable_npv COLON identifier { [P_PPred("type", [Arg_var $1;Arg_string($3)])] }
    | jargument_npv binop_cmp jargument_npv { Support_syntax.bop_to_prover_pred $2 $1 $3 }
@@ -940,7 +1062,7 @@ spatial_list:
 sequent:
    | spatial_list OR formula VDASH formula { ($1,$3,$5) }
 /* used as the collapse form is || is a reserved token */
-   | spatial_list OROR formula VDASH formula {  if Config.symb_debug() then parse_warning "deprecated use of |" ; ($1,$3,$5) }
+   | spatial_list OROR formula VDASH formula {  if Config.parse_debug() then parse_warning "deprecated use of |" ; ($1,$3,$5) }
 
 sequent_list:
    |  /* empty */ { [] }
@@ -994,7 +1116,8 @@ equiv_rule:
    | EQUIV identifier_op COLON formula BIMP formula without_simp  { EquivRule($2,mkEmpty,$4,$6,$7) } 
 
 rule:
-   | IMPORT STRING_CONSTANT SEMICOLON { ImportEntry($2) }
+   |  CONSTRUCTOR identifier  { NormalEntry( ConsDecl($2) ) }
+   |  IMPORT STRING_CONSTANT SEMICOLON  { ImportEntry($2) }
    |  RULE identifier_op COLON sequent without where IF sequent_list_or_list { NormalEntry(SeqRule($4,$8,$2,$5,$6)) }
    |  REWRITERULE identifier_op COLON identifier L_PAREN jargument_list R_PAREN EQUALS jargument ifclause without_simp where 
 	 { NormalEntry(RewriteRule({function_name=$4;
@@ -1086,6 +1209,38 @@ inductive:
 inductive_file: 
    | EOF  { [] }
    | inductive inductive_file  {$1 :: $2}
+
+
+symb_question_file: 
+   | EOF  { [] }
+   | symb_question symb_question_file  {$1 :: $2}
+   
+
+symb_question: 
+   | SPECIFICATION identifier COLON spec QUESTIONMARK core_stmt_list  {Specification($2,$4,$6)}
+
+
+core_stmt_list:
+   |  core_stmt SEMICOLON core_stmt_list  { $1 :: $3 } 
+   |  /* empty */  { [] }
+
+core_stmt: 
+   |  END   { End }
+   |  NOP  { Nop_stmt_core }
+   |  ASSIGN core_assn_args spec L_PAREN jargument_list_npv R_PAREN
+         { Assignment_core($2, $3, $5) } 
+   |  GOTO label_list { Goto_stmt_core $2 } 
+   |  LABEL IDENTIFIER  { Label_stmt_core $2 }
+
+core_assn_args:
+   | lvariable_list_ne_npv COLON_EQUALS { $1 }
+   | COLON_EQUALS { [] }
+   |  /* empty */  { [] }
+
+label_list:
+   |  IDENTIFIER   { [$1] }
+   |  IDENTIFIER COMMA label_list   { $1 :: $3 }
+
 
 
 %% (* trailer *)

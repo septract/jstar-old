@@ -10,15 +10,15 @@ if
  *****************************/
 /*
 rule ls_len1 :
-| LT(?i,?n) | ls(?n,?x,?y,?v) |- | ls(Pred(?i),?x,_x,_v1) * NodeLL(_x,_y,_v) * ls(_k,_y,?y,_v2)
+| LT(?i,?n) | ls(?n,?x,?y,?v) |- ls(Pred(?i),?x,_x,_v1) * NodeLL(_x,_y,_v) * ls(_k,_y,?y,_v2)
 if
-| LT(?i,?n) * _k= MINUS(?n,?i)  *  ?v=app(app(_v1,_v),_v2) | ls(Pred(?i),?x,_x,_v1) * NodeLL(_x,_y,_v) * ls(_k,_y,?y,_v2) |- |  ls(Pred(?i),?x,_x,_v1) * NodeLL(_x,_y,_v) * ls(_k,_y,?y,_v2)
+| LT(?i,?n) * _k= MINUS(?n,?i)  *  ?v=app(app(_v1,_v),_v2) | ls(Pred(?i),?x,_x,_v1) * NodeLL(_x,_y,_v) * ls(_k,_y,?y,_v2) |-  ls(Pred(?i),?x,_x,_v1) * NodeLL(_x,_y,_v) * ls(_k,_y,?y,_v2)
 */
 
 rule ls_len2 :
-| LT(?i,?n) | ls(?n,?x,?y,?v) |- 
+| !LT(?i,?n) * ls(?n,?x,?y,?v) |- 
 if
-| LT(?i,?n) * _k= MINUS(?n,?i) *  ?v=app(app(v1,v),v2)| ls(Pred(?i),?x,x2,v1) * NodeLL(x2,y2,v) * ls(_k,y2,?y,v2) |- 
+| !LT(?i,?n) * _k= MINUS(?n,?i) *  ?v=app(app(v1,v),v2) * ls(Pred(?i),?x,x2,v1) * NodeLL(x2,y2,v) * ls(_k,y2,?y,v2) |- 
 
 
 rule ls_pe : 
@@ -138,26 +138,26 @@ if
  *  Rule for Object
  *****************************/
 rule obj:
-| | Obj(?x,?y) |- | Obj(?x,_z)
+| Obj(?x,?y) |- Obj(?x,_z)
 if 
-| ?y = _z | Obj(?x,?y) |- | Obj(?x,_z)
+| ?y = _z * Obj(?x,?y) |- Obj(?x,_z)
 
 // ddino: I dunno why but I need to have ?z instead of _z!!!
 rule iterator:
-| | Iterator(?x,?y) |- | Iterator(?x,?z)
+| Iterator(?x,?y) |- Iterator(?x,?z)
 if 
-Iterator(?x,?y) | | |- ?y=?z |
+Iterator(?x,?y) | |- ?y=?z 
 
 rule observer:
-| | Observer(?x,?y) |- | Observer(?x,?z)
+| Observer(?x,?y) |- Observer(?x,?z)
 if 
-Observer(?x,?y) | | |- ?y=?z | 
+Observer(?x,?y) | |- ?y=?z 
 
 
 rule observer_obj:
-| | Observer(?x,?y) |- | Obj(?x,_z)
+| Observer(?x,?y) |- Obj(?x,_z)
 if 
-| | Obj(?x,?y) |- | Obj(?x,_z)
+| Obj(?x,?y) |- Obj(?x,_z)
 
 
 
@@ -167,14 +167,14 @@ if
  *  Rule for minus
  *****************************/
 rule minus_hack1 :
-| | |- MINUS(?t,?g) = MINUS(?t,?h) | 
+| |- MINUS(?t,?g) = MINUS(?t,?h) 
 if
-| | |- ?g = ?h | 
+| |- ?g = ?h 
 
 rule minus_hack2 :
-| | |- MINUS(?t,?g) = MINUS(?t,?h) | 
+| |- MINUS(?t,?g) = MINUS(?t,?h) 
 if
-| | |- ?g = ?h | 
+| |- ?g = ?h 
 
 
 
@@ -186,44 +186,44 @@ if
  *****************************/
 
 rule sub_eq_hack : 
-| | |- | !subeq({content=?x; oldcon=?z},{content=?y})
+| |- !subeq({content=?x; oldcon=?z},{content=?y})
 if
-| | |- ?x=?y| 
+| |- ?x=?y
 
 rule sub_eq_hack : 
-| | |- | !subeq({content=?x},{content=?y})
+| |- !subeq({content=?x},{content=?y})
 if
-| | |- ?x=?y| 
+| |- ?x=?y
 
 rule sub_eq_hack2 : 
-| | |- | !subeq({content=?x},{content=?y; oldcon=_z})
+| |- !subeq({content=?x},{content=?y; oldcon=_z})
 if
-| | |- ?x=?y| 
+| |- ?x=?y
 
 rule visitor_hack :
-| | Visitor(?x,?y) |- | Visitor(?x,_y)
+| Visitor(?x,?y) |- Visitor(?x,_y)
 if
-| ?y=_y | Visitor(?x,?y) |- | Visitor(?x,_y)
+| ?y=_y * Visitor(?x,?y) |- Visitor(?x,_y)
 
 rule visited_hack1 :
-| | Visited(?x,?y,?z) |- | Visited(?x,_y,?w)
+| Visited(?x,?y,?z) |- Visited(?x,_y,?w)
 if
-| ?y=_y | Visited(?x,?y,?z) |- | Visited(?x,_y,?w)
+| ?y=_y * Visited(?x,?y,?z) |- Visited(?x,_y,?w)
 
 rule visited_hack2 :
-| | Visited(?x,?y,?z) |- | Visited(?x,?w,_y)
+| Visited(?x,?y,?z) |- Visited(?x,?w,_y)
 if
-| ?z=_y | Visited(?x,?y,?z) |- | Visited(?x,?w,_y)
+| ?z=_y * Visited(?x,?y,?z) |- * Visited(?x,?w,_y)
 
 rule ast_hack :
-| | Ast(?x,{content=?y}) |- | Ast(?x,{content=_y})
+| Ast(?x,{content=?y}) |- Ast(?x,{content=_y})
 if
-| ?y=_y | Ast(?x,{content=?y}) |- | Ast(?x,{content=_y})
+| ?y=_y * Ast(?x,{content=?y}) |- Ast(?x,{content=_y})
 
 rule observer :
-| | Observer(?x,?y) |- | Observer(?x,?z)
+| Observer(?x,?y) |- Observer(?x,?z)
 if
-Observer(?x,?y) | | |- ?y=?z| 
+Observer(?x,?y) | |- ?y=?z
 
 
 
@@ -231,9 +231,9 @@ Observer(?x,?y) | | |- ?y=?z|
  * Rule for obj
  *************************************/
 rule object:
-| | Obj(?t,?u) |- | Obj(?t,_u)
+| Obj(?t,?u) |- Obj(?t,_u)
 if
-| ?u=_u | Obj(?t,?u) |- | Obj(?t,_u)
+| ?u=_u * Obj(?t,?u) |- Obj(?t,_u)
 
 
 /*************************************
@@ -296,38 +296,38 @@ without
     || ?x=empty()
 
 rule cons_eq_empty_contrad :
-  | cons(?x,?y) = empty() | |- |
+  | cons(?x,?y) = empty() |- 
 if
 
 
 rule cons_eq_left :
-  | cons(?x,?y) = cons(?z,?w) | |- |
+  | cons(?x,?y) = cons(?z,?w) |- 
 without
   ?x=?z 
 if
-  | ?x=?z * ?w=?y | |- |
+  | ?x=?z * ?w=?y |- 
 
 rule cons_eq_left :
-  | cons(?x,?y) = cons(?z,?w) | |- |
+  | cons(?x,?y) = cons(?z,?w) |- 
 without
   ?y=?w 
 if
-  | ?x=?z * ?w=?y | |- |
+  | ?x=?z * ?w=?y |- 
 
 rule cons_eq_right :
-  | | |- cons(?x,?y) = cons(?z,?w) |
+  | |- cons(?x,?y) = cons(?z,?w) 
 without
   ?x=?z * ?y=?w
 if
-  | | |- ?x=?z * ?w=?y |
+  | |- ?x=?z * ?w=?y 
 
 
 rule app_eq_empty :
-  | app(?x,?y) = empty()  | |- |
+  | app(?x,?y) = empty()  |- 
 without 
   ?x = empty() * ?y=empty()
 if
-  | ?x = empty() * ?y = empty()  | |- |
+  | ?x = empty() * ?y = empty()  |- 
 
 
 /* *******  Valuer  *********/
@@ -373,22 +373,22 @@ where
 
 /*
 rule app_exists_left_eq :
-   | | |- app(_x,?y) = app(?x,?z) |
+   | |- app(_x,?y) = app(?x,?z) 
 without
   _x != ?x
 if
-   | | |- _x = ?x * ?y=?z |
+   | |- _x = ?x * ?y=?z 
 or
-   | | |- _x != ?x * app(_x,?y) = app(?x,?z) |
+   | |- _x != ?x * app(_x,?y) = app(?x,?z) 
 
 rule app_exists_right_eq :
-   | | |- app(?y,_x) = app(?z,?x) |
+   | |- app(?y,_x) = app(?z,?x) 
 without
   _x != ?x
 if
-   | | |- _x = ?x * ?y=?z |
+   | |- _x = ?x * ?y=?z 
 or
-   | | |- _x != ?x * app(?y,_x) = app(?z,?x) |
+   | |- _x != ?x * app(?y,_x) = app(?z,?x) 
 */
 
 
@@ -404,14 +404,14 @@ rewrite true : true() = numeric_const("1")
 
 
 rule numericrule:
-  | numeric_const(?x) = numeric_const(?y) | |- |
+  | numeric_const(?x) = numeric_const(?y) |- 
 without
   ?x=?y 
 if
-  | ?x = ?y | |- |
+  | ?x = ?y |-
 
 rule zeroone:
-  | "0" = "1" | |- |
+  | "0" = "1" |- 
 if
 
 
@@ -423,7 +423,7 @@ rule app_inj_left :
 without 
   ?y=?w
 if
- | |- ?y = ?w |
+ | |- ?y = ?w
 
 rule app_inj_right :
 | |- app(?y,?x) = app(?w,?x)
@@ -435,101 +435,101 @@ if
 
 /*
 rule app_left_guess:
-| | |- app(?x,?y) = app(_z,?w) | 
+| |- app(?x,?y) = app(_z,?w)  
 without
   ?x!=_z || ?x=_z
 if
-| | |- ?x=_z * app(?x,?y) = app(_z,?w) |
+| |- ?x=_z * app(?x,?y) = app(_z,?w) 
 or
-| | |- ?x!=_z * app(?x,?y) = app(_z,?w) |
+| |- ?x!=_z * app(?x,?y) = app(_z,?w)
 
 rule app_right_guess:
-| | |- app(?x,?y) = app(?z,_w) | 
+| |- app(?x,?y) = app(?z,_w) 
 without
   ?y!=_w 
 if
-| | |- ?y=_w * app(?x,?y) = app(?z,_w) |
+| |- ?y=_w * app(?x,?y) = app(?z,_w) 
 or
-| | |- ?y!=_w * app(?x,?y) = app(?z,_w) |
+| |- ?y!=_w * app(?x,?y) = app(?z,_w) 
 */
 
 
 rule app_left_guess:
-| | |- app(?x,?y) = app(_z,?w) | 
+| |- app(?x,?y) = app(_z,?w)  
 without
   ?x=_z
 if
  | |- ?x=_z * app(?x,?y) = app(_z,?w)
 /*
 or
-| | |- ?x!=_z * app(?x,?y) = app(_z,?w) |
+| |- ?x!=_z * app(?x,?y) = app(_z,?w) 
 */
 
 rule app_right_guess:
-| | |- app(?x,?y) = app(?z,_w) | 
+| |- app(?x,?y) = app(?z,_w)  
 if
-| | |- ?y=_w * app(?x,?y) = app(?z,_w) |
+| |- ?y=_w * app(?x,?y) = app(?z,_w) 
 /*
 or
-| | |- ?y!=_w * app(?x,?y) = app(?z,_w) |
+| |- ?y!=_w * app(?x,?y) = app(?z,_w) 
 */
 
 
 rule app_guess_full:
-| | |- x = app(_v1,_v2) |
+| |- x = app(_v1,_v2) 
 where
   _v1,_v2 notincontext
 if
-| x = app(_v1,_v2) | |- |
+| x = app(_v1,_v2) |- 
 
 rule app_guess_more :
-| | |- app(?t,?s) = app(_x,_y) |
+| |- app(?t,?s) = app(_x,_y)
 without
   ?t!=_x
 if
-| | |- ?t=_x * ?s=_y |
+| |- ?t=_x * ?s=_y 
 or
-| | |- ?t!=_x * ?s!=_y * app(?t,?s) = app(_x,_y) |
+| |- ?t!=_x * ?s!=_y * app(?t,?s) = app(_x,_y) 
 
 
 rule ObsSet_1 :
-| | ObsSet(?O, ?v, ?s) |- | ObsSet(?O, ?v2, ?s2)
+| ObsSet(?O, ?v, ?s) |- ObsSet(?O, ?v2, ?s2)
 if
-ObsSet(?O, ?v, ?s) | | |- ?v2=?v * ?s2=?s |
+ObsSet(?O, ?v, ?s) | |- ?v2=?v * ?s2=?s 
 
 rule setof_exists :
-| | |- setof(?x) = setof(_y) | 
+| |- setof(?x) = setof(_y) 
 without
   _y!=?x
 if
-| | |- ?x = _y | 
+| |- ?x = _y  
 or 
-| | |- setof(?x) = setof(_y) * _y!=?x | 
+| |- setof(?x) = setof(_y) * _y!=?x 
 
 
 rule simp :
-| LT(length(?t),length(app(?t,cons(?z,?w)))) | |- |
+| !LT(length(?t),length(app(?t,cons(?z,?w)))) |-
 if
-| | |- |
+| |-
 
 rewrite setof_size :
  size(setof(?l)) = length(?l)
 
 rule LT_GE :
- | LT(?x,?y) * GE(?x,?y) | |- |
+ | !LT(?x,?y) * !GE(?x,?y) |- 
 if
 
 
 
 rule  foo:
- | add(x,v) = setof(l) | |- |
+ | add(x,v) = setof(l) |- 
 if
- | l = app(v1,cons(x,v2)) * setof(app(v1,v2)) = v | |- |
+ | l = app(v1,cons(x,v2)) * setof(app(v1,v2)) = v |-
 
 rule Iterator :
- | | Iterator(?x,?y) |- | Iterator(?x,?z)
+ | Iterator(?x,?y) |- Iterator(?x,?z)
 if
- Iterator(?x,?y) | | |- ?y=?z |
+ Iterator(?x,?y) | |- ?y=?z 
 
 
 rule ls_guess:
@@ -549,12 +549,12 @@ if
  | ?x!=?y |-
 
 rule exist_neq :
-  | | |- ?x!=_y |
+  | |- ?x!=_y 
 where 
   _y notincontext
 if
-  | ?x!=_y | |- |
-
+  | ?x!=_y |- 
+  
 
 
 /****************
@@ -579,99 +579,99 @@ rewrite add_defn :
   add(?x,?y) = app(?y,cons(?x,empty()))
 
 /******************************
- *  Iterated Resrouces
+ *  Iterated Resources
 ********************************/
 
 rule iterresleft_add:
-| | ObsSet(cons(?x,?y),?z,?s) |- |
+| ObsSet(cons(?x,?y),?z,?s) |-
 if
-| | ObsSet(?y,?z,?s) * Observer(?x,{vals=?z; subject=?s}) |- |
+| ObsSet(?y,?z,?s) * Observer(?x,{vals=?z; subject=?s}) |-
 
 rule iterresright_add:
-| | |- | ObsSet(cons(?x,?y),?z,?s)
+| |- ObsSet(cons(?x,?y),?z,?s)
 if
-| | |- | ObsSet(?y,?z,?s) * Observer(?x,{vals=?z; subject=?s}) 
+| |- ObsSet(?y,?z,?s) * Observer(?x,{vals=?z; subject=?s}) 
 
 rule iterresleft_union:
-| | ObsSet(app(?x,?y),?z,?s) |- |
+| ObsSet(app(?x,?y),?z,?s) |-
 without
-  | ( ?x=empty()| ) || (?y=empty()|)
+  ?x=empty() || ?y=empty()
 if
-| | ObsSet(?y,?z,?s) * ObsSet(?x,?z,?s) |- |
+| ObsSet(?y,?z,?s) * ObsSet(?x,?z,?s) |-
 
 rule iterresright_union:
-| | |- | ObsSet(app(?x,?y),?z,?s) 
+| |- ObsSet(app(?x,?y),?z,?s) 
 without
-  | ( ?x=empty()| ) || (?y=empty()|)
+  ?x=empty() || ?y=empty()
 if
-| | |- | ObsSet(?y,?z,?s) * ObsSet(?x,?z,?s) 
+| |- ObsSet(?y,?z,?s) * ObsSet(?x,?z,?s) 
 
 rule iterresright_empty:
-| | |- | ObsSet(empty(),?z,?s) 
+| |- ObsSet(empty(),?z,?s) 
 if
-| | |- | 
+| |- 
 
 rule iterresleft_empty:
-| | ObsSet(empty(),?z,?s) |- | 
+| ObsSet(empty(),?z,?s) |- 
 if
-| | |- | 
+| |- 
 
 rule ls_contradiction1:
-| | ls(?x,?y,empty()) |- |
+| ls(?x,?y,empty()) |-
 if
 
 rule ls_contradiction2:
-| | |- | ls(?x,?y,empty()) 
+| |- ls(?x,?y,empty()) 
 if
-| | |- x!=x |
+| |- x!=x
 
 rule ls_pe1:
-| | lspe(?x,?y,empty()) |- |
+| lspe(?x,?y,empty()) |-
 if
-| ?x=?y | |- |
+| ?x=?y |-
 
 rule ls_pe2:
-| | lspe(?x,?y,cons(?s,?t)) |- |
+| lspe(?x,?y,cons(?s,?t)) |-
 if
-| | ls(?x,?y,cons(?s,?t)) |- |
+| ls(?x,?y,cons(?s,?t)) |-
 
 rule ls_pe3:
-| | lspe(?x,?y,?z) |- |
+| lspe(?x,?y,?z) |-
 if
-| | ls(?x,?y,?z) |- | ;
-| ?x=?y * ?z=empty() | |- | 
+| ls(?x,?y,?z) |- ;
+| ?x=?y * ?z=empty() |- 
 
 rule ls_pe4:
-| | |- | lspe(?x,?y,?z) 
+| |- lspe(?x,?y,?z) 
 if
-| | |- ?x!=?y | ls(?x,?y,?z) 
+| |- ?x!=?y * ls(?x,?y,?z) 
 or
-| | |- ?x=?y * ?z=empty() |
+| |- ?x=?y * ?z=empty() 
 
 rule ls_obs:
-| | lsObs(?x,?x,cons(?s,?t),?a,?b) |- |
+| lsObs(?x,?x,cons(?s,?t),?a,?b) |-
 if
 
 
 rule ls_obs:
-| | lsObs(?x,?y,?t,?a,?b) |- | ls(?x,?y,?t) 
+| lsObs(?x,?y,?t,?a,?b) |- ls(?x,?y,?t) 
 if
-| | ObsSet(?t,?a,?b) |- | 
+| ObsSet(?t,?a,?b) |- 
 
 rule ls_obs_match:
-| | lsObs(?x,?y,?t,?a,?b) |- | lsObs(?x,?y,?t2,?a,?b)
+| lsObs(?x,?y,?t,?a,?b) |- lsObs(?x,?y,?t2,?a,?b)
 if
-lsObs(?x,?y,?t,?a,?b) | |  |- ?t=?t2 | 
+lsObs(?x,?y,?t,?a,?b) |  |- ?t=?t2  
 
 rule Subject:
-| | SubjectObs(?s,?f) |-  | SubjectObs(?s,?f2)
+| SubjectObs(?s,?f) |-  SubjectObs(?s,?f2)
 if
-SubjectObs(?s,?f) | | |- ?f=?f2 |
+SubjectObs(?s,?f) | |- ?f=?f2 
 
 rule subeq_hack:
-| | |- | !subeq(?f,?f2) 
+| |- !subeq(?f,?f2) 
 if
-| | |- ?f=?f2 |
+| |- ?f=?f2 
 
 
 rule length: 

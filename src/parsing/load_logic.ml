@@ -17,21 +17,27 @@ open Load
 open Psyntax
 open System
 
-let load_logic_extra_rules dirs filename extra_rules =
+let load_logic_extra_rules 
+    dirs filename extra_rules 
+    : (Psyntax.sequent_rule list * Psyntax.rewrite_rule list * string list) =
   let fileentrys = import_flatten_extra_rules dirs filename extra_rules (Jparser.rule_file Jlexer.token) in  
   let rl = expand_equiv_rules fileentrys in 
-  let sl,rm = 
+  let sl,rm,cn = 
     List.fold_left
-      (fun (sl,rm) rule ->
+      (fun (sl,rm,cn) rule ->
 	match rule with
-	| SeqRule(r) -> (r::sl,rm)
-	| RewriteRule(r) -> (sl,r::rm)
+        | ConsDecl(f) -> (sl,rm,f::cn)
+	| SeqRule(r) -> (r::sl,rm,cn)
+	| RewriteRule(r) -> (sl,r::rm,cn)
 	| EquivRule(r) -> assert false)
-      ([], []) 
+      ([], [], []) 
       rl
   in
   if log log_load then
     fprintf logf "@[<2>Sequent rules%a@." (pp_list pp_sequent_rule) sl;
-  (sl,rm)
+  (sl,rm,cn)
 
-let load_logic dirs filename : (sequent_rule list * rewrite_rule list)= load_logic_extra_rules dirs filename []
+let load_logic 
+    dirs filename 
+    : (sequent_rule list * rewrite_rule list * string list) = 
+  load_logic_extra_rules dirs filename []

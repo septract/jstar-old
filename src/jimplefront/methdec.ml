@@ -106,9 +106,9 @@ let has_body m =
         List.for_all (fun x -> Abstract<>x) m.modifiers
 
 let has_requires_clause m =
-        m.req_stmts != []
+        m.req_stmts <> []
 
 let has_ensures_clause m =
-        m.ens_stmts != []
+        m.ens_stmts <> []
 
 (* ========================  ======================== *) 

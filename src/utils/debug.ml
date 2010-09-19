@@ -43,7 +43,7 @@
  * going to a new line ("@."). The first complication that may appear is that
  * a message belongs not to one log_category but to several log categories
  * log_a, log_b, and log_c.
- *    if log_active land (log_a lor log_b lor log_c) != 0 then
+ *    if log_active land (log_a lor log_b lor log_c) <> 0 then
  *      fprintf logf "Some message.@."
  * The second complication is that the message might be long.
  *    if log log_category then
@@ -77,17 +77,17 @@ let log_prove = 1 lsl 3
 let log_exec = 1 lsl 4
 let log_logic = 1 lsl 5
 
-let log_active = log_prove
+let log_active = 0 
   (* -1 means all, 0 means one, in general use lor *)
 
-let log x = log_active land x != 0
+let log x = log_active land x <> 0
 
 let logf = std_formatter
 
 
-(* TODO(rgrig): Review the following code. *)
-
+(* TODO(rgrig): Review. *)
 let debug = false
+
 
 let buffer_dump = Buffer.create 10000
 
@@ -103,7 +103,7 @@ let merge_formatters frm1 frm2 =
 
 
 
-let dump = ref (merge_formatters 
+let proof_dump = ref (merge_formatters 
 		  (Format.formatter_of_buffer buffer_dump)
 		  (flagged_formatter Format.std_formatter debug))
 
@@ -123,6 +123,16 @@ F#*)
 let pp_list pp f = List.iter (pp f)
 
 let string_of pp x = pp str_formatter x; flush_str_formatter ()
+
+let rec form_format sep emp f ppf list = 
+  match list with 
+    [] -> Format.fprintf ppf "%s" emp
+  | [x] -> Format.fprintf ppf "%a" f x
+  | x::xs -> Format.fprintf ppf "@[%a@]@ %s @[%a@]" f x sep (form_format sep emp f) xs 
+
+
+let rec form_format_optional start sep emp f ppf list = 
+  Format.fprintf ppf "%s@ @[%a@]" start (form_format sep emp f) list 
 
 let rec list_format sep f ppf = function
   | [] -> ()
