@@ -25,7 +25,6 @@ val form_clone : inner_form -> inner_form
 val form_clone_abs : inner_form -> inner_form
 val string_inner_form : Format.formatter -> inner_form -> unit 
 
-val implies_inner : logic -> inner_form -> inner_form -> bool
 val implies : logic -> inner_form -> form -> bool
 val implies_opt : logic -> inner_form option -> form -> bool
 val inconsistent : logic -> inner_form -> bool
