@@ -25,3 +25,7 @@ Implication:
 Implication: 
   |- (x + builtin_mult(k,x)) = builtin_mult((k + 1), x)
 ? True 
+
+Implication:  
+  |- ((x + x) + builtin_mult(k,x)) = builtin_mult((k + 2), x)
+? True 

@@ -64,6 +64,12 @@ let smt_init () : unit =
 let smt_fatal_recover () : unit  = 
   System.warning();
   Format.printf "Oh noes! The SMT solver died for some reason. This shouldn't happen.\n"; 
+  if Config.smt_debug() then 
+    begin
+      Format.printf "Error report from the solver:\n";
+      try while true do Format.printf "%s\n" (input_line !smterr) done
+      with End_of_file -> ()
+    end; 
   Format.printf "Turning off SMT for this example..."; 
   Unix.close_process_full (!smtout, !smtin, !smterr); 
   Format.printf "SMT off.\n"; 
@@ -106,11 +112,11 @@ let rec list_to_pairs
 (* We should probably handle this in a more principled way *)
 
 let cmd_munge (s : string) : string = 
-  let s = Str.global_replace (Str.regexp "@") "AT_" s in 
+  let s = Str.global_replace (Str.regexp "@") "AT_" s in
   s
   
 let str_munge (s : string ) : string = 
-  let s = Str.global_replace (Str.regexp "[<> @\*]")  "_" s in 
+  let s = Str.global_replace (Str.regexp "[<> @\*]")  "_" s in
   s
 
 
