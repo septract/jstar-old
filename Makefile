@@ -9,7 +9,7 @@ test:
 clean:
 	rm -f lib/*.a
 	cd src; make clean
-	cd examples; make clean
+	cd unit_tests; make clean
 	cd doc/tutorial; make clean
 
 #vim:noet:

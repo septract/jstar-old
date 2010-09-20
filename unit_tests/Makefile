@@ -7,3 +7,8 @@ test:
 	
 	@echo "\nRunning symbolic execution unit tests:" 
 	@cd symb_tests; make test; echo	
+
+clean:
+	@echo "TODO"
+
+#vim:noet:
