@@ -66,9 +66,6 @@ let main () : unit =
   	| true,false -> Format.printf "Test failed!" 
   	| false,true -> Format.printf "Test failed!" 
   	)
-          
-       | _ -> Format.printf "Currently unsupported"
-       
     ) question_list
 
 

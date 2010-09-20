@@ -62,15 +62,11 @@ let main () : unit =
     List.iter (
     fun question ->
       match question with 
-      
        | Specification(mname,spec,core)  ->
           Format.printf "Method: %s\nSpec: %a"  mname  Spec.spec2str spec; 
        	  let stmts_core = map Cfg_core.mk_node core in 
           if Symexec.verify mname stmts_core spec lo abs_rules then
           Format.printf "Good specification!\n\n" else Format.printf "Bad specification!\n\n" 
-          
-       | _ -> Format.printf "Currently unsupported"
-       
     ) question_list
 
 (*    List.iter (fun x -> pp_stmt_core Format.std_formatter x; 

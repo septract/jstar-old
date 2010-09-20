@@ -43,7 +43,7 @@
  * going to a new line ("@."). The first complication that may appear is that
  * a message belongs not to one log_category but to several log categories
  * log_a, log_b, and log_c.
- *    if log_active land (log_a lor log_b lor log_c) != 0 then
+ *    if log_active land (log_a lor log_b lor log_c) <> 0 then
  *      fprintf logf "Some message.@."
  * The second complication is that the message might be long.
  *    if log log_category then
@@ -80,7 +80,7 @@ let log_logic = 1 lsl 5
 let log_active = 0 
   (* -1 means all, 0 means one, in general use lor *)
 
-let log x = log_active land x != 0
+let log x = log_active land x <> 0
 
 let logf = std_formatter
 
@@ -121,6 +121,10 @@ let unsupported () = failwith "Assert false"
 F#*)
 
 let pp_list pp f = List.iter (pp f)
+
+(* TODO(rgrig): Move this out of debug. *)
+(* TODO(rgrig): Use a local buffer instead of the global str_formatter. *)
+let string_of pp x = pp str_formatter x; flush_str_formatter ()
 
 let rec form_format sep emp f ppf list = 
   match list with 

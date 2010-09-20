@@ -42,11 +42,11 @@ let unnest x =
 let error_message e lb = 
   match e with 
     Illegal_character c -> 
-      Printf.sprintf "Illegal character %c  found at line %d character %d.\n" 
+      Printf.sprintf "Illegal character %c found at line %d character %d.\n" 
 	c 
 	lb.lex_curr_p.pos_lnum 
 	(lb.lex_curr_p.pos_cnum - lb.lex_curr_p.pos_bol)
-  | Unterminated_comment -> Printf.sprintf "Unterminatated comment started at line %d character %d in %s.\n"
+  | Unterminated_comment -> Printf.sprintf "Unterminated comment started at line %d character %d in %s.\n"
 	!nest_start_pos.pos_lnum 
 	(!nest_start_pos.pos_cnum  - !nest_start_pos.pos_bol)
 	lb.lex_curr_p.pos_fname
@@ -220,7 +220,12 @@ let identifier =
 
 let quoted_name = quote quotable_char+ quote
 
-let at_identifier = '@' (("parameter" dec_digit+ ':') | "this" ':' | "caughtexception") 
+let at_identifier = 
+  '@' (
+    ("parameter" dec_digit+ ':') 
+    | "this" ':' 
+    | "caughtexception" 
+    | "caller") 
 	
 let integer_constant = (dec_constant | hex_constant | oct_constant) 'L'? 
 
@@ -293,12 +298,12 @@ rule token = parse
   | float_constant   { FLOAT_CONSTANT(float_of_string(Lexing.lexeme lexbuf))}
 
   | '"' (string_char* as s) '"' { kwd_or_else (STRING_CONSTANT s) s }
-  | _ { raise (Failure (error_message (Illegal_character ((Lexing.lexeme lexbuf).[0])) lexbuf))}
+  | _ { failwith (error_message (Illegal_character ((Lexing.lexeme lexbuf).[0])) lexbuf)}
 and comment = parse 
   | "/*"  { nest lexbuf; comment lexbuf }
   | "*/"  { if unnest lexbuf then comment lexbuf }
   | newline  { new_line lexbuf; comment lexbuf }
-  | eof      { raise (Failure (error_message Unterminated_comment lexbuf))}
+  | eof      { failwith (error_message Unterminated_comment lexbuf)}
   | _     { comment lexbuf; }
 
 

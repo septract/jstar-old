@@ -11,6 +11,7 @@
       LICENSE.txt
  ********************************************************)
 open Jparsetree
+open Printing
 open Spec
 (***************************************************
  from jparsetree
@@ -35,7 +36,7 @@ type statement_inner =
    | Invoke_stmt of invoke_expr   
    | Spec_stmt of Vars.var list * spec
      
-type statement = statement_inner * (Printing.source_pos_tag option) 
+type statement = statement_inner * source_location option
 
 type declaration_or_statement =
   |  DOS_dec of declaration
