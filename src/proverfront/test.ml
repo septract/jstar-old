@@ -66,7 +66,7 @@ let main () =
     | Psyntax.TImplication (heap1,heap2,result) ->
 	(*Format.printf "Check implication\n %s\n ===> \n %s\n" (Plogic.string_form heap1) (Plogic.string_form heap2);*)
 	(match (Sepprover.implies_opt logic (Sepprover.convert heap1) heap2), result with 
-	  true,true | false,false -> ()
+	  true,true | false,false -> Format.printf "."
 	| true,false -> Format.printf "Test failed! Unsound as proved @\n@ %a@\n@ ===> @\n%a@\n " 
 	      Psyntax.string_form heap1 
 	      Psyntax.string_form heap2
@@ -82,7 +82,7 @@ let main () =
 	  match x with 
 	  None -> Format.printf "Incorrect: cannot find frame. @\n%a@\n ===> @\n%a@\n" Psyntax.string_form heap1  Psyntax.string_form heap2
 	| Some x -> 
-	if Sepprover.implies_list x result then ()
+	if Sepprover.implies_list x result then Format.printf "."
 	else (
 	  Format.printf "Incorrect frame for:@\n%a@\n ===> @\n%a@\n"
 	      Psyntax.string_form heap1 
@@ -95,7 +95,7 @@ let main () =
 	end
     | Psyntax.TAbs (heap1,result)  -> 
 	let x = Sepprover.abs_opt logic (Sepprover.convert heap1) in
-	if Sepprover.implies_list x result then ()
+	if Sepprover.implies_list x result then Format.printf "."
 	else (
 	  Format.printf "Incorrect Abstraction for:@\n%a@\n "
 	      Psyntax.string_form heap1;
@@ -107,7 +107,7 @@ let main () =
     | Psyntax.TInconsistency (heap1,result) ->
 	(match Sepprover.inconsistent_opt logic (Sepprover.convert heap1), result with 
 	  true, true 
-	| false,false -> ()
+	| false,false -> Format.printf "."
 	| true,false -> Format.printf "Test failed! Prover found@ %a@ inconsistent, test said consistent.@\n" 
 	      Psyntax.string_form heap1
 	| false,true -> Format.printf "Test failed! Prover could not prove@ %a@ inconsistent.@\n" 

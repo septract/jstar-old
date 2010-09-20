@@ -331,6 +331,7 @@ let add_invariant (label, formula) map =
 %token EMP
 %token IMPORT 
 %token SPECIFICATION
+%token SPECTEST
 
 %type <float> FLOAT_CONSTANT 
 
@@ -407,6 +408,9 @@ let add_invariant (label, formula) map =
 
 %start symb_question_file
 %type <Core.symb_question list> symb_question_file 
+
+%start symb_test_file
+%type <Core.symb_test list> symb_test_file 
 
 %% /* rules */
 
@@ -1215,10 +1219,17 @@ symb_question_file:
    | EOF  { [] }
    | symb_question symb_question_file  {$1 :: $2}
    
+   
+symb_test_file: 
+   | EOF  { [] }
+   | symb_test symb_test_file  {$1 :: $2}
+   
 
 symb_question: 
    | SPECIFICATION identifier COLON spec QUESTIONMARK core_stmt_list  {Specification($2,$4,$6)}
 
+symb_test: 
+   | SPECTEST identifier COLON spec QUESTIONMARK boolean core_stmt_list {SpecTest($2,$4,$7,$6)}
 
 core_stmt_list:
    |  core_stmt SEMICOLON core_stmt_list  { $1 :: $3 } 

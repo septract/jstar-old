@@ -6,8 +6,8 @@ build:
 scripts:
 	cd scripts; make
 
-test: build
-	cd examples; make test
+test:
+	cd unit_tests; make test
 
 clean:
 	rm -f lib/*.a

@@ -127,6 +127,7 @@ let kwd_or_else =
     "short", SHORT;
     "specialinvoke", SPECIALINVOKE;
     "Specification", SPECIFICATION;
+    "SpecTest", SPECTEST; 
     "static", STATIC;
     "staticinvoke", STATICINVOKE;
     "strictfp", STRICTFP;

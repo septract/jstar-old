@@ -31,10 +31,14 @@ let verb_proof() = !verb_proof_ref
 let parse_debug_ref = ref false
 let parse_debug() = !parse_debug_ref
 
+let cfg_debug_ref = ref false
+let cfg_debug() = !cfg_debug_ref 
+
 let set_debug_char (c : char) : unit = 
   match c with 
   | 'p' -> parse_debug_ref := true
-  | 's' -> symb_debug_ref := true 
+  | 's' -> symb_debug_ref := true
+  | 'c' -> cfg_debug_ref := true 
   | _ -> () 
 
 let args_default = [

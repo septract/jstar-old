@@ -28,5 +28,5 @@ type symb_question =
   | Specification of string * spec * core_statement list 
   
 type symb_test = 
-  | Nothing_here_yet
+  | SpecTest of string * spec * core_statement list * bool  
 

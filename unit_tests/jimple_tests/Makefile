@@ -28,7 +28,6 @@ all: $(addsuffix .jimple, $(TARGETS))
 	@for dir in ${SUBDIRS} ; do ( cd $$dir; make all ) ; done
 
 test: all $(addsuffix .test, $(TARGETS)) $(addsuffix .test.dir, ${SUBDIRS})
-	@echo
 
 time :  all $(addsuffix .time, $(TARGETS))
 	@for dir in ${SUBDIRS} ; do ( cd $$dir; make time ) ; done
@@ -40,7 +39,7 @@ time :  all $(addsuffix .time, $(TARGETS))
 	java soot.Main $* -f J -d . -print-tags -keep-line-number
 
 %.test.dir: 
-	@echo $(INDENT) Testing $(DIR); cd $*; make test
+	@cd $*; make test
 
 clean:: 
 	for dir in ${SUBDIRS} ; do ( cd $$dir; make clean ) ; done
@@ -51,5 +50,5 @@ clean::
 	@time ./runtest $*.jimple >/dev/null
 
 %.test : %.jimple
-	@echo $(INDENT) Testing $(DIR)/$*
+	@echo -n .
 	@./runtest $*.jimple

@@ -7,4 +7,5 @@ type core_statement =
   | End
 type symb_question =
     Specification of string * Spec.spec * core_statement list
-type symb_test = Nothing_here_yet
+type symb_test =
+  | SpecTest of string * Spec.spec * core_statement list * bool
