@@ -57,7 +57,7 @@ open Psyntax
 
 
     let string_inner_form : Format.formatter -> inner_form -> unit = 
-      Clogic.pp_ts_form 
+      Clogic.pp_ts_formula
      
     (******************************************
        Entailment operations

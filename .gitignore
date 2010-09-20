@@ -1,4 +1,5 @@
 *.core
 *.swp
 .depend
+_build
 tags

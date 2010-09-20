@@ -17,7 +17,6 @@ module MultisetImpl (A : Map.OrderedType) :
     type t = A.t
     type multiset
 
-    exception Empty 
 
 (* Checks if the multiset is empty *)
     val is_empty : multiset -> bool 
@@ -29,6 +28,12 @@ module MultisetImpl (A : Map.OrderedType) :
     val remove : multiset -> t * multiset
 (* Restart search in multiset *)
     val restart : multiset -> multiset
+
+(** [MultisetImpl.iter f m] applies function [f] in turn to all the
+ * elements of [m] in increasing order. *)
+    val iter : (t -> unit) -> multiset -> unit
+
+    val fold : ('a -> t -> 'a) -> 'a -> multiset -> 'a
 
 (* Convert a normal list to this kind of multiset *)
     val lift_list : t list -> multiset

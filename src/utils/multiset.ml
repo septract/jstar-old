@@ -14,12 +14,13 @@
 (* Multiset that allows for iteration through the elements *)
 
 
-module MultisetImpl (A : Map.OrderedType) =
+module MultisetImpl (A : Set.OrderedType) =
   struct
     type t = A.t
     type multiset = A.t list * A.t list
 	  
-(* Invariant all inner list must be non-empty 
+(* TODO(rgrig): I don't understand the following comment.
+ * Invariant all inner list must be non-empty 
    That is, forall splittings 
    forall xs,ys. t != xs @ [] :: ys    
 *)
@@ -62,9 +63,7 @@ module MultisetImpl (A : Map.OrderedType) =
       | (x::xs) -> x,(xs,y)
 
     let lift_list (xs : A.t list)  : multiset = 
-      match xs with 
-	[] -> [],[]
-      | xs -> List.sort compare xs,[]
+      List.sort compare xs, []
 
     let restart (x,y) : multiset =
       revapp y x, [] 
@@ -78,6 +77,14 @@ module MultisetImpl (A : Map.OrderedType) =
 
     let empty =
       [],[]
+
+    let iter f (x, y) =
+      List.iter f (List.rev y);
+      List.iter f x
+
+    let fold f s (x, y) =
+      let f' a b = f b a in
+      List.fold_left f (List.fold_right f' y s) x
 	
     let map_to_list a f = 
       let a = restart a in
@@ -111,6 +118,5 @@ module MultisetImpl (A : Map.OrderedType) =
 	    (List.rev res,[]), restart set1, restart set2 
 	in
 	f set1 set2 []
-
 
   end
