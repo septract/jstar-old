@@ -35,7 +35,7 @@ class LinkedList extends java.lang.Object
 /*11*/
         r1 = $r2;
 /*11*/
-        $r3 = r0.<LinkedList: NodeLL head>; 
+        $r3 = r0.<LinkedList: NodeLL head>;
 /*12*/
         r1.<NodeLL: NodeLL next> = $r3;
 /*12*/
