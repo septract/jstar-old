@@ -588,7 +588,7 @@ module PersistentCC (A : GrowablePersistentArray) : PCC =
 
     let no_live ts nr = 
 	List.for_all 
-	  (fun x -> (A.get ts.unifiable x != Standard))
+	  (fun x -> (A.get ts.unifiable x <> Standard))
 	  (A.get ts.classlist (rep ts nr)) 
 
 
