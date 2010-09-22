@@ -587,7 +587,7 @@ module PersistentCC (A : GrowablePersistentArray) : PCC =
 	  assert false
 
     let no_live ts nr = 
-	List.forall
+	List.for_all
 	  (fun x -> match (A.get ts.unifiable x with Standard -> false | _ -> true))
 	  (A.get ts.classlist (rep ts nr)) 
 
