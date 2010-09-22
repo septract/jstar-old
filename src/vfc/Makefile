@@ -18,7 +18,7 @@ export LIB
 
 INCLUDES = 
 
-ABDUCTFRONT_SOURCES = vfcAST.ml vfc2core.ml vfcfront.ml
+ABDUCTFRONT_SOURCES = vfcAST.ml vfcparse.mly vfclex.mll vfc2core.ml vfcfront.ml
 
 
 TOPLEVEL_SOURCES = $(ABDUCTFRONT_SOURCES)

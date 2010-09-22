@@ -1,3 +1,4 @@
 open VfcAST
+open Methdec_core
 
-let foo = ()
+let translate_statement s : core_statement list = []

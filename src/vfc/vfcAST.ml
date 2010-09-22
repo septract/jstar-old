@@ -1,56 +1,73 @@
+(* Verified Featherweight C AST *)
 
-type vfc_type = 
- | Byte of char 
- | Int of int  
- | Struct of string 
- | Pointer of vfc_type
- | Void_ptr
- | Thread_ptr
- | Array of int 
+type var_id = string
+type field_id = string
+type struct_id = string
+type fun_id = string
 
-type op = 
- | PAdd 
- | PSub 
- | Neg
- | Sub
- | Mult
- 
-type pvar = string * vfc_type
+type vfc_type =
+  | Bool
+  | Byte
+  | Int
+  | Struct of struct_id
+  | Pointer of vfc_type
+  | Void_ptr
+  | Thread_ptr
+  | Array of vfc_type * int 
 
-type pexp = 
- | Const of int
- | PVar of pvar
-(*| JVar of var*)
- | Prim_op of op * (pexp list) 
- 
-type field = {
- fname : string; 
- ftype : vfc_type; 
- offset : int; 
+and pvar_kind =    
+  | Parameter
+  | Local
+  | Global
+	
+and pvar = {
+  vname: var_id;
+  vtype: vfc_type;
+  kind: pvar_kind;
 }
 
-type stmt = 
- | PVar_decl of pvar 
- | Assign of pvar * pexp 
- | Field_read of pvar * pexp * field 
- | Field_assn of pexp * field * pexp
- | Skip
- | Cond of pexp * stmt * stmt
-(*| While of pexp * lexp option * stmt*)
- | While of pexp * stmt
- | Return of pexp option
- | Fun_call of pvar * fun_def * pexp list
- | Block of stmt list 
- | Alloc of pvar * pexp
- | Free of pexp 
- | Fork of pvar * fun_def * pexp list
- | Join of pexp 
- | Get of pexp * pexp * pexp * pexp 
- | Put of pexp * pexp * pexp * pexp 
- | Wait of pexp 
+and op = 
+  | Add 
+  | Sub 
+  | Neg
+  | Mult 
+ 
+and pexp = 
+  | Int_const of int
+  | PVar of var_id
+  (*| JVar of var*)
+  | Prim_op of op * (pexp list) 
+ 
+and field = {
+  fname : field_id; 
+  ftype : vfc_type; 
+  offset : int; 
+}
+
+and stmt = 
+  | PVar_decl of pvar 
+  | Assign of var_id * pexp
+  | Cast of var_id * vfc_type * pexp  
+  | Field_read of var_id * pexp * field_id 
+  | Field_assn of pexp * field_id * pexp
+  | Skip
+  | If of pexp * stmt * stmt
+  (*| While of pexp * lexp option * stmt*)
+  | While of pexp * stmt
+  | Return of pexp option
+  | Fun_call of var_id * fun_id * pexp list
+  | Block of stmt list 
+  | Alloc of var_id * pexp
+  | Free of pexp 
+  | Fork of var_id * fun_id * pexp list
+  | Join of pexp 
+  | Get of pexp * pexp * pexp * pexp 
+  | Put of pexp * pexp * pexp * pexp 
+  | Wait of pexp 
 
 and fun_def = {
-  ret_type : vfc_type; 
+  fun_name : fun_id;
+  ret_type : vfc_type option; 
   params : pvar list; 
 (*  requires : lexp; 
   ensures : lexp;  *)
@@ -58,12 +75,12 @@ and fun_def = {
 }
 
 and struct_def = {
-  sname : string; 
+  sname : struct_id; 
   fields : field list; 
 }
 
 type vfc_decl = 
- | Fun_decl of fun_def
- | Struct_decl of struct_def
+  | Fun_decl of fun_def
+  | Struct_decl of struct_def
  
 type vfc_prog = vfc_decl list

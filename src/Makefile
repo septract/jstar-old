@@ -2,12 +2,14 @@ default:
 	cd proverfront; make
 	cd jimplefront;  make 
 	cd symbfront; make
+	cd vfc; make
 
 
 debug: 
 	cd proverfront; make debug
 	cd jimplefront;  make debug
 	cd symbfront; make debug
+	cd vfc; make debug
 
 
 clean: 
@@ -21,4 +23,5 @@ clean:
 	cd symbexe; make clean
 	cd jimplefront;  make clean
 	cd symbfront; make clean
+	cd vfc; make clean
 	rm -f ../lib/*.a
