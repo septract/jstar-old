@@ -1,0 +1,8 @@
+struct foo {
+  int blat; 
+  byte bar; 
+}
+
+void fun_foo (byte x, int y, struct foo z) {
+  skip; 
+}
