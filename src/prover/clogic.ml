@@ -696,7 +696,10 @@ let check wheres seq =
 	    Cterm.var_not_used_in seq.ts v sreps
 	) varset
     | NotInTerm (Psyntax.Var varset, term) ->
-	assert false
+	vs_for_all (
+	  fun v ->
+	    Cterm.var_not_used_in_term seq.ts v term
+	) varset
   ) wheres
 
 

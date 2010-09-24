@@ -1,10 +1,31 @@
+Implication:  
+  R(x,_x) |-
+? True
+
+
+Implication:  
+  R(x,_x) * Q(_x) |-
+? True
+
+Implication:  
+  R(x,_x) * R(_x,y) |-
+? True
+
+Implication:  
+  R(x,_x) * T(_x,y) |-
+? False
+
+Implication:  
+  R(x,_x) * T(_x,nil()) |-
+? True
+
 
 Implication:  
   P(_x) |-
 ? True
 
 Implication:
-  P(_x) * P(_x) |-
+  P(_y) * P(_y) |-
 ? False
 
 Implication:
@@ -49,9 +70,23 @@ Implication:
   |- NodeLL(r1,$r3) * ls($r3,nil())
 ? True
 
+
 Implication:
- NodeLL(_$r3_3040, nil()) * NodeLL($r3, _$r3_3040)
+ NodeLL(_r33040, nil()) * NodeLL($r3, _r33040)
   |- ls($r3,nil())
 ? True
+
+Implication:
+ NodeLL(_y, nil()) * NodeLL($r3, _y)
+  |- ls($r3,nil())
+? True
+
+Implication:
+ NodeLL(_x, nil()) * NodeLL($r3, _x)
+  |- ls($r3,nil())
+? True
+
+
+
 
 

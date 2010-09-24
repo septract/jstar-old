@@ -508,6 +508,15 @@ let var_not_used_in ts var reps : bool =
       Printf.printf "Don't use non-existential variables in notincontext stuff.";
       assert false 
 
+let var_not_used_in_term ts var term : bool =
+  (* TODO: This ts is not return, potentially dangerous. Further review required. *)
+  let pat,ts = add_pattern term ts in
+  let rec pat_to_const pat reps = 
+     match pat with 
+     | CC.Constant c -> c::reps 
+     | CC.App (c1,c2) -> pat_to_const c1 (pat_to_const c2 reps) in   
+  let reps = pat_to_const pat [] in
+  var_not_used_in ts var reps
 
 let add_constructor 
     (fn : string) 
