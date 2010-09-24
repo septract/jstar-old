@@ -21,7 +21,6 @@ open Psyntax
 let program_file_name = ref ""
 let logic_file_name = ref ""
 let inductive_file_name = ref ""
-let verbose = ref false
  
 let set_file_name n = 
   program_file_name := n 

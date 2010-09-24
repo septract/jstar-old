@@ -1,9 +1,21 @@
-export OCAMLMAKEFILE = OcamlMakefile
-export OCAMLYACC = ocamlyacc -v
-export OCAMLC = ocamlc.opt -annot
-export OCAMLOPT = ocamlopt.opt -annot
-export OCAMLDEP = ocamldep.opt
-export OCAMLDOC = ocamldoc.opt
+ifndef OCAMLMAKEFILE
+	export OCAMLMAKEFILE = OcamlMakefile
+endif
+ifndef OCAMLYACC
+	export OCAMLYACC = ocamlyacc -v
+endif
+ifndef OCAMLC
+	export OCAMLC = ocamlc.opt -annot
+endif 
+ifndef OCAMLOPT
+	export OCAMLOPT = ocamlopt.opt -annot
+endif 
+ifndef OCAMLDEP
+	export OCAMLDEP = ocamldep.opt
+endif 
+ifndef OCAMLDOC
+	export OCAMLDOC = ocamldoc.opt
+endif 
 
 ifndef BIN
 	BIN := ../../bin

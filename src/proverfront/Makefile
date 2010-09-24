@@ -1,14 +1,21 @@
-export OCAMLMAKEFILE = OcamlMakefile
-export OCAMLYACC = ocamlyacc -v
-export OCAMLC = ocamlc.opt -annot
-export OCAMLOPT = ocamlopt.opt -annot
-export OCAMLDEP = ocamldep.opt
-export OCAMLDOC = ocamldoc.opt
-
-export FSHARPDIR = /Users/mjp41/FSharp-1.9.6.2
-export MONO = mono
-export FSHARPCOMPILER = $(MONO) $(FSHARPDIR)/bin/fsc.exe --mlcompatibility -r $(FSHARPDIR)/bin/FSharp.PowerPack.dll
-export MAKEDLL = $(FSHARPCOMPILER) -a 
+ifndef OCAMLMAKEFILE
+	export OCAMLMAKEFILE = OcamlMakefile
+endif
+ifndef OCAMLYACC
+	export OCAMLYACC = ocamlyacc -v
+endif
+ifndef OCAMLC
+	export OCAMLC = ocamlc.opt -annot
+endif 
+ifndef OCAMLOPT
+	export OCAMLOPT = ocamlopt.opt -annot
+endif 
+ifndef OCAMLDEP
+	export OCAMLDEP = ocamldep.opt
+endif 
+ifndef OCAMLDOC
+	export OCAMLDOC = ocamldoc.opt
+endif 
 
 
 INCLUDES = 

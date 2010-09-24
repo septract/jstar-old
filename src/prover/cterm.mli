@@ -95,6 +95,7 @@ val rewrite : term_structure -> rewrite_rule list -> (term_structure * rewrite_g
 val ts_eq : term_structure -> term_structure -> bool
 
 val var_not_used_in : term_structure -> Vars.var -> term_handle list -> bool
+val var_not_used_in_term : term_structure -> Vars.var -> Psyntax.args -> bool
 
 val add_constructor : string -> term_structure -> term_structure
 

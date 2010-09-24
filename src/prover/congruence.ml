@@ -586,19 +586,28 @@ module PersistentCC (A : GrowablePersistentArray) : PCC =
 	     and should have already been removed *)
 	  assert false
 
+    let no_live ts nr = 
+	List.for_all
+	  (fun x -> match (A.get ts.unifiable x) with Standard -> false | _ -> true)
+	  (A.get ts.classlist (rep ts nr)) 
+
+
     let unifiable_merge ts a b : t =
       let vt =
 	match A.get ts.unifiable a , A.get ts.unifiable b with 
-	  Unifiable, Unifiable -> Unifiable
+	| _, Standard -> Standard
+	| Standard, _ -> Deleted
+	| _, Deleted  
+	| Deleted, _ -> Deleted
+	| Unifiable, Unifiable -> Unifiable
 	| Unifiable, UnifiableExists 
 	| UnifiableExists, Unifiable 
 	| UnifiableExists, UnifiableExists -> UnifiableExists
-	| Standard, _ 
-	| _, Standard -> Standard
-	| Exists, _ 
-	| _, Exists -> Exists
-	| c, Deleted -> c
-	| Deleted, _ -> Deleted
+	| Exists, UnifiableExists 
+	| UnifiableExists, Exists 
+	| Exists, Exists 
+	| Exists, Unifiable 
+	| Unifiable, Exists -> Exists
       in
       {ts with 
 	unifiable = A.set ts.unifiable b vt}
@@ -1096,9 +1105,13 @@ module PersistentCC (A : GrowablePersistentArray) : PCC =
 	      Unifiable, _ 
 	    | UnifiableExists, Exists ->
 		cont (try make_equal ts c con with Contradiction -> raise No_match)
-	    | UnifiableExists, _ ->  
-                (* Needs to be an exists, so fail*)
-		raise No_match
+	    | UnifiableExists, _ ->
+	        if no_live ts (rep ts con) then 
+		    (* If not live accesses treat as an exists *)
+		    cont (try make_equal ts c con with Contradiction -> raise No_match)
+		else
+                  (* Needs to be an exists, so fail*)
+		  raise No_match  
 	    | Exists,_ 
 	    | Standard, _ -> raise No_match
 	    | Deleted, _ -> raise No_match
@@ -1187,41 +1200,17 @@ module PersistentCC (A : GrowablePersistentArray) : PCC =
 	  rep_uneq ts c1 c2
 
     let delete ts r = 
-      let no_live nr r = 
-	List.for_all 
-	  (fun x -> x<>r && (A.get ts.unifiable x <> Standard))
-	  (A.get ts.classlist nr) in
       let current_sort = A.get ts.unifiable r in 
       match current_sort with 
-	Unifiable -> ts
-      |	UnifiableExists -> ts
-      |	Exists -> ts
+	Unifiable 
+      |	UnifiableExists 
+      |	Exists -> 
+	  {ts with unifiable = A.set ts.unifiable r Deleted}	  
       | Deleted -> 
           (* Double dispose *)
-	  assert false
+	  ts (*assert false*)
       |	Standard ->
-	  let nr = rep ts r in
-	  let ts = {ts with unifiable = A.set ts.unifiable r Deleted} in 
-	  if nr <> r then 
-	    match A.get ts.unifiable r with 
-	    | Unifiable | UnifiableExists | Exists -> 
-		(* This should be impossible, as rep can't be more
-		permissive then the terms it represents *)
-		assert false
-	    | Standard -> 
-		(* Can delete as rep is not deleted yet. *)
-		ts
-	    | Deleted -> 
-		(* Need to check if deleting final term from class *)
-		if no_live nr r then 
-		  {ts with unifiable = A.set ts.unifiable nr Exists}
-		else 
-		  ts
-	  else 
-	  if no_live nr r then 
-	    {ts with unifiable = A.set ts.unifiable r Exists}
-	  else
-	    {ts with unifiable = A.set ts.unifiable r Deleted}
+	  {ts with unifiable = A.set ts.unifiable r Deleted}
    
   end
 
