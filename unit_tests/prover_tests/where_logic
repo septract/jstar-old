@@ -1,0 +1,24 @@
+
+rule vapourise_P:
+| P(_x) |- 
+where
+  _x notincontext
+if
+| |- 
+
+
+rule vapourise_QP:
+| P(_x) * Q(_x) |- 
+where
+  _x notincontext
+if
+| |- 
+
+
+abstraction pto_pto:
+ NodeLL(?x,_x) * NodeLL(_x,nil()) ~~> ls(?x,nil())
+where 
+  _x notincontext;
+  _x notin ?x
+
+

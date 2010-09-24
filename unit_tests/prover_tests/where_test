@@ -1,0 +1,57 @@
+
+Implication:  
+  P(_x) |-
+? True
+
+Implication:
+  P(_x) * P(_x) |-
+? False
+
+Implication:
+  P(_x) * P(_y) |-
+? True
+
+Implication:
+  P(_x) * P(_y) |- _x = _y
+? False
+
+Implication:
+  P(_x) |- _x = _y
+? True
+
+Implication:
+  _x = y * P(_x) |-
+? False
+
+Implication:
+  Q(_x) * P(_x) |-
+? True
+
+Implication:
+  Q(_x) * P(_x) |-
+? True
+
+Implication:
+ $r3=$r3 * r1=$r2 * r1=r1 * nil()=nil() * nil()=nil()
+  * "<NodeLL: java.lang.String content>"="<NodeLL: java.lang.String content>"
+  * "<NodeLL: NodeLL next>"="<NodeLL: NodeLL next>" * "NodeLL"="NodeLL"
+  * r0=@this: * r0=r0 * "1"="1" * true()=numeric_const("1") * true()=true()
+  * zero()=numeric_const("0") * zero()=false() * zero()=zero() * "0"="0"
+  * "<LinkedList: NodeLL tail>"="<LinkedList: NodeLL tail>"
+  * "<LinkedList: NodeLL head>"="<LinkedList: NodeLL head>"
+  * NodeLL(_$r3_3040, nil()) * NodeLL($r3, _$r3_3040) * NodeLL(r1, $r3)
+  |- NodeLL(r1,$r3) * ls($r3,nil())
+? True
+
+
+Implication:
+ NodeLL(_$r3_3040, nil()) * NodeLL($r3, _$r3_3040) * NodeLL(r1, $r3)
+  |- NodeLL(r1,$r3) * ls($r3,nil())
+? True
+
+Implication:
+ NodeLL(_$r3_3040, nil()) * NodeLL($r3, _$r3_3040)
+  |- ls($r3,nil())
+? True
+
+
