@@ -497,7 +497,7 @@ let var_not_used_in ts var reps : bool =
     EVar _ -> 
       begin
 	try 
-	  CC.rep_not_used_in ts.cc (VarMap.find var ts.evars) reps 	  
+	  CC.rep_not_used_in ts.cc (VarMap.find var ts.aevars) reps 	  
 	with Not_found -> 
 	  (* TODO Check that returning false is sensible.
 	     Printf.printf "Could not find existential! Impossible!";
