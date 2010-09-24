@@ -78,15 +78,13 @@ let get_spec  (iexp: Jparsetree.invoke_expr) =
 	(match get_dynamic_spec si with
 	  Some spec -> spec
 	| None -> 
-	    System.warning(); Printf.printf "\n No dynamic specs found for %s. Abort!\n\n" (Pprinter.signature2str si); System.reset();
-	    assert false	  )
+      failwith ("I need dynamic specs for " ^ (Pprinter.signature2str si)))
     | Invoke_nostatic_exp (Special_invoke,_,si,_) 
     | Invoke_static_exp (si,_) -> 
 	(match get_static_spec si with 
 	  Some spec -> spec
-	| None -> 	   
-	    System.warning(); Printf.printf "\n No static specs found for %s. Abort!\n\n" (Pprinter.signature2str si); System.reset();
-	    assert false	  )
+	| None ->
+      failwith ("I need static specs for " ^ (Pprinter.signature2str si)))
   in
   match iexp with
   | Invoke_nostatic_exp (Virtual_invoke,n,_,il) 
@@ -240,14 +238,11 @@ let methdec2signature_str dec =
   
   
 let jimple_stmt_create s source_pos =
- let node = Cfg_core.mk_node s in
-    Printing.source_pos_table := 
-      Printing.Source_pos_node_id_table.add 
-        node.Cfg_core.sid source_pos 
-        !Printing.source_pos_table;
-    node 
+  let node = Cfg_core.mk_node s in
+  Printing.add_location node.Cfg_core.sid source_pos;
+  node 
 
-let jimple_stms2core stms = 
+let jimple_stmts2core stms = 
   let do_one_stmt (stmt_jimple, source_pos) =
     let s=jimple_statement2core_statement stmt_jimple in
     if Config.symb_debug() then 
@@ -277,8 +272,7 @@ let get_spec_for m fields cname=
       match (MethodMap.find msi !curr_static_methodSpecs) with
         | (spec, pos) -> spec
     with  Not_found -> 
-      System.warning(); Format.printf "\n\n Error: Cannot find spec for method %s\n\n" (methdec2signature_str m); System.reset();
-      assert false
+      failwith ("Cannot find spec for method " ^ methdec2signature_str m)
   in
   let spec = logical_vars_to_prog spec in 
   if is_init_method m then (* we treat <init> in a special way*)
@@ -302,8 +296,7 @@ let get_requires_clause_spec_for m fields cname =
                   	match (MethodMap.find msi !curr_dynamic_methodSpecs) with
                         | (spec, pos) -> spec
                 with Not_found ->
-                        System.warning(); Format.printf "\n\n Error: Cannot find spec for method %s\n\n" (methdec2signature_str m); System.reset();
-                        assert false
+                        failwith ("Cannot find spec for method " ^ methdec2signature_str m)
         in
         let dynspec = logical_vars_to_prog dynspec in
         (* Now construct the desired spec *)
@@ -322,8 +315,8 @@ let get_dyn_spec_for m fields cname =
                   	match (MethodMap.find msi !curr_dynamic_methodSpecs) with
                     	| (spec, pos) -> spec                     
                 with Not_found ->
-                        System.warning(); Format.printf "\n\n Error: Cannot find spec for method %s\n\n" (methdec2signature_str m); System.reset();
-                        assert false
+                  failwith 
+                      ("Cannot find spec for method " ^ methdec2signature_str m)
         in
         logical_vars_to_prog dynspec
 
@@ -429,22 +422,22 @@ let compute_fixed_point
                   let meth_sig_str = methdec2signature_str m in
                   let meth_body_info =
                           if Methdec.has_body m then
-                                  [(jimple_stms2core m.bstmts, meth_sig_str)]
+                                  [(jimple_stmts2core m.bstmts, meth_sig_str)]
                           else
                                   []
                   in
                   let requires_info = 
                           if Methdec.has_requires_clause m then
-                                  [(jimple_stms2core m.req_stmts, meth_sig_str^" requires clause")]
+                                  [(jimple_stmts2core m.req_stmts, meth_sig_str^" requires clause")]
                           else
                                   []
                   in
                   let old_clause_info = 
-                          List.map (fun o -> (jimple_stms2core o,meth_sig_str^" old expression")) m.old_stmts_list
+                          List.map (fun o -> (jimple_stmts2core o,meth_sig_str^" old expression")) m.old_stmts_list
                   in
                   let ensures_info =
                           if Methdec.has_ensures_clause m then
-                                  [(jimple_stms2core m.ens_stmts, meth_sig_str^" ensures clause")]
+                                  [(jimple_stmts2core m.ens_stmts, meth_sig_str^" ensures clause")]
                           else
                                   []
                   in
@@ -463,32 +456,28 @@ let compute_fixed_point
                   (* verify the body only if the method is non-abstract *)
                   if Methdec.has_body m then
                           let spec = get_spec_for m fields cname in
-                          let body = jimple_stms2core m.bstmts in
+                          let body = jimple_stmts2core m.bstmts in
 			  let l = add_static_type_info lo m.locals in
 			  (*let _ = Prover.pprint_sequent_rules l in*)
-                          Symexec.verify meth_sig_str body spec l abs_rules;
-                          ()
-                  else
-                          ()
-                  ;
+                          ignore 
+                            (Symexec.verify meth_sig_str body spec l abs_rules);
                   (* verify the requires clause if present *)
                   if Methdec.has_requires_clause m then
                           let spec = get_requires_clause_spec_for m fields cname in
-                          let body = jimple_stms2core m.req_stmts in
+                          let body = jimple_stmts2core m.req_stmts in
 		          let l = add_static_type_info lo m.req_locals in
-                          Symexec.verify (meth_sig_str^" requires clause") body spec l abs_rules;
-                          ()
-                  else
-                          ()
-                  ;
+                          ignore 
+                            (Symexec.verify 
+                              (meth_sig_str^" requires clause") 
+                              body spec l abs_rules);
                   (* verify the ensures clause if present *)
                   if Methdec.has_ensures_clause m then
                           let spec = get_dyn_spec_for m fields cname in
 			  let l = add_static_type_info lo m.ens_locals in
                           let frames = List.map (fun oc -> 
-                          let body = jimple_stms2core oc in
+                          let body = jimple_stmts2core oc in
                           Symexec.get_frame body spec.pre l abs_rules) m.old_stmts_list in
-                          let body = jimple_stms2core m.ens_stmts in
+                          let body = jimple_stmts2core m.ens_stmts in
                           Symexec.verify_ensures (meth_sig_str^" ensures clause") body spec.post conjoin_with_res_true frames l abs_rules
             ) mdl
 

@@ -1,3 +1,11 @@
 SpecTest trivial1:
 {Garbage}{Garbage} ? True 
 end; 
+
+SpecTest trivial2: 
+{False}{Garbage} ? False
+end; 
+
+SpecTest trivial3: 
+{Garbage}{False} ? False
+end; 

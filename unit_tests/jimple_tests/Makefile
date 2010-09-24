@@ -33,10 +33,10 @@ time :  all $(addsuffix .time, $(TARGETS))
 	@for dir in ${SUBDIRS} ; do ( cd $$dir; make time ) ; done
 
 %.class: $(SOURCES)
-	javac -g $?
+	javac -g $?  || (echo "WARNING: Javac failed, using old class file" ; touch $@)
 
 %.jimple: %.class
-	java soot.Main $* -f J -d . -print-tags -keep-line-number
+	java soot.Main $* -f J -d . -print-tags -keep-line-number  || (echo "WARNING: Soot failed, using old Jimple file." ; touch $@)
 
 %.test.dir: 
 	@cd $*; make test

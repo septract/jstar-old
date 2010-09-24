@@ -431,7 +431,7 @@ let pp_sequent_rule f ((c, hss, n, w, ss) : sequent_rule) =
         let ps = list_format ";" pp_psequent in
         p "if " ps x; List.iter (p "or" ps) xs);
   p "without " pp_entailment w;
-  if ss != [] then
+  if ss <> [] then
     p "where " (list_format ";" string_where) ss;
   fprintf f "@]"
 
@@ -489,7 +489,7 @@ let expand_equiv_rules rules =
 	:: 
 	  (SeqRule(([],[],guard&&&leftform), [[([],[],guard&&&rightform)]], name ^"_right", (mkEmpty, without), []))
 	::
-	  if(guard != []) then 
+	  if(guard <> []) then 
 	    (SeqRule((guard, [], leftform), [[([],[],rightform)]], name ^ "_split", (mkEmpty, without), []))
 	    ::
 	      list

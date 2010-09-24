@@ -1,9 +1,17 @@
-test: 
-	@echo "Running jimple unit tests:" 
-	@cd jimple_tests; make test; echo
+DIRS=$(wildcard *_tests)
+DIRS_TEST=$(addsuffix .test,$(DIRS))
+DIRS_CLEAN=$(addsuffix .clean,$(DIRS))
 
-	@echo "\nRunning prover unit tests:" 
-	@cd prover_tests; make test; echo
-	
-	@echo "\nRunning symbolic execution unit tests:" 
-	@cd symb_tests; make test; echo	
+test: $(DIRS_TEST)
+clean: $(DIRS_CLEAN)
+
+$(DIRS_TEST): %.test:
+	@echo -n "Testing $* "
+	@$(MAKE) -s -C $* test
+	@echo
+
+$(DIRS_CLEAN): %.clean:
+	$(MAKE) -C $* clean
+
+.PHONY: test $(DIRS_TEST) clean $(DIRS_CLEAN)
+.SILENT: test

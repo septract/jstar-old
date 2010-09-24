@@ -20,7 +20,6 @@ let _ = CC.test ()
 
 let program_file_name = ref ""
 let logic_file_name = ref ""
-let verbose = ref false
  
 let set_file_name n = 
   program_file_name := n 
@@ -30,7 +29,8 @@ let set_logic_file_name n =
 
 let arg_list = Config.args_default @ 
   [ ("-f", Arg.String(set_file_name ), "program file name");
-    ("-l", Arg.String(set_logic_file_name ), "logic file name"); ]
+    ("-l", Arg.String(set_logic_file_name ), "logic file name"); 
+  ]
 
 
 

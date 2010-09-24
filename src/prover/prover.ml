@@ -22,19 +22,16 @@ open Psyntax
 open Vars
 
 let prover_counter_example : Clogic.sequent list ref = ref []
-let print_counter_example ()  = 
-  Printing.eclipse_print_start_counter_example();
-  printf "Needed to prove:@   @[%a@]@\n@\n"
-    (list_format "\nor" Clogic.pp_sequent)
-    !prover_counter_example;
-  Printing.eclipse_print_end_counter_example()
-
 
 let pprint_counter_example ppf () = 
   fprintf ppf "Needed to prove:@   @[%a@]@\n@\n"
-    (Debug.list_format "\nor" Clogic.pp_sequent)
+    (list_format "\nor" Clogic.pp_sequent)
     !prover_counter_example
 
+let print_counter_example () = 
+  Printing.eclipse_print_start_counter_example();
+  pprint_counter_example std_formatter ();
+  Printing.eclipse_print_end_counter_example()
 
 let pprint_proof (f : formatter) : unit = 
   fprintf f "%s" (Buffer.contents buffer_dump)
@@ -125,7 +122,9 @@ let apply_rule_list
 	 ) sequents 
       )
   in let res = apply_rule_list_inner sequents n in 
-  if log log_prove then fprintf !proof_dump "@\nEnd time :%f@ " (Sys.time ()); res
+  if log log_prove then 
+    fprintf !proof_dump "@\nEnd time :%f@ " (Sys.time ());
+  res
 
 let check_imp (logic : logic) (seq : sequent) : bool = 
     try 

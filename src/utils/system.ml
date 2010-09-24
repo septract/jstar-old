@@ -64,17 +64,13 @@ let parse_file pars lexe fname ftype =
 let find_file_from_dirs dirs fname =
   if Sys.file_exists fname then fname 
   else 
-    let f x = x ^ "/" ^ fname in 
+    let f x = Filename.concat x fname in 
     f (List.find (function d -> Sys.file_exists (f d)) dirs)
 
 
-
-let warning () =
-  if !colortty then  Printf.printf "%c[%d;%dm"  (Char.chr 0x1B ) 1 31 else ()
-
-let good () =
-  if !colortty then Printf.printf "%c[%d;%dm"  (Char.chr 0x1B ) 1 32 else ()
-
-let reset () =
-  if !colortty then Printf.printf "%c[%dm" (Char.chr 0x1B) 0 else ()
+(* TODO(rgrig): Thee should probably depend on the terminal. *)
+(* TODO(rgrig): Is there a (nice) ncurses ocaml inerface? *)
+let terminal_red = "\x1B[1;31m"
+let terminal_green = "\x1B[1;32m"
+let terminal_white = "\x1B[0m"
 

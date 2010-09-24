@@ -1,15 +1,24 @@
-default: build test
-
 build:
-	cd src; make
+	$(MAKE) -C src
 
-test:
-	cd unit_tests; make test
+test: build
+	$(MAKE) -s -C unit_tests
+
+doc:
+	$(MAKE) -C doc/tutorial
+
+scripts:
+	$(MAKE) -C scripts
+
+all: test scripts doc
 
 clean:
 	rm -f lib/*.a
-	cd src; make clean
-	cd examples; make clean
-	cd doc/tutorial; make clean
+	$(MAKE) -C src clean
+	$(MAKE) -C unit_tests clean
+	$(MAKE) -C scripts clean
+	$(MAKE) -C doc/tutorial clean
+
+.PHONY: build test test clean
 
 #vim:noet:
