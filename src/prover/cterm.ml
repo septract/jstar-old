@@ -173,7 +173,7 @@ let rec add_term params pt ts : 'a * term_structure =
 		  (*assert (unif);   FIX this later.*)
 		  (* if not add to ts, and return constant to it *)
 		  let c,cc = CC.fresh_unifiable ts.cc in 
-		  lift(c), {ts with cc = cc; avars = VarMap.add (v) c ts.avars; originals = CMap.add c (FArg_var (Vars.freshen v))  ts.originals }  
+		  lift(c), {ts with cc = cc; avars = VarMap.add (v) c ts.avars; originals = CMap.add c (FArg_var (Vars.freshen_exists v))  ts.originals }  
 	      end
           | PVar (n,_) -> 
 	      (* Check if variable is in current map *)
@@ -185,7 +185,7 @@ let rec add_term params pt ts : 'a * term_structure =
 		  let c,cc = CC.fresh ts.cc in
 		  (*let c,cc = app cc lift(ts.var) lift(c) in  *)
 		  if fresh && n<>0 then 
-		    lift c,{ts with cc = cc; apvars = VarMap.add (v) c ts.apvars; originals = CMap.add c (FArg_var (freshen v))  ts.originals }  
+		    lift c,{ts with cc = cc; apvars = VarMap.add (v) c ts.apvars; originals = CMap.add c (FArg_var (freshen_exists v))  ts.originals }  
 		  else 
 		    lift c, {ts with cc = cc; pvars = VarMap.add (v) c ts.pvars; originals = CMap.add c (FArg_var v)  ts.originals }  
 	      end
@@ -199,7 +199,7 @@ let rec add_term params pt ts : 'a * term_structure =
 		    if unif then CC.fresh_unifiable_exists ts.cc 
 		    else CC.fresh_exists ts.cc in
 		  if fresh then
-		    lift(c), {ts with cc = cc; aevars = VarMap.add v c ts.aevars; originals = CMap.add c (FArg_var (Vars.freshen v))  ts.originals }  
+		    lift(c), {ts with cc = cc; aevars = VarMap.add v c ts.aevars; originals = CMap.add c (FArg_var (Vars.freshen_exists v))  ts.originals }  
 		  else
 		    lift(c), {ts with cc = cc; evars = VarMap.add v c ts.evars; originals = CMap.add c (FArg_var v)  ts.originals }  
 	      end
@@ -410,7 +410,7 @@ let kill_var ts v =
 	  {ts with 
 	    pvars = pvars; 
 	    cc = cc;
-	    originals = CMap.add r (FArg_var (Vars.freshen v)) (CMap.remove r ts.originals)}
+	    originals = CMap.add r (FArg_var (Vars.freshen_exists v)) (CMap.remove r ts.originals)}
       |  _ -> {ts with cc=cc; pvars = pvars} 
     end
   with Not_found -> 
