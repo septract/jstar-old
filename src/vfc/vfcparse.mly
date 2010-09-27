@@ -42,6 +42,7 @@ open VfcAST
 %token GET 
 %token PUT
 %token WAIT 
+%token INV
 
 %token <int> INTEGER_CONSTANT
 %token <string> IDENTIFIER 
@@ -115,14 +116,15 @@ exp_list:
 op: 
  | PLUS  { Add } 
  | MINUS { Sub } 
- | STAR  { Mult } 
+ | STAR STAR { Mult } 
  | BANG  { Neg }
+ | STAR { Deref }
 ; 
 stmt: 
  | stack_type IDENTIFIER SEMICOLON  { PVar_decl {vname=$2; vtype=$1; kind=Local} }
- | IDENTIFIER EQUALS exp SEMICOLON  { Assign($1, $3) }
- | IDENTIFIER EQUALS L_PAREN pointer_type R_PAREN exp SEMICOLON  { Cast($1, $4, $6) }
- | IDENTIFIER EQUALS exp ARROW IDENTIFIER SEMICOLON  { Field_read($1, $3, $5) }
+ | exp EQUALS exp SEMICOLON  { Assign($1, $3) }
+ | exp EQUALS L_PAREN pointer_type R_PAREN exp SEMICOLON  { Cast($1, $4, $6) }
+ | exp EQUALS exp ARROW IDENTIFIER SEMICOLON  { Field_read($1, $3, $5) }
  | exp ARROW IDENTIFIER EQUALS exp SEMICOLON  { Field_assn($1, $3, $5) }
  | SKIP SEMICOLON  { Skip }
  | IF L_PAREN exp R_PAREN stmt ELSE stmt SEMICOLON  { If($3, $5, $7) }
@@ -139,6 +141,7 @@ stmt:
  | GET L_PAREN exp COMMA exp COMMA exp COMMA exp R_PAREN SEMICOLON  { Get($3,$5,$7,$9) }
  | PUT L_PAREN exp COMMA exp COMMA exp COMMA exp R_PAREN SEMICOLON  { Put($3,$5,$7,$9) } 
  | WAIT L_PAREN exp R_PAREN SEMICOLON  { Wait($3) }
+ | INV IDENTIFIER  { Inv($2) }
 ; 
 stmt_list: 
  | stmt  { [$1] }

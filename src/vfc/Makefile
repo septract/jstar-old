@@ -24,9 +24,9 @@ ABDUCTFRONT_SOURCES = vfcAST.ml vfcparse.mly vfclex.mll vfc2core.ml vfcfront.ml
 TOPLEVEL_SOURCES = $(ABDUCTFRONT_SOURCES)
 
 DEFAULT_ARGS = SOURCES="$(TOPLEVEL_SOURCES)" \
-       LIBS="str unix utils prover_syntax symbexe_syntax prover" \
+       LIBS="str unix utils prover_syntax symbexe_syntax jimple_syntax prover symbexe parsing" \
        OCAMLLDFLAGS="-g -I $(LIB)" \
-       INCDIRS="../utils ../prover_syntax ../symbexe_syntax ../prover" \
+       INCDIRS="../prover ../prover_syntax ../parsing ../symbexe_syntax ../utils ../jimple_syntax ../symbexe" \
        OCAMLFLAGS="-g" \
        TRASH=""
 

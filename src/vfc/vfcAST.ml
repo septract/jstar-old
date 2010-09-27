@@ -4,6 +4,7 @@ type var_id = string
 type field_id = string
 type struct_id = string
 type fun_id = string
+type inv_id = string
 
 type vfc_type =
   | Bool
@@ -31,6 +32,7 @@ and op =
   | Sub 
   | Neg
   | Mult 
+  | Deref
  
 and pexp = 
   | Int_const of int
@@ -46,9 +48,9 @@ and field = {
 
 and stmt = 
   | PVar_decl of pvar 
-  | Assign of var_id * pexp
-  | Cast of var_id * vfc_type * pexp  
-  | Field_read of var_id * pexp * field_id 
+  | Assign of pexp * pexp
+  | Cast of pexp * vfc_type * pexp  
+  | Field_read of pexp * pexp * field_id 
   | Field_assn of pexp * field_id * pexp
   | Skip
   | If of pexp * stmt * stmt
@@ -64,6 +66,7 @@ and stmt =
   | Get of pexp * pexp * pexp * pexp 
   | Put of pexp * pexp * pexp * pexp 
   | Wait of pexp 
+  | Inv of inv_id
 
 and fun_def = {
   fun_name : fun_id;

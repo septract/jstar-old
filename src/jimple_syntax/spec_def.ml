@@ -46,3 +46,8 @@ type class_spec = {
 	exports: exports_clause;
 	axioms: axioms_clause;
 	methodspecs: methodspecs }
+
+
+type vfc_spec = 
+  |  Vfc_inv of string * Psyntax.pform 
+  |  Vfc_fun of string * Psyntax.pform * Psyntax.pform 

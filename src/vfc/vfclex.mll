@@ -24,6 +24,7 @@ let keyword_al = [
   ( "get", GET ); 
   ( "put", PUT ); 
   ( "wait", WAIT ); 
+  ( "inv", INV ); 
 ]
 
 }

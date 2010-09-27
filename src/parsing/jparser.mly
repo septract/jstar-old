@@ -326,6 +326,9 @@ let field_signature2str fs =
 %start symb_question_file
 %type <Methdec_core.symb_question list> symb_question_file 
 
+%start vfc_spec_file
+%type <Spec_def.vfc_spec list> vfc_spec_file 
+
 %% /* rules */
 
 
@@ -1160,5 +1163,12 @@ label_list:
    |  IDENTIFIER COMMA label_list   { $1 :: $3 }
 
 
+vfc_spec_file: 
+   | EOF  { [] }
+   | vfc_spec vfc_spec_file { $1 :: $2 }
+
+vfc_spec: 
+   | IDENTIFIER L_BRACE formula R_BRACE L_BRACE formula R_BRACE  { Vfc_fun($1,$3,$6) } 
+   | IDENTIFIER L_BRACE formula R_BRACE  { Vfc_inv($1,$3) }
 
 %% (* trailer *)
