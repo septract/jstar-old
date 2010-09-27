@@ -1,0 +1,73 @@
+//{{{ Issues
+// * finalize: we need a logic rule that is applied only if necessary
+// * rewrite rules for read/write predicates
+// * @caller, @return, @this
+// * do we need xor? (this state `xor' that state)
+// * what's the scope for abstract predicate names?
+//}}}
+//{{{ java.*
+class java.lang.Object {
+  void <init>(): {} {};
+}
+class java.lang.Integer {
+  java.lang.Integer valueOf(int) : {} {};
+}
+//}}}
+//{{{ List
+class List {
+  static void <init>() : {} {access(@this:,Z)};
+  static void add(java.lang.Object) : {} {};
+  static int size() : {} {};
+  static Iterator iterator() : {} {};
+  static void remove(java.lang.Object) : {} {};
+}
+//}}}
+//{{{ List$LI
+class List$LI {
+  void <init>(List$Node) : {} {};
+  boolean hasNext(): {}{};
+  java.lang.Object next(): {}{};
+}
+//}}}
+//{{{List$Node
+class List$Node {
+  void <init>(java.lang.Object,List$Node): {} {};
+}
+//}}}
+//{{{ Collection
+interface Collection {
+  static void add(java.lang.Object) : 
+      {access(@this:,Z)}
+      {access(@this:,Z)};
+  void remove(java.lang.Object) : 
+      {access(@this:,Z)}
+      {access(@this:,Z)};
+  int size() : 
+      {}
+      {};
+  Iterator iterator() : 
+      {access(@this:,_x)} 
+      {access(@this:,S(_x)) * iterator($ret_val,{c=@this:})};
+}
+//}}}
+//{{{ Iterator
+class Iterator {
+  define iterator(x,c=c) = iteratorWorking(x,{c=c}) || iteratorDone(x,{c=c});
+  boolean hasNext() : 
+      {iterator(@this:)}
+      {iteratorWorking(@this:) * $ret_val=True}
+    andalso
+      {iterator(@this:)}
+      {iteratorDone(@this:) * $ret_val=False};
+  java.lang.Object next() : 
+      {iteratorWorking(@this:)}
+      {iterator(@this:)};
+}
+//}}}
+//{{{ Client
+class Client {
+  void <init>() : {} {};
+  void main(java.lang.String[]) : {} {};
+}
+//}}}
+

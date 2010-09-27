@@ -2,7 +2,8 @@
 
 open VfcAST
 open Vfclogic
-open Methdec_core
+open Core
+open Cfg_core
 open Spec
 open Psyntax
 
@@ -108,9 +109,11 @@ let retvar_term = mkVar (Spec.ret_v1)
 
 let excep_post_empty = ClassMap.empty
 
+let invariants_empty = LabelMap.empty
+
 (* Assume in core language *)
 let assume_core (e : form) =
-  Assignment_core([], mk_spec [] e excep_post_empty, []) 
+  Assignment_core([], mk_spec [] e excep_post_empty invariants_empty, []) 
 
   
 (* Translation of statement *)
@@ -120,7 +123,7 @@ let rec tr_stmt (s : stmt) : core_statement list =
   
   | Assign (v_id, e) ->
     let post = mkEQ (retvar_term, tr_expr2term e) in
-    let spec = mk_spec [] post excep_post_empty in
+    let spec = mk_spec [] post excep_post_empty invariants_empty in
     [Assignment_core ([prog_var v_id], spec, [])]
 
   | Cast (v_id, t, e) -> [] (* TODO: Handle cast properly *)
@@ -131,7 +134,7 @@ let rec tr_stmt (s : stmt) : core_statement list =
     let x = tr_expr2term e in 
     let pre = mk_pointsto x (mkString f_id) pointed_to_var in
     let post = mkStar (mkEQ (retvar_term, pointed_to_var)) (mk_pointsto x (mkString f_id) pointed_to_var) in
-    let spec = mk_spec pre post excep_post_empty in
+    let spec = mk_spec pre post excep_post_empty invariants_empty in
     [Assignment_core ([prog_var v_id], spec, [])]
   
   | Field_assn (e, f_id, e') -> 
@@ -141,7 +144,7 @@ let rec tr_stmt (s : stmt) : core_statement list =
     let p1 = tr_expr2term e' in
     let pre = mk_pointsto p0 (mkString f_id) pointed_to_var in
     let post = mk_pointsto p0 (mkString f_id) p1 in
-    let spec = mk_spec pre post excep_post_empty in
+    let spec = mk_spec pre post excep_post_empty invariants_empty in
     [Assignment_core ([], spec, [])]
   
   | Skip -> []
@@ -174,7 +177,7 @@ let rec tr_stmt (s : stmt) : core_statement list =
     | Some e' ->
       let p0 = Arg_var (mk_parameter 0) in (* TODO: should be a fresh program variable? *)
       let post = mkEQ (retvar_term, p0) in
-      let spec = mk_spec [] post excep_post_empty in
+      let spec = mk_spec [] post excep_post_empty invariants_empty in
       [Assignment_core ([], spec, [tr_expr2term e']); End]
     | None -> [Nop_stmt_core]
     end
@@ -187,14 +190,15 @@ let rec tr_stmt (s : stmt) : core_statement list =
   | Join t -> []
   | Get (l, h, s, t) -> []
   | Put (l, h, s, t) -> []
-  | Wait (t) -> [] (* TODO: treat via function call *)
+  | Wait t -> [] (* TODO: treat via function call *)
+  | Inv i_id -> [] (* TODO *)
 
 
 let function_signature_str f =
   f.fun_name
   
 
-let verify (spec : Spec.spec)
+let verify (spec : Spec.spec) (* temporary *)
     (prog : vfc_prog)
     (lo : logic) 
     (abs_rules : logic) : unit =
@@ -214,9 +218,9 @@ let verify (spec : Spec.spec)
     | Fun_decl f ->
       let fun_name_str = function_signature_str f in
       let core_stmts = tr_stmt f.body in
-      let methdec_core_stmts = List.map (fun s -> Methdec_core.stmt_create s [] []) core_stmts in
-      Pprinter_core.print_core !file fun_name_str methdec_core_stmts;
-      let res = Symexec.verify fun_name_str methdec_core_stmts spec lo abs_rules in
+      let cfg_nodes = List.map (fun s -> mk_node s) core_stmts in
+      print_core !file fun_name_str cfg_nodes;
+      let res = Symexec.verify fun_name_str cfg_nodes spec lo abs_rules in
       if res then
         Printf.printf "Verification of %s succeeded." (f.fun_name)
       else

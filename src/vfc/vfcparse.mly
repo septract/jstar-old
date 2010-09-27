@@ -50,6 +50,7 @@ open VfcAST
 %token GET 
 %token PUT
 %token WAIT 
+%token INV
 
 %token <int> INTEGER_CONSTANT
 %token <string> IDENTIFIER 
@@ -127,8 +128,9 @@ exp_list:
 op: 
  | PLUS  { Add } 
  | MINUS { Sub } 
- | STAR  { Mult } 
+ | STAR STAR { Mult } 
  | BANG  { Neg }
+ | STAR { Deref }
  | CMPEQ {Cmpeq} 
  | CMPNE {Cmpne} 
  | CMPGT {Cmpgt} 
@@ -159,6 +161,7 @@ stmt:
  | GET L_PAREN exp COMMA exp COMMA exp COMMA exp R_PAREN SEMICOLON  { Get($3,$5,$7,$9) }
  | PUT L_PAREN exp COMMA exp COMMA exp COMMA exp R_PAREN SEMICOLON  { Put($3,$5,$7,$9) } 
  | WAIT L_PAREN exp R_PAREN SEMICOLON  { Wait($3) }
+ | INV IDENTIFIER  { Inv($2) }
 ; 
 stmt_list: 
  | stmt  { [$1] }

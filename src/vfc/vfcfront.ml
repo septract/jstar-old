@@ -21,9 +21,8 @@ let main () : unit =
   else
   begin
     if !Config.smt_run then Smt.smt_init();
-    let vfc_file = open_in !vfc_file_name in 
-    let lexbuf = Lexing.from_channel vfc_file in 
-    let res = Vfcparse.program Vfclex.token lexbuf in 
+    let prog = Vfcparse.program Vfclex.token (Lexing.from_channel (open_in !vfc_file_name)) in 
+    let specs = Jparser.vfc_spec_file Jlexer.token (Lexing.from_channel (open_in !spec_file_name)) in 
     () 
   end
 

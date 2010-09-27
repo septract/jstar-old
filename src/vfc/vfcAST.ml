@@ -4,6 +4,7 @@ type var_id = string
 type field_id = string
 type struct_id = string
 type fun_id = string
+type inv_id = string
 
 type vfc_type =
   | Bool
@@ -31,6 +32,7 @@ and op =
   | Sub 
   | Neg
   | Mult 
+  | Deref
   | Cmpeq
   | Cmpne
   | Cmpgt
@@ -75,8 +77,9 @@ and stmt =
   | Fork of var_id * fun_id * pexp list
   | Join of pexp 
   | Get of pexp * pexp * pexp * pexp 
-  | Put of pexp * pexp * pexp * pexp 
-  | Wait of pexp 
+  | Put of pexp * pexp * pexp * pexp
+  | Wait of pexp   
+  | Inv of inv_id
 
 and fun_def = {
   fun_name : fun_id;

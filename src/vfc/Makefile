@@ -1,9 +1,21 @@
-export OCAMLMAKEFILE = OcamlMakefile
-export OCAMLYACC = ocamlyacc -v
-export OCAMLC = ocamlc.opt -dtypes
-export OCAMLOPT = ocamlopt.opt -dtypes
-export OCAMLDEP = ocamldep.opt
-export OCAMLDOC = ocamldoc.opt
+ifndef OCAMLMAKEFILE
+	export OCAMLMAKEFILE = OcamlMakefile
+endif
+ifndef OCAMLYACC
+	export OCAMLYACC = ocamlyacc -v
+endif
+ifndef OCAMLC
+	export OCAMLC = ocamlc.opt -annot
+endif 
+ifndef OCAMLOPT
+	export OCAMLOPT = ocamlopt.opt -annot
+endif 
+ifndef OCAMLDEP
+	export OCAMLDEP = ocamldep.opt
+endif 
+ifndef OCAMLDOC
+	export OCAMLDOC = ocamldoc.opt
+endif 
 
 ifndef BIN
 	BIN := ../../bin
@@ -18,15 +30,12 @@ export LIB
 
 INCLUDES = 
 
-ABDUCTFRONT_SOURCES = vfcAST.ml vfcparse.mly vfclex.mll vfclogic.ml vfc2core.ml vfcfront.ml
+VFCFRONT_SOURCES = vfcAST.ml vfcparse.mly vfclex.mll vfclogic.ml vfc2core.ml vfcfront.ml
 
-
-TOPLEVEL_SOURCES = $(ABDUCTFRONT_SOURCES)
-
-DEFAULT_ARGS = SOURCES="$(TOPLEVEL_SOURCES)" \
-       LIBS="str unix utils prover_syntax symbexe_syntax prover symbexe" \
+DEFAULT_ARGS = SOURCES="$(VFCFRONT_SOURCES)" \
+       LIBS="str unix utils prover_syntax symbexe_syntax jimple_syntax prover symbexe parsing" \
        OCAMLLDFLAGS="-g -I $(LIB)" \
-       INCDIRS="../utils ../prover_syntax ../symbexe_syntax ../prover ../symbexe" \
+       INCDIRS="../prover ../prover_syntax ../parsing ../symbexe_syntax ../utils ../jimple_syntax ../symbexe" \
        OCAMLFLAGS="-g" \
        TRASH=""
 
