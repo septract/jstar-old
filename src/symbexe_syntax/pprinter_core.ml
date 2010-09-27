@@ -10,13 +10,14 @@
    jStar is distributed under a BSD license,  see, 
       LICENSE.txt
  ********************************************************)
+open Core
 open Psyntax
-open Methdec_core
 open Spec
 
-let core_debug () = false
+(** Pretty printer for core programs. Note that this handles a lot more
+  than the data structure in core.ml. *)
 
-(* =================== PPrinter for core  ============================ *)
+let core_debug () = false
 
 let rec args2str  arg = 
   match arg with 
@@ -85,23 +86,6 @@ let pp_stmt_core (ppf: Format.formatter) : core_statement -> unit =
 	"throw %a;"
 	string_args a
   | End -> Format.fprintf ppf "end;"
-
-
-(* Print a sequence of core statements to a file *)
-let print_core 
-    (filename : string) 
-    (mname: string) 
-    (stmts : stmt_core list) : unit =
-
-  if core_debug () then ignore (Printf.printf "\n\nPrinting core file for method %s..." mname); 
-  
-  (* FIXME: Don't understand why I can't use Format.formatter_of_out_channel *)
-  let cstr = Format.flush_str_formatter 
-     (List.iter (fun x -> pp_stmt_core Format.str_formatter x.skind;
-	             Format.pp_print_newline Format.str_formatter () ) stmts) in 
-  let chan = open_out (filename ^ "." ^ mname ^ ".core") in 
-  Printf.fprintf chan "%s" cstr; 
-  close_out chan; 
 
 
 

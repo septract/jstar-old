@@ -1,0 +1,27 @@
+import "field_logic";
+
+rule same_c:
+ | C(?x,?y) |- C(?x,?z)
+if
+C(?x,?y) | |- ?y=?z
+
+rule same_root:
+ | C(?x,?y) |- C(?z,?y)
+without
+ ?x!=?z
+if
+C(?x,?y) | |- ?x=?z
+
+rule same_c_CELL:
+ | C$CELL(?x,?y) |- C$CELL(?x,?z)
+if
+C$CELL(?x,?y) | |- ?y=?z
+
+rule same_root_CELL:
+ | C$CELL(?x,?y) |- C$CELL(?z,?y)
+without
+ ?x!=?z
+if
+C$CELL(?x,?y) | |- ?x=?z
+
+

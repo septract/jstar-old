@@ -1,4 +1,4 @@
 open VfcAST
-open Methdec_core
+open Core
 
 let translate_statement s : core_statement list = []
