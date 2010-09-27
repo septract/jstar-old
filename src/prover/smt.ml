@@ -377,7 +377,7 @@ let finish_him
 
 let true_sequent_smt (seq : sequent) : bool =  
   (Clogic.true_sequent seq)
-    ||
+(*    ||
   (* Call the SMT if the other check fails *)
   (if (not !Config.smt_run) then false 
   else 
@@ -387,19 +387,19 @@ let true_sequent_smt (seq : sequent) : bool =
     &&
    Clogic.plain seq.obligation 
     && 
-   finish_him seq.ts seq.assumption seq.obligation))
+   finish_him seq.ts seq.assumption seq.obligation)) *)
 
 
 let frame_sequent_smt (seq : sequent) : bool = 
-  (seq.obligation = empty) 
-    ||
+  (Clogic.frame_sequent seq) 
+(*    ||
   (if (not !Config.smt_run) then false 
   else 
   (if Config.smt_debug() 
    then Format.printf "Calling SMT to get frame from\n %a\n" Clogic.pp_sequent seq; 
    Clogic.plain seq.obligation
     && 
-   finish_him seq.ts seq.assumption seq.obligation))
+   finish_him seq.ts seq.assumption seq.obligation)) *)
 
 
 

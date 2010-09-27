@@ -15,8 +15,6 @@ open Printing
 open Psyntax
 open Vars
 
-let cycle_gensym = ref (0)
-
 type term_handle = CC.constant
 
 type pattern = CC.curry_term
