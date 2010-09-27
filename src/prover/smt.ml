@@ -54,16 +54,24 @@ let smt_init () : unit =
   if Config.smt_debug() then Format.printf "Initialising SMT\n"; 
   (try Config.solver_path := Sys.getenv "JSTAR_SMT_PATH" with Not_found -> ()); 
   let path = !Config.solver_path in 
-  let o, i, e = Unix.open_process_full path (environment()) in 
-  smtout := o;  smtin := i;  smterr := e;
-  smtout_lex := Lexing.from_channel !smtout; 
-  Config.smt_run := true; 
-  if Config.smt_debug() then Format.printf "SMT running...\n"
+  try 
+    let s = Unix.stat path in 
+    let o, i, e = Unix.open_process_full path (environment()) in 
+    smtout := o;  smtin := i;  smterr := e;
+    smtout_lex := Lexing.from_channel !smtout; 
+    Config.smt_run := true; 
+    if Config.smt_debug() then Format.printf "SMT running...\n"
+  with 
+  | Unix_error(err,f,a) -> 
+    match err with 
+    | ENOENT -> Format.printf "@,@{<b>ERROR:@} SMT solver not found.@,"; 
+                Config.smt_run := false 
+    | _ -> raise (Unix_error(err,f,a))
 
 
 let smt_fatal_recover () : unit  = 
-  Format.printf "@[@{<b>SMT ERROR:@} "; 
-  Format.printf "Oh noes! The SMT solver died for some reason. This shouldn't happen.\n"; 
+  Format.printf "@,@{<b>SMT ERROR:@} "; 
+  Format.printf "Oh noes! The SMT solver died for some reason. This shouldn't happen.@,"; 
   if Config.smt_debug() then 
     begin
       Format.printf "Error report from the solver:\n";
