@@ -31,10 +31,23 @@ and op =
   | Sub 
   | Neg
   | Mult 
- 
-and pexp = 
+  | Cmpeq
+  | Cmpne
+  | Cmpgt
+  | Cmplt
+  | Cmpge
+  | Cmple
+  | And
+  | Or 
+
+and const =
+(*  | Null_const*)
   | Int_const of int
-  | PVar of var_id
+(*  | Bool_const of bool*)
+  
+and pexp = 
+  | Const of const
+  | PVar_ref of var_id
   (*| JVar of var*)
   | Prim_op of op * (pexp list) 
  

@@ -35,6 +35,14 @@ open VfcAST
 %token MINUS
 %token STAR
 %token BANG
+%token AND
+%token OR
+%token CMPEQ
+%token CMPNE
+%token CMPGT
+%token CMPGE
+%token CMPLT
+%token CMPLE
 %token ARROW
 %token EOF
 %token THREAD 
@@ -102,11 +110,15 @@ fun_decl:
 var_list: 
  | stack_type IDENTIFIER { [{vname=$2; vtype=$1; kind=Parameter}] }
  | stack_type IDENTIFIER COMMA var_list { {vname=$2; vtype=$1; kind=Parameter} :: $4 }
+;
+const:
+ | INTEGER_CONSTANT  { Int_const($1) }
+ /* todo: BOOLEAN_CONSTANT and NULL_CONSTANT */
 ; 
 exp: 
- | INTEGER_CONSTANT  { Int_const($1) }
+ | const  { Const($1) }
  | op L_PAREN exp_list R_PAREN  { Prim_op($1, $3) }
- | IDENTIFIER        { PVar($1) }
+ | IDENTIFIER        { PVar_ref($1) }
 ; 
 exp_list: 
  | /* empty */   { [] }
@@ -117,6 +129,14 @@ op:
  | MINUS { Sub } 
  | STAR  { Mult } 
  | BANG  { Neg }
+ | CMPEQ {Cmpeq} 
+ | CMPNE {Cmpne} 
+ | CMPGT {Cmpgt} 
+ | CMPGE {Cmpge} 
+ | CMPLT {Cmplt} 
+ | CMPLE {Cmple} 
+ | AND {And}   
+ | OR  {Or}    
 ; 
 stmt: 
  | stack_type IDENTIFIER SEMICOLON  { PVar_decl {vname=$2; vtype=$1; kind=Local} }

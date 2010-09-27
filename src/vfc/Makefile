@@ -18,15 +18,15 @@ export LIB
 
 INCLUDES = 
 
-ABDUCTFRONT_SOURCES = vfcAST.ml vfcparse.mly vfclex.mll vfc2core.ml vfcfront.ml
+ABDUCTFRONT_SOURCES = vfcAST.ml vfcparse.mly vfclex.mll vfclogic.ml vfc2core.ml vfcfront.ml
 
 
 TOPLEVEL_SOURCES = $(ABDUCTFRONT_SOURCES)
 
 DEFAULT_ARGS = SOURCES="$(TOPLEVEL_SOURCES)" \
-       LIBS="str unix utils prover_syntax symbexe_syntax prover" \
+       LIBS="str unix utils prover_syntax symbexe_syntax prover symbexe" \
        OCAMLLDFLAGS="-g -I $(LIB)" \
-       INCDIRS="../utils ../prover_syntax ../symbexe_syntax ../prover" \
+       INCDIRS="../utils ../prover_syntax ../symbexe_syntax ../prover ../symbexe" \
        OCAMLFLAGS="-g" \
        TRASH=""
 

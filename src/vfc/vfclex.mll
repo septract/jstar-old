@@ -65,6 +65,14 @@ rule token = parse
    | "-" { MINUS }
    | "*" { STAR }
    | "!" { BANG }
+   | "&" { AND }
+   | "|" { OR }
+   | "==" { CMPEQ }
+   | "!=" { CMPNE }
+   | ">" { CMPGT }
+   | ">=" { CMPGE }
+   | "<" { CMPLT }
+   | "<=" { CMPLE }
    | "->" { ARROW }
    | eof { EOF }
 
