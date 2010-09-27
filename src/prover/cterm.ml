@@ -11,8 +11,9 @@
       LICENSE.txt
  ********************************************************)
 open Congruence
-open Vars
+open Printing
 open Psyntax
+open Vars
 
 let cycle_gensym = ref (0)
 
@@ -104,7 +105,7 @@ let has_pp_c ts c : bool =
 (* Remove pattern match variables from pretty print where possible *)
 let rec get_pargs norm ts rs rep : Psyntax.args =
   if List.mem rep rs then 
-    if rep != CC.normalise ts.cc rep then 
+    if rep <> CC.normalise ts.cc rep then 
       (* TODO: Add topological sorting to avoid printing this if possible.
          If not possible should introduce a new variable. *)
      (let cname = Printf.sprintf "CYCLE%i" (CC.const_int rep ts.cc) in 
@@ -187,11 +188,10 @@ let pp_c norm ts ppf c : unit =
     (* Should call has_pp_c to check it can be pretty printed *)
     Format.fprintf ppf "No PP" (*assert false*)
 
-let pp_ts ppf ts =
-  CC.pretty_print (has_pp_c ts) (pp_c false ts) ppf ts.cc 
+let pp_ts' pp ppf first ts =
+  CC.pretty_print' (has_pp_c ts) (pp_c false ts) pp ppf first ts.cc
 
-let pp_ts_nonemp ppf ts =
-  CC.pretty_print_nonemp (has_pp_c ts) (pp_c false ts) ppf ts.cc 
+let pp_ts = pp_whole pp_ts' pp_star
 
 let pp_c ts ppf c = CC.pp_c ts.cc (pp_c true ts) ppf c
 
@@ -216,19 +216,19 @@ let rec add_term params pt ts : 'a * term_structure =
 		  (*assert (unif);   FIX this later.*)
 		  (* if not add to ts, and return constant to it *)
 		  let c,cc = CC.fresh_unifiable ts.cc in 
-		  lift(c), {ts with cc = cc; avars = VarMap.add (v) c ts.avars; originals = CMap.add c (FArg_var (Vars.freshen v))  ts.originals }  
+		  lift(c), {ts with cc = cc; avars = VarMap.add (v) c ts.avars; originals = CMap.add c (FArg_var (Vars.freshen_exists v))  ts.originals }  
 	      end
           | PVar (n,_) -> 
 	      (* Check if variable is in current map *)
 	      begin
 		try 
-		  lift(VarMap.find v (if fresh && n!=0 then ts.apvars else ts.pvars)), ts 
+		  lift(VarMap.find v (if fresh && n<>0 then ts.apvars else ts.pvars)), ts 
 		with Not_found ->
 		  (* if not add to ts, and return constant to it *)
 		  let c,cc = CC.fresh ts.cc in
 		  (*let c,cc = app cc lift(ts.var) lift(c) in  *)
-		  if fresh && n!=0 then 
-		    lift c,{ts with cc = cc; apvars = VarMap.add (v) c ts.apvars; originals = CMap.add c (FArg_var (freshen v))  ts.originals }  
+		  if fresh && n<>0 then 
+		    lift c,{ts with cc = cc; apvars = VarMap.add (v) c ts.apvars; originals = CMap.add c (FArg_var (freshen_exists v))  ts.originals }  
 		  else 
 		    lift c, {ts with cc = cc; pvars = VarMap.add (v) c ts.pvars; originals = CMap.add c (FArg_var v)  ts.originals }  
 	      end
@@ -242,7 +242,7 @@ let rec add_term params pt ts : 'a * term_structure =
 		    if unif then CC.fresh_unifiable_exists ts.cc 
 		    else CC.fresh_exists ts.cc in
 		  if fresh then
-		    lift(c), {ts with cc = cc; aevars = VarMap.add v c ts.aevars; originals = CMap.add c (FArg_var (Vars.freshen v))  ts.originals }  
+		    lift(c), {ts with cc = cc; aevars = VarMap.add v c ts.aevars; originals = CMap.add c (FArg_var (Vars.freshen_exists v))  ts.originals }  
 		  else
 		    lift(c), {ts with cc = cc; evars = VarMap.add v c ts.evars; originals = CMap.add c (FArg_var v)  ts.originals }  
 	      end
@@ -487,7 +487,7 @@ let kill_var ts v =
 	  {ts with 
 	    pvars = pvars; 
 	    cc = cc;
-	    originals = CMap.add r (FArg_var (Vars.freshen v)) (CMap.remove r ts.originals)}
+	    originals = CMap.add r (FArg_var (Vars.freshen_exists v)) (CMap.remove r ts.originals)}
       |  _ -> {ts with cc=cc; pvars = pvars} 
     end
   with Not_found -> 
@@ -574,7 +574,7 @@ let var_not_used_in ts var reps : bool =
     EVar _ -> 
       begin
 	try 
-	  CC.rep_not_used_in ts.cc (VarMap.find var ts.evars) reps 	  
+	  CC.rep_not_used_in ts.cc (VarMap.find var ts.aevars) reps 	  
 	with Not_found -> 
 	  (* TODO Check that returning false is sensible.
 	     Printf.printf "Could not find existential! Impossible!";
@@ -585,6 +585,15 @@ let var_not_used_in ts var reps : bool =
       Printf.printf "Don't use non-existential variables in notincontext stuff.";
       assert false 
 
+let var_not_used_in_term ts var term : bool =
+  (* TODO: This ts is not return, potentially dangerous. Further review required. *)
+  let pat,ts = add_pattern term ts in
+  let rec pat_to_const pat reps = 
+     match pat with 
+     | CC.Constant c -> c::reps 
+     | CC.App (c1,c2) -> pat_to_const c1 (pat_to_const c2 reps) in   
+  let reps = pat_to_const pat [] in
+  var_not_used_in ts var reps
 
 let add_constructor 
     (fn : string) 

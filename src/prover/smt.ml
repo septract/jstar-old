@@ -62,7 +62,7 @@ let smt_init () : unit =
 
 
 let smt_fatal_recover () : unit  = 
-  System.warning();
+  Format.printf "\n@{<b>SMT ERROR:@} "; 
   Format.printf "Oh noes! The SMT solver died for some reason. This shouldn't happen.\n"; 
   if Config.smt_debug() then 
     begin
@@ -73,7 +73,6 @@ let smt_fatal_recover () : unit  =
   Format.printf "Turning off SMT for this example..."; 
   Unix.close_process_full (!smtout, !smtin, !smterr); 
   Format.printf "SMT off.\n"; 
-  System.reset(); 
   Format.print_flush(); 
   Config.smt_run := false 
 
@@ -112,7 +111,7 @@ let rec list_to_pairs
 (* We should probably handle this in a more principled way *)
 
 let cmd_munge (s : string) : string = 
-  let s = Str.global_replace (Str.regexp "@") "AT_" s in
+  let s = Str.global_replace (Str.regexp "[@\$]") "AT_" s in
   s
   
 let str_munge (s : string ) : string = 
@@ -368,7 +367,7 @@ let finish_him
   with 
   | SMT_error r -> 
     smt_reset(); 
-    System.warning(); Format.printf "SMT error: %s\n" r; System.reset(); 
+    Format.printf "@{<b>SMT ERROR@}: %s\n" r; 
     Format.print_flush(); 
     false
   | SMT_fatal_error -> 
@@ -459,7 +458,7 @@ let ask_the_audience
   with 
   | SMT_error r -> 
     smt_reset(); 
-    System.warning(); Format.printf "SMT error: %s\n" r; System.reset(); 
+    Format.printf "@{<b>SMT ERROR@}: %s\n" r;
     Format.print_flush(); 
     raise Backtrack.No_match
   | SMT_fatal_error -> 

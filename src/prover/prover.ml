@@ -12,31 +12,28 @@
  ********************************************************)
 
 
-open Cterm
+open Backtrack
 open Clogic
-open Vars
-open Misc
+open Cterm
 open Debug
+open Format
+open Misc
 open Psyntax
 open Backtrack
 open Smt
-
+open Vars
 
 let prover_counter_example : Clogic.sequent list ref = ref []
-let print_counter_example ()  = 
-  Format.printf "Needed to prove:@   @[%a@]@\n@\n"
-    (Debug.list_format "\nor" Clogic.pp_sequent)
-    !prover_counter_example
 
 let pprint_counter_example ppf () = 
-  Format.fprintf ppf "Needed to prove:@   @[%a@]@\n@\n"
-    (Debug.list_format "\nor" Clogic.pp_sequent)
+  fprintf ppf "Needed to prove:@   @[%a@]@\n@\n"
+    (list_format "\nor" Clogic.pp_sequent)
     !prover_counter_example
 
+let print_counter_example = pprint_counter_example std_formatter
 
-let pprint_proof chan = 
-  let s = Buffer.contents buffer_dump in 
-  output_string chan s
+let pprint_proof (f : formatter) : unit = 
+  fprintf f "%s" (Buffer.contents buffer_dump)
 
 let string_of_proof () =
   Buffer.contents buffer_dump
@@ -68,9 +65,9 @@ let rec sequents_backtrack
       try f seqs 
       with 
 	Failed ->  
-	  Format.fprintf !proof_dump "Backtracking!@\n"; sequents_backtrack f seqss xs
+	  fprintf !proof_dump "Backtracking!@\n"; sequents_backtrack f seqss xs
       | Failed_eg x -> 
-	  Format.fprintf !proof_dump "Backtracking!@\n"; sequents_backtrack f seqss (x @ xs)
+	  fprintf !proof_dump "Backtracking!@\n"; sequents_backtrack f seqss (x @ xs)
 
 let apply_rule_list 
     (logic : logic) 
@@ -83,9 +80,9 @@ let apply_rule_list
   Buffer.clear buffer_dump;
 (*  let rules,rwm,ep = logic in *)
   let n = 0 in
-  if true || Config.verb_proof()  then
-    (List.iter (fun seq -> Format.fprintf !proof_dump "Goal@ %a@\n@\n" Clogic.pp_sequent seq) sequents;
-     Format.fprintf !proof_dump "Start time :%f @\n" (Sys.time ()));
+  if log log_prove then
+    (List.iter (fun seq -> fprintf !proof_dump "Goal@ %a@\n@\n" Clogic.pp_sequent seq) sequents;
+     fprintf !proof_dump "Start time :%f @\n" (Sys.time ()));
   let rec apply_rule_list_inner sequents n : Clogic.sequent list = 
     let search seqss : Clogic.sequent list = 
       sequents_backtrack 
@@ -95,7 +92,7 @@ let apply_rule_list
     List.flatten 
       (List.map 
 	 (fun seq ->
-	   Format.fprintf !proof_dump "%s>@[%a@]@\n@." (String.make n '-') Clogic.pp_sequent seq;
+	   fprintf !proof_dump "%s>@[%a@]@\n@." (String.make n '-') Clogic.pp_sequent  seq;
 	   if must_finish seq then 
 	     [seq]
 	   else
@@ -120,7 +117,9 @@ let apply_rule_list
 	 ) sequents 
       )
   in let res = apply_rule_list_inner sequents n in 
-  if true || Config.verb_proof()  then Format.fprintf !proof_dump "End time :%f @\n@?" (Sys.time ()); res
+  if log log_prove then 
+    fprintf !proof_dump "@\nEnd time :%f@ " (Sys.time ());
+  res
 
 let check_imp (logic : logic) (seq : sequent) : bool = 
     try 
@@ -138,8 +137,8 @@ let check_frm (logic : logic) (seq : sequent) : Clogic.ts_formula list option =
     let leaves = apply_rule_list logic [seq] (fun _ -> false) Smt.frame_sequent_smt in 
     Some (Clogic.get_frames leaves)
   with 
-    Failed -> Format.fprintf !(Debug.proof_dump) "Foo55";None 
-  | Failed_eg x -> Format.fprintf !(Debug.proof_dump) "Foo44"; prover_counter_example := x; None 
+    Failed -> fprintf !proof_dump "Foo55";None 
+  | Failed_eg x -> fprintf !proof_dump "Foo44"; prover_counter_example := x; None 
 
 
 let check_implication_frame_pform logic heap pheap  =  
