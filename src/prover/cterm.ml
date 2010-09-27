@@ -143,10 +143,11 @@ let rec get_pargs norm ts rs rep : Psyntax.args =
   with Not_found -> Arg_op ("NOT_FOUND", []) 
 
 
-(* Remove pattern match variables from pretty print where possible *)
+(* A version of get_pargs which hides records, for use in SMT *)
+(* TODO: factor out both get_pargs into a single function *)
 let rec get_pargs_norecs norm ts rs rep : Psyntax.args =
   if List.mem rep rs then 
-    if rep != CC.normalise ts.cc rep then 
+    if rep <> CC.normalise ts.cc rep then 
       (* TODO: Add topological sorting to avoid printing this if possible.
          If not possible should introduce a new variable. *)
      (let cname = Printf.sprintf "CYCLE%i" (CC.const_int rep ts.cc) in 
@@ -447,13 +448,14 @@ let get_neqs ts : (Psyntax.args * Psyntax.args ) list =
   let mask = has_pp_c ts in 
   let map = fun c -> get_pargs false ts [] c in 
   CC.get_neqs mask map ts.cc 
-  
-  
+
+
+
+(* Versions of get_eqs and get_neqs that hide records *)  
 let get_eqs_norecs ts : (Psyntax.args * Psyntax.args ) list = 
   let mask = has_pp_c ts in 
   let map = fun c -> get_pargs_norecs false ts [] c in 
   CC.get_eqs mask map ts.cc 
-
 
 let get_neqs_norecs ts : (Psyntax.args * Psyntax.args ) list = 
   let mask = has_pp_c ts in 
