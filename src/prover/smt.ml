@@ -62,7 +62,7 @@ let smt_init () : unit =
 
 
 let smt_fatal_recover () : unit  = 
-  Format.printf "\n@{<b>SMT ERROR:@} "; 
+  Format.printf "@[@{<b>SMT ERROR:@} "; 
   Format.printf "Oh noes! The SMT solver died for some reason. This shouldn't happen.\n"; 
   if Config.smt_debug() then 
     begin
@@ -70,7 +70,7 @@ let smt_fatal_recover () : unit  =
       try while true do Format.printf "%s\n" (input_line !smterr) done
       with End_of_file -> ()
     end; 
-  Format.printf "Turning off SMT for this example..."; 
+  Format.printf "Turning off SMT for this example...@]"; 
   Unix.close_process_full (!smtout, !smtin, !smterr); 
   Format.printf "SMT off.\n"; 
   Format.print_flush(); 

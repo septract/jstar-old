@@ -897,8 +897,8 @@ let make_implies (heap : ts_formula) (pheap : pform) : sequent =
 
 let make_syntactic ts_form =
   let ts,form = break_ts_form ts_form in
-  let eqs = get_eqs ts in
-  let neqs = get_neqs ts in
+  let eqs = Cterm.get_eqs ts in
+  let neqs = Cterm.get_neqs ts in
 
   let rec form_to_syntax form =
     let convert_tuple r =

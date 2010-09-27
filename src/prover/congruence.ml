@@ -1198,25 +1198,6 @@ module PersistentCC (A : GrowablePersistentArray) : PCC =
     let others ts c = 
       A.get ts.classlist c 
 
-    let get_eqs mask map ts = 
-      let acc = ref [] in 
-      for_each_rep ts 
-	(fun rep  -> 
-	  let rp = map rep in 
-	  List.iter 
-	    (fun i -> if mask i then acc := (rp,map i)::!acc) 
-	    (A.get ts.classlist rep)
-	  ) ;
-      !acc
-
-    let get_neqs mask map ts =
-      let acc = ref [] in 
-      CCMap.iter 
-	(fun (a,b) () ->
-	  acc := (map (rep ts a),map (rep ts b))::!acc)
-	ts.not_equal
-      ; !acc
-      
    let rec inter_list (i : int) (j : int) : int list =  if i > j then [] else (i :: inter_list (i+1) j) 
 
     let get_consts ts = inter_list 0 (A.size ts.representative - 1)
