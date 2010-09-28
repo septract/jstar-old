@@ -15,7 +15,7 @@
 
 open List
 open Printf
-open Methdec_core
+open Core
 open Pprinter_core
 open Load_logic
 open Psyntax
@@ -53,19 +53,20 @@ let main () : unit =
     let lo = {empty_logic with seq_rules = l1; rw_rules = l2; consdecl = cn} in
     let l1,l2,cn = Load_logic.load_logic  (System.getenv_dirlist "JSTAR_LOGIC_LIBRARY") !absrules_file_name in 
     let abs_rules = {empty_logic with seq_rules = l1; rw_rules = l2; consdecl = cn} in
-    let question_list = System.parse_file Jparser.symb_question_file Jlexer.token !question_file_name "Question" true in
+    let question_list = 
+      System.parse_file 
+          Jparser.symb_question_file 
+          Jlexer.token 
+          !question_file_name 
+          "Question" in
     List.iter (
     fun question ->
       match question with 
-      
        | Specification(mname,spec,core)  ->
           Format.printf "Method: %s\nSpec: %a"  mname  Spec.spec2str spec; 
-       	  let stmts_core = map (fun x -> Methdec_core.stmt_create x [] []) core in 
+       	  let stmts_core = map Cfg_core.mk_node core in 
           if Symexec.verify mname stmts_core spec lo abs_rules then
           Format.printf "Good specification!\n\n" else Format.printf "Bad specification!\n\n" 
-          
-       | _ -> Format.printf "Currently unsupported"
-       
     ) question_list
 
 (*    List.iter (fun x -> pp_stmt_core Format.std_formatter x; 

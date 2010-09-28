@@ -10,10 +10,12 @@
    jStar is distributed under a BSD license,  see, 
       LICENSE.txt
  ********************************************************)
-open Misc
-open Psyntax
-open Persistentarray
 open Backtrack
+open Format
+open Misc
+open Persistentarray
+open Printing
+open Psyntax
 
 (*  Implementation of paper:
     Fast congruence closure and extensions
@@ -127,11 +129,32 @@ module type PCC =
          Also returns a map for the updates to each constant*)
       val compress_full : t -> t*(constant -> constant) 
 
-      (*  Debug stuff *)
+      (* {{{  Debug stuff *)
       val print : t -> unit 
-      val pretty_print : (constant -> bool) -> (Format.formatter -> constant -> unit) -> Format.formatter -> t -> unit 
-      val pretty_print_nonemp : (constant -> bool) -> (Format.formatter -> constant -> unit) -> Format.formatter -> t -> bool
-      val pp_c : t -> (Format.formatter -> constant -> unit) -> (Format.formatter -> constant -> unit)  
+
+      (** Like [pretty_print'], but uses * as separator (so that 
+       * arguments [pp_sep] and [first] are mising). *)
+      val pretty_print : 
+        (constant -> bool) -> 
+        (formatter -> constant -> unit) -> formatter -> t -> unit 
+
+      (** [pretty_print' has_pp pp_c pp_sep ppf first cc] prints to [ppf]
+       * the information in the congruence closure [cc]. Constants involved
+       * in equalities/inequalities are printed using [pp_c], but only when
+       * [has_pp] says that both constants can be handled by [pp_c], otherwise
+       * that particular equality/inequality is omitted. The function [pp_sep]
+       * is used to print separators. The module [Printing] explains how
+       * [first] is used and what the result means. *)
+      val pretty_print' : 
+        (constant -> bool) -> 
+        (formatter -> constant -> unit) ->
+        sep_wrapper -> 
+        formatter -> 
+        bool -> 
+        t -> 
+        bool
+
+      val pp_c : t -> (formatter -> constant -> unit) -> (formatter -> constant -> unit)  
 
       val get_eqs : (constant -> bool) -> (constant -> 'a) -> t -> ('a * 'a) list
       val get_neqs : (constant -> bool) -> (constant -> 'a) -> t -> ('a * 'a) list
@@ -139,9 +162,10 @@ module type PCC =
       val test : unit -> unit
 
       val delete : t -> constant -> t
+      (* }}} *)
     end
 
-module PersistentCC ( A : GrowablePersistentArray) : PCC = 
+module PersistentCC (A : GrowablePersistentArray) : PCC = 
   struct
 	   
     type constant = int
@@ -286,7 +310,7 @@ module PersistentCC ( A : GrowablePersistentArray) : PCC =
     let rec rep_uneq (ts : t) (c : constant) (c2 : constant) : bool = 
       let c = rep ts c in 
       let c2 = rep ts c2 in
-      if c != c2 then
+      if c <> c2 then
 	match A.get ts.constructor c, A.get ts.constructor c2 with 
 	  Not, _
 	| _, Not  (* At least one rep is not constructor, check if we have explicit neq.*) 
@@ -368,174 +392,114 @@ module PersistentCC ( A : GrowablePersistentArray) : PCC =
       true
 	
     let pp_c ts pp ppf i = 
-       (*if true then pp ppf i else Format.fprintf ppf "{%a}_%i" pp i i*)
+       (*if true then pp ppf i else fprintf ppf "{%a}_%i" pp i i*)
       pp ppf (rep ts i)
-	
-    let pretty_print 
-        (has_pp : constant -> bool)  
-	    (pp : Format.formatter -> constant -> unit)  
-	    (ppf : Format.formatter) 
-	    (ts:t) 
-	    : unit = 
-    let rs = ts.representative in 
-    
-    (* Get equalities *)
-	let eqs = List.map (fun i -> (i,(A.get ts.classlist i)))
-	                   (inter_list 0 (A.size rs - 1)) in 
 
-    (* Filter trivial equalities *)
-    let eqs = List.map (fun (i,e) -> 
-	   (i, List.filter (fun x -> i!=x && has_pp x) e )) eqs in 
-	
-	(* Filter useless elements *)
-	let eqs = List.filter (fun (i,e) -> i = (A.get rs i) && 
-	                   match e with [] -> false | _ -> true ) eqs in 
-	
-	(* Print *)
-	let first_elem = ref true in 
-    Debug.list_format "*"
-	   (fun ppf (i,eq) -> 
-	     List.iter
-	      (fun x -> 
-		      if !first_elem then 
-                begin
-                  first_elem := false;
-		          Format.fprintf ppf "%a=%a" pp i pp x
-		        end		    
-              else  Format.fprintf ppf "=%a" pp x
-		      )  eq;
-		  first_elem := true )
-		 ppf eqs;
+    let for_each_rep ts (f : constant -> unit) = 
+      let n = A.size ts.representative in
+      for i = 0 to n-1 do
+	if A.get ts.representative i = i then 
+	  f i 
+      done
 
-    (* Get inequalities *)
-	let neqs = List.map (fun i -> (i,(A.get ts.uselist i)))
-	                    (inter_list 0 (A.size rs - 1)) in
+    let get_eqs mask map ts = 
+      let acc = ref [] in 
+      for_each_rep ts 
+	(fun rep  -> 
+          if mask rep then
+	  let rp = map rep in 
+	  List.iter 
+	    (fun i -> if mask i then acc := (rp,map i)::!acc) 
+	    (A.get ts.classlist rep)
+	  ) ;
+      !acc
 
-    (* Filter *)
-    let neqs = List.flatten 
-       (List.map (fun (i,xs) -> 
-        List.fold_right 
-        (fun x rs -> match x with 
-                     | Complex_eq a -> rs 
-                     | Not_equal a -> if i<a then (i,a)::rs else rs) xs []) neqs) in 
+    let get_neqs mask map ts =
+      let r = Hashtbl.create 13 in (* to take care of duplicates *)
+      CCMap.iter 
+	(fun (a,b) () -> 
+          if mask a && mask b then
+          let a = rep ts a in
+          let b = rep ts b in
+          Hashtbl.add r (map (min a b), map (max a b)) ())
+        ts.not_equal;
+      Hashtbl.fold (fun x _ xs -> x::xs) r []
 
-    (* Put in a star if it's needed *)
-    if (function [] -> false | _ -> true) eqs && 
-       (function [] -> false | _ -> true) neqs then 
-      Format.fprintf ppf " * " ;
-    
-	(* Print neqs *)
-	Debug.list_format "*" 
-	  (fun ppf (i,a) -> Format.fprintf ppf "%a!=%a" pp i pp a ) 
-	  ppf neqs
+    let pretty_print' has_pp pp_term pp ppf first ts =
+      let eqs = get_eqs has_pp (fun x->x) ts in
+      let neqs = get_neqs has_pp (fun x->x) ts in
+      let first = 
+        List.fold_left (pp.separator (pp_eq pp_term) ppf) first eqs in
+      List.fold_left (pp.separator (pp_neq pp_term) ppf) first neqs
 
-    
-
-
-    let pretty_print_nonemp 
-        (has_pp : constant -> bool)  
-	    (pp : Format.formatter -> constant -> unit)  
-	    (ppf : Format.formatter) 
-	    (ts:t) 
-	    : bool = 
-    let rs = ts.representative in 
-    
-    (* Get equalities *)
-	let eqs = List.map (fun i -> (i,(A.get ts.classlist i)))
-	                   (inter_list 0 (A.size rs - 1)) in 
-
-    (* Filter trivial equalities *)
-    let eqs = List.map (fun (i,e) -> 
-	   (i, List.filter (fun x -> i!=x && has_pp x) e )) eqs in 
-	
-	(* Filter useless elements *)
-	let eqs = List.filter (fun (i,e) -> i = (A.get rs i) && 
-	                   match e with [] -> false | _ -> true ) eqs in 
-	
-    (* Get inequalities *)
-	let neqs = List.map (fun i -> (i,(A.get ts.uselist i)))
-	                    (inter_list 0 (A.size rs - 1)) in
-
-    (* Filter *)
-    let neqs = List.flatten 
-       (List.map (fun (i,xs) -> 
-        List.fold_right 
-        (fun x rs -> match x with 
-                     | Complex_eq a -> rs 
-                     | Not_equal a -> if i<a then (i,a)::rs else rs) xs []) neqs) in 
-
-    (* return *)
-    (function [] -> false | _ -> true) eqs || (function [] -> false | _ -> true) neqs
-
-    
-
-
+    let pretty_print has_pp pp_term = 
+      pp_whole (pretty_print' has_pp pp_term) pp_star
 
     let print (ts:t) : unit =
       let rs = ts.representative in 
       let n = A.size rs - 1 in 
-      Format.printf "Rep\n   ";
+      printf "Rep\n   ";
       for i = 0 to n do
-	if i != (A.get rs i) then 
-	  Format.printf "%n|->%n  " i (A.get rs i)
+	if i <> (A.get rs i) then 
+	  printf "%n|->%n  " i (A.get rs i)
       done ;
 
 (* 
-      Format.printf "\nUses";
+      printf "\nUses";
       for i = 0 to n do
 	if (A.get (ts.uselist) i) <> [] then 
 	  begin 
-	    Format.printf "\n%n  |-> " i;
+	    printf "\n%n  |-> " i;
 	    List.iter 
 	      (function
 		  Complex_eq (a,b,c) ->
-		    Format.printf "app(%n,%n)=%n   " a b c
+		    printf "app(%n,%n)=%n   " a b c
 		| Not_equal a ->
-		    Format.printf "%n != %n   " i a
+		    printf "%n != %n   " i a
 		    )
 	      (A.get (ts.uselist) i)
 	  end
       done; 
 *)
 (*
-      Format.printf "\nClass list\n";
+      printf "\nClass list\n";
       for i = 0 to n do 
 	if (A.get (ts.classlist) i) <> [i] then 
 	  begin
-	    Format.printf "%n |->  " i;
+	    printf "%n |->  " i;
 	    List.iter
-	      (fun c -> Format.printf "%n " c)
+	      (fun c -> printf "%n " c)
 	      (A.get (ts.classlist) i);
-	    Format.printf ";\n"
+	    printf ";\n"
 	  end
       done;
 *)
-      Format.printf "\nNot equal\n";
-      CCMap.iter  (fun (a,b) () -> Format.printf "  %n!=%n;\n" a b) ts.not_equal;
+      printf "\nNot equal\n";
+      CCMap.iter  (fun (a,b) () -> printf "  %n!=%n;\n" a b) ts.not_equal;
 
-      Format.printf "\nLookup\n";
-      CCMap.iter  (fun (a,b) (x,y,z) -> Format.printf "  app(%n,%n) |-> (%n,%n,%n);\n" a b x y z) ts.lookup;
+      printf "\nLookup\n";
+      CCMap.iter  (fun (a,b) (x,y,z) -> printf "  app(%n,%n) |-> (%n,%n,%n);\n" a b x y z) ts.lookup;
 
-      Format.printf "\nRev lookup";
+      printf "\nRev lookup";
       for i = 0 to n do
 	if (A.get ts.rev_lookup i) <> [] then
 	  begin
-	    Format.printf "\n %n" i;
+	    printf "\n %n" i;
 	    List.iter
 	      (fun (a,b) -> 
-		Format.printf " = app(%n,%n)" a b )
+		printf " = app(%n,%n)" a b )
 	      (A.get ts.rev_lookup i)
 	  end
       done;
 
-      Format.printf "Injective info:\n";
+      printf "Injective info:\n";
       for i = 0 to n do
 	match A.get ts.constructor i with
 	  Not -> ()
-	| Self -> Format.printf "  inj(%i)\n" i
-	| IApp(a,b) -> Format.printf "  inj(%i) by app(%i,%i)\n" i a b 
+	| Self -> printf "  inj(%i)\n" i
+	| IApp(a,b) -> printf "  inj(%i) by app(%i,%i)\n" i a b 
       done;
-      Format.printf "\n\n"
+      printf "\n\n"
 
 
     let add_lookup ts (a,b,c) =
@@ -622,19 +586,28 @@ module PersistentCC ( A : GrowablePersistentArray) : PCC =
 	     and should have already been removed *)
 	  assert false
 
+    let no_live ts nr = 
+	List.for_all
+	  (fun x -> match (A.get ts.unifiable x) with Standard -> false | _ -> true)
+	  (A.get ts.classlist (rep ts nr)) 
+
+
     let unifiable_merge ts a b : t =
       let vt =
 	match A.get ts.unifiable a , A.get ts.unifiable b with 
-	  Unifiable, Unifiable -> Unifiable
+	| _, Standard -> Standard
+	| Standard, _ -> Deleted
+	| _, Deleted  
+	| Deleted, _ -> Deleted
+	| Unifiable, Unifiable -> Unifiable
 	| Unifiable, UnifiableExists 
 	| UnifiableExists, Unifiable 
 	| UnifiableExists, UnifiableExists -> UnifiableExists
-	| Standard, _ 
-	| _, Standard -> Standard
-	| Exists, _ 
-	| _, Exists -> Exists
-	| c, Deleted -> c
-	| Deleted, _ -> Deleted
+	| Exists, UnifiableExists 
+	| UnifiableExists, Exists 
+	| Exists, Exists 
+	| Exists, Unifiable 
+	| Unifiable, Exists -> Exists
       in
       {ts with 
 	unifiable = A.set ts.unifiable b vt}
@@ -645,13 +618,13 @@ module PersistentCC ( A : GrowablePersistentArray) : PCC =
 	| (a,b)::pending -> 
 	    if !cc_debug then 
 	      begin 
-		Format.printf "Making %i=%i " a b;
-		if pending != [] then 
+		printf "Making %i=%i " a b;
+		if pending <> [] then 
 		  begin
-		    Format.printf "with pending ";
-		    List.iter (fun (a,b) -> Format.printf "(%i,%i) " a b) pending;
+		    printf "with pending ";
+		    List.iter (fun (a,b) -> printf "(%i,%i) " a b) pending;
 		  end;
-		Format.printf " in \n";
+		printf " in \n";
 		print ts;
 	      end;
 	    begin 
@@ -696,23 +669,23 @@ module PersistentCC ( A : GrowablePersistentArray) : PCC =
 
 
     let rec rep_not_used_in (ts : t) ( a : constant) (b : constant list) (visited : constant list) : bool = 
-(*      Format.printf "Looking for %i in @\n" a;
+(*      printf "Looking for %i in @\n" a;
       print ts;
-      Format.printf "Entry points:@ ";
-      List.iter (Format.printf "%i @ ") b;
-      Format.printf "@\n";*)
+      printf "Entry points:@ ";
+      List.iter (printf "%i @ ") b;
+      printf "@\n";*)
       if List.mem a visited then 
 	begin 
-	  Format.printf "Cycle in ts@\n";
+	  printf "Cycle in ts@\n";
 	  print ts; 
-	  Format.printf "Visited@\n @[";
-	  List.iter (Format.printf "%i@ ") visited;
-	  Format.printf "@]@\n";
+	  printf "Visited@\n @[";
+	  List.iter (printf "%i@ ") visited;
+	  printf "@]@\n";
           true
 	end 
       else if List.mem a b then 
 	begin 
-(*	  Format.printf "Foo";*)
+(*	  printf "Foo";*)
 	  false
 	end
       else 
@@ -748,7 +721,7 @@ module PersistentCC ( A : GrowablePersistentArray) : PCC =
 		let ts = add_use ts a (Complex_eq (a,b,c)) in 
 		let ts = add_use ts b (Complex_eq (a,b,c)) in 
 		(* If a is constructor, then so should c be. *)
-		if A.get ts.constructor (rep ts a) != Not then 
+		if A.get ts.constructor (rep ts a) <> Not then 
 		  let ts,pending = make_use_constructor a (ts,[]) (Complex_eq (a,b,c)) in 
 		  propogate ts pending
 		else
@@ -903,13 +876,6 @@ module PersistentCC ( A : GrowablePersistentArray) : PCC =
       assert (invariant ts);
       ts,map
 
-    let for_each_rep ts (f : constant -> unit) = 
-      let n = A.size ts.representative in
-      for i = 0 to n-1 do
-	if A.get ts.representative i = i then 
-	  f i 
-      done
-
     let compress_full ts = 
       let cs = ref [] in 
       for_each_rep ts 
@@ -918,7 +884,7 @@ module PersistentCC ( A : GrowablePersistentArray) : PCC =
 
     let test debug =
       let print_constant ts c =
-	Format.printf "Constant %n has rep %n\n" c (rep ts c) in
+	printf "Constant %n has rep %n\n" c (rep ts c) in
       let nth r1 r2 n = 
 	let rec f n = 
 	  match n with 
@@ -942,10 +908,10 @@ module PersistentCC ( A : GrowablePersistentArray) : PCC =
 	let ts = make_equal ts c0 c2 in 
 	let ts = make_equal ts c1 c4 in
 	if rep_eq ts c1 c2 && rep_eq ts c0 c1 && rep_eq ts c1 c2 && rep_eq ts c2 c3 && rep_eq ts c3 c4
-	then Format.printf "Correct Test 1.\n" 
+	then printf "Correct Test 1.\n" 
 	else 
 	  begin 
-	    Format.printf "Test 1 fails!";
+	    printf "Test 1 fails!";
 	    print_constant ts c1;
 	    print_constant ts c2;
 	    print_constant ts c3;
@@ -956,7 +922,7 @@ module PersistentCC ( A : GrowablePersistentArray) : PCC =
 	 if rep_eq ts c1 c2 || rep_eq ts c0 c1 || rep_eq ts c1 c2 || rep_eq ts c2 c3 || rep_eq ts c3 c4
 	 then 
 	   begin 
-	     Format.printf "Test 2 fails!";
+	     printf "Test 2 fails!";
 	     print_constant ts c1;
 	     print_constant ts c2;
 	     print_constant ts c3;
@@ -964,14 +930,14 @@ module PersistentCC ( A : GrowablePersistentArray) : PCC =
 	     print ts 
 	   end
 	 else 
-	   Format.printf "Correct Test 2.\n" in
+	   printf "Correct Test 2.\n" in
        let _ = 
 	 let ts = make_equal ts c0 c1 in 
 	 if rep_eq ts c1 c2 && rep_eq ts c0 c1 && rep_eq ts c1 c2 && rep_eq ts c2 c3 && rep_eq ts c3 c4
-	 then Format.printf "Correct Test 3.\n" 
+	 then printf "Correct Test 3.\n" 
 	 else 
 	   begin 
-	     Format.printf "Test 3 fails!";
+	     printf "Test 3 fails!";
 	     print_constant ts c1;
 	     print_constant ts c2;
 	     print_constant ts c3;
@@ -983,10 +949,10 @@ module PersistentCC ( A : GrowablePersistentArray) : PCC =
 	 let ts = make_equal ts c0 c2 in 
 	 if rep_eq ts c1 c3 && rep_eq ts c2 c4 && 
 	   (not (rep_eq ts c1 c2)) && (not (rep_eq ts c2 c3)) && (not (rep_eq ts c3 c4))
-	 then Format.printf "Correct Test 4. \n" 
+	 then printf "Correct Test 4. \n" 
 	 else 
 	   begin 
-	     Format.printf "Test 4 fails!";
+	     printf "Test 4 fails!";
 	     print_constant ts c1;
 	     print_constant ts c2;
 	     print_constant ts c3;
@@ -998,7 +964,7 @@ module PersistentCC ( A : GrowablePersistentArray) : PCC =
 	   let ts = make_not_equal ts c0 c2 in 
 	   let ts = make_equal ts c0 c1 in 
 	   begin 
-	     Format.printf "Test 5 fails!";
+	     printf "Test 5 fails!";
 	     print_constant ts c1;
 	     print_constant ts c2;
 	     print_constant ts c3;
@@ -1006,16 +972,16 @@ module PersistentCC ( A : GrowablePersistentArray) : PCC =
 	     print ts 
 	   end
 	 with Contradiction -> 
-	   Format.printf "Correct Test 5. \n" 
+	   printf "Correct Test 5. \n" 
        in
        let _ =
 	 try 
 	   let ts = make_not_equal ts c0 c1 in 
 	   let _ = make_equal ts c0 c2 in 
-	   Format.printf "Correct Test 6. \n" 
+	   printf "Correct Test 6. \n" 
 	 with Contradiction -> 
 	   begin 
-	     Format.printf "Test 6 fails!";
+	     printf "Test 6 fails!";
 	   end
        in
 (* This test is hard to automatically check.  Approximate by checking a size *) 
@@ -1024,33 +990,33 @@ module PersistentCC ( A : GrowablePersistentArray) : PCC =
 	   let ts = make_equal ts c0 c2 in 
 	   let ts2,map = compress ts [r1;r2] in 
 	   if A.size ts2.representative = 3 
-	   then Format.printf "Correct Test 7 a\n" 
+	   then printf "Correct Test 7 a\n" 
 	   else 
 	     begin
-	       Format.printf "Failed Test 7 a\n";
+	       printf "Failed Test 7 a\n";
 	       print ts2
 	     end;
 	   let ts2 = make_not_equal ts c0 c1 in 
 	   let ts2,map = compress ts2 [r1;r2] in 
 	   if A.size ts2.representative = 3 
-	   then Format.printf "Correct Test 7 b\n" 
+	   then printf "Correct Test 7 b\n" 
 	   else 
 	     begin
-	       Format.printf "Failed Test 7 b\n";
+	       printf "Failed Test 7 b\n";
 	       print ts2
 	     end;
 	   let ts2 = make_equal ts c0 c1 in 
 	   let ts2,map = compress ts2 [r1;r2] in 
 	   if A.size ts2.representative = 2 
-	   then Format.printf "Correct Test 7 c\n" 
+	   then printf "Correct Test 7 c\n" 
 	   else 
 	     begin
-	       Format.printf "Failed Test 7 c\n";
+	       printf "Failed Test 7 c\n";
 	       print ts2
 	     end
 	 with Contradiction -> 
 	   begin 
-	     Format.printf "Test 7 fails!\n";
+	     printf "Test 7 fails!\n";
 	   end
        in
        let _ = 
@@ -1069,43 +1035,43 @@ module PersistentCC ( A : GrowablePersistentArray) : PCC =
 	 begin 
 	   (* Test 8 *)
 	   if rep_uneq ts tcons1 tnil then 
-	     Format.printf "Test 8 Passed!\n" 
+	     printf "Test 8 Passed!\n" 
 	   else
 	     begin 
-	       Format.printf "Test 8 Failed!\n";
+	       printf "Test 8 Failed!\n";
 	       print ts;
 	     end
 	       ;
 	   (* Test 9 *)
 	   let ts2 = make_equal ts tcons1 tcons2 in
 	   if rep_eq ts2 x1 y1 then 
-	     Format.printf "Test 9a Passed!\n"
+	     printf "Test 9a Passed!\n"
 	   else 
-	     Format.printf "Test 9a Failed!\n";
+	     printf "Test 9a Failed!\n";
 	   if rep_eq ts2 x2 y2 then 
-	     Format.printf "Test 9b Passed!\n"
+	     printf "Test 9b Passed!\n"
 	   else 
 	     begin 
-	       Format.printf "Test 9b Failed!\n Assuming %i=%i, could not prove %i=%i\n" tcons1 tcons2 x2 y2;
+	       printf "Test 9b Failed!\n Assuming %i=%i, could not prove %i=%i\n" tcons1 tcons2 x2 y2;
 	       print ts2;
 	       let ts,m= compress_full ts2 in 
 	       print ts
 	     end;
 	   if rep_eq ts2 x1 x2 then 
-	     Format.printf "Test 9c Failed!\n"
+	     printf "Test 9c Failed!\n"
 	   else 
-	     Format.printf "Test 9c Passed!\n";
+	     printf "Test 9c Passed!\n";
 	   if rep_eq ts2 y1 y2 then 
-	     Format.printf "Test 9d Failed!\n"
+	     printf "Test 9d Failed!\n"
 	   else 
-	     Format.printf "Test 9d Passed!\n"
+	     printf "Test 9d Passed!\n"
 	       ;
 	   let ts3 = make_equal ts tcons3 tcons1 in 
 	   let ts3 = make_equal ts3 tcons2 tcons1 in 
 	   if rep_eq ts3 y1 x1 then
-	     Format.printf "Test 10 Passed!\n"
+	     printf "Test 10 Passed!\n"
 	   else 
-	     Format.printf "Test 10 Failed!\n"
+	     printf "Test 10 Failed!\n"
 	 end
        in
        ()
@@ -1139,9 +1105,13 @@ module PersistentCC ( A : GrowablePersistentArray) : PCC =
 	      Unifiable, _ 
 	    | UnifiableExists, Exists ->
 		cont (try make_equal ts c con with Contradiction -> raise No_match)
-	    | UnifiableExists, _ ->  
-                (* Needs to be an exists, so fail*)
-		raise No_match
+	    | UnifiableExists, _ ->
+	        if no_live ts (rep ts con) then 
+		    (* If not live accesses treat as an exists *)
+		    cont (try make_equal ts c con with Contradiction -> raise No_match)
+		else
+                  (* Needs to be an exists, so fail*)
+		  raise No_match  
 	    | Exists,_ 
 	    | Standard, _ -> raise No_match
 	    | Deleted, _ -> raise No_match
@@ -1162,44 +1132,7 @@ module PersistentCC ( A : GrowablePersistentArray) : PCC =
       patternmatch_inner pattern constant ts cont
 
     let unifies = patternmatch 
-(*
-    let rec unifies ts c1 c2 (cont : t -> 'a) : 'a =
-      if rep_eq ts c1 c2 then 
-      (* They are equal *)
-	cont ts
-      else if rep_uneq ts c1 c2 then 
-	raise No_match
-      else if A.get ts.unifiable (rep ts c1)(* || A.get ts.unifiable (rep ts c2) *)then
-	begin 
-          (* They can be made equal *)
-	  (* TODO Add occurs check *)
-	  cont (make_equal ts c1 c2)
-	end
-      else
-	begin
-	  let rec f ts (a,b) tl cont = 
-	    match tl with 
-	      [] -> raise No_match
-	    | (a2,b2)::tl -> 
-		try 
-		  unifies ts a a2
-		    (fun ts-> unifies ts b b2 cont)
-		with No_match ->
-		  f ts (a,b) tl cont		  
-	  in
-	  let rec g ts tl1 tl2 cont = 
-	    match tl1 with 
-	      [] -> cont ts 
-	    | (a,b)::tl1 -> f ts (a,b) tl2 (fun ts -> g ts tl1 tl2 cont)
-	  in
-	  let tl1 = A.get ts.rev_lookup (rep ts c1) in 
-	  let tl2 = A.get ts.rev_lookup (rep ts c2) in 
-	  match tl1,tl2 with 
-	  | [],_ | _,[] -> raise No_match
-	  | [(a,b)],tl -> f ts (a,b) tl cont
-	  |  _,_ ->  g ts tl1 tl2 cont 
-	end
-*)
+
 
     let unifies_any ts c1 cont = 
       (* Very naive code, should do something clever like e-matching, but will do for now. *)
@@ -1207,7 +1140,7 @@ module PersistentCC ( A : GrowablePersistentArray) : PCC =
 	if n = A.size ts.uselist then
 	  raise No_match
 	else
-	    if n != rep ts n then f (n+1)
+	    if n <> rep ts n then f (n+1)
 	    else
 	      try 
 		unifies ts c1 n (fun ts -> cont (ts,n)) 
@@ -1251,25 +1184,6 @@ module PersistentCC ( A : GrowablePersistentArray) : PCC =
     let others ts c = 
       A.get ts.classlist c 
 
-    let get_eqs mask map ts = 
-      let acc = ref [] in 
-      for_each_rep ts 
-	(fun rep  -> 
-	  let rp = map rep in 
-	  List.iter 
-	    (fun i -> if mask i then acc := (rp,map i)::!acc) 
-	    (A.get ts.classlist rep)
-	  ) ;
-      !acc
-
-    let get_neqs mask map ts =
-      let acc = ref [] in 
-      CCMap.iter 
-	(fun (a,b) () ->
-	  acc := (map (rep ts a),map (rep ts b))::!acc)
-	ts.not_equal
-      ; !acc
-
     let rep_uneq ts c d = 
       try 
 	ignore (make_equal ts c d); false
@@ -1286,41 +1200,17 @@ module PersistentCC ( A : GrowablePersistentArray) : PCC =
 	  rep_uneq ts c1 c2
 
     let delete ts r = 
-      let no_live nr r = 
-	List.for_all 
-	  (fun x -> x!=r && (A.get ts.unifiable x != Standard))
-	  (A.get ts.classlist nr) in
       let current_sort = A.get ts.unifiable r in 
       match current_sort with 
-	Unifiable -> ts
-      |	UnifiableExists -> ts
-      |	Exists -> ts
+	Unifiable 
+      |	UnifiableExists 
+      |	Exists -> 
+	  {ts with unifiable = A.set ts.unifiable r Deleted}	  
       | Deleted -> 
           (* Double dispose *)
-	  assert false
+	  ts (*assert false*)
       |	Standard ->
-	  let nr = rep ts r in
-	  let ts = {ts with unifiable = A.set ts.unifiable r Deleted} in 
-	  if nr != r then 
-	    match A.get ts.unifiable r with 
-	    | Unifiable | UnifiableExists | Exists -> 
-		(* This should be impossible, as rep can't be more
-		permissive then the terms it represents *)
-		assert false
-	    | Standard -> 
-		(* Can delete as rep is not deleted yet. *)
-		ts
-	    | Deleted -> 
-		(* Need to check if deleting final term from class *)
-		if no_live nr r then 
-		  {ts with unifiable = A.set ts.unifiable nr Exists}
-		else 
-		  ts
-	  else 
-	  if no_live nr r then 
-	    {ts with unifiable = A.set ts.unifiable r Exists}
-	  else
-	    {ts with unifiable = A.set ts.unifiable r Deleted}
+	  {ts with unifiable = A.set ts.unifiable r Deleted}
    
   end
 

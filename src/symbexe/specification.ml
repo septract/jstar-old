@@ -21,44 +21,28 @@ open Spec
 
 
 
-
-
 type ts_excep_post = inner_form ClassMap.t 
 
 let conjunction_excep excep_post f1 =
   ClassMap.map (fun post -> Psyntax.pconjunction post f1) excep_post
 
+let conjunction_inv invs f1 =
+  LabelMap.map (fun inv -> Psyntax.pconjunction inv f1) invs
+
 let conjunction_excep_convert excep_post f1 =
   ClassMap.map (fun post -> Sepprover.conjoin post f1) excep_post
 
+let combine_maps empty fold add find combine_values m1 m2 =
+  let combine_add k v m =
+    try add k (combine_values v (find k m)) m
+    with Not_found -> add k v m in
+  fold combine_add m1 m2
 
-let disjunction_excep excep_post1 excep_post2 =
-  let newClassMap = ref ClassMap.empty in 
-  let _ = ClassMap.iter 
-      (fun key post -> 
-	newClassMap := 
-	  ClassMap.add 
-	    key 
-	    (try Psyntax.mkOr(post,(ClassMap.find key excep_post2))
-	    with Not_found -> post)
-	    !newClassMap 
-      ) 
-    excep_post1 in
-  let _ = ClassMap.iter
-      (fun key post -> 
-	if ClassMap.mem key excep_post1 then () 
-	else newClassMap := ClassMap.add key post !newClassMap)
-      excep_post2
-  in !newClassMap
+let disjunction_excep = 
+  combine_maps ClassMap.empty ClassMap.fold ClassMap.add ClassMap.find (Misc.curry mkOr)
 
-
-
-(*
-type spec = 
-    { pre : representative Plogic.pform;
-      post : representative Plogic.pform;
-      excep : excep_post }
-*)
+let disjunction_inv =
+  combine_maps LabelMap.empty LabelMap.fold LabelMap.add LabelMap.find (Misc.curry mkOr)
 
 let spec_conjunction spec1 spec2 =
   let var = Arg_var(Vars.freshe()) in
@@ -67,12 +51,12 @@ let spec_conjunction spec1 spec2 =
   let eq = mkEQ(var,zero) in 
   let neq = mkEQ(var,one) in       
   match spec1,spec2 with 
-    {pre=pre1; post=post1; excep=excep1},
-    {pre=pre2; post=post2; excep=excep2} ->
+    {pre=pre1; post=post1; excep=excep1; invariants=inv1},
+    {pre=pre2; post=post2; excep=excep2; invariants=inv2} ->
       {pre= Psyntax.mkOr ((Psyntax.pconjunction pre1 eq),(Psyntax.pconjunction pre2 neq));
        post= Psyntax.mkOr ((Psyntax.pconjunction post1 eq),(Psyntax.pconjunction post2 neq));
-       excep = disjunction_excep (conjunction_excep excep1 eq) (conjunction_excep excep2 neq)
-     }
+       excep = disjunction_excep (conjunction_excep excep1 eq) (conjunction_excep excep2 neq);
+       invariants = disjunction_inv (conjunction_inv inv1 eq) (conjunction_inv inv2 neq) }
 
 
 
@@ -105,7 +89,8 @@ let sub_spec  sub spec =
     {pre=pre; post=post; excep=excep} ->
       {pre=subst_pform sub pre;
        post=subst_pform sub post;
-	excep=ClassMap.map (subst_pform sub) excep;}
+       excep=ClassMap.map (subst_pform sub) excep;
+       invariants=LabelMap.empty}
       
 let ev_spec spec = 
   match spec with

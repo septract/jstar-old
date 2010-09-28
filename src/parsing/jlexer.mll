@@ -42,111 +42,113 @@ let unnest x =
 let error_message e lb = 
   match e with 
     Illegal_character c -> 
-      Printf.sprintf "Illegal character %c  found at line %d character %d.\n" 
+      Printf.sprintf "Illegal character %c found at line %d character %d.\n" 
 	c 
 	lb.lex_curr_p.pos_lnum 
 	(lb.lex_curr_p.pos_cnum - lb.lex_curr_p.pos_bol)
-  | Unterminated_comment -> Printf.sprintf "Unterminatated comment started at line %d character %d in %s.\n"
+  | Unterminated_comment -> Printf.sprintf "Unterminated comment started at line %d character %d in %s.\n"
 	!nest_start_pos.pos_lnum 
 	(!nest_start_pos.pos_cnum  - !nest_start_pos.pos_bol)
 	lb.lex_curr_p.pos_fname
 
-
-
-(* association list of keywords. to be checked *)
-let keyword_al = [
-   ( "requires" , REQUIRES );
-   ( "old" , OLD );
-   ( "ensures" , ENSURES );
-   ( "abstract"  , ABSTRACT  );
-   ( "as"  , AS  );
-   ( "final" , FINAL );
-   ( "native" , NATIVE );
-   ( "public" , PUBLIC );
-   ( "protected" , PROTECTED );
-   ( "private" , PRIVATE );
-   ( "static" , STATIC );
-   ( "synchronized" , SYNCHRONIZED );
-   ( "transient" , TRANSIENT );
-   ( "volatile" , VOLATILE );
-   ( "strictfp" , STRICTFP );
-   ( "enum" , ENUM );
-   ( "annotation"  , ANNOTATION );
-   ( "class" , CLASS );
-   ( "interface" , INTERFACE );
-   ( "void" , VOID );
-   ( "boolean" , BOOLEAN );
-   ( "byte" , BYTE );
-   ( "short" , SHORT );
-   ( "char" , CHAR );
-   ( "int" , INT );
-   ( "long" , LONG );
-   ( "float" , FLOAT );
-   ( "double" , DOUBLE );
-   ( "null_type" , NULL_TYPE );
-   ( "unknown" , UNKNOWN );
-   ( "extends" , EXTENDS );
-   ( "implements" , IMPLEMENTS );
-   ( "breakpoint" , BREAKPOINT ); 
-   ( "case" , CASE );
-   ( "catch" , CATCH );
-   ( "goto" , GOTO );
-   ( "if" , IF );
-   ( "instanceof" , INSTANCEOF  );
-   ( "interfaceinvoke" , INTERFACEINVOKE );
-   ( "lengthof" , LENGTHOF );
-   ( "lookupswitch" , LOOKUPSWITCH );
-   ( "new" , NEW );
-   ( "newarray" , NEWARRAY );
-   ( "newmultiarray" , NEWMULTIARRAY );
-   ( "return" , RETURN );
-   ( "specialinvoke" , SPECIALINVOKE );
-   ( "staticinvoke" , STATICINVOKE );
-   ( "tableswitch" , TABLESWITCH );  
-   ( "throw" , THROW  );
-   ( "throws" , THROWS );
-   ( "virtualinvoke" , VIRTUALINVOKE );
-   ( "null" , NULL );
-   ( "from" , FROM );
-   ( "to" , TO );
-   ( "with" , WITH );
-   ( "cls" , CLS );
-   ( "andalso" , ANDALSO );
-   ( "export" , EXPORT );
-   ( "exports" , EXPORTS );
-   ( "axioms" , AXIOMS );
-   ( "define" , DEFINE );
-  ("import",IMPORT);
-  ("False",FALSE);
-  ("True",TRUE);
-  ("Emp",EMP);
-  ("Implication",IMPLICATION);
-  ("Frame",FRAME);
-  ("Garbage",GARBAGE);
-  ("Inconsistency",INCONSISTENCY);
-  ("Abduction", ABDUCTION );
-  ("rule",RULE);
-  ("rewrite",REWRITERULE);
-  ("emprule",EMPRULE);
-  ("purerule",PURERULE);
-  ("constructor",CONSTRUCTOR);
-  ("if",IF);
-  ("without",WITHOUT);  
-  ("notin",NOTIN);  
-  ("notincontext",NOTINCONTEXT);  
-  ("where",WHERE);
-  ("or",ORTEXT);
-  ("abstraction",ABSRULE);
-  ("equiv",EQUIV);
-  ("inductive" , INDUCTIVE );
-  ("nop",NOP);
-  ("label",LABEL);
-  ("end",END);
-  ("assign",ASSIGN);
-  ("Specification",SPECIFICATION);
-]
-
-
+(* [kwd_or_else d s] is the token corresponding to [s] if there is one,
+  or the default [d] otherwise. *)
+let kwd_or_else = 
+  let keyword_table = Hashtbl.create 53 in
+  List.iter (fun (kwd, tok) -> Hashtbl.add keyword_table kwd tok) [
+    "Abduction", ABDUCTION;
+    "abstract", ABSTRACT;
+    "abstraction", ABSRULE;
+    "andalso", ANDALSO;
+    "annotation", ANNOTATION;
+    "as", AS;
+    "assign", ASSIGN;
+    "axioms", AXIOMS;
+    "boolean", BOOLEAN;
+    "breakpoint", BREAKPOINT;
+    "byte", BYTE;
+    "case", CASE;
+    "catch", CATCH;
+    "char", CHAR;
+    "class", CLASS;
+    "cls", CLS;
+    "constructor", CONSTRUCTOR;
+    "define", DEFINE;
+    "double", DOUBLE;
+    "Emp", EMP;
+    "emprule", EMPRULE;
+    "end", END;
+    "ensures", ENSURES;
+    "enum", ENUM;
+    "equiv", EQUIV;
+    "export", EXPORT;
+    "exports", EXPORTS;
+    "extends", EXTENDS;
+    "False", FALSE;
+    "final", FINAL;
+    "float", FLOAT;
+    "Frame", FRAME;
+    "from", FROM;
+    "Garbage", GARBAGE;
+    "goto", GOTO;
+    "if", IF;
+    "implements", IMPLEMENTS;
+    "Implication", IMPLICATION;
+    "import", IMPORT;
+    "Inconsistency", INCONSISTENCY;
+    "inductive", INDUCTIVE;
+    "instanceof", INSTANCEOF;
+    "int", INT;
+    "interface", INTERFACE;
+    "interfaceinvoke", INTERFACEINVOKE;
+    "invariant", INVARIANT;
+    "label", LABEL;
+    "lengthof", LENGTHOF;
+    "long", LONG;
+    "lookupswitch", LOOKUPSWITCH;
+    "native", NATIVE;
+    "new", NEW;
+    "newarray", NEWARRAY;
+    "newmultiarray", NEWMULTIARRAY;
+    "nop", NOP;
+    "notin", NOTIN;
+    "notincontext", NOTINCONTEXT;
+    "null", NULL;
+    "null_type", NULL_TYPE;
+    "old", OLD;
+    "or", ORTEXT;
+    "private", PRIVATE;
+    "protected", PROTECTED;
+    "public", PUBLIC;
+    "purerule", PURERULE;
+    "requires", REQUIRES;
+    "return", RETURN;
+    "rewrite", REWRITERULE;
+    "rule", RULE;
+    "short", SHORT;
+    "specialinvoke", SPECIALINVOKE;
+    "Specification", SPECIFICATION;
+    "SpecTest", SPECTEST; 
+    "static", STATIC;
+    "staticinvoke", STATICINVOKE;
+    "strictfp", STRICTFP;
+    "synchronized", SYNCHRONIZED;
+    "tableswitch", TABLESWITCH;
+    "throw", THROW;
+    "throws", THROWS;
+    "to", TO;
+    "transient", TRANSIENT;
+    "True", TRUE;
+    "unknown", UNKNOWN;
+    "virtualinvoke", VIRTUALINVOKE;
+    "void", VOID;
+    "volatile", VOLATILE;
+    "where", WHERE;
+    "with", WITH;
+    "without", WITHOUT;
+  ];
+  fun d s ->
+  try Hashtbl.find keyword_table s with Not_found -> d
 
 
 (* to store the position of the beginning of a comment *)
@@ -219,104 +221,91 @@ let identifier =
 
 let quoted_name = quote quotable_char+ quote
 
-let at_identifier = '@' (("parameter" dec_digit+ ':') | "this" ':' | "caughtexception") 
+let at_identifier = 
+  '@' (
+    ("parameter" dec_digit+ ':') 
+    | "this" ':' 
+    | "caughtexception" 
+    | "caller") 
 	
 let integer_constant = (dec_constant | hex_constant | oct_constant) 'L'? 
 
 let float_constant = ((dec_constant '.' dec_constant) (('e'|'E') ('+'|'-')? dec_constant)? ('f'|'F')?)  | ('#' (('-'? "Infinity") | "NaN") ('f' | 'F')? ) 
 
-let string_constant = '"' string_char* '"'
-
-let core_label = (first_id_char | escape_char) (simple_id_char | escape_char)* | "<clinit>" | "<init>"
-
 (* Translation of section Tokens of jimple.scc *)
 
 rule token = parse
-   | newline { new_line lexbuf; token lexbuf }
-   | "/*Source Line Pos Tag" { SOURCE_POS_TAG }
-   | "*/" { SOURCE_POS_TAG_CLOSE }
-   | "/*" { nest lexbuf; comment lexbuf; token lexbuf } 
-   | ignored_helper  { token lexbuf }
-   | "," { COMMA }
-   | "{" { L_BRACE }
-   | "}" { R_BRACE }
-   | ";" { SEMICOLON }
-   | "[" { L_BRACKET }
-   | "]" { R_BRACKET }
-   | "(" { L_PAREN }
-   | ")" { R_PAREN }
-   | ":" { COLON}
-   | "." { DOT }
-   | "'" { QUOTE }
-   | ":=" { COLON_EQUALS }
-   | "=" { EQUALS }
-   | "&" { AND }
-   | "|" { OR }
-   | "||" { OROR }
-   | "|->" { MAPSTO }
-   | "^" { XOR }
-   | "%" { MOD }
-   | "cmp" { CMP }
-   | "cmpl" { CMPL }
-   | "cmpg" { CMPG }
-   | "==" { CMPEQ }
-   | "!=" { CMPNE }
-   | ">" { CMPGT }
-   | ">=" { CMPGE }
-   | "=>" { IMP }
-   | "<=>" { BIMP }
-   | "<" { CMPLT }
-   | "<=" { CMPLE }
-   | "<<" { SHL }
-   | ">>" { SHR }
-   | ">>>" { USHR }
-   | "+" { PLUS }
-   | "-" { MINUS }
-   | "*" { MULT }
-   | "-*" { WAND }
-   | "/" { DIV }
-   | "?" { QUESTIONMARK }
-   | "!" { BANG }
-   | "|-" { VDASH }
-   | "-|" { DASHV }
-   | "~~>" {LEADSTO}
-   | eof { EOF }
+  | newline { new_line lexbuf; token lexbuf }
+  | "/*Source Line Pos Tag" { SOURCE_POS_TAG }
+  | "*/" { SOURCE_POS_TAG_CLOSE }
+  | "/*" { nest lexbuf; comment lexbuf; token lexbuf } 
+  | ignored_helper  { token lexbuf }
+  | "," { COMMA }
+  | "{" { L_BRACE }
+  | "}" { R_BRACE }
+  | ";" { SEMICOLON }
+  | "[" { L_BRACKET }
+  | "]" { R_BRACKET }
+  | "(" { L_PAREN }
+  | ")" { R_PAREN }
+  | ":" { COLON}
+  | "." { DOT }
+  | "'" { QUOTE }
+  | ":=" { COLON_EQUALS }
+  | "=" { EQUALS }
+  | "&" { AND }
+  | "|" { OR }
+  | "||" { OROR }
+  | "|->" { MAPSTO }
+  | "^" { XOR }
+  | "%" { MOD }
+  | "cmp" { CMP }
+  | "cmpl" { CMPL }
+  | "cmpg" { CMPG }
+  | "==" { CMPEQ }
+  | "!=" { CMPNE }
+  | ">" { CMPGT }
+  | ">=" { CMPGE }
+  | "=>" { IMP }
+  | "<=>" { BIMP }
+  | "<" { CMPLT }
+  | "<=" { CMPLE }
+  | "<<" { SHL }
+  | ">>" { SHR }
+  | ">>>" { USHR }
+  | "+" { PLUS }
+  | "-" { MINUS }
+  | "*" { MULT }
+  | "-*" { WAND }
+  | "/" { DIV }
+  | "?" { QUESTIONMARK }
+  | "!" { BANG }
+  | "|-" { VDASH }
+  | "-|" { DASHV }
+  | "~~>" {LEADSTO}
+  | eof { EOF }
 
-   | at_identifier  { let s = Lexing.lexeme lexbuf in
-          try List.assoc s keyword_al
-          with Not_found -> AT_IDENTIFIER s }
+  | at_identifier as s { kwd_or_else (AT_IDENTIFIER s) s }
+  | full_identifier as s { kwd_or_else (FULL_IDENTIFIER s) s }
+  | quoted_name as s { kwd_or_else (QUOTED_NAME s) s }
+  | identifier as s { kwd_or_else (IDENTIFIER s) s }
 
-   | full_identifier { let s = Lexing.lexeme lexbuf in
-          try List.assoc s keyword_al
-          with Not_found -> FULL_IDENTIFIER s } 
-   | quoted_name  { let s = Lexing.lexeme lexbuf in
-          try List.assoc s keyword_al
-          with Not_found -> QUOTED_NAME s }
-
-   | identifier  { let s = Lexing.lexeme lexbuf in
-          try List.assoc s keyword_al
-          with Not_found -> IDENTIFIER s}
-
-   | integer_constant {
-       let s=Lexing.lexeme lexbuf in
-       if (String.get s (String.length s -1)) = 'L' then
+  | integer_constant {
+      let s=Lexing.lexeme lexbuf in
+      if (String.get s (String.length s -1)) = 'L' then
 	 INTEGER_CONSTANT_LONG(int_of_string(String.sub s 0 (String.length s - 1)))
-       else 
+      else 
 	 INTEGER_CONSTANT(int_of_string(s))}
 
-   | float_constant   { FLOAT_CONSTANT(float_of_string(Lexing.lexeme lexbuf))}
+  | float_constant   { FLOAT_CONSTANT(float_of_string(Lexing.lexeme lexbuf))}
 
-   | string_constant  { let s = Lexing.lexeme lexbuf in
-			let s= String.sub s 1 (String.length s - 2) in 
-			try List.assoc s keyword_al
-			with Not_found -> STRING_CONSTANT s }
-			
-  | _ { raise (Failure (error_message (Illegal_character ((Lexing.lexeme lexbuf).[0])) lexbuf))}
+  | '"' (string_char* as s) '"' { kwd_or_else (STRING_CONSTANT s) s }
+  | _ { failwith (error_message (Illegal_character ((Lexing.lexeme lexbuf).[0])) lexbuf)}
 and comment = parse 
   | "/*"  { nest lexbuf; comment lexbuf }
   | "*/"  { if unnest lexbuf then comment lexbuf }
   | newline  { new_line lexbuf; comment lexbuf }
-  | eof      { raise (Failure (error_message Unterminated_comment lexbuf))}
+  | eof      { failwith (error_message Unterminated_comment lexbuf)}
   | _     { comment lexbuf; }
 
 

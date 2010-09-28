@@ -12,9 +12,11 @@
  ********************************************************)
 
 (* File to read a logic file and its imports. *)
+open Debug
+open Format
+open Load
 open Psyntax
 open System
-open Load
 
 
 let load_logic_extra_rules 
@@ -26,18 +28,15 @@ let load_logic_extra_rules
     List.fold_left
       (fun (sl,rm,cn) rule ->
 	match rule with
-	| SeqRule(r) -> 
-	    if Config.verb_proof() 
-	    then 
-	      Format.printf "Loaded rule:@\n%a@\n" 
-		string_psr r; 
-	    (r::sl,rm,cn)
-	| RewriteRule(r) -> 
-	    (sl,r::rm,cn)
-	| ConsDecl(f) -> (sl,rm,f::cn) (* FIXME: put handler here *)
-	| EquivRule(r) -> assert false
-      ) ([], [], []) rl
+        | ConsDecl(f) -> (sl,rm,f::cn)
+	| SeqRule(r) -> (r::sl,rm,cn)
+	| RewriteRule(r) -> (sl,r::rm,cn)
+	| EquivRule(r) -> assert false)
+      ([], [], []) 
+      rl
   in
+  if log log_load then
+    fprintf logf "@[<2>Sequent rules%a@." (pp_list pp_sequent_rule) sl;
   (sl,rm,cn)
 
 let load_logic 
