@@ -276,7 +276,7 @@ let call_jsr_static (sheap,id) spec il node =
         printf "%s(end error description)%s@." 
         System.terminal_red System.terminal_white;
       Printing.pp_json_node node.sid 
-            (sprintf "Error while executing %d." node.sid);
+            (sprintf "Error while executing %d." node.sid) (Sepprover.get_counter_example());
 	[]
     | Some r -> fst r
 
@@ -307,7 +307,7 @@ let check_postcondition heaps sheap =
     printf "@{<b>ERROR@}: %s.@." et;
     Sepprover.print_counter_example ();
     printf "@{<b>(end of error)@}@.";
-    Printing.pp_json_node (match node.cfg with None -> -1 | Some x -> x.sid) et;
+    Printing.pp_json_node (match node.cfg with None -> -1 | Some x -> x.sid) et (Sepprover.get_counter_example());
     List.iter (fun heap -> 
                  let form = Sepprover.convert (fst heap) in 
 		 match form with 
@@ -556,7 +556,7 @@ let check_and_get_frame (heap,id) sheap =
               flush_str_formatter ());
       printf "@{<b>(end of error)@}@.";
       Printing.pp_json_node 
-        (match node.cfg with None -> -1 | Some x -> x.sid) et;
+        (match node.cfg with None -> -1 | Some x -> x.sid) et (Sepprover.get_counter_example());
       [])
 
 

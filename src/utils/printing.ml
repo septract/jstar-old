@@ -49,14 +49,15 @@ let find_location i =
   try Hashtbl.find locations i with Not_found -> unknown_location
 
 (* TODO(rgrig): This prints invalid json for many [t]s. Fix. *)
-let pp_json_location l t =
-  printf "@[@[<2>json {@\n@[<2>\"error_pos\": {";
-  List.iter (fun (k, v) -> printf "@\n\"%s\": \"%d\"," k v) [
+let pp_json_location l t c =
+  if Config.eclipse_mode() then (
+  printf "json {\"error_pos\": {";
+  List.iter (fun (k, v) -> printf "\"%s\": \"%d\"," k v) [
     ("sline", l.begin_line);
     ("eline", l.end_line);
     ("spos", l.begin_column);
     ("epos", l.end_column)];
-  printf "@]@\n},\"error_text\": \"%s\"@]@\n}@." t
+  printf "},\"error_text\": \"%s\",\"counter_example\": \"%s\"}" (String.escaped t) (String.escaped c))
 
 let pp_json_location_opt = function
   | None -> pp_json_location unknown_location
@@ -89,11 +90,3 @@ let pp_neq pp_operand = pp_binary_op "!=" pp_operand
 let pp_disjunct pp_operand = pp_binary_op " || " pp_operand
 (* }}} *)
 (* }}} *)
-
-let eclipse_print_start_counter_example () =
-  if Config.eclipse_mode() then 
-    Printf.printf "\njson_counter_example_begin\n"
-    
-let eclipse_print_end_counter_example () =
-  if Config.eclipse_mode() then 
-    Printf.printf "\njson_counter_example_end\n"

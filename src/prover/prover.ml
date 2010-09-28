@@ -28,10 +28,16 @@ let pprint_counter_example ppf () =
     (list_format "\nor" Clogic.pp_sequent)
     !prover_counter_example
 
-let print_counter_example () = 
-  Printing.eclipse_print_start_counter_example();
-  pprint_counter_example std_formatter ();
-  Printing.eclipse_print_end_counter_example()
+let print_counter_example = pprint_counter_example std_formatter
+  
+let get_counter_example () =
+  let out_buff = Buffer.create 1000 in
+  let out_ft = Format.formatter_of_buffer out_buff in
+  pprint_counter_example out_ft ();
+  Format.pp_print_flush out_ft ();
+  let r = Buffer.contents out_buff in
+  Buffer.clear out_buff;
+  r
 
 let pprint_proof (f : formatter) : unit = 
   fprintf f "%s" (Buffer.contents buffer_dump)
