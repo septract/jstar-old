@@ -32,7 +32,6 @@ and op =
   | Sub 
   | Neg
   | Mult 
-  | Deref
   | Cmpeq
   | Cmpne
   | Cmpgt
@@ -56,15 +55,16 @@ and pexp =
 and field = {
   fname : field_id; 
   ftype : vfc_type; 
-  offset : int; 
+  offset : int;
+  parent : struct_id;
 }
 
 and stmt = 
   | PVar_decl of pvar 
   | Assign of var_id * pexp
   | Cast of var_id * vfc_type * pexp  
-  | Field_read of var_id * pexp * field_id 
-  | Field_assn of pexp * field_id * pexp
+  | Heap_read of var_id * pexp * (field_id option)
+  | Heap_assn of pexp * (field_id option) * pexp
   | Skip
   | If of pexp * stmt * stmt
   (*| While of pexp * lexp option * stmt*)

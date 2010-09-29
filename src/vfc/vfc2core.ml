@@ -3,9 +3,9 @@
 open VfcAST
 open Vfclogic
 open Core
-open Cfg_core
 open Spec
 open Psyntax
+open Spec_def
 
 
 (* Create fresh labels used in translation of conditionals and loops *)
@@ -115,7 +115,9 @@ let invariants_empty = LabelMap.empty
 let assume_core (e : form) =
   Assignment_core([], mk_spec [] e excep_post_empty invariants_empty, []) 
 
-  
+let fun_specs = ref []
+let invs = ref []
+
 (* Translation of statement *)
 let rec tr_stmt (s : stmt) : core_statement list =
   match s with 
@@ -128,22 +130,24 @@ let rec tr_stmt (s : stmt) : core_statement list =
 
   | Cast (v_id, t, e) -> [] (* TODO: Handle cast properly *)
   
-  | Field_read (v_id, e, f_id) ->
+  | Heap_read (v_id, e, fo) ->
+    let typ = mk_type Int in (* TODO: sort out handling of types *)
     let e_var = fresh_exists_var() in
     let pointed_to_var = mkVar e_var in
     let x = tr_expr2term e in 
-    let pre = mk_pointsto x (mkString f_id) pointed_to_var in
-    let post = mkStar (mkEQ (retvar_term, pointed_to_var)) (mk_pointsto x (mkString f_id) pointed_to_var) in
+    let pre = mk_local_blob typ (mk_loc x fo) pointed_to_var in
+    let post = mkStar (mkEQ (retvar_term, pointed_to_var)) (mk_local_blob typ (mk_loc x fo) pointed_to_var) in
     let spec = mk_spec pre post excep_post_empty invariants_empty in
     [Assignment_core ([prog_var v_id], spec, [])]
   
-  | Field_assn (e, f_id, e') -> 
+  | Heap_assn (e, fo, e') ->
+    let typ = mk_type Int in (* TODO: sort out handling of types *)
     let e_var = fresh_exists_var() in
     let pointed_to_var = mkVar e_var in
     let p0 = tr_expr2term e in (* TODO: should be a fresh program variable? *)
     let p1 = tr_expr2term e' in
-    let pre = mk_pointsto p0 (mkString f_id) pointed_to_var in
-    let post = mk_pointsto p0 (mkString f_id) p1 in
+    let pre = mk_local_blob typ (mk_loc p0 fo) pointed_to_var in
+    let post = mk_local_blob typ (mk_loc p0 fo) p1 in
     let spec = mk_spec pre post excep_post_empty invariants_empty in
     [Assignment_core ([], spec, [])]
   
@@ -198,8 +202,10 @@ let function_signature_str f =
   f.fun_name
   
 
-let verify (spec : Spec.spec) (* temporary *)
+let verify
+    (file_prefix : string)
     (prog : vfc_prog)
+    (specs : vfc_spec list)
     (lo : logic) 
     (abs_rules : logic) : unit =
 
@@ -210,16 +216,28 @@ let verify (spec : Spec.spec) (* temporary *)
     | _ -> ()
   ) prog;  
   
+  List.iter (fun spec ->
+    match spec with
+    | Vfc_inv (inv_id, inv) -> 
+      invs := (inv_id, inv) :: !invs
+    | Vfc_fun (fun_id, pre, post) -> 
+      fun_specs := (fun_id, mk_spec pre post excep_post_empty invariants_empty) :: !fun_specs
+  ) specs;
+
   (* TODO: generate call graph, and perform the fixpoint abduction *)
   (* for now: verification of each method separately against a given spec *)
-  let file = ref "" in
   List.iter (fun decl ->
     match decl with
     | Fun_decl f ->
       let fun_name_str = function_signature_str f in
       let core_stmts = tr_stmt f.body in
-      let cfg_nodes = List.map (fun s -> mk_node s) core_stmts in
-      print_core !file fun_name_str cfg_nodes;
+      let cfg_nodes = List.map (fun s -> Cfg_core.mk_node s) core_stmts in
+      Cfg_core.print_core file_prefix fun_name_str cfg_nodes;
+      let spec = 
+        try List.assoc f.fun_name !fun_specs
+        with Not_found -> 
+        Printf.printf "Specification for function %s not present in the spec file." f.fun_name; exit 1
+      in 
       let res = Symexec.verify fun_name_str cfg_nodes spec lo abs_rules in
       if res then
         Printf.printf "Verification of %s succeeded." (f.fun_name)

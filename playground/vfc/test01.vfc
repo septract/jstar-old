@@ -4,5 +4,7 @@ struct foo {
 }
 
 void fun_foo (byte x, int y, struct foo z) {
-  skip; 
+  skip;
+  int x;
+  x = 1;
 }

@@ -156,7 +156,8 @@ val mkString : string -> term
 val mkFalse : form
 val mkEQ : term * term -> form
 val mkNEQ : term * term -> form
-val mkPPred : string * term list -> form 
+val mkPPred : string * term list -> form
+val mkSPred : string * term list -> form
 val mkOr : form * form -> form
 val mkStar : form -> form -> form
 val mkEmpty : form

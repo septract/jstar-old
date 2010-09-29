@@ -1,0 +1,9 @@
+void main () {
+  int i;
+  int M;
+  i = 0;
+  while (i < M) {
+    i = i+1;
+  }
+  return;
+}

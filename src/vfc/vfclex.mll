@@ -66,8 +66,8 @@ rule token = parse
    | "-" { MINUS }
    | "*" { STAR }
    | "!" { BANG }
-   | "&" { AND }
-   | "|" { OR }
+   | "&&" { AND }
+   | "||" { OR }
    | "==" { CMPEQ }
    | "!=" { CMPNE }
    | ">" { CMPGT }
