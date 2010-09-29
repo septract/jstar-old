@@ -46,29 +46,30 @@ let smterr = ref Pervasives.stdin;;
 let smtout_lex = ref (Lexing.from_string "");; 
 
 
-(* use z3 by default. Can be overridden by the -p command line option *)
-(*let solver_path = ref "z3";;*)
-
-
 let smt_init () : unit = 
-  if Config.smt_debug() then Format.printf "Initialising SMT\n"; 
-  (try Config.solver_path := Sys.getenv "JSTAR_SMT_PATH" with Not_found -> ()); 
-  let path = !Config.solver_path in 
-  try 
-    let s = Unix.stat path in 
-    let args = try Sys.getenv "JSTAR_SMT_ARGUMENTS" with Not_found -> "" in 
-    let command = Filename.quote path ^ " " ^ args in 
-    let o, i, e = Unix.open_process_full command (environment()) in 
-    smtout := o;  smtin := i;  smterr := e;
-    smtout_lex := Lexing.from_channel !smtout; 
-    Config.smt_run := true; 
-    if Config.smt_debug() then Format.printf "SMT running...\n"
-  with 
-  | Unix_error(err,f,a) -> 
-    match err with 
-    | ENOENT -> Format.printf "@,@{<b>ERROR:@} SMT solver not found:%s %s@," f a; 
-                Config.smt_run := false 
-    | _ -> raise (Unix_error(err,f,a))
+  let path = ( if (!Config.solver_path <> "") then !Config.solver_path 
+               else try Sys.getenv "JSTAR_SMT_PATH" with Not_found -> "" )
+  in 
+  if path = "" then Config.smt_run := false
+  else
+    try 
+      begin
+        if Config.smt_debug() then Format.printf "Initialising SMT\n"; 
+        let s = Unix.stat path in 
+        let args = try Sys.getenv "JSTAR_SMT_ARGUMENTS" with Not_found -> "" in 
+        let command = Filename.quote path ^ " " ^ args in 
+        let o, i, e = Unix.open_process_full command (environment()) in 
+        smtout := o;  smtin := i;  smterr := e;
+        smtout_lex := Lexing.from_channel !smtout; 
+        Config.smt_run := true; 
+        if Config.smt_debug() then Format.printf "SMT running...\n"
+      end 
+    with 
+    | Unix_error(err,f,a) -> 
+      match err with 
+      | ENOENT -> Format.printf "@,@{<b>ERROR:@} Bad path for SMT solver: %s@," a; 
+                  Config.smt_run := false 
+      | _ -> raise (Unix_error(err,f,a))
 
 
 let smt_fatal_recover () : unit  = 

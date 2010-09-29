@@ -38,7 +38,7 @@ let smt_debug_ref = ref false
 let smt_debug() = !smt_debug_ref
 
 let smt_run = ref true 
-let solver_path = ref "z3"
+let solver_path = ref ""
 
 
 let set_debug_char (c : char) : unit = 
