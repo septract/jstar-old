@@ -55,6 +55,12 @@ let freshen = function
   | EVar (_,v) -> freshe_str v
   | AnyVar (_,v) -> fresha_str v 
 
+let freshen_exists = function 
+  | PVar (_,v) 
+  | AnyVar (_,v) 
+  | EVar (_,v) -> freshe_str v
+
+
 
 let pp_var f =
   let p = function 0 -> "" | n -> sprintf "_%d" n in

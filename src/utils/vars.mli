@@ -27,5 +27,6 @@ module StrVarHash :
 val concretep_str : StrVarHash.key -> var
 val concretee_str : StrVarHash.key -> var
 val freshen : var -> var
+val freshen_exists : var -> var
 val pp_var : Format.formatter -> var -> unit
 val string_var : var -> string
