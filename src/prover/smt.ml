@@ -56,7 +56,9 @@ let smt_init () : unit =
   let path = !Config.solver_path in 
   try 
     let s = Unix.stat path in 
-    let o, i, e = Unix.open_process_full path (environment()) in 
+    let args = try Sys.getenv "JSTAR_SMT_ARGUMENTS" with Not_found -> "" in 
+    let command = Filename.quote path ^ " " ^ args in 
+    let o, i, e = Unix.open_process_full command (environment()) in 
     smtout := o;  smtin := i;  smterr := e;
     smtout_lex := Lexing.from_channel !smtout; 
     Config.smt_run := true; 
@@ -64,7 +66,7 @@ let smt_init () : unit =
   with 
   | Unix_error(err,f,a) -> 
     match err with 
-    | ENOENT -> Format.printf "@,@{<b>ERROR:@} SMT solver not found.@,"; 
+    | ENOENT -> Format.printf "@,@{<b>ERROR:@} SMT solver not found:%s %s@," f a; 
                 Config.smt_run := false 
     | _ -> raise (Unix_error(err,f,a))
 
@@ -362,7 +364,7 @@ let finish_him
     let types = smt_union_list [ts_types; asm_types; obl_types] in 
     
     (* declare variables and predicates *)
-    SMTTypeSet.iter (fun x -> smt_command (string_sexp_decl x);()) types; 
+    SMTTypeSet.iter (fun x -> ignore (smt_command (string_sexp_decl x))) types; 
 
     (* Construct and run the query *)                    
     let query = "(not (=> (and true " ^ asm_eq_sexp ^ " " ^ asm_neq_sexp ^ " " ^ 
@@ -436,7 +438,7 @@ let ask_the_audience
     let types = smt_union_list [ts_types; form_types] in 
   
     (* declare predicates *)
-    SMTTypeSet.iter (fun x -> smt_command (string_sexp_decl x);()) types; 
+    SMTTypeSet.iter (fun x -> ignore(smt_command (string_sexp_decl x))) types; 
 
     (* Assert the assumption *)                    
     let assm_query = "(and true " ^ ts_eq_sexp ^" "^ ts_neq_sexp ^" "^ form_sexp ^ ")"
