@@ -48,7 +48,6 @@ let add_location i = function
 let find_location i =
   try Hashtbl.find locations i with Not_found -> unknown_location
 
-(* TODO(rgrig): This prints invalid json for many [t]s. Fix. *)
 let pp_json_location l t c =
   if Config.eclipse_mode() then (
   printf "json {\"error_pos\": {";
