@@ -13,7 +13,6 @@ let keyword_al = [
   ( "skip", SKIP ); 
   ( "if", IF );
   ( "else", ELSE ); 
-  ( "inv", INV ); 
   ( "return", RETURN ); 
   ( "malloc", ALLOC ); 
   ( "free", FREE );

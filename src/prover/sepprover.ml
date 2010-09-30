@@ -53,7 +53,7 @@ open Psyntax
       = fun inner_form -> inner_form  (* functional rep now, so easy *)
 
     let form_clone_abs : inner_form -> inner_form 
-      = fun inner_form -> inner_form  (* TODO. Should do some form of compression of formula *)
+      = fun inner_form -> Clogic.abs inner_form  (* TODO. Should do some form of compression of formula *)
 
 
     let string_inner_form : Format.formatter -> inner_form -> unit = 

@@ -49,8 +49,8 @@ and const =
 and pexp = 
   | Const of const
   | PVar_ref of var_id
-  (*| JVar of var*)
   | Prim_op of op * (pexp list) 
+  (*| JVar of var*)
  
 and field = {
   fname : field_id; 
@@ -67,8 +67,7 @@ and stmt =
   | Heap_assn of pexp * (field_id option) * pexp
   | Skip
   | If of pexp * stmt * stmt
-  (*| While of pexp * lexp option * stmt*)
-  | While of pexp * stmt
+  | While of pexp * inv_id option * stmt
   | Return of pexp option
   | Fun_call of var_id * fun_id * pexp list
   | Block of stmt list 

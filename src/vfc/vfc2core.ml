@@ -179,13 +179,23 @@ let rec tr_stmt (s : stmt) : core_statement list =
     (tr_stmt s2)
   (*| While of pexp * lexp option * stmt*)
  
- | While (e, s) ->
-    let l_loop_top = fresh_label() in 
-    let l_loop_body = fresh_label() in  
-    let l_loop_exit = fresh_label() in  
+ | While (e, i, s) ->
+    let inv_stmt_core =
+      match i with
+      | Some inv_id ->
+        let inv = find invs inv_id in
+        let spec = mk_spec inv inv excep_post_empty invariants_empty in
+        [Assignment_core ([], spec, [])]
+      | None -> []
+    in
+    let l_loop_top = fresh_label() in
+    let l_loop_body = fresh_label() in
+    let l_loop_exit = fresh_label() in
+    inv_stmt_core @
     [Label_stmt_core l_loop_top; Goto_stmt_core ([l_loop_body; l_loop_exit]);
     Label_stmt_core l_loop_body; assume_core (tr_expr2form e)] @
     (tr_stmt s) @
+    inv_stmt_core @
     [Goto_stmt_core ([l_loop_top]); 
     Label_stmt_core l_loop_exit; assume_core (tr_expr2form (negate_expr e))]
 
@@ -239,7 +249,7 @@ let rec tr_stmt (s : stmt) : core_statement list =
   
   | Inv inv_id ->
     let inv = find invs inv_id in
-	let spec = mk_spec inv inv excep_post_empty invariants_empty in
+    let spec = mk_spec inv inv excep_post_empty invariants_empty in
     [Assignment_core ([], spec, [])]
 
 
