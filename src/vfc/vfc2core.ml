@@ -8,6 +8,18 @@ open Psyntax
 open Spec_def
 
 
+let fun_decls = Hashtbl.create 101
+let struct_decls = Hashtbl.create 101
+let fun_specs = Hashtbl.create 101
+let invs = Hashtbl.create 101
+
+let find hashtbl id =
+  try Hashtbl.find hashtbl id
+  with Not_found ->
+    Printf.printf "Error: %s not found!" id;
+    exit 1
+
+
 (* Create fresh labels used in translation of conditionals and loops *)
 let fresh_label =
   let label_ref = ref 0 in 
@@ -27,7 +39,8 @@ let mk_parameter n =
 let constant_to_term c =
   match c with 
 (*  | Null_const -> mkFun "nil" [] *)
-  | Int_const i -> mkFun "numeric_const" [mkString (Printf.sprintf "%d" i)]
+(*  | Int_const i -> mkFun "numeric_const" [mkString (Printf.sprintf "%d" i)] *)
+  | Int_const i -> mkString (Printf.sprintf "%d" i)
 (*  | Bool_const -> assert false *)
 
 
@@ -105,7 +118,10 @@ let rec tr_expr2form (e : pexp) : form =
   | _ ->  assert false
 
 
-let retvar_term = mkVar (Spec.ret_v1)
+let retvar = Spec.ret_v1
+let retvar_term = mkVar retvar
+
+let parameter_var n = prog_var (Support_syntax.parameter n)
 
 let excep_post_empty = ClassMap.empty
 
@@ -115,8 +131,6 @@ let invariants_empty = LabelMap.empty
 let assume_core (e : form) =
   Assignment_core([], mk_spec [] e excep_post_empty invariants_empty, []) 
 
-let fun_specs = ref []
-let invs = ref []
 
 (* Translation of statement *)
 let rec tr_stmt (s : stmt) : core_statement list =
@@ -186,8 +200,35 @@ let rec tr_stmt (s : stmt) : core_statement list =
     | None -> [Nop_stmt_core]
     end
 
-  | Fun_call (v_id, fun_id, e) -> [] (* TODO: use contracts on function call *)
-  
+  | Fun_call (v_id, fun_id, args) ->
+    let (pre, post) = find fun_specs fun_id in
+    let params = (find fun_decls fun_id).params in
+    let pvars = List.fold_right (fun v -> vs_add (prog_var v.vname)) params 
+      (vs_add retvar vs_empty) in
+    let lvars = vs_diff (fv_form pre) pvars in
+    let psubst = ref empty_subst in
+(*
+    List.iter (fun (v, e) ->
+      psubst := add_subst (prog_var v.vname) (tr_expr2term e) !psubst
+    ) (List.combine params args);
+*)
+    let cnt = ref 0 in
+    List.iter (fun v ->
+      psubst := add_subst (prog_var v.vname) (mkVar (parameter_var !cnt)) !psubst;
+      cnt := !cnt + 1;
+    ) params;
+    psubst := add_subst retvar retvar_term !psubst; 
+    (* make logical variables fresh to avoid capture *)
+    let lsubst = subst_kill_vars_to_fresh_exist lvars in
+    let pre = subst_form lsubst (subst_form !psubst pre) in
+    (* substitution makes existentials in post that aren't already handled into prog variables *)
+    let evars = vs_diff (vs_diff (fv_form post) pvars) lvars in
+    let esubst = subst_kill_vars_to_fresh_prog evars in
+    let post = subst_form esubst (subst_form lsubst (subst_form !psubst post)) in
+    let spec = mk_spec pre post excep_post_empty invariants_empty in
+(*    [Assignment_core ([prog_var v_id], spec, [])]*)
+    [Assignment_core ([prog_var v_id], spec, List.map tr_expr2term args)]
+
   | Alloc (v_id, e) -> []
   | Free e -> []
   | Fork (v_id, fun_id, e) -> []
@@ -198,10 +239,7 @@ let rec tr_stmt (s : stmt) : core_statement list =
   | Inv i_id -> [] (* TODO *)
 
 
-let function_signature_str f =
-  f.fun_name
-  
-
+(* Verifies functions in prog against specs using given logic and abstraction rules *)
 let verify
     (file_prefix : string)
     (prog : vfc_prog)
@@ -209,39 +247,52 @@ let verify
     (lo : logic) 
     (abs_rules : logic) : unit =
 
-  (* TODO: add struct rules to logic *)
   List.iter (fun decl ->
     match decl with
-    | Struct_decl s -> () (* updateLogic ((fun l -> Logic.add_struct_to_rules t l)) *)
-    | _ -> ()
+    | Fun_decl f -> 
+      Hashtbl.add fun_decls f.fun_name f;  (* Note: function names must be unique *)    
+    | Struct_decl s ->
+      Hashtbl.add struct_decls s.sname s;
+      (* TODO: add struct rules to logic *)
+      (* updateLogic ((fun l -> Logic.add_struct_to_rules t l)) *)
   ) prog;  
-  
+
   List.iter (fun spec ->
     match spec with
-    | Vfc_inv (inv_id, inv) -> 
-      invs := (inv_id, inv) :: !invs
-    | Vfc_fun (fun_id, pre, post) -> 
-      fun_specs := (fun_id, mk_spec pre post excep_post_empty invariants_empty) :: !fun_specs
+    | Vfc_inv (inv_id, inv) ->
+      Hashtbl.add invs inv_id inv;
+    | Vfc_fun (fun_id, pre, post) ->
+      Hashtbl.add fun_specs fun_id (pre, post);
   ) specs;
 
+  Symexec.file := file_prefix;
   (* TODO: generate call graph, and perform the fixpoint abduction *)
   (* for now: verification of each method separately against a given spec *)
   List.iter (fun decl ->
     match decl with
     | Fun_decl f ->
-      let fun_name_str = function_signature_str f in
-      let core_stmts = tr_stmt f.body in
+      let fun_name_str = f.fun_name in
+      if Config.symb_debug() then Printf.printf "Starting verification of function %s...\n" fun_name_str;
+      (* add function parameters *)
+      let params_stmts =
+        let cnt = ref 0 in
+        List.map (fun v ->
+          let post = mkEQ (mkVar (parameter_var !cnt), mkVar (prog_var v.vname)) in
+          cnt := !cnt + 1;
+          let spec = mk_spec [] post excep_post_empty invariants_empty in
+          Assignment_core ([], spec, [])
+        ) f.params in
+      (* add function body *)
+      let body_stmts = tr_stmt f.body in
+      let core_stmts = params_stmts @ body_stmts in
       let cfg_nodes = List.map (fun s -> Cfg_core.mk_node s) core_stmts in
       Cfg_core.print_core file_prefix fun_name_str cfg_nodes;
-      let spec = 
-        try List.assoc f.fun_name !fun_specs
-        with Not_found -> 
-        Printf.printf "Specification for function %s not present in the spec file." f.fun_name; exit 1
-      in 
+      let (pre, post) = find fun_specs fun_name_str in
+      let spec = mk_spec pre post excep_post_empty invariants_empty in
       let res = Symexec.verify fun_name_str cfg_nodes spec lo abs_rules in
       if res then
-        Printf.printf "Verification of %s succeeded." (f.fun_name)
+        Printf.printf "Verification of %s succeeded.\n" fun_name_str
       else
-        Printf.printf "Verification of %s failed!" (f.fun_name)
+        Printf.printf "Verification of %s failed!\n" fun_name_str
     | _ -> ()
   ) prog 

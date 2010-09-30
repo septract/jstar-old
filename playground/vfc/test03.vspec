@@ -1,0 +1,3 @@
+f { } { $ret_v1=3 }
+
+g { } { $ret_v1=builtin_plus(x,"1") }

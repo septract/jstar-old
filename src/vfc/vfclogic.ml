@@ -35,3 +35,4 @@ let mk_type (t : vfc_type) =
 
 let mk_local_blob t x e = mk_multiheap_blob local_heap t full_perm x e
 let mk_host_blob t x e = mk_multiheap_blob host_heap t full_perm x e
+

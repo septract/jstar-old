@@ -109,7 +109,7 @@ fun_decl:
       { if Config.parse_debug() then Printf.printf "fun_decl void %!"; {fun_name=$2; ret_type=None; params=$4; body=$6} }
 ; 
 var_list:
- | /* empty */   { [] }
+ | /* empty */  { [] }
  | full_type IDENTIFIER { [{vname=$2; vtype=$1; kind=Parameter}] } 
  | full_type IDENTIFIER COMMA var_list { {vname=$2; vtype=$1; kind=Parameter} :: $4 }
 ;
@@ -126,7 +126,8 @@ exp:
 /* | op L_PAREN exp_list R_PAREN  { Prim_op($1, $3) } */
 ; 
 exp_list: 
- | /* empty */   { [] }
+ | /* empty */  { [] }
+ | exp  { [$1] } 
  | exp COMMA exp_list  { $1 :: $3 }
 ;
 op:

@@ -1,0 +1,9 @@
+int g (int x) {
+  return x + 1;
+}
+
+int f() {
+  int ret;
+  ret = g(2);
+  return ret;
+}

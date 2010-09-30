@@ -36,6 +36,9 @@ module VarSet :
     val split : elt -> t -> t * bool * t
   end
 type varset = VarSet.t
+val vs_add : VarSet.elt -> VarSet.t -> VarSet.t
+val vs_empty : VarSet.t
+val vs_diff : VarSet.t -> VarSet.t -> VarSet.t
 val vs_fold : (VarSet.elt -> 'a -> 'a) -> VarSet.t -> 'a -> 'a
 val vs_for_all : (VarSet.elt -> bool) -> VarSet.t -> bool
 val vs_from_list : VarSet.elt list -> VarSet.t
@@ -168,8 +171,11 @@ val string_form : Format.formatter -> form -> unit
 val prog_var : string -> var
 val fresh_exists_var : unit -> var
 type variable_subst = varmap
+val empty_subst : variable_subst
+val add_subst : var -> term -> variable_subst -> variable_subst
 val subst_kill_vars_to_fresh_prog : varset -> variable_subst
 val subst_kill_vars_to_fresh_exist : varset -> variable_subst
+val subst_form : variable_subst -> form -> form
 val mk_seq_rule : psequent * psequent list list * string -> sequent_rule
 type external_prover =
     (pform -> pform -> bool) * (pform -> args list -> args list list)

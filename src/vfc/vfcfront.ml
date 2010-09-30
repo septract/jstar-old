@@ -28,10 +28,12 @@ let main () : unit =
     let lo = {empty_logic with seq_rules = l1; rw_rules = l2; consdecl = cn} in
     let l1,l2,cn = Load_logic.load_logic (System.getenv_dirlist "JSTAR_LOGIC_LIBRARY") !absrules_file_name in 
     let abs_rules = {empty_logic with seq_rules = l1; rw_rules = l2; consdecl = cn} in
+    if Config.symb_debug() then Printf.printf "Vfc file parsing started...\n";
     let prog = Vfcparse.program Vfclex.token (Lexing.from_channel (open_in !vfc_file_name)) in
-    Printf.printf "Vfc file successfully parsed...\n";
+    if Config.symb_debug() then Printf.printf "\nVfc file successfully parsed...\n";
+    if Config.symb_debug() then Printf.printf "Spec file parsing started...\n";
     let specs = Jparser.vfc_spec_file Jlexer.token (Lexing.from_channel (open_in !spec_file_name)) in 
-    Printf.printf "Spec file successfully parsed...\n";
+    if Config.symb_debug() then Printf.printf "Spec file successfully parsed...\n";
     let file_prefix = String.sub !vfc_file_name 0 (String.index !vfc_file_name '.') in
     Vfc2core.verify file_prefix prog specs lo abs_rules
   end
