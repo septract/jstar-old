@@ -50,13 +50,13 @@ let find_location i =
 
 let pp_json_location l t c =
   if Config.eclipse_mode() then (
-  printf "\njson {\"error_pos\": {";
+  printf "@\njson {\"error_pos\": {";
   List.iter (fun (k, v) -> printf "\"%s\": \"%d\"," k v) [
     ("sline", l.begin_line);
     ("eline", l.end_line);
     ("spos", l.begin_column);
     ("epos", l.end_column)];
-  printf "},\"error_text\": \"%s\",\"counter_example\": \"%s\"}\n" (String.escaped t) (String.escaped c))
+  printf "},\"error_text\": \"%s\",\"counter_example\": \"%s\"}@\n" (String.escaped t) (String.escaped c))
 
 let pp_json_location_opt = function
   | None -> pp_json_location unknown_location
