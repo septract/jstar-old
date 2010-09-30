@@ -392,13 +392,10 @@ let true_sequent_smt (seq : sequent) : bool =
   (* Call the SMT if the other check fails *)
   (if (not !Config.smt_run) then false 
   else 
-  (if Config.smt_debug() 
-   then Format.printf "Calling SMT to prove@\n %a@\n" Clogic.pp_sequent seq; 
-   Clogic.plain seq.assumption 
-    &&
-   Clogic.plain seq.obligation 
+  (Clogic.plain seq.assumption  &&  Clogic.plain seq.obligation 
     && 
-   finish_him seq.ts seq.assumption seq.obligation)) 
+   ((if Config.smt_debug() then Format.printf "Calling SMT to prove@\n %a@\n" Clogic.pp_sequent seq); 
+    finish_him seq.ts seq.assumption seq.obligation)))
 
 
 let frame_sequent_smt (seq : sequent) : bool = 
@@ -406,11 +403,10 @@ let frame_sequent_smt (seq : sequent) : bool =
     ||
   (if (not !Config.smt_run) then false 
   else 
-  (if Config.smt_debug() 
-   then Format.printf "Calling SMT to get frame from@\n %a@\n" Clogic.pp_sequent seq; 
-   Clogic.plain seq.obligation
+  (Clogic.plain seq.obligation
     && 
-   finish_him seq.ts seq.assumption seq.obligation)) 
+   ((if Config.smt_debug() then Format.printf "Calling SMT to get frame from@\n %a@\n" Clogic.pp_sequent seq); 
+    finish_him seq.ts seq.assumption seq.obligation)))
 
 
 
@@ -421,8 +417,12 @@ let ask_the_audience
     : term_structure = 
   if (not !Config.smt_run) then raise Backtrack.No_match 
   else try 
-    if Config.smt_debug() then Format.printf "Calling SMT to update congruence closure@\n"; 
-  
+    if Config.smt_debug() then 
+      begin 
+        Format.printf "Calling SMT to update congruence closure@\n"; 
+        Format.printf "Current formula:@\n %a@\n" Clogic.pp_ts_formula (Clogic.mk_ts_form ts form)
+      end;  
+      
     smt_push(); 
     
     (* Construct equalities and ineqalities from ts *)
