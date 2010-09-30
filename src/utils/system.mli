@@ -5,3 +5,4 @@ val find_file_from_dirs : string list -> string -> string
 val terminal_red : string
 val terminal_green : string
 val terminal_white : string
+val getenv : string -> string
