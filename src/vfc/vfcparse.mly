@@ -174,7 +174,7 @@ stmt:
  | GET L_PAREN exp COMMA exp COMMA exp COMMA exp R_PAREN SEMICOLON  { Get($3,$5,$7,$9) }
  | PUT L_PAREN exp COMMA exp COMMA exp COMMA exp R_PAREN SEMICOLON  { Put($3,$5,$7,$9) } 
  | WAIT L_PAREN exp R_PAREN SEMICOLON  { Wait($3) }
- | INV IDENTIFIER  { if Config.parse_debug() then Printf.printf "Inv %!"; Inv($2) }
+ | INV IDENTIFIER SEMICOLON  { if Config.parse_debug() then Printf.printf "Inv %!"; Inv($2) }
 ; 
 stmt_list: 
  | stmt  { [$1] }
