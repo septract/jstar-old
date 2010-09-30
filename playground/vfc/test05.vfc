@@ -1,0 +1,11 @@
+int f (int L, int M, byte* a) {
+  int i;
+  byte* b;
+  i = 0;
+  b = a;
+  while (i < M) (inv in) {
+    b = b + L;
+    i = i + 1;
+  }
+  return b;
+}

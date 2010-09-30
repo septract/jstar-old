@@ -5,4 +5,13 @@ where
   _j notin ?i;
   _j notin ?n
 if
-  | |- 
+  | |-
+  
+rule minus_exists :
+  | |- ?i = (_j - ?n)
+where 
+  _j notincontext;
+  _j notin ?i;
+  _j notin ?n
+if
+  | |-
