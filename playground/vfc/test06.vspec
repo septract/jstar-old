@@ -1,0 +1,3 @@
+f { } { }
+
+in { j = builtin_mult(i,10) }
