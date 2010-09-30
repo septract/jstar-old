@@ -393,7 +393,38 @@ let conjoin fresh (f : ts_formula) (sf : syntactic_form) =
   {ts = ts; form = nf; cache_sform = ref None}
 
 
+let make_syntactic ts_form =
+  let ts,form = break_ts_form ts_form in
+  let eqs = Cterm.get_eqs ts in
+  let neqs = Cterm.get_neqs ts in
 
+  let rec form_to_syntax form =
+    let convert_tuple r =
+      match get_term ts r with
+	Psyntax.Arg_op("tuple",al) -> al
+      | _ -> assert false in
+    let convert_pair = lift_pair (get_term ts) in
+    let eqs = List.map convert_pair form.eqs in
+    let neqs = List.map convert_pair form.neqs in
+    let sspat_list = RMSet.map_to_list form.spat (fun (name,i)->(name,convert_tuple i)) in
+    let splain_list = RMSet.map_to_list form.plain (fun (name,i)->(name,convert_tuple i)) in
+    let disjuncts = List.map (lift_pair form_to_syntax) form.disjuncts in
+    {seqs= eqs;
+      sneqs=neqs;
+      sspat = SMSet.lift_list sspat_list;
+      splain = SMSet.lift_list splain_list;
+      sdisjuncts = disjuncts}
+  in
+  let sform = form_to_syntax form in
+  {sform with
+    seqs = sform.seqs @ eqs;
+    sneqs = sform.sneqs @ neqs}
+
+
+let abs ts_form = 
+  let syn = make_syntactic ts_form in 
+  let ts,form = convert false (new_ts()) syn in 
+  mk_ts_form form ts 
 
 
 let match_and_remove
@@ -895,33 +926,6 @@ let make_implies (heap : ts_formula) (pheap : pform) : sequent =
      obligation = rh;
      matched = RMSet.empty}
 
-let make_syntactic ts_form =
-  let ts,form = break_ts_form ts_form in
-  let eqs = Cterm.get_eqs ts in
-  let neqs = Cterm.get_neqs ts in
-
-  let rec form_to_syntax form =
-    let convert_tuple r =
-      match get_term ts r with
-	Psyntax.Arg_op("tuple",al) -> al
-      | _ -> assert false in
-    let convert_pair = lift_pair (get_term ts) in
-    let eqs = List.map convert_pair form.eqs in
-    let neqs = List.map convert_pair form.neqs in
-    let sspat_list = RMSet.map_to_list form.spat (fun (name,i)->(name,convert_tuple i)) in
-    let splain_list = RMSet.map_to_list form.plain (fun (name,i)->(name,convert_tuple i)) in
-    let disjuncts = List.map (lift_pair form_to_syntax) form.disjuncts in
-    {seqs= eqs;
-      sneqs=neqs;
-      sspat = SMSet.lift_list sspat_list;
-      splain = SMSet.lift_list splain_list;
-      sdisjuncts = disjuncts}
-  in
-  let sform = form_to_syntax form in
-  {sform with
-    seqs = sform.seqs @ eqs;
-    sneqs = sform.sneqs @ neqs}
-
 
 let make_implies_inner ts_form1 ts_form2 =
   let ts,form = break_ts_form ts_form1 in
@@ -934,5 +938,6 @@ let make_implies_inner ts_form1 ts_form2 =
   {ts = ts;
     assumption = form;
     obligation = rform;
-    matched = RMSet.empty}
+    matched = RMSet.empty}  
+   
 
