@@ -671,7 +671,7 @@ method_body:
 ;
 source_pos_tag:
    | SOURCE_POS_TAG COLON identifier COLON integer_constant identifier COLON integer_constant identifier COLON integer_constant identifier COLON integer_constant identifier COLON full_identifier SOURCE_POS_TAG_CLOSE 
-   { {begin_line=$5; begin_column=$8; end_line=$11; end_column=$14} }
+   { {begin_line=$5; begin_column=$11; end_line=$8; end_column=$14} }
 ; 
 source_pos_tag_option:
    | /* empty */ { None }

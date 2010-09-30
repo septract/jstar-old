@@ -46,33 +46,44 @@ let smterr = ref Pervasives.stdin;;
 let smtout_lex = ref (Lexing.from_string "");; 
 
 
-(* use z3 by default. Can be overridden by the -p command line option *)
-(*let solver_path = ref "z3";;*)
-
-
 let smt_init () : unit = 
-  if Config.smt_debug() then Format.printf "Initialising SMT\n"; 
-  (try Config.solver_path := Sys.getenv "JSTAR_SMT_PATH" with Not_found -> ()); 
-  let path = !Config.solver_path in 
-  let o, i, e = Unix.open_process_full path (environment()) in 
-  smtout := o;  smtin := i;  smterr := e;
-  smtout_lex := Lexing.from_channel !smtout; 
-  Config.smt_run := true; 
-  if Config.smt_debug() then Format.printf "SMT running...\n"
+  let path = ( if (!Config.solver_path <> "") then !Config.solver_path 
+               else System.getenv "JSTAR_SMT_PATH")
+  in 
+  if path = "" then Config.smt_run := false
+  else
+    try 
+      begin
+        if Config.smt_debug() then Format.printf "Initialising SMT@\n"; 
+        let s = Unix.stat path in 
+        let args = System.getenv "JSTAR_SMT_ARGUMENTS" in 
+        let command = Filename.quote path ^ " " ^ args in 
+        let o, i, e = Unix.open_process_full command (environment()) in 
+        smtout := o;  smtin := i;  smterr := e;
+        smtout_lex := Lexing.from_channel !smtout; 
+        Config.smt_run := true; 
+        if Config.smt_debug() then Format.printf "SMT running...@\n"
+      end 
+    with 
+    | Unix_error(err,f,a) -> 
+      match err with 
+      | ENOENT -> Format.printf "@,@{<b>ERROR:@} Bad path for SMT solver: %s@," a; 
+                  Config.smt_run := false 
+      | _ -> raise (Unix_error(err,f,a))
 
 
 let smt_fatal_recover () : unit  = 
-  Format.printf "@[@{<b>SMT ERROR:@} "; 
-  Format.printf "Oh noes! The SMT solver died for some reason. This shouldn't happen.\n"; 
+  Format.printf "@,@{<b>SMT ERROR:@} "; 
+  Format.printf "Oh noes! The SMT solver died for some reason. This shouldn't happen.@,"; 
   if Config.smt_debug() then 
     begin
-      Format.printf "Error report from the solver:\n";
-      try while true do Format.printf "%s\n" (input_line !smterr) done
+      Format.printf "Error report from the solver:@\n";
+      try while true do Format.printf "%s@\n" (input_line !smterr) done
       with End_of_file -> ()
     end; 
   Format.printf "Turning off SMT for this example...@]"; 
   Unix.close_process_full (!smtout, !smtin, !smterr); 
-  Format.printf "SMT off.\n"; 
+  Format.printf "SMT off.@\n"; 
   Format.print_flush(); 
   Config.smt_run := false 
 
@@ -266,7 +277,7 @@ let smt_command
     : smt_response = 
   try 
     let cmd = cmd_munge cmd in 
-    if Config.smt_debug() then Format.printf "%s\n" cmd; 
+    if Config.smt_debug() then Format.printf "%s@\n" cmd; 
     Format.print_flush(); 
     output_string !smtin cmd; 
     output_string !smtin "\n"; 
@@ -354,7 +365,7 @@ let finish_him
     let types = smt_union_list [ts_types; asm_types; obl_types] in 
     
     (* declare variables and predicates *)
-    SMTTypeSet.iter (fun x -> smt_command (string_sexp_decl x);()) types; 
+    SMTTypeSet.iter (fun x -> ignore (smt_command (string_sexp_decl x))) types; 
 
     (* Construct and run the query *)                    
     let query = "(not (=> (and true " ^ asm_eq_sexp ^ " " ^ asm_neq_sexp ^ " " ^ 
@@ -367,7 +378,7 @@ let finish_him
   with 
   | SMT_error r -> 
     smt_reset(); 
-    Format.printf "@{<b>SMT ERROR@}: %s\n" r; 
+    Format.printf "@{<b>SMT ERROR@}: %s@\n" r; 
     Format.print_flush(); 
     false
   | SMT_fatal_error -> 
@@ -382,7 +393,7 @@ let true_sequent_smt (seq : sequent) : bool =
   (if (not !Config.smt_run) then false 
   else 
   (if Config.smt_debug() 
-   then Format.printf "Calling SMT to prove\n %a\n" Clogic.pp_sequent seq; 
+   then Format.printf "Calling SMT to prove@\n %a@\n" Clogic.pp_sequent seq; 
    Clogic.plain seq.assumption 
     &&
    Clogic.plain seq.obligation 
@@ -396,7 +407,7 @@ let frame_sequent_smt (seq : sequent) : bool =
   (if (not !Config.smt_run) then false 
   else 
   (if Config.smt_debug() 
-   then Format.printf "Calling SMT to get frame from\n %a\n" Clogic.pp_sequent seq; 
+   then Format.printf "Calling SMT to get frame from@\n %a@\n" Clogic.pp_sequent seq; 
    Clogic.plain seq.obligation
     && 
    finish_him seq.ts seq.assumption seq.obligation)) 
@@ -410,7 +421,7 @@ let ask_the_audience
     : term_structure = 
   if (not !Config.smt_run) then raise Backtrack.No_match 
   else try 
-    if Config.smt_debug() then Format.printf "Calling SMT to update congruence closure\n"; 
+    if Config.smt_debug() then Format.printf "Calling SMT to update congruence closure@\n"; 
   
     smt_push(); 
     
@@ -428,18 +439,18 @@ let ask_the_audience
     let types = smt_union_list [ts_types; form_types] in 
   
     (* declare predicates *)
-    SMTTypeSet.iter (fun x -> smt_command (string_sexp_decl x);()) types; 
+    SMTTypeSet.iter (fun x -> ignore(smt_command (string_sexp_decl x))) types; 
 
     (* Assert the assumption *)                    
     let assm_query = "(and true " ^ ts_eq_sexp ^" "^ ts_neq_sexp ^" "^ form_sexp ^ ")"
     in smt_assert assm_query;    
 
     (* check for a contradiction *)
-    if Config.smt_debug() then Format.printf "[Checking for contradiction in assumption]\n"; 
+    if Config.smt_debug() then Format.printf "[Checking for contradiction in assumption]@\n"; 
     if smt_check_unsat() then (smt_reset(); raise Assm_Contradiction);
     
     (* check whether there are any new equalities to find; otherwise raise Backtrack.No_match *)
-    if Config.smt_debug() then Format.printf "[Checking for new equalities]\n"; 
+    if Config.smt_debug() then Format.printf "[Checking for new equalities]@\n"; 
     smt_push(); 
     let reps = get_args_rep ts in 
     let rep_sexps = String.concat " " (map (fun (x,y) -> string_sexp_neq (snd x,snd y)) 
@@ -458,7 +469,7 @@ let ask_the_audience
   with 
   | SMT_error r -> 
     smt_reset(); 
-    Format.printf "@{<b>SMT ERROR@}: %s\n" r;
+    Format.printf "@{<b>SMT ERROR@}: %s@\n" r;
     Format.print_flush(); 
     raise Backtrack.No_match
   | SMT_fatal_error -> 

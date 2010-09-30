@@ -183,5 +183,6 @@ Need to do something better here for integration with multiple SMT provers and s
 
    let pprint_proof = Prover.pprint_proof
    let pprint_counter_example = Prover.pprint_counter_example   
-   let print_counter_example = Prover.print_counter_example   
+   let print_counter_example = Prover.print_counter_example
+   let get_counter_example = Prover.get_counter_example
    let string_of_proof = Prover.string_of_proof
