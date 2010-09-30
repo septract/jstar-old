@@ -5,10 +5,10 @@ ifndef OCAMLYACC
 	export OCAMLYACC = ocamlyacc -v
 endif
 ifndef OCAMLC
-	export OCAMLC = ocamlc.opt -annot
+	export OCAMLC = ocamlc.opt -annot -g
 endif 
 ifndef OCAMLOPT
-	export OCAMLOPT = ocamlopt.opt -annot
+	export OCAMLOPT = ocamlopt.opt -annot -g
 endif 
 ifndef OCAMLDEP
 	export OCAMLDEP = ocamldep.opt
@@ -34,9 +34,9 @@ VFCFRONT_SOURCES = vfcAST.ml vfcparse.mly vfclex.mll vfclogic.ml vfc2core.ml vfc
 
 DEFAULT_ARGS = SOURCES="$(VFCFRONT_SOURCES)" \
        LIBS="str unix utils prover_syntax symbexe_syntax jimple_syntax prover symbexe parsing" \
-       OCAMLLDFLAGS="-g -I $(LIB)" \
+       OCAMLLDFLAGS="-I $(LIB)" \
        INCDIRS="../prover ../prover_syntax ../parsing ../symbexe_syntax ../utils ../jimple_syntax ../symbexe" \
-       OCAMLFLAGS="-g" \
+       OCAMLFLAGS="" \
        TRASH=""
 
 MAIN = $(DEFAULT_ARGS) RESULT=$(BIN)/run_vfc.byte
