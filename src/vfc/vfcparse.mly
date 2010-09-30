@@ -161,7 +161,8 @@ stmt:
  | STAR exp EQUALS exp SEMICOLON  { if Config.parse_debug() then Printf.printf "Heap_assn %!"; Heap_assn($2, None, $4) }
  | SKIP SEMICOLON  { if Config.parse_debug() then Printf.printf "Skip %!"; Skip }
  | IF L_PAREN exp R_PAREN stmt ELSE stmt  { if Config.parse_debug() then Printf.printf "If %!"; If($3, $5, $7) }
- | WHILE L_PAREN exp R_PAREN stmt  { if Config.parse_debug() then Printf.printf "While %!"; While($3, $5) }
+ | WHILE L_PAREN exp R_PAREN stmt  { if Config.parse_debug() then Printf.printf "While no inv%!"; While($3, None, $5) }
+ | WHILE L_PAREN exp R_PAREN L_PAREN INV IDENTIFIER R_PAREN stmt  { if Config.parse_debug() then Printf.printf "While inv %!"; While($3, Some $7, $9) } 
  | RETURN SEMICOLON  { if Config.parse_debug() then Printf.printf "Return none %!"; Return(None) }
  | RETURN exp SEMICOLON  { if Config.parse_debug() then Printf.printf "Return some %!"; Return(Some $2) } 
  | IDENTIFIER EQUALS IDENTIFIER L_PAREN exp_list R_PAREN SEMICOLON  { if Config.parse_debug() then Printf.printf "Fun_call %!"; Fun_call($1, $3, $5) }

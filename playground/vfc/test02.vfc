@@ -1,10 +1,8 @@
 int f (int M) {
   int i;
   i = 0;
-  inv i1;
-  while (i < M) {
+  while (i < M) (inv i) {
     i = i+1;
-	inv i2;
   }
   return i;
 }
