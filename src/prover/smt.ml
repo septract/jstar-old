@@ -157,9 +157,9 @@ let rec args_smttype (arg : Psyntax.args) : smttypeset =
           if Str.string_match rxp s 0 then SMTTypeSet.empty 
           else SMTTypeSet.singleton (SMT_Op("string_const_"^(str_munge s), 0))
 
-  | Arg_op ("builtin_plus",_) -> SMTTypeSet.empty
-  | Arg_op ("builtin_minus",_) -> SMTTypeSet.empty
-  | Arg_op ("builtin_mult",_) -> SMTTypeSet.empty
+  | Arg_op ("builtin_plus",args) -> smt_union_list (map args_smttype args)
+  | Arg_op ("builtin_minus",args) -> smt_union_list (map args_smttype args)
+  | Arg_op ("builtin_mult",args) -> smt_union_list (map args_smttype args)
 
   | Arg_op (name, args) -> 
           let s = SMTTypeSet.singleton (SMT_Op(("op_"^name), (length args))) in 
