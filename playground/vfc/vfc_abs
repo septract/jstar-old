@@ -1,5 +1,11 @@
-abstraction LE_exists : 
+abstraction LE_exists_left : 
    !LE(_x,?l) ~~> 
 
-abstraction LT_exists : 
+abstraction LT_exists_left : 
    !LT(_x,?l) ~~> 
+
+abstraction LE_exists_right : 
+   !LE(?l,_x) ~~> 
+
+abstraction LT_exists_right : 
+   !LT(?l,_x) ~~> 

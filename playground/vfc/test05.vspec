@@ -1,0 +1,5 @@
+f { !LE(0, M) * !LE(0, L) } { $ret_v1=builtin_plus(a, builtin_mult(M,L)) }
+
+in { !LE (i, M) *  b = builtin_plus(a, builtin_mult(i,L)) }
+
+in2 { !LE (0, i) }
