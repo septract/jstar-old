@@ -48,7 +48,7 @@ let smtout_lex = ref (Lexing.from_string "");;
 
 let smt_init () : unit = 
   let path = ( if (!Config.solver_path <> "") then !Config.solver_path 
-               else try Sys.getenv "JSTAR_SMT_PATH" with Not_found -> "" )
+               else System.getenv "JSTAR_SMT_PATH")
   in 
   if path = "" then Config.smt_run := false
   else
@@ -56,7 +56,7 @@ let smt_init () : unit =
       begin
         if Config.smt_debug() then Format.printf "Initialising SMT@\n"; 
         let s = Unix.stat path in 
-        let args = try Sys.getenv "JSTAR_SMT_ARGUMENTS" with Not_found -> "" in 
+        let args = System.getenv "JSTAR_SMT_ARGUMENTS" in 
         let command = Filename.quote path ^ " " ^ args in 
         let o, i, e = Unix.open_process_full command (environment()) in 
         smtout := o;  smtin := i;  smterr := e;
