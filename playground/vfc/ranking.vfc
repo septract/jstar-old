@@ -1,0 +1,89 @@
+void ranking (int no_of_dmas) {
+  i = 0; 
+  while(i<no_of_dmas) {
+    succ_i = *(succ+i); 
+    if(succ_i == 0) {
+      *(run+i) = 0; 
+    } else {
+      nextaddr = source + (size_int * succ_i);
+      ret = asyncpy(nextaddr, dataIn+i, size_int, i); 
+    }
+    i = i + 1; 
+  }
+
+  flag = 1;
+
+  while(flag) {
+    k = 0; 
+    while(k<(buf_size-1)) {
+      i = 0; 
+      while(i<no_of_dmas){
+        wait(i); 
+        run_i = *(run+i); 
+        dataIn_i = *(dataIn+i); 
+        if((run_i == 1) && (dataIn_i>=0)) {
+          *(succ+i) = dataIn_i;
+          nextaddr = source + dataIn_i;
+          ret = asyncpy(nextaddr, dataIn+i, size_int, i);
+          currlen_i = *(currlen+i); 
+          SPUbuf_i = *(SPUbuf+i); 
+          *(SPUbuf_i + currlen_i) = dataIn_i;
+          *(currlen+i) = currlen_i + 1;
+        }
+        else{ *(run+i) = 0; }
+        i = i+1; 
+      }
+    }
+ 
+    i = 0; 
+    while(i<no_of_dmas) {
+      currlen_i = *(currlen+i); 
+      if(currlen_i != 0) {  
+        wait(i);
+        run_i = *(run+i); 
+        dataIn_i = *(dataIn+i); 
+        if((run_i == 1 ) && (dataIn_i>=0)) { 
+          *(succ+i) = dataIn_i;
+          SPUbuf_i = *(SPUbuf+i); 
+          *(SPUbuf_i + currlen_i) = dataIn_i;
+          *(currlen+i) = currlen_i + 1;
+        }
+        else{ *(run+i) = 0; }
+
+        currlen_i = *(currlen_i); 
+        totlen_i = *(totlen+i); 
+        target_i = *(target+i); 
+        addr = target_i + (size_int * totlen_i);
+        ret = asyncpy(SPUbuf+i, addr, (currlen_i * size_int), i); 
+        *(totlen+i) = totlen_i + currlen_i;
+        *(currlen+i) = 0;
+      } else { skip; }
+      i = i+1; 
+    } 
+
+    i = 0; 
+    while(i<no_of_dmas) {
+      wait(i); 
+      run_i = *(run+i); 
+      if(run_i == 1) {
+        dataIn_i = *(dataIn+i); 
+        nextaddr = source + dataIn_i; 
+        ret = asyncpy(nextaddr, dataIn+i, size_int, i); 
+      } else { skip; }
+      i = i+1; 
+    } 
+
+    flag = 0; 
+    i = 0; 
+    while(i<no_of_dmas) {
+      run_i = *(run+i);
+      flag = flag + run_i;
+      i = i+1; 
+    } 
+    k = k + 1; 
+  }
+}
+
+int asyncpy( int src, int tgt, int size, int id ) {
+  skip; 
+}
