@@ -269,7 +269,7 @@ let call_jsr_static (sheap,id) spec il node =
 	        Pprinter_core.pp_stmt_core node.skind
 	        Sepprover.pprint_counter_example (); 
 	    flush_str_formatter ());
-        printf "@[<2>@{<b>ERROR}: While executing node %d:@\n%a@."
+        printf "@[<2>@{<b>ERROR@}: While executing node %d:@\n%a@."
             node.sid
             Pprinter_core.pp_stmt_core node.skind;
 	Sepprover.print_counter_example ();
