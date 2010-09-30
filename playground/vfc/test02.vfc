@@ -1,9 +1,10 @@
-void main () {
+int f (int M) {
   int i;
-  int M;
   i = 0;
+  inv i1;
   while (i < M) {
     i = i+1;
+	inv i2;
   }
-  return;
+  return i;
 }

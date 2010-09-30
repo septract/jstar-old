@@ -236,7 +236,11 @@ let rec tr_stmt (s : stmt) : core_statement list =
   | Get (l, h, s, t) -> []
   | Put (l, h, s, t) -> []
   | Wait t -> [] (* TODO: treat via function call *)
-  | Inv i_id -> [] (* TODO *)
+  
+  | Inv inv_id ->
+    let inv = find invs inv_id in
+	let spec = mk_spec inv inv excep_post_empty invariants_empty in
+    [Assignment_core ([], spec, [])]
 
 
 (* Verifies functions in prog against specs using given logic and abstraction rules *)
