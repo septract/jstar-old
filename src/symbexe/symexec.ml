@@ -380,6 +380,7 @@ and execs n sheaps =
 and execute_core_stmt n (sheap : formset_entry) : formset_entry list =
   let sheap_noid=fst sheap in
   let sheap_noid = Sepprover.kill_all_exists_names sheap_noid in 
+  let sheap_noid = Sepprover.form_clone_abs sheap_noid in 
   let stm=n in
   if Config.symb_debug() then 
     Format.printf "@\nExecuting statement:@ %a" Pprinter_core.pp_stmt_core stm.skind; 

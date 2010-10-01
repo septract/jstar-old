@@ -74,7 +74,7 @@ type sep_wrapper = {
 }
 let pp_sep sep_text = {
   separator = fun pp ppf first x ->
-    if not first then fprintf ppf "@ %s " sep_text; pp ppf x; false
+    if not first then fprintf ppf "@, %s " sep_text; pp ppf x; false
 }
 let pp_star = pp_sep "*"
 
@@ -83,7 +83,7 @@ let pp_whole pp_element pp_separator =
 
 (* {{{ printing for typical collection elements *)
 let pp_binary_op operator pp_operand ppf (l, r) =
-  fprintf ppf "%a%s%a" pp_operand l operator pp_operand r
+  fprintf ppf "@[@[%a@]%s@[%a@]@]@," pp_operand l operator pp_operand r
 let pp_eq pp_operand = pp_binary_op "=" pp_operand
 let pp_neq pp_operand = pp_binary_op "!=" pp_operand
 let pp_disjunct pp_operand = pp_binary_op " || " pp_operand
