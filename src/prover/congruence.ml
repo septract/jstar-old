@@ -407,7 +407,7 @@ module PersistentCC (A : GrowablePersistentArray) : PCC =
 	
     let pp_c ts pp ppf i = 
        (*if true then pp ppf i else fprintf ppf "{%a}_%i" pp i i*)
-      pp ppf (rep ts i)
+      pp ppf i (*(rep ts i)*)
 
     let for_each_rep ts (f : constant -> unit) = 
       let n = A.size ts.representative in
@@ -423,7 +423,7 @@ module PersistentCC (A : GrowablePersistentArray) : PCC =
           if mask rep then
 	  let rp = map rep in 
 	  List.iter 
-	    (fun i -> if mask i then acc := (rp,map i)::!acc) 
+	    (fun i -> if mask i && rep <> i then acc := (rp,map i)::!acc) 
 	    (A.get ts.classlist rep)
 	  ) ;
       !acc
@@ -1196,7 +1196,7 @@ module PersistentCC (A : GrowablePersistentArray) : PCC =
     let normalise ts c = 
       rep ts c
     let others ts c = 
-      A.get ts.classlist c 
+      A.get ts.classlist (rep ts c) 
 
    let rec inter_list (i : int) (j : int) : int list =  if i > j then [] else (i :: inter_list (i+1) j) 
 
