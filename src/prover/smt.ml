@@ -11,20 +11,6 @@
       LICENSE.txt
  ********************************************************)
  
-(*
-SMT TODO list: 
-
-- mark things that are constructors as such in the term structure; 
-  at the moment they're treated as predicates. 
-  
-- get rid of some of the gratuatous calls to the Format module & 
-  do all the sexp construction through string-catenation 
-  
-- check that the SMT has started correctly; at the moment this is 
-  assumed and a fault is raised only when the prover tries to read 
-  the SMT's output. 
-
-*)
 
 open Psyntax
 open Clogic
