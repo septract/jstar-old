@@ -44,7 +44,7 @@ let rec form_at2str pa =
   match pa with 
     P_NEQ(a1,a2) ->(args2str a1)^ "!= "^  (args2str a2)
   | P_EQ(a1,a2) ->  (args2str a1)^ " = "^ (args2str a2)
-  | P_PPred(op,al) -> op^"("^ (args_list2str al)^")"
+  | P_PPred(op,al) -> "!"^op^"("^ (args_list2str al)^")"
   | P_SPred (s,al) -> s^"("^ (args_list2str al)^")"
   | P_Or(f1,f2) -> "[[("^(list_form2str f1)^" || "^" [("^( list_form2str f2)^")]]"
   | P_Wand(f1,f2) -> "[[("^(list_form2str f1)^" -* "^" [("^( list_form2str f2)^")]]"
