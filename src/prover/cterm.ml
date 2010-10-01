@@ -562,7 +562,7 @@ let rewrite (ts : term_structure) (rm : rewrite_rule list) (query : term_structu
     | r::rm -> 
 	try 
 	  let t = Arg_op (r.function_name, r.arguments) in 
-(*	  Format.printf "Trying: %s for matches %a@\n" r.rewrite_name string_args t; 
+(*	  Format.printf "Trying: %s for matches %a@\n" r.rewrite_name string_args t; *)
 	  let c,ts = add_pattern t ts in
 (*	  Format.printf "Pattern %a@\n" (pp_c ts) c; *)
 	  CC.unifies_any ts.cc c
