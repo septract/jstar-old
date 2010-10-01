@@ -55,7 +55,7 @@ let stmts_to_cfg (stmts : cfg_node list) : unit =
         List.iter (fun ln -> connect m (find ln)) ls; process ss
     | m :: ((n :: _) as ss)-> connect m n; process ss
     | _ -> () in
-  assert (List.for_all (fun s -> s.succs = [] && s.preds = []) stmts);
+  List.iter (fun s -> s.succs <- []; s.preds <- []) stmts;
   List.iter al stmts;
   process stmts
 (* utils for building flowgraphs }}} *)
@@ -96,7 +96,7 @@ let print_icfg_dotty
 
 (* Print a sequence of core statements to a file *)
 let print_core 
-    (filename : string) 
+    (file: string)
     (mname: string) 
     (stmts : cfg_node list) : unit =
 
@@ -106,7 +106,7 @@ let print_core
   let cstr = Format.flush_str_formatter 
      (List.iter (fun x -> pp_stmt_core Format.str_formatter x.skind;
 	             Format.pp_print_newline Format.str_formatter () ) stmts) in 
-  let chan = open_out (filename ^ "." ^ mname ^ ".core") in 
+  let chan = open_out (file ^ mname ^ ".core") in 
   Printf.fprintf chan "%s" cstr; 
   close_out chan; 
 

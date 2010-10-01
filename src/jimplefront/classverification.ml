@@ -103,7 +103,7 @@ let verify_methods
   let static_specs = keep_cn static_method_specs in
 
   (* Body verification - call symbolic execution for all methods in the jimple file *)
-  Translatejimple.compute_fixed_point
+  Translatejimple.verify_jimple_file
       jimple_file
       logic
       abslogic
