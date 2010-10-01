@@ -85,10 +85,10 @@ let update_var_to ts_form v e =
 (* {{{ printing of atomic formulas *)
 (* TODO(rgrig): What's a better name for RMSet.t and SMSet.t? *)
 let pp_rmset_element prefix pp_term ppf (s, t) =
-  fprintf ppf "%s%s%a" prefix s pp_term t
+  fprintf ppf "@[%s%s%a@]" prefix s pp_term t
 
 let pp_smset_element prefix ppf (n, args) =
-  fprintf ppf "%s%s(%a)" prefix n string_args_list args
+  fprintf ppf "@[%s%s(%a)@]" prefix n string_args_list args
 
 (* }}} *)
 (* {{{ printing for [formula], [syntactic_form], and [ts_form] *)
