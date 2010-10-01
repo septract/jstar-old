@@ -485,11 +485,15 @@ let verify
       match Sepprover.convert (spec.pre) with 
 	None -> 
           printf "@{<b>WARNING@}: %s has an unsatisfiable precondition@." mname;
+          pp_dotty_transition_system (); 
           false
       |	Some pre -> 
 	  let post = execute_core_stmt s (pre, id) in 
 	  let id_exit = add_good_node ("Exit") in 
-          List.for_all (check_postcondition [(spec.post, id_exit)]) post
+          let ret = List.for_all (check_postcondition [(spec.post, id_exit)]) post in 
+          pp_dotty_transition_system (); 
+          ret
+          
 
 
 let verify_ensures 
@@ -529,7 +533,9 @@ let verify_ensures
       let id_exit = add_good_node ("Exit") in
       ignore (List.map 
 	(fun post -> 
-	  check_postcondition [(ensures_postcond,id_exit)] post) post)
+	  check_postcondition [(ensures_postcond,id_exit)] post) post);
+      pp_dotty_transition_system () 
+         
 
 
 let check_and_get_frame (heap,id) sheap =
