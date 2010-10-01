@@ -41,7 +41,6 @@ let smt_init () : unit =
     try 
       begin
         if Config.smt_debug() then Format.printf "Initialising SMT@\n"; 
-        let s = Unix.stat path in 
         let args = System.getenv "JSTAR_SMT_ARGUMENTS" in 
         let command = Filename.quote path ^ " " ^ args in 
         let o, i, e = Unix.open_process_full command (environment()) in 
@@ -68,7 +67,7 @@ let smt_fatal_recover () : unit  =
       with End_of_file -> ()
     end; 
   Format.printf "Turning off SMT for this example...@]"; 
-  Unix.close_process_full (!smtout, !smtin, !smterr); 
+  ignore (Unix.close_process_full (!smtout, !smtin, !smterr)); 
   Format.printf "SMT off.@\n"; 
   Format.print_flush(); 
   Config.smt_run := false 
@@ -108,11 +107,11 @@ let rec list_to_pairs
 (* We should probably handle this in a more principled way *)
 
 let cmd_munge (s : string) : string = 
-  let s = Str.global_replace (Str.regexp "[@\$]") "AT_" s in
+  let s = Str.global_replace (Str.regexp "[@\\$]") "AT_" s in
   s
   
 let str_munge (s : string ) : string = 
-  let s = Str.global_replace (Str.regexp "[<> @\*]")  "_" s in
+  let s = Str.global_replace (Str.regexp "[<> @\\*]")  "_" s in
   s
 
 
@@ -139,7 +138,7 @@ let rec args_smttype (arg : Psyntax.args) : smttypeset =
   match arg with
   | Arg_var v -> SMTTypeSet.singleton (SMT_Var(v)) 
   | Arg_string s -> 
-          let rxp = (Str.regexp "^\(-?[0-9]+\)") in 
+          let rxp = (Str.regexp "^\\(-?[0-9]+\\)") in 
           if Str.string_match rxp s 0 then SMTTypeSet.empty 
           else SMTTypeSet.singleton (SMT_Op("string_const_"^(str_munge s), 0))
 
@@ -160,7 +159,7 @@ let rec string_sexp_args (arg : Psyntax.args) : string =
   match arg with 
   | Arg_var v -> Vars.string_var v
   | Arg_string s -> 
-          let rxp = (Str.regexp "^\(-?[0-9]+\)") in 
+          let rxp = (Str.regexp "^\\(-?[0-9]+\\)") in 
           if Str.string_match rxp s 0 then (Str.matched_group 1 s)
           else "string_const_"^(str_munge s)
   
@@ -174,6 +173,7 @@ let rec string_sexp_args (arg : Psyntax.args) : string =
   | Arg_op (name,args) -> 
           Printf.sprintf "(%s %s)" ("op_"^name) (string_sexp_args_list args)
   | Arg_record _ -> ""  (* shouldn't happen as converted to preds *)
+  | Arg_cons _ -> failwith "TODO"
 and string_sexp_args_list (argsl : Psyntax.args list) : string = 
   match argsl with 
   | [] -> ""
@@ -206,9 +206,11 @@ let string_sexp_pred (p : string * Psyntax.args) : (string * smttypeset) =
       
   | (name, args) -> 
     let name = "pred_"^name in 
-    match args with Arg_op ("tuple",al) ->
-    let types = SMTTypeSet.add (SMT_Pred(name,(length al))) (args_smttype args) in 
-    (Printf.sprintf "(%s %s)" name (string_sexp_args_list al), types)
+    match args with 
+      | Arg_op ("tuple",al) ->
+          let types = SMTTypeSet.add (SMT_Pred(name,(length al))) (args_smttype args) in 
+        (Printf.sprintf "(%s %s)" name (string_sexp_args_list al), types)
+      | _ -> failwith "TODO"
 
 
 let rec string_sexp_form 
@@ -287,6 +289,7 @@ let smt_check_sat () : bool =
   | Sat -> true
   | Unsat -> false
   | Unknown -> false
+  | _ -> failwith "TODO"
 
 
 let smt_check_unsat () : bool =
@@ -294,6 +297,7 @@ let smt_check_unsat () : bool =
   | Unsat -> true
   | Sat -> false
   | Unknown -> false
+  | _ -> failwith "TODO"
 
 
 let smt_push () : unit = 

@@ -8,7 +8,7 @@ ifndef OCAMLC
 	export OCAMLC = ocamlc.opt -annot
 endif 
 ifndef OCAMLOPT
-	export OCAMLOPT = ocamlopt.opt -annot
+	export OCAMLOPT = ocamlopt.opt -annot -warn-error A
 endif 
 ifndef OCAMLDEP
 	export OCAMLDEP = ocamldep.opt
