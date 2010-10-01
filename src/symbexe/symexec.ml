@@ -35,6 +35,8 @@ type id = int
 
 let file = ref ""
 
+let proof_succeeded = ref true
+
 let set_group,grouped = let x = ref false in (fun y -> x := y),(fun () -> !x )
 
 let fresh_node = let node_counter = ref 0 in fun () ->  let x = !node_counter in node_counter := x+1; x
@@ -142,7 +144,10 @@ let add_node (label : string) (ty : ntype) (cfg : cfg_node option) =
   graphn := Idmap.add cfgid (node::(try Idmap.find cfgid !graphn with Not_found -> [])) !graphn;
   node
 
-let add_error_node label = add_node label Error None
+let add_error_node label = 
+  proof_succeeded := false; 
+  add_node label Error None
+  
 let add_abs_node label cfg = add_node label Abs (Some cfg)
 let add_good_node label = add_node label Good None
 let add_node_unexplored label cfg = add_node label UnExplored (Some cfg)
@@ -459,11 +464,8 @@ and execute_core_stmt n (sheap : formset_entry) : formset_entry list =
     | End -> execs_one n [sheap]
 	  ))
 	
-      
-(* Implements a work-list fixed point algorithm. *)
-(* the queue qu is a list of pairs [(node, expression option)...] the expression
-is used to deal with if statement. It is the expression of the if statement is the predecessor
-of the node is a if_stmt otherwise is None. In the beginning is always None for each node *)
+
+(* TODO: a meaningful description of what this does *)      
 let verify 
     (mname : string) 
     (stmts : cfg_node list)  
@@ -475,7 +477,7 @@ let verify
   (* remove methods that are declared abstraction *)
   curr_logic:= lo;
   curr_abs_rules:=abs_rules;
- 
+  
   stmts_to_cfg stmts;
   match stmts with 
   | [] -> failwith "Internal error: Method body shouldn't be empty."
@@ -485,15 +487,15 @@ let verify
       match Sepprover.convert (spec.pre) with 
 	None -> 
           printf "@{<b>WARNING@}: %s has an unsatisfiable precondition@." mname;
-          pp_dotty_transition_system (); 
           false
       |	Some pre -> 
+          proof_succeeded := true; (* mutable state recording whether the proof failed.  *)
 	  let post = execute_core_stmt s (pre, id) in 
-	  let id_exit = add_good_node ("Exit") in 
+          let id_exit = add_good_node ("Exit") in 
           let ret = List.for_all (check_postcondition [(spec.post, id_exit)]) post in 
           pp_dotty_transition_system (); 
-          ret
-          
+          (* TODO: the way verification failure is currently handled is stupid *)
+	  if !proof_succeeded then ret else false 
 
 
 let verify_ensures 
