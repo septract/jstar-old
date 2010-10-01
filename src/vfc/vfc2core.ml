@@ -300,7 +300,7 @@ let verify
       let body_stmts = tr_stmt f.body in
       let core_stmts = params_stmts @ body_stmts in
       let cfg_nodes = List.map (fun s -> Cfg_core.mk_node s) core_stmts in
-      Cfg_core.print_core file_prefix fun_name_str cfg_nodes;
+      Cfg_core.print_core (file_prefix ^ ".") fun_name_str cfg_nodes;
       let (pre, post) = find fun_specs fun_name_str in
       let spec = mk_spec pre post excep_post_empty invariants_empty in
       let res = Symexec.verify fun_name_str cfg_nodes spec lo abs_rules in
