@@ -420,7 +420,7 @@ let make_syntactic ts_form =
     seqs = sform.seqs @ eqs;
     sneqs = sform.sneqs @ neqs}
 
-    
+
 (* Heuristic abstraction on syntactic form that eliminates existentials which are not in the spatial part *)
 let eliminate_existentials syn_form =
   (* finds existentials in the spatial part *)
@@ -436,26 +436,39 @@ let eliminate_existentials syn_form =
   in
   let ev_sp = find_ev_sp syn_form in
   let rec elim_evars syn =
+    (* ignore terms with heads from forbidden_heads *)
+    let forbidden_heads = ["Ast"] in
+    let rec is_not_forbidden arg =
+      match arg with
+      | Arg_var v -> true
+      | Arg_string s -> true
+      | Arg_op (name, args) -> 
+        ((List.mem name forbidden_heads) <> true) && 
+        (List.for_all (fun arg -> is_not_forbidden arg) args)
+      | _ -> assert false
+    in
     (* condition for killing a term *)
     let can_kill vs =
       (vs_is_empty vs <> true) &&  (* the set of free variables must be non empty *)
       (vs_is_empty (vs_inter ev_sp vs)) &&  (* the intersection with existentials in spatials must be empty *)
-      (vs_for_all (fun v -> match v with Vars.EVar _ -> true | _ -> false) vs)  (* in there should be only existential vars *)
+      (vs_for_all (fun v -> match v with Vars.EVar _ -> true | _ -> false) vs) (* in there should be only existential vars *)
     in
     (* filters terms in a multiset *)
     let rec filter_args_mset ms : SMSet.multiset =
       if SMSet.has_more ms then begin
-        if can_kill (fv_args_list (snd (SMSet.peek ms)) vs_empty) then
+        if can_kill (fv_args_list (snd (SMSet.peek ms)) vs_empty) &&
+          ((List.mem (fst (SMSet.peek ms)) forbidden_heads) <> true) then
           filter_args_mset (snd (SMSet.remove ms))
         else
           filter_args_mset (SMSet.next ms)
       end
-      else SMSet.restart ms        
-    in 
+      else SMSet.restart ms
+    in
     (* filters terms in a list of pairs *)
     let filter_args_pls xs =
       List.filter (fun (a1, a2) ->
-        can_kill (vs_union (fv_args a1 vs_empty) (fv_args a2 vs_empty)) <> true
+        (can_kill (vs_union (fv_args a1 vs_empty) (fv_args a2 vs_empty)) <> true) &&
+        (is_not_forbidden a1) && (is_not_forbidden a2)
       ) xs
     in
     if syn.sdisjuncts = [] then

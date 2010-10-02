@@ -3,6 +3,7 @@ int f (int L, int M, byte* a) {
   byte* b;
   i = 0;
   b = a;
+  L = 10;
   while (i < M) (inv in) {
     b = b + L;
     i = i + 1;
