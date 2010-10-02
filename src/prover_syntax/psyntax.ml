@@ -63,8 +63,11 @@ F#*)
 let vs_mem = VarSet.mem
 let vs_add = VarSet.add
 let vs_empty = VarSet.empty
+let vs_is_empty = VarSet.is_empty
 let vs_fold = VarSet.fold
 let vs_iter = VarSet.iter
+let vs_union = VarSet.union
+let vs_inter = VarSet.inter
 let vs_diff = VarSet.diff
 let vs_exists = VarSet.exists
 let vs_for_all = VarSet.for_all

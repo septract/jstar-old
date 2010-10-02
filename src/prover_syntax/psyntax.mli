@@ -38,6 +38,9 @@ module VarSet :
 type varset = VarSet.t
 val vs_add : VarSet.elt -> VarSet.t -> VarSet.t
 val vs_empty : VarSet.t
+val vs_is_empty : VarSet.t -> bool
+val vs_union : VarSet.t -> VarSet.t -> VarSet.t
+val vs_inter : VarSet.t -> VarSet.t -> VarSet.t
 val vs_diff : VarSet.t -> VarSet.t -> VarSet.t
 val vs_fold : (VarSet.elt -> 'a -> 'a) -> VarSet.t -> 'a -> 'a
 val vs_for_all : (VarSet.elt -> bool) -> VarSet.t -> bool
@@ -85,6 +88,9 @@ val empty : varmap
 val subst_args : varmap -> args -> args
 val string_args : Format.formatter -> args -> unit
 val string_args_list : Format.formatter -> args list -> unit
+val ev_args : args -> VarSet.t -> VarSet.t
+val ev_args_list : args list -> VarSet.t -> VarSet.t
+val fv_args : args -> VarSet.t -> VarSet.t
 val fv_args_list : args list -> VarSet.t -> VarSet.t
 type pform_at =
     P_EQ of args * args

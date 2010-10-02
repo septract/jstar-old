@@ -420,10 +420,70 @@ let make_syntactic ts_form =
     seqs = sform.seqs @ eqs;
     sneqs = sform.sneqs @ neqs}
 
+    
+(* Heuristic abstraction on syntactic form that eliminates existentials which are not in the spatial part *)
+let eliminate_existentials syn_form =
+  (* finds existentials in the spatial part *)
+  let rec find_ev_sp syn =
+    if syn.sdisjuncts = [] then
+      SMSet.fold_to_list syn.sspat (fun t vs -> 
+        vs_union (ev_args_list (snd t) vs_empty) vs) vs_empty
+    else begin
+      List.fold_left (fun vs (s1, s2) -> 
+        vs_union (vs_union (find_ev_sp s1) (find_ev_sp s2)) vs
+      ) vs_empty syn.sdisjuncts   
+    end
+  in
+  let ev_sp = find_ev_sp syn_form in
+  let rec elim_evars syn =
+    (* condition for killing a term *)
+    let can_kill vs =
+      (vs_is_empty vs <> true) &&  (* the set of free variables must be non empty *)
+      (vs_is_empty (vs_inter ev_sp vs)) &&  (* the intersection with existentials in spatials must be empty *)
+      (vs_for_all (fun v -> match v with Vars.EVar _ -> true | _ -> false) vs)  (* in there should be only existential vars *)
+    in
+    (* filters terms in a multiset *)
+    let rec filter_args_mset ms : SMSet.multiset =
+      if SMSet.has_more ms then begin
+        if can_kill (fv_args_list (snd (SMSet.peek ms)) vs_empty) then
+          filter_args_mset (snd (SMSet.remove ms))
+        else
+          filter_args_mset (SMSet.next ms)
+      end
+      else SMSet.restart ms        
+    in 
+    (* filters terms in a list of pairs *)
+    let filter_args_pls xs =
+      List.filter (fun (a1, a2) ->
+        can_kill (vs_union (fv_args a1 vs_empty) (fv_args a2 vs_empty)) <> true
+      ) xs
+    in
+    if syn.sdisjuncts = [] then
+      let plain = filter_args_mset syn.splain in
+      let eqs = filter_args_pls syn.seqs in
+      let neqs = filter_args_pls syn.sneqs in
+      { sspat = syn.sspat;
+        splain = plain;
+        sdisjuncts = syn.sdisjuncts;
+        seqs = eqs;
+        sneqs = neqs }
+    else
+      let disjuncts = 
+        List.map (fun (s1, s2) -> (elim_evars s1, elim_evars s2)) syn.sdisjuncts
+      in
+      { sspat = syn.sspat;
+        splain = syn.splain;
+        sdisjuncts = disjuncts;
+        seqs = syn.seqs;
+        sneqs = syn.sneqs }
+  in
+  elim_evars syn_form
+
 
 let abs ts_form = 
-  let syn = make_syntactic ts_form in 
-  let ts,form = convert false (new_ts()) syn in 
+  let syn = make_syntactic ts_form in
+  let abs_syn = eliminate_existentials syn in (* perform syntactic abstraction *)
+  let ts,form = convert false (new_ts()) abs_syn in 
   mk_ts_form form ts 
 
 
