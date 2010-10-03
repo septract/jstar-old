@@ -1,0 +1,43 @@
+import "listdatatype_logic";
+import "parray_logic";
+
+
+/*************************************
+ * rules for matching MFC
+ *************************************/
+
+rule MFC_remove:
+| MFC(?t,?O) |- MFC(?t,?P) 
+without
+  ?O!=?P
+if
+  MFC(?t,?O) | |- ?O=?P 
+
+rule MFC_MFC_contradiction:
+  MFC(?t,?O) * MFC(?t,?P) | |- 
+if
+
+
+/******************************************
+ * rules for releasing MFC back to pfield
+ ******************************************/
+
+rule release_MFC_empty_right:
+  | |- release(MFC(?t, empty()))
+if
+  | |- MFC(?t, empty())
+
+rule release_MFC_cons_right:
+  | |- release(MFC(?t, cons(tuple(?d, ?p, ?s, ?q, ?l), ?O)))
+if
+  | |- parray(?p, ?d, num("0"), ?l) * parray(?q, ?s, num("0"), ?l) * release(MFC(?t, ?O)) * MFCSlot()
+
+rule release_MFC_empty_left:
+  | release(MFC(?t, empty())) |-
+if
+  | MFC(?t, empty()) |-
+
+rule release_MFC_cons_left:
+  | release(MFC(?t, cons(tuple(?d, ?p, ?s, ?q, ?l), ?O))) |-
+if
+  | parray(?p, ?d, num("0"), ?l) * parray(?q, ?s, num("0"), ?l) * release(MFC(?t, ?O)) * MFCSlot() |-

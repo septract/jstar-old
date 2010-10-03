@@ -1,3 +1,5 @@
+import "blob_logic";
+
 rule plus_exists :
   | |- ?i = (_j + ?n)
 where 

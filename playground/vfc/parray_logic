@@ -1,0 +1,75 @@
+import "permissions_logic";
+import "simple_arith_logic";
+
+/********************************
+ * Array logic with permissions
+ ********************************/
+
+rule parray_normalize_left:
+  | parray(?p,?x,?l,?u) |- 
+without
+  ?l=num("0")
+if
+  | parray(?p,plus(?x,?l),num("0"),minus(?u,?l)) |-
+
+rule parray_normalize_right:
+  | |- parray(?p,?x,?l,?u) 
+without
+  ?l=num("0")
+if
+  | |- parray(?p,plus(?x,?l),num("0"),minus(?u,?l))
+
+rule parray_split1_left:
+  | parray(?p,?x,?l,?u) * !less(?l,?i) * !less(?i,?u) |- 
+without
+  ?l!=num("0")
+if
+  | parray(?p,?x,?l,?i) * parray(?p,?x,minus(?i,?l),minus(?u,?i)) |-
+
+rule parray_split1_right:
+  | |- parray(?p,?x,?l,?u) * !less(?l,?i) * !less(?i,?u)
+without
+  ?l!=num("0")
+if
+  | |- parray(?p,?x,?l,?i) * parray(?p,?x,minus(?i,?l),minus(?u,?i)) 
+
+rule parray_split2_left:
+  | parray(?p,?x,?l,?u) * !less(?l,?i) * !less(?i,?j) * !less(?j,?u) |- 
+without
+  ?l!=num("0")
+if
+  | parray(?p,?x,?l,?i) * parray(?p,?x,minus(?i,?l),minus(?j,?i)) * parray(?p,?x,minus(?j,?l),minus(?u,?j)) |-
+
+rule parray_split2_right:
+  | |- parray(?p,?x,?l,?u) * !less(?l,?i) * !less(?i,?j) * !less(?j,?u)
+without
+  ?l!=num("0")
+if
+  | |- parray(?p,?x,?l,?i) * parray(?p,?x,minus(?i,?l),minus(?j,?i)) * parray(?p,?x,minus(?j,?l),minus(?u,?j))
+
+rule parray_perm_bot_left:
+  | parray(pbot(),?x,?l,?u) |-
+if
+  | |-
+
+rule parray_perm_bot_right:
+  | |- parray(pbot(),?x,?l,?u)
+if
+  | |-
+ 
+rule parray_perm_bot_elimination_left:
+  | parray(?p,?x,?l,?u) * parray(pbot(),?x,?l,?u) |- 
+if
+  | parray(?p,?x,?l,?u) |-
+
+rule parray_perm_bot_elimination_right:
+  | |- parray(?p,?x,?l,?u) * parray(pbot(),?x,?l,?u)
+if
+  | |- parray(?p,?x,?l,?u)
+
+rule parray_perm_pdiff_match:
+  | parray(?p,?x,?l,?u) |- parray(?q,?x,?l,?u) 
+without
+  parray(pbot(),?x,?l,?u) || parray(pbot(),?x,?l,?u)
+if
+  parray(?q,?x,?l,?u) | parray(?r,?x,?l,?u) * ?r = pdiff(?p, ?q) |-

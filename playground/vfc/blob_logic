@@ -1,0 +1,76 @@
+import "permissions_logic";
+
+/*************************************
+ * Simple subtraction rules 
+ *************************************/
+
+rule blob_remove:
+| blob(?h,?t,?p,?x,?c) |-  blob(?h,?t,?p,?x,?d) 
+without
+  ?c!=?d
+if
+  blob(?h,?t,?p,?x,?c) | |- ?c=?d 
+
+
+/*************************************
+ * rules for contradictions 
+ *************************************/
+
+rule blob_blob_contradiction:
+  blob(?h,?t,?p,?x,?c) * blob(?h,?t,?q,?x,?d) | |- 
+without
+  ?c!=?d
+if
+
+rule blob_nil_contradiction : 
+  blob(?h,?t,?p,nil(),?c) | |- 
+without
+  p != pbot()
+if
+
+
+/**************************************
+ *  Rules for failed proofs
+ **************************************/
+
+rule blob_nil_failed :
+  | |- blob(?h,?t,?p,nil(),?c)
+if
+  | |- blob(?h,?t,?p,nil(),?c) * False
+
+rule blob_not_null :
+  blob(?h,?t,?p,?x,?c) | |- ?x!=nil() 
+if
+  | |-
+
+
+/**************************************
+ *  Rules for failed proofs
+ **************************************/
+
+rule blob_perm_bot_left:
+  | blob(?h,?t,pbot(),?x,?y) |-
+if
+  | |-
+
+rule blob_perm_bot_right:
+  | |- blob(?h,?t,pbot(),?x,?y)
+if
+  | |-
+ 
+rule blob_perm_bot_elimination_left:
+  | blob(?h,?t,?p,?x,?y) * blob(?h,?t,pbot(),?x,?y) |- 
+if
+  | blob(?h,?t,?p,?x,?y) |-
+
+rule blob_perm_bot_elimination_right:
+  | |- blob(?h,?t,?p,?x,?y) * blob(?h,?t,pbot(),?x,?y)
+if
+  | |- blob(?h,?t,?p,?x,?y)
+
+rule blob_perm_pdiff_match:
+  | blob(?h,?t,?p,?x,?y) |- blob(?h,?t,?q,?x,?z) 
+without
+  ?y != ?z || blob(?h,?t,pbot(),?x,?y) || blob(?h,?t,pbot(),?x,?z)
+if
+  blob(?h,?t,?q,?x,?y) | blob(?h,?t,?r,?x,?y) * ?r = pdiff(?p, ?q) |- ?y = ?z

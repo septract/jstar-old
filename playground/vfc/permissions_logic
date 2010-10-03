@@ -1,0 +1,163 @@
+/********************************************
+ *  Definitions for datatype of permissions
+ *  represented with binary trees
+ ********************************************/
+
+ 
+/***********************************
+ *  Simplifications of permissions
+ ***********************************/
+
+rewrite pcons_bot_simp:
+  pcons(pbot(), pbot()) = pbot()
+
+rewrite pcons_top_simp:
+  pcons(ptop(), ptop()) = ptop()
+
+
+/************************
+ *  Join of permissions
+ ************************/
+
+rewrite pjoin_bot_left:
+  pjoin(pbot(), ?t) = ?t
+  
+rewrite pjoin_bot_right:
+  pjoin(?t, pbot()) = ?t
+
+rewrite pjoin_top_left:
+  pjoin(ptop(), ?t) = ptop()
+  
+rewrite pjoin_top_right:
+  pjoin(?t, ptop()) = ptop()
+  
+rewrite pjoin_cons:
+  pjoin(pcons(?t1, ?t2), pcons(?t3, ?t4)) = pcons(pjoin(?t1, ?t3), pjoin(?t2, ?t4))
+
+
+/************************
+ *  Meet of permissions
+ ************************/
+
+rewrite pmeet_bot_left:
+  pmeet(pbot(), ?t) = pbot()
+
+rewrite pmeet_bot_right:
+  pmeet(?t, pbot()) = pbot()
+
+rewrite pmeet_top_left:
+  pmeet(ptop(), ?t) = ?t
+
+rewrite pmeet_top_right:
+  pmeet(?t, ptop()) = ?t
+
+rewrite pmeet_cons:
+  pmeet(pcons(?t1, ?t2), pcons(?t3, ?t4)) = pcons(pmeet(?t1, ?t3), pmeet(?t2, ?t4))
+
+
+/******************************
+ *  Complement of permissions
+ ******************************/
+
+rewrite pneg_bot:
+  pneg(pbot()) = ptop()
+
+rewrite pneg_top:
+  pneg(ptop()) = pbot()
+
+rewrite pneg_cons:
+  pneg(pcons(?t1, ?t2)) = pcons(pneg(?t1), pneg(?t2))
+
+
+/******************************
+ *  Difference of permissions
+ ******************************/
+
+rewrite pdiff_bot:
+  pdiff(?t, pbot()) = ?t
+
+rewrite pdiff_top:
+  pdiff(?t, ptop()) = pbot()
+/*
+rewrite pdiff_cons:
+  pdiff(?t, pcons(?t1, ?t2)) = pmeet(?t, pneg(pcons(?t1, ?t2)))
+*/
+rewrite pdiff:
+  pdiff(?t, ?u) = pmeet(?t, pneg(?u))
+without
+  pdiff(pdiff(?t, ?u), ?v) = ?w
+/*
+rewrite pdiff_diff:
+  pdiff(pdiff(?t, ?u), ?v) = pmeet(?t, pneg(pjoin(?u, ?v)))
+*/
+
+
+/*************************
+ *  Split of permissions
+ *************************/
+
+rewrite psplit1_bot:
+  psplit1(pbot()) = pbot()
+
+rewrite psplit1_top:
+  psplit1(ptop()) = pcons(ptop(), pbot())
+
+rewrite psplit1_cons:
+  psplit1(pcons(?t1, ?t2)) = pcons(psplit1(?t1), psplit1(?t2))
+without 
+  pcons(?t1, ?t2) = pbot() || pcons(?t1, ?t2) = ptop()
+
+rewrite psplit2_bot:
+  psplit2(pbot()) = pbot()
+
+rewrite psplit2_top:
+  psplit2(ptop()) = pcons(pbot(), ptop())
+
+rewrite psplit2_cons:
+  psplit2(pcons(?t1, ?t2)) = pcons(psplit2(?t1), psplit2(?t2))
+without 
+  pcons(?t1, ?t2) = pbot() || pcons(?t1, ?t2) = ptop()
+
+rewrite psplit_join_simp:
+  pjoin(psplit1(?t), psplit2(?t)) = ?t
+
+rewrite psplit_meet_simp:
+  pmeet(psplit1(?t), psplit2(?t)) = pbot()
+
+rewrite psplit_diff_simp:
+  pdiff(pdiff(?t, psplit1(?t)), psplit2(?t)) = pbot()
+
+
+/****************************
+ *  Ordering of permissions
+ ****************************/
+
+rule Pless_bot_left:
+  | !Pless(pbot(), ?t) |-
+if
+  | |-
+
+rule Pless_bot_right:
+  | |- !Pless(pbot(), ?t)
+if
+  | |-
+
+rule Pless_top_left:
+  | !Pless(?t, ptop()) |-
+if
+  | |-
+
+rule Pless_top_right:
+  | |- !Pless(?t, ptop())
+if
+  | |-
+  
+rule Pless_left:
+  | !Pless(pcons(?x1, ?x2), pcons(?y1, ?y2)) |-
+if
+  | !Pless(?x1, ?y1) * Pless(?x2, ?y2) |-
+
+rule Pless_right:
+  | |- !Pless(pcons(?x1, ?x2), pcons(?y1, ?y2))
+if
+  | |- !Pless(?x1, ?y1) * Pless(?x2, ?y2)
