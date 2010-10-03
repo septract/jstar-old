@@ -297,7 +297,8 @@ rule token = parse
 
   | float_constant   { FLOAT_CONSTANT(float_of_string(Lexing.lexeme lexbuf))}
 
-  | '"' (string_char* as s) '"' { kwd_or_else (STRING_CONSTANT s) s }
+  (* FIXME: What is the right lexing of string constants? *)
+  | '"' (string_char* as s) '"' { STRING_CONSTANT s }
   | _ { failwith (error_message (Illegal_character ((Lexing.lexeme lexbuf).[0])) lexbuf)}
 and comment = parse 
   | "/*"  { nest lexbuf; comment lexbuf }
