@@ -124,9 +124,9 @@ let verify_methods
           sprintf "Dynamic and static specs of %s disagree."
             (Pprinter.name2str mname) in
         printf "@{<b>WARNING@}: %s@." et; pp_json_location_opt dsp et "") in
-    try MethodMap.iter pss static_specs
-    with Not_found ->
-      failwith "Internal error: Couldn't get dynamic specs for some method.";
+    (try MethodMap.iter pss static_specs
+    with Not_found -> 
+       failwith "Internal error: Couldn't get dynamic specs for some method.");
 
   (* Behavioural subtyping of non-constructor methods *)
   let dynamic_specs =
