@@ -1,9 +1,16 @@
 import "permissions_logic";
 
+
 /*************************************
  * Simple subtraction rules 
  *************************************/
 
+rule blob_unify:
+| blob(?h,?t,?p,?x,_c) |-  blob(?h,?t,?p,?x,_d) 
+without
+  _c!=_d
+if
+ 
 rule blob_remove:
 | blob(?h,?t,?p,?x,?c) |-  blob(?h,?t,?p,?x,?d) 
 without
@@ -45,7 +52,7 @@ if
 
 
 /**************************************
- *  Rules for failed proofs
+ *  Rules for permission accounting
  **************************************/
 
 rule blob_perm_bot_left:
