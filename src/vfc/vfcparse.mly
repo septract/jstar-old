@@ -165,17 +165,20 @@ stmt:
  | WHILE L_PAREN exp R_PAREN L_PAREN INV IDENTIFIER R_PAREN stmt  { if Config.parse_debug() then Printf.printf "While inv %!"; While($3, Some $7, $9) } 
  | RETURN SEMICOLON  { if Config.parse_debug() then Printf.printf "Return none %!"; Return(None) }
  | RETURN exp SEMICOLON  { if Config.parse_debug() then Printf.printf "Return some %!"; Return(Some $2) } 
- | IDENTIFIER EQUALS IDENTIFIER L_PAREN exp_list R_PAREN SEMICOLON  { if Config.parse_debug() then Printf.printf "Fun_call %!"; Fun_call($1, $3, $5) }
+ | IDENTIFIER L_PAREN exp_list R_PAREN SEMICOLON  { if Config.parse_debug() then Printf.printf "Proc_call %!"; Fun_call(None, $1, $3) }
+ | IDENTIFIER EQUALS IDENTIFIER L_PAREN exp_list R_PAREN SEMICOLON  { if Config.parse_debug() then Printf.printf "Fun_call %!"; Fun_call(Some $1, $3, $5) }
  | L_BRACE stmt_list R_BRACE  { if Config.parse_debug() then Printf.printf "Block %!"; Block($2) }
- | IDENTIFIER EQUALS ALLOC L_PAREN exp R_PAREN SEMICOLON  { Alloc($1, $5) }
- | FREE L_PAREN exp R_PAREN SEMICOLON  { Free($3) }
  | IDENTIFIER EQUALS FORK L_PAREN IDENTIFIER COLON exp_list R_PAREN SEMICOLON 
     { Fork($1, $5, $7) }
  | JOIN L_PAREN exp R_PAREN SEMICOLON  { Join($3) }
+ | INV IDENTIFIER SEMICOLON  { if Config.parse_debug() then Printf.printf "Inv %!"; Inv($2) }
+/*
+ | IDENTIFIER EQUALS ALLOC L_PAREN exp R_PAREN SEMICOLON  { Alloc($1, $5) }
+ | FREE L_PAREN exp R_PAREN SEMICOLON  { Free($3) }
  | GET L_PAREN exp COMMA exp COMMA exp COMMA exp R_PAREN SEMICOLON  { Get($3,$5,$7,$9) }
  | PUT L_PAREN exp COMMA exp COMMA exp COMMA exp R_PAREN SEMICOLON  { Put($3,$5,$7,$9) } 
  | WAIT L_PAREN exp R_PAREN SEMICOLON  { Wait($3) }
- | INV IDENTIFIER SEMICOLON  { if Config.parse_debug() then Printf.printf "Inv %!"; Inv($2) }
+*/
 ; 
 stmt_list: 
  | stmt  { [$1] }

@@ -13,17 +13,19 @@ let keyword_al = [
   ( "skip", SKIP ); 
   ( "if", IF );
   ( "else", ELSE ); 
+  ( "while", WHILE ); 
   ( "return", RETURN ); 
-  ( "malloc", ALLOC ); 
-  ( "free", FREE );
   ( "fork", FORK ); 
   ( "join", JOIN ); 
   ( "thread", THREAD ); 
-  ( "while", WHILE ); 
+  ( "inv", INV ); 
+(*
+  ( "alloc", ALLOC ); 
+  ( "free", FREE );
   ( "get", GET ); 
   ( "put", PUT ); 
-  ( "wait", WAIT ); 
-  ( "inv", INV ); 
+  ( "wait", WAIT );
+*)
 ]
 
 }

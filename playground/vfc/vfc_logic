@@ -1,6 +1,7 @@
 import "blob_logic";
 import "array_logic";
-import "blob_ls_logic"; 
+import "mfc_array_logic";
+/* import "blob_ls_logic"; */
 
 rule plus_exists :
   | |- ?i = (_j + ?n)
@@ -10,7 +11,7 @@ where
   _j notin ?n
 if
   | |-
-  
+
 rule minus_exists :
   | |- ?i = (_j - ?n)
 where 

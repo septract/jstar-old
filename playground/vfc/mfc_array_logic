@@ -19,7 +19,7 @@ if
 
 
 /******************************************
- * rules for releasing MFC back to pfield
+ * rules for releasing what is owned by MFC
  ******************************************/
 
 rule release_MFC_empty_right:
@@ -30,7 +30,7 @@ if
 rule release_MFC_cons_right:
   | |- release(MFC(?t, cons(tuple(?d, ?p, ?s, ?q, ?l), ?O)))
 if
-  | |- array(?p, ?d, num("0"), ?l) * array(?q, ?s, num("0"), ?l) * release(MFC(?t, ?O)) * MFCSlot()
+  | |- array("local", "byte", ?p, ?d, "0", ?l) * array("host", "byte", ?q, ?s, "0", ?l) * release(MFC(?t, ?O)) * MFCSlot()
 
 rule release_MFC_empty_left:
   | release(MFC(?t, empty())) |-
@@ -40,4 +40,4 @@ if
 rule release_MFC_cons_left:
   | release(MFC(?t, cons(tuple(?d, ?p, ?s, ?q, ?l), ?O))) |-
 if
-  | array(?p, ?d, num("0"), ?l) * array(?q, ?s, num("0"), ?l) * release(MFC(?t, ?O)) * MFCSlot() |-
+  | array("local", "byte", ?p, ?d, "0", ?l) * array("host", "byte", ?q, ?s, "0", ?l) * release(MFC(?t, ?O)) * MFCSlot() |-
