@@ -1,15 +1,21 @@
 ranking { 
-succ_i = nil() 
-* 
-_s != nil()
+blob("local", "byte", ptop(), succ, _s)
 *
-blob("local", "int", ptop(), succ, _s)
+_s != "0"
 *
-b_ls("shared",ptop(),_s,nil())
+b_ls("host",ptop(),_s,"0")
 * 
-blob("local", "int", ptop(), run, "1")
+blob("local", "byte", ptop(), run, "1")
+*
+blob("local", "byte", ptop(), dataIn, _x)
+* 
+MFCSlot()
+*
+MFC(0,empty())
+*
+array("local", "byte", ptop(), dataIn, "0", buf_size)
+* 
+!GT(0,buf_size)
 } 
 { 
 }
-
-asyncpy { Garbage } { Garbage } 

@@ -6,8 +6,7 @@ void ranking (int no_of_dmas) {
     if(succ_i == 0) {
       *(run+i) = 0; 
     } else {
-      nextaddr = source + succ_i;
-      get(nextaddr, dataIn+i, 1, i); 
+      get(succ_i, dataIn+i, 1, i); 
     }
     i = i + 1; 
   }
@@ -26,8 +25,7 @@ void bad () {
         dataIn_i = *(dataIn+i); 
         if((run_i == 1) && (dataIn_i>=0)) {
           *(succ+i) = dataIn_i;
-          nextaddr = source + dataIn_i;
-          get(nextaddr, dataIn+i, size_int, i);
+          get(dataIn_i, dataIn+i, size_int, i);
           currlen_i = *(currlen+i); 
           SPUbuf_i = *(SPUbuf+i); 
           *(SPUbuf_i + currlen_i) = dataIn_i;
@@ -70,8 +68,7 @@ void bad () {
       run_i = *(run+i); 
       if(run_i == 1) {
         dataIn_i = *(dataIn+i); 
-        nextaddr = source + dataIn_i; 
-        get(nextaddr, dataIn+i, 1, i); 
+        get(dataIn_i, dataIn+i, 1, i); 
       } else { skip; }
       i = i+1; 
     } 
@@ -85,8 +82,4 @@ void bad () {
     } 
     k = k + 1; 
   }
-}
-
-int asyncpy( int src, int tgt, int size, int id ) {
-  skip; 
 }

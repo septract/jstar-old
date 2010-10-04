@@ -16,7 +16,7 @@ let invs = Hashtbl.create 101
 let find hashtbl id =
   try Hashtbl.find hashtbl id
   with Not_found ->
-    Printf.printf "Error: %s not found!" id;
+    Printf.printf "Error: %s not found!\n" id;
     exit 1
 
 
