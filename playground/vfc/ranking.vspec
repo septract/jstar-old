@@ -11,4 +11,5 @@ blob("local", "int", ptop(), run, "1")
 } 
 { 
 }
+
 asyncpy { Garbage } { Garbage } 
