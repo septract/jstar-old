@@ -6,12 +6,27 @@ import "blob_logic";
  * Array logic with permissions
  ********************************/
 
+
 /* Rules for contradictions */
  
 rule blob_blob_contradiction:
   array(?h,?t,?p,?x,?l,?u) * array(?h,?u,?q,?y,?l,?v) | |- 
 without
   ?x!=?y
+if
+
+
+/* Get rid of arrays with same upper and lower bound */
+
+/*
+rule remove_empty_left :
+  | array(?h,?t,?p,?x,?l,?u) |-
+if
+  | |- ?l = ?u
+*/
+
+rule remove_empty_left :
+  | array(?h,?t,?p,?x,?l,?l) |-
 if
 
 
@@ -30,11 +45,6 @@ without
   ?l="0"
 if
   | |- array(?h,?t,?p,builtin_plus(?x,?l),"0",builtin_minus(?u,?l))
-
-rule remove_empty_left :
-  | array(?h,?t,?p,?x,?l,?u) |-
-if
-  | |- ?l = ?u
 
 
 /* Array splitting */
@@ -74,6 +84,9 @@ without
 if
   | |- array(?h,?t,?p,?x,?l,?i) * array(?h,?t,?p,?x,builtin_minus(?i,?l),builtin_minus(?j,?i)) * array(?h,?t,?p,?x,builtin_minus(?j,?l),builtin_minus(?u,?j))
 
+  
+/* Arrays with zero permission reduce to emp */
+
 rule array_perm_bot_left:
   | array(?h,?t,pbot(),?x,?l,?u) |-
 if
@@ -93,6 +106,9 @@ rule array_perm_bot_elimination_right:
   | |- array(?h,?t,?p,?x,?l,?u) * array(?h,?t,pbot(),?x,?l,?u)
 if
   | |- array(?h,?t,?p,?x,?l,?u)
+
+
+/* Permissions matching */
 
 rule array_perm_pdiff_match:
   | array(?h,?t,?p,?x,?l,?u) |- array(?h,?t,?q,?x,?l,?u) 

@@ -69,16 +69,18 @@ and stmt =
   | If of pexp * stmt * stmt
   | While of pexp * inv_id option * stmt
   | Return of pexp option
-  | Fun_call of var_id * fun_id * pexp list
+  | Fun_call of (var_id option) * fun_id * pexp list
   | Block of stmt list 
-  | Alloc of var_id * pexp
-  | Free of pexp 
   | Fork of var_id * fun_id * pexp list
   | Join of pexp 
+  | Inv of inv_id
+(*
+  | Alloc of var_id * pexp
+  | Free of pexp 
   | Get of pexp * pexp * pexp * pexp 
   | Put of pexp * pexp * pexp * pexp
   | Wait of pexp   
-  | Inv of inv_id
+*)
 
 and fun_def = {
   fun_name : fun_id;

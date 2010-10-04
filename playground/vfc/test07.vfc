@@ -1,4 +1,12 @@
-void f (int* a, int* b) {
+void f (byte* a, byte* b) {
   *a = 5;
   *b = 8;
+}
+
+void g () {
+  byte* x;
+  byte* y;
+  x = alloc (local, 1);
+  y = alloc (local, 1);
+  f (x, y);
 }

@@ -94,8 +94,12 @@ let rec tr_expr2term (e : pexp) : term =
   match e with
   | Const c -> 
     constant_to_term c
-  | PVar_ref v_id -> 
-    mkVar (prog_var v_id)
+  | PVar_ref v_id ->
+    begin
+      match v_id with
+      | "local" | "host" -> mkString v_id (* TODO: sort this out more elegantly *)
+      | _ -> mkVar (prog_var v_id)
+    end
   | Prim_op (op_name, args) ->
     let op = 
       try List.assoc op_name term_term_ops
@@ -145,7 +149,7 @@ let rec tr_stmt (s : stmt) : core_statement list =
   | Cast (v_id, t, e) -> [] (* TODO: Handle cast properly *)
   
   | Heap_read (v_id, e, fo) ->
-    let typ = mk_type Byte in (* TODO: sort out handling of types *)
+    let typ = mk_type Byte in (* TODO: sort out handling of types; everything byte for now *)
     let e_var = fresh_exists_var() in
     let pointed_to_var = mkVar e_var in
     let x = tr_expr2term e in 
@@ -155,7 +159,7 @@ let rec tr_stmt (s : stmt) : core_statement list =
     [Assignment_core ([prog_var v_id], spec, [])]
   
   | Heap_assn (e, fo, e') ->
-    let typ = mk_type Byte in (* TODO: sort out handling of types *)
+    let typ = mk_type Byte in (* TODO: sort out handling of types; everything byte for now *)
     let e_var = fresh_exists_var() in
     let pointed_to_var = mkVar e_var in
     let p0 = tr_expr2term e in (* TODO: should be a fresh program variable? *)
@@ -201,18 +205,25 @@ let rec tr_stmt (s : stmt) : core_statement list =
 
   | Return e ->
     begin
-    match e with
-    | Some e' ->
-      let p0 = Arg_var (mk_parameter 0) in (* TODO: should be a fresh program variable? *)
-      let post = mkEQ (retvar_term, p0) in
-      let spec = mk_spec [] post excep_post_empty invariants_empty in
-      [Assignment_core ([], spec, [tr_expr2term e']); End]
-    | None -> [Nop_stmt_core]
+      match e with
+      | Some e' ->
+        let p0 = Arg_var (mk_parameter 0) in (* TODO: should be a fresh program variable? *)
+        let post = mkEQ (retvar_term, p0) in
+        let spec = mk_spec [] post excep_post_empty invariants_empty in
+        [Assignment_core ([], spec, [tr_expr2term e']); End]
+      | None -> [Nop_stmt_core]
     end
 
-  | Fun_call (v_id, fun_id, args) ->
+  | Fun_call (vo, fun_id, args) ->
     let (pre, post) = find fun_specs fun_id in
-    let params = (find fun_decls fun_id).params in
+    let params =
+      match fun_id with (* TODO: sort this out using function prototypes; need a support for header files for that *)
+      | "free" | "wait"  -> [ { vname="@parameter0:"; vtype=Byte; kind=Parameter; }  ]
+      | "alloc" -> [ { vname="@parameter0:"; vtype=Byte; kind=Parameter; }; { vname="@parameter1:"; vtype=Byte; kind=Parameter; } ]
+      | "memcpy" ->  [ { vname="@parameter0:"; vtype=Byte; kind=Parameter; }; { vname="@parameter1:"; vtype=Byte; kind=Parameter; }; { vname="@parameter2:"; vtype=Byte; kind=Parameter; } ]
+      | "get" | "put" -> [ { vname="@parameter0:"; vtype=Byte; kind=Parameter; }; { vname="@parameter1:"; vtype=Byte; kind=Parameter; }; { vname="@parameter2:"; vtype=Byte; kind=Parameter; }; { vname="@parameter3:"; vtype=Byte; kind=Parameter; } ]
+      | _ -> (find fun_decls fun_id).params
+    in
     let pvars = List.fold_right (fun v -> vs_add (prog_var v.vname)) params 
       (vs_add retvar vs_empty) in
     let lvars = vs_diff (fv_form pre) pvars in
@@ -236,21 +247,29 @@ let rec tr_stmt (s : stmt) : core_statement list =
     let esubst = subst_kill_vars_to_fresh_prog evars in
     let post = subst_form esubst (subst_form lsubst (subst_form !psubst post)) in
     let spec = mk_spec pre post excep_post_empty invariants_empty in
+    let tr_args = List.map tr_expr2term args in
 (*    [Assignment_core ([prog_var v_id], spec, [])]*)
-    [Assignment_core ([prog_var v_id], spec, List.map tr_expr2term args)]
+    begin
+      match vo with
+      | Some v_id -> [Assignment_core ([prog_var v_id], spec, tr_args)]
+      | None -> [Assignment_core ([], spec, tr_args)]
+    end
 
-  | Alloc (v_id, e) -> []
-  | Free e -> []
+  (* TODO *)
   | Fork (v_id, fun_id, e) -> []
   | Join t -> []
-  | Get (l, h, s, t) -> []
-  | Put (l, h, s, t) -> []
-  | Wait t -> [] (* TODO: treat via function call *)
-  
+
   | Inv inv_id ->
     let inv = find invs inv_id in
     let spec = mk_spec inv inv excep_post_empty invariants_empty in
     [Assignment_core ([], spec, [])]
+(*
+  | Alloc (v_id, e) -> []
+  | Free e -> []
+  | Get (l, h, s, t) -> []
+  | Put (l, h, s, t) -> []
+  | Wait t -> []
+*)  
 
 
 (* Verifies functions in prog against specs using given logic and abstraction rules *)
