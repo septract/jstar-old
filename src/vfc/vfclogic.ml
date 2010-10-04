@@ -8,7 +8,7 @@ open Psyntax
 let mk_loc x fo = 
   match fo with
     | Some f_id -> mkFun "loc" [x; mkString f_id]
-    | None -> mkFun "loc" [x]
+    | None -> x
 
 (* create x |={p}=>_h^{T} e *)
 let mk_multiheap_blob h t p x e = mkSPred("blob", [h; t; p; x; e])
@@ -35,4 +35,3 @@ let mk_type (t : vfc_type) =
 
 let mk_local_blob t x e = mk_multiheap_blob local_heap t full_perm x e
 let mk_host_blob t x e = mk_multiheap_blob host_heap t full_perm x e
-
