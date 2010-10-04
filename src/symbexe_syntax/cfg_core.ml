@@ -103,9 +103,12 @@ let print_core
   if core_debug () then ignore (Printf.printf "\n\nPrinting core file for method %s..." mname); 
   
   (* FIXME: Don't understand why I can't use Format.formatter_of_out_channel *)
+  Format.pp_set_margin Format.str_formatter 80; 
+
   let cstr = Format.flush_str_formatter 
      (List.iter (fun x -> pp_stmt_core Format.str_formatter x.skind;
 	             Format.pp_print_newline Format.str_formatter () ) stmts) in 
+
   let chan = open_out (file ^ mname ^ ".core") in 
   Printf.fprintf chan "%s" cstr; 
   close_out chan; 

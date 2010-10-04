@@ -1,2 +1,14 @@
-ranking { Garbage } { Garbage }
+ranking { 
+succ_i = nil() 
+* 
+_s != nil()
+*
+blob("local", "int", ptop(), succ, _s)
+*
+b_ls("shared",ptop(),_s,nil())
+* 
+blob("local", "int", ptop(), run, "1")
+} 
+{ 
+}
 asyncpy { Garbage } { Garbage } 
