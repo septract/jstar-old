@@ -1,4 +1,5 @@
 import "blob_logic";
+import "blob_ls_logic"; 
 
 rule plus_exists :
   | |- ?i = (_j + ?n)
