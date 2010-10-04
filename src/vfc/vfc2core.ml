@@ -145,7 +145,7 @@ let rec tr_stmt (s : stmt) : core_statement list =
   | Cast (v_id, t, e) -> [] (* TODO: Handle cast properly *)
   
   | Heap_read (v_id, e, fo) ->
-    let typ = mk_type Int in (* TODO: sort out handling of types *)
+    let typ = mk_type Byte in (* TODO: sort out handling of types *)
     let e_var = fresh_exists_var() in
     let pointed_to_var = mkVar e_var in
     let x = tr_expr2term e in 
@@ -155,7 +155,7 @@ let rec tr_stmt (s : stmt) : core_statement list =
     [Assignment_core ([prog_var v_id], spec, [])]
   
   | Heap_assn (e, fo, e') ->
-    let typ = mk_type Int in (* TODO: sort out handling of types *)
+    let typ = mk_type Byte in (* TODO: sort out handling of types *)
     let e_var = fresh_exists_var() in
     let pointed_to_var = mkVar e_var in
     let p0 = tr_expr2term e in (* TODO: should be a fresh program variable? *)

@@ -1,5 +1,5 @@
 import "listdatatype_logic";
-import "parray_logic";
+import "array_logic";
 
 
 /*************************************
@@ -30,7 +30,7 @@ if
 rule release_MFC_cons_right:
   | |- release(MFC(?t, cons(tuple(?d, ?p, ?s, ?q, ?l), ?O)))
 if
-  | |- parray(?p, ?d, num("0"), ?l) * parray(?q, ?s, num("0"), ?l) * release(MFC(?t, ?O)) * MFCSlot()
+  | |- array(?p, ?d, num("0"), ?l) * array(?q, ?s, num("0"), ?l) * release(MFC(?t, ?O)) * MFCSlot()
 
 rule release_MFC_empty_left:
   | release(MFC(?t, empty())) |-
@@ -40,4 +40,4 @@ if
 rule release_MFC_cons_left:
   | release(MFC(?t, cons(tuple(?d, ?p, ?s, ?q, ?l), ?O))) |-
 if
-  | parray(?p, ?d, num("0"), ?l) * parray(?q, ?s, num("0"), ?l) * release(MFC(?t, ?O)) * MFCSlot() |-
+  | array(?p, ?d, num("0"), ?l) * array(?q, ?s, num("0"), ?l) * release(MFC(?t, ?O)) * MFCSlot() |-

@@ -1,11 +1,20 @@
-abstraction LE_exists_left : 
+abstraction LE_exists_left :
    !LE(_x,?l) ~~> 
 
-abstraction LT_exists_left : 
+abstraction LT_exists_left :
    !LT(_x,?l) ~~> 
 
-abstraction LE_exists_right : 
-   !LE(?l,_x) ~~> 
+abstraction LE_exists_right :
+  !LE(?l,_x) ~~> 
 
-abstraction LT_exists_right : 
-   !LT(?l,_x) ~~> 
+abstraction LT_exists_right :
+  !LT(?l,_x) ~~> 
+
+abstraction blob_to_array :
+  blob(?h,?t,?p,?x,?c) ~~> array(?h,?t,?p,?x,"0","1")
+
+abstraction array_array_to_array :
+array(?h,?t,?p,?x,?l,_i) * array(?h,?t,?p,?x,builtin_minus(_i,?l),builtin_minus(?u,_i)) ~~> array(?h,?t,?p,?x,?l,?u)
+
+abstraction array_array_array_to_array :
+array(?h,?t,?p,?x,?l,_i) * array(?h,?t,?p,?x,builtin_minus(_i,?l),builtin_minus(_j,_i)) * array(?h,?t,?p,?x,builtin_minus(_j,?l),builtin_minus(?u,_j)) ~~> array(?h,?t,?p,?x,?l,?u)

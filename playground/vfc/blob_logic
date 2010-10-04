@@ -5,14 +5,8 @@ import "permissions_logic";
  * Simple subtraction rules 
  *************************************/
 
-rule blob_unify:
-| blob(?h,?t,?p,?x,_c) |-  blob(?h,?t,?p,?x,_d) 
-without
-  _c!=_d
-if
- 
 rule blob_remove:
-| blob(?h,?t,?p,?x,?c) |-  blob(?h,?t,?p,?x,?d) 
+| blob(?h,?t,?p,?x,?c) |-  blob(?h,?t,?p,?x,?d)
 without
   ?c!=?d
 if
@@ -20,20 +14,17 @@ if
 
 
 /*************************************
- * rules for contradictions 
+ * Rules for contradictions 
  *************************************/
 
 rule blob_blob_contradiction:
   blob(?h,?t,?p,?x,?c) * blob(?h,?t,?q,?x,?d) | |- 
-without
-  ?c!=?d
 if
 
 rule blob_nil_contradiction : 
   blob(?h,?t,?p,nil(),?c) | |- 
-without
-  p != pbot()
 if
+  | |- ?p != pbot()
 
 
 /**************************************
