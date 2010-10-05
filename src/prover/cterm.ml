@@ -337,6 +337,9 @@ let add_pattern term ts =
   (* Add new term *)
   let c,ts = add_term params_pattern term ts in 
   c,ts
+  
+let ground_pattern (pattern : pattern) (ts : term_structure) : term_handle = 
+  assert false 
 
 let add_term fresh term ts = 
   (* Add new term *)

@@ -397,7 +397,7 @@ let conjoin fresh (f : ts_formula) (sf : syntactic_form) =
 
 
 let match_and_remove
-      remove (* should match terms be removed: true removes them, false leaves them*)
+      remove (* should match terms be removed - true removes them, false leaves them *)
       ts
       term (*formula to match in *)
       pattern (*pattern to match *)
