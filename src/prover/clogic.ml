@@ -512,7 +512,7 @@ let eliminate_existentials syn_form =
 let abs ts_form = 
   let syn = make_syntactic ts_form in
   let abs_syn = eliminate_existentials syn in (* perform syntactic abstraction *)
-  let ts,form = convert false (new_ts()) abs_syn in 
+  let ts,form = convert_sf false (new_ts()) abs_syn in 
   mk_ts_form form ts 
 
 
