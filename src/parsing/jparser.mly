@@ -204,6 +204,7 @@ let add_invariant (label, formula) map =
 %token NOP 
 %token NOTIN
 %token NOTINCONTEXT
+%token PUREGUARD
 %token NULL 
 %token NULL_TYPE 
 %token OLD
@@ -1101,6 +1102,7 @@ varterm:
 clause: 
    | varterm NOTINCONTEXT { NotInContext($1) }
    | varterm NOTIN jargument { NotInTerm($1,$3) }
+   | formula PUREGUARD{ PureGuard($1) }   /* TODO: check that the formula here is really pure */ 
 
 clause_list:
    | clause  { [$1] }

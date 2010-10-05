@@ -387,9 +387,30 @@ let params_term fresh =
      {ts with originals = CMap.add c (FArg_op(fn,cl)) ts.originals}),
    (fun c rl ts -> {ts with originals = CMap.add c (FArg_record(rl)) ts.originals}))
 
+let params_pattern_to_term = 
+  (true,
+   true,
+   (fun x-> x), 
+   (fun cc x y -> CC.add_app cc x y),
+   (fun c (fn,cl) ts -> 
+     if CMap.mem c ts.originals then ts else 
+     {ts with originals = CMap.add c (FArg_op(fn,cl)) ts.originals}),
+   (fun c rl ts -> {ts with originals = CMap.add c (FArg_record(rl)) ts.originals}))
+
 let add_pattern term ts = 
   (* Add new term *)
   let c,ts = add_term params_pattern term ts in 
+  c,ts
+  
+(*
+let ground_pattern (pattern : args) (ts : term_structure) : term_handle * term_structure = 
+  let c,ts = add_term params_pattern_to_term pattern ts in 
+  c, ts
+*)
+
+let ground_pattern_tuple (ptl : args list) (ts : term_structure) : term_handle * term_structure = 
+  let c,ts,cl = add_term_list (params_pattern_to_term) ptl (ts.tuple,ts) [] in 
+  let ts = {ts with originals = CMap.add c (FArg_op("tuple",List.rev cl)) ts.originals} in
   c,ts
 
 let add_term fresh term ts = 

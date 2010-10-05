@@ -45,6 +45,9 @@ val determined_exists : term_structure -> term_handle -> term_handle -> term_str
 (*
    Add Psyntax to the term_structure, and return a term_handle and updated term structure
 *)
+
+val ground_pattern_tuple : args list -> term_structure -> (term_handle * term_structure)
+        
 val add_term : bool -> Psyntax.args -> term_structure -> (term_handle * term_structure)
 
 val add_pattern : Psyntax.args -> term_structure -> (pattern * term_structure)

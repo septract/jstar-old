@@ -112,6 +112,7 @@ let kwd_or_else =
     "nop", NOP;
     "notin", NOTIN;
     "notincontext", NOTINCONTEXT;
+    "pureguard", PUREGUARD;
     "null", NULL;
     "null_type", NULL_TYPE;
     "old", OLD;

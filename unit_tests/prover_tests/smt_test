@@ -29,3 +29,7 @@ Implication:
 Implication:  
   |- ((x + x) + builtin_mult(k,x)) = builtin_mult((k + 2), x)
 ? True 
+
+Implication: 
+  !LT(a,b) * testpred(a,b) |- 
+? True 
