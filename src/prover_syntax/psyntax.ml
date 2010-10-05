@@ -404,6 +404,7 @@ type varterm =
 type where = 
   | NotInContext of varterm
   | NotInTerm of varterm * args
+  | PureGuard of pform 
 
 let string_vs ppf vs =
   vs_iter (fun v -> Format.fprintf ppf "%s" (string_var v)) vs
@@ -417,6 +418,10 @@ let string_where ppf where =
       Format.fprintf ppf "%a notin %a" 
 	string_vs vs 
 	string_args args
+  | PureGuard f -> 
+      Format.fprintf ppf "%a pureguard"
+      string_form f
+        
 
 
 

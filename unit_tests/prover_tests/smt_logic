@@ -1,0 +1,7 @@
+rule vapourise_RT:
+| testpred(?x,?y) |- 
+where
+  !LT(?x,?y) pureguard
+if 
+| |-
+

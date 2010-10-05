@@ -348,9 +348,16 @@ let add_pattern term ts =
   let c,ts = add_term params_pattern term ts in 
   c,ts
   
+(*
 let ground_pattern (pattern : args) (ts : term_structure) : term_handle * term_structure = 
   let c,ts = add_term params_pattern_to_term pattern ts in 
   c, ts
+*)
+
+let ground_pattern_tuple (ptl : args list) (ts : term_structure) : term_handle * term_structure = 
+  let c,ts,cl = add_term_list (params_pattern_to_term) ptl (ts.tuple,ts) [] in 
+  let ts = {ts with originals = CMap.add c (FArg_op("tuple",List.rev cl)) ts.originals} in
+  c,ts
 
 let add_term fresh term ts = 
   (* Add new term *)

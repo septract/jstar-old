@@ -301,18 +301,6 @@ let rec normalise ts form : formula * term_structure =
 (*  printf "Normalised formula : %a @\n" pp_ts_form  {ts=ts;form=form};*)
   form,ts
 
-let rec out_normalise ts form =
-  let form,ts = normalise ts form in
-  if form.eqs <> [] || form.neqs <> [] then
-    begin
-      let ts = add_eqs_list form.eqs ts in
-      let ts = add_neqs_list form.neqs ts in
-      let form,ts = out_normalise ts {form with eqs = []; neqs = []} in
-      form,ts
-    end
-  else
-    form,ts
-
 
 
 
@@ -350,6 +338,8 @@ let smset_to_list fresh a ts =
     else
       rs, ts
   in inner a [] ts
+  
+
 let rec add_pair_list fresh xs ts rs =
   match xs with
     [] -> rs,ts
@@ -357,15 +347,17 @@ let rec add_pair_list fresh xs ts rs =
       let c1,ts = add_term fresh a ts in
       let c2,ts = add_term fresh b ts in
       add_pair_list fresh xs ts ((c1,c2)::rs)
-(* Will convert eqs into ts for or which is wrong. *)
-let rec convert fresh (ts :term_structure) (sf : syntactic_form) : formula * term_structure =
+      
+      
+(* TODO: Will convert eqs into ts for or which is wrong. *)
+let rec convert_sf fresh (ts :term_structure) (sf : syntactic_form) : formula * term_structure =
   let spat, ts = smset_to_list fresh sf.sspat ts in
   let plain, ts = smset_to_list fresh sf.splain ts in
   let disj, ts  = convert_sf_pair_list fresh ts sf.sdisjuncts [] in
   let ts = add_eqs_t_list fresh sf.seqs ts in
   let ts = add_neqs_t_list fresh sf.sneqs ts in
   {spat = RMSet.lift_list spat; plain = RMSet.lift_list plain; disjuncts = disj;eqs=[];neqs=[]}, ts
-and convert_without_eqs
+and convert_sf_without_eqs
  fresh (ts :term_structure) (sf : syntactic_form) : formula * term_structure =
   let spat, ts = smset_to_list fresh sf.sspat ts in
   let plain, ts = smset_to_list fresh sf.splain ts in
@@ -374,7 +366,6 @@ and convert_without_eqs
   let neqs,ts = add_pair_list fresh sf.sneqs ts [] in
   {spat = RMSet.lift_list spat; plain = RMSet.lift_list plain; disjuncts = disj;
   eqs=eqs;neqs=neqs}, ts
-
 and convert_sf_pair_list
     fresh (ts :term_structure)
     (sf : (syntactic_form * syntactic_form) list)
@@ -383,12 +374,37 @@ and convert_sf_pair_list
   match sf with
     [] -> rs,ts
   | (x,y)::sf ->
-      let x,ts = convert_without_eqs fresh ts x in
-      let y,ts = convert_without_eqs fresh ts y in
+      let x,ts = convert_sf_without_eqs fresh ts x in
+      let y,ts = convert_sf_without_eqs fresh ts y in
       convert_sf_pair_list fresh ts sf ((x,y)::rs)
 
+
+
+(* convert to a formula with all pattern variables converted to ground *)
+let smset_to_list_ground a ts =
+  let a = SMSet.restart a in
+  let rec inner a rs ts =
+    if SMSet.has_more a then
+      let (n,tl),a = SMSet.remove a in
+      let c,ts = ground_pattern_tuple tl ts in
+      inner a ((n,c)::rs) ts
+    else
+      rs, ts
+  in inner a [] ts
+
+let rec convert_ground (ts :term_structure) (sf : syntactic_form) : formula * term_structure =
+  assert (sf.sdisjuncts = []);  (* don't want disjuncts in an SMT pattern *)
+  assert (sf.sspat = SMSet.empty); 
+  let plain, ts = smset_to_list_ground sf.splain ts in
+  assert (sf.seqs = []); (* TODO: handle this properly *)
+  assert (sf.sneqs = []); 
+  {spat = RMSet.empty; plain = RMSet.lift_list plain; disjuncts = []; eqs=[]; neqs=[]}, ts
+
+
+
+
 let conjoin fresh (f : ts_formula) (sf : syntactic_form) =
-  let nf,ts = convert fresh f.ts sf in
+  let nf,ts = convert_sf fresh f.ts sf in
   let nf = conjunction nf f.form in
   {ts = ts; form = nf; cache_sform = ref None}
 
@@ -471,14 +487,6 @@ type sequent =
     obligation : formula;
   }
 
-let empty_sequent () =
-  {
-  matched = RMSet.empty;
-  ts = Cterm.new_ts ();
-  assumption = empty;
-  obligation = empty;
-}
-
 let pp_sequent ppf
   {matched=matched; ts=ts; assumption=assumption; obligation=obligation} =
     let pp_term = pp_c ts in 
@@ -551,53 +559,6 @@ let convert_rule (sr : sequent_rule) : inner_sequent_rule =
      }
 
 
-let sequent_join fresh (seq : sequent) (pseq : pat_sequent) : sequent option =
-  try
-    let ass,ts =
-      try
-	convert fresh  seq.ts pseq.assumption_diff
-      with Contradiction ->
-	fprintf !(Debug.proof_dump) 
-          "Failed to add formula to lhs: %a@\n" 
-          pp_syntactic_form pseq.assumption_diff;
-	raise Contradiction
-    in
-    let ass = conjunction ass seq.assumption in
-    let sam,ts =
-      try
-	convert fresh ts pseq.assumption_same
-      with Contradiction ->
-	fprintf !(Debug.proof_dump) 
-          "Failed to add formula to matched: %a@\n" 
-          pp_syntactic_form pseq.assumption_same;
-	assert false in
-    let sam = RMSet.union sam.spat seq.matched in
-    let obs,ts =
-      try
-	let obs,ts = convert_without_eqs fresh ts pseq.obligation_diff in
-	let obs = conjunction obs seq.obligation in
-	obs,ts
-      with Contradiction ->
-	try
-	  convert_without_eqs true ts false_sform
-	with Contradiction -> assert false
-    in
-    Some {
-     assumption = ass;
-     obligation = obs;
-     matched = sam;
-     ts = ts;
-   }
-  with Contradiction ->
-    fprintf !(Debug.proof_dump) "Contradiction detected!!@\n";
-    None
-
-let sequent_join_fresh = sequent_join true
-let sequent_join = sequent_join false
-
-let make_sequent (pseq : pat_sequent) : sequent option =
-  sequent_join (empty_sequent ()) pseq
-
 (* Match in syntactic ones too *)
 let rec match_foo op ts form seqs cont =
   match seqs with
@@ -665,185 +626,8 @@ and match_disjunct remove ts form pat_disj cont =
       with No_match ->
 	match_form remove ts form y (fun (ts,form) -> match_disjunct remove ts form pat_disj cont)
 
-let contains ts form pat : bool  =
-  try
-    match_form true ts form pat (fun (ts2,_) -> if Cterm.ts_eq ts ts2 (*This checks that no unification has occured in the contains*) then true else  raise Backtrack.No_match)
-  with No_match ->
-    false
 
 
-let rec form_reps form reps =
-  let reps = (RMSet.map_to_list form.spat snd) @ reps in
-  let reps = (RMSet.map_to_list form.plain snd)  @ reps in
-  let reps = List.fold_left (fun acc (a,b) -> a::b::acc) reps form.eqs in
-  let reps = List.fold_left (fun acc (a,b) -> a::b::acc) reps form.neqs in
-  let reps = List.fold_left (fun acc (a,b) -> form_reps a (form_reps b acc)) reps form.disjuncts in
-  reps
-
-let rec sequent_reps sequent reps =
-  let reps = (RMSet.map_to_list sequent.matched snd) @ reps in
-  let reps = form_reps sequent.assumption reps in
-  let reps = form_reps sequent.obligation reps in
-  reps
-
-let check wheres seq =
-  let sreps = sequent_reps seq [] in
-  List.for_all
-    (
-  function
-    | NotInContext (Psyntax.Var varset) ->
-	vs_for_all (
-	  fun v ->
-	    Cterm.var_not_used_in seq.ts v sreps
-	) varset
-    | NotInTerm (Psyntax.Var varset, term) ->
-	vs_for_all (
-	  fun v ->
-	    Cterm.var_not_used_in_term seq.ts v term
-	) varset
-  ) wheres
-
-
-
-
-let rewrite_guard_check seq (ts,guard) =
-  if contains ts seq.assumption (convert_to_inner guard.if_form) then
-    let without = convert_to_inner guard.without_form in
-    if not (is_sempty without) && contains ts seq.assumption without then
-      false
-    else
-      check guard.rewrite_where seq
-  else
-    false
-
-
-let simplify_sequent rm seq : sequent option
-    =
-try
-(*  printf "Before simplification : %a@\n" pp_sequent seq ;*)
-  (* Try to prove each equality and inequality using ts.
-   Note we assume ones we can prove to prove the rest.*)
-  let remove test update =
-    let rec remove_rec rem_eqs ts eqs =
-      match eqs with
-	[] -> rem_eqs,ts
-      | (x,y)::eqs ->
-	  if test ts x y then
-	    remove_rec rem_eqs ts eqs
-	  else
-	    begin
-	      let ts = update ts x y in
-	      remove_rec ((x,y)::rem_eqs) ts eqs
-	    end
-    in remove_rec []
-  in
-  let ass = seq.assumption in
-  let obs = seq.obligation in
-  let ass,ts =
-    try
-      out_normalise seq.ts ass
-    with Contradiction ->
-      fprintf !(Debug.proof_dump)"Success: %a@\n" pp_sequent seq;
-      raise Success
-  in
-  try
-    let obs,_ =
-      try normalise ts obs
-      with Contradiction ->
-	raise Failed in
-    let ob_eqs = obs.eqs in
-    let rec duts ts ob_eqs new_ob_eqs =
-      match ob_eqs with
-	[] -> ts,  new_ob_eqs
-      | (a,b)::ob_eqs ->
-	  let ts,obeq = determined_exists ts a b in
-	  duts ts ob_eqs (obeq @ new_ob_eqs) in
-    let ts, ob_eqs = try duts ts ob_eqs [] with Contradiction -> raise Failed in
-    let ob_neqs = obs.neqs in
-    let ts = try Cterm.rewrite ts rm (rewrite_guard_check seq) with Contradiction -> raise Success in
-    let ob_eqs,ts_ob = try remove equal make_equal ts ob_eqs with Contradiction -> raise Failed in
-    let ob_neqs,ts_ob = try remove not_equal make_not_equal ts_ob ob_neqs with Contradiction -> raise Failed in
-  (* Assuming obligations equalities and inequalities,
-     and try to match same terms on each side *)
-    let a_spat = ass.spat in
-    let o_spat = obs.spat in
-  (* Look for all the o_spat terms in a_spat,
-     shared terms will be f_spat
-  *)
-    let (f_spat,o_spat,a_spat) = intersect_with_ts ts_ob true o_spat a_spat in
-    let f_spat = RMSet.union seq.matched f_spat in
-    let a_plain = ass.plain in
-    let o_plain = obs.plain in
-    let (_,o_plain,_) = intersect_with_ts ts_ob false o_plain a_plain in
-    let ts = try Cterm.rewrite ts rm (rewrite_guard_check seq) with Contradiction -> raise Success in
-    let seq = {
-      ts = ts;
-      matched = f_spat;
-      assumption = {ass with spat = a_spat};
-      obligation =
-      {obs with
-	spat = o_spat;
-	plain = o_plain;
-	eqs = ob_eqs;
-	neqs=ob_neqs
-      }
-    } in
-   (*  printf "After simplification : %a@\n" pp_sequent seq; *)
-    Some seq
-  with Failed ->
-    let obs,ts = convert_without_eqs true ts false_sform in
-    Some {seq with
-      ts = ts;
-      assumption = ass;
-      obligation = obs }
-
-with Success -> None
-
-
-
-(* TODO Doesn't use obligation equalities to help with match.
-   *)
-let apply_rule
-     (sr : inner_sequent_rule)
-     (seq : sequent)
-     : sequent list list
-     =
-  (* Should reset any matching variables in the ts to avoid clashes. *)
-  let ts = blank_pattern_vars seq.ts in
-  (* Match obligation *)
-  match_form true ts seq.obligation sr.conclusion.obligation_diff
-    (fun (ts,ob) ->
-      (* Match assumption_diff *)
-      match_form true ts seq.assumption sr.conclusion.assumption_diff
-	(fun (ts,ass) ->
-	  (* match assumption_not removed *)
-	  let ass_f = {ass with spat=RMSet.union ass.spat seq.matched} in
-	  match_form true ts ass_f sr.conclusion.assumption_same
-	    (fun (ts,_) ->
-	      if (not (is_sempty sr.without_left) && contains ts ass_f sr.without_left) then
-		raise No_match
-	      else if (not (is_sempty sr.without_right) && contains ts ob sr.without_right) then
-		raise No_match
-	      else if (not (check sr.where {seq with
-					    ts = ts;
-					    obligation = ob;
-					    assumption = ass})) then
-		  raise No_match
-	      else begin
-		fprintf !(Debug.proof_dump) "Match rule %s@\n" sr.name;
-		let seq =
-		  {seq with
-		   ts = ts;
-		   obligation = ob;
-		   assumption = ass;} in
-		List.map
-		  (map_option
-		     (sequent_join_fresh seq))
-		  sr.premises
-	      end
-	    )
-	)
-    )
 
 (* Takes a formula, and returns a pair of formula with one of the
    original disjuncts eliminated.*)
@@ -881,11 +665,11 @@ let get_frames seqs =
 let convert_with_eqs fresh pform =
   let sf = convert_to_inner pform in
   let ts = new_ts () in
-  let ts,form = convert fresh ts sf in
+  let ts,form = convert_sf fresh ts sf in
   mk_ts_form form ts
 
 let convert fresh ts pform =
-  convert_without_eqs fresh  ts (convert_to_inner pform)
+  convert_sf_without_eqs fresh  ts (convert_to_inner pform)
 
 let make_implies (heap : ts_formula) (pheap : pform) : sequent =
   let ts,form = break_ts_form heap in
@@ -930,7 +714,7 @@ let make_implies_inner ts_form1 ts_form2 =
       Some sform -> sform
     | None -> make_syntactic ts_form2 in
   ts_form2.cache_sform := Some sform;
-  let rform,ts =  convert_without_eqs false ts sform in
+  let rform,ts =  convert_sf_without_eqs false ts sform in
   {ts = ts;
     assumption = form;
     obligation = rform;
