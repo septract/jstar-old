@@ -6,7 +6,7 @@ void ranking (int no_of_dmas) {
     if(succ_i == 0) {
       *(run+i) = 0; 
     } else {
-      get(succ_i, dataIn+i, 1, i); 
+      get(dataIn+i, succ_i, 1, i); 
     }
     i = i + 1; 
   }

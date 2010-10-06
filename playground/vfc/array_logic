@@ -21,6 +21,12 @@ if
 rule remove_empty_left :
   | array(?h,?t,?p,?x,"0") |-
 if
+  | |-
+  
+rule remove_empty_right : 
+  | |- array(?h,?t,?p,?x,"0")
+if 
+  | |-
 
 
 /* Array splitting */
@@ -64,3 +70,10 @@ without
   array(?h,?t,pbot(),?x,?l)
 if
   array(?h,?t,?q,?x,?l) | array(?h,?t,?r,?x,?l) * ?r = pdiff(?p, ?q) |-
+
+rule array_simple_match : 
+  | array(?h,?t,?p,?x,?l1) |- array(?h,?t,?q,?x,?l2)
+where
+  !GE(?l1,?l2) pureguard
+if 
+  array(?h,?t,?p,?x,?l2) | array(?h,?t,?q,?x,(?l1-?l2)) |- 

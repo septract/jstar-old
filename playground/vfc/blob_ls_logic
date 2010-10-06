@@ -54,7 +54,7 @@ if
   blob(?h,?p,?x,?e1) | |-  ?e1=?e2 
 
 
-//Roll up a complete NodeLL if we have both fields.
+//Roll up a complete NodeLL
 rule b_field_remove2:
   | blob(?h,?p,?x,?e1)  |- 
 if

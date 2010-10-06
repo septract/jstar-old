@@ -78,6 +78,10 @@ rewrite pdiff_bot:
 
 rewrite pdiff_top:
   pdiff(?t, ptop()) = pbot()
+
+rewrite pdiff_same:
+  pdiff(?t, ?t) = pbot()
+
 /*
 rewrite pdiff_cons:
   pdiff(?t, pcons(?t1, ?t2)) = pmeet(?t, pneg(pcons(?t1, ?t2)))

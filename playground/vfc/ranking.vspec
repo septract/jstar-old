@@ -3,7 +3,7 @@ blob("local", "byte", ptop(), succ, _s)
 *
 _s != "0"
 *
-b_ls("host",ptop(),_s,"0")
+b_ls("host","byte",ptop(),_s,"0")
 * 
 blob("local", "byte", ptop(), run, "1")
 *
@@ -13,9 +13,9 @@ MFCSlot()
 *
 MFC(0,empty())
 *
-array("local", "byte", ptop(), dataIn, "0", buf_size)
+array("local", "byte", ptop(), dataIn, buf_size)
 * 
-!GT(0,buf_size)
+!GT(buf_size,0)
 } 
 { 
 }
