@@ -1,0 +1,30 @@
+void process_data(byte* data, int len) {
+  int i;
+  i = 0;
+  while (i < len) (inv inv_pd) {
+    *data = 0;
+    data = data + 1;
+    i = i + 1;
+  }
+}
+
+void single_buffer(byte* buffer, byte* in, byte* out, int num_chunks, int tag) {
+  int i;
+  int CHUNK;
+  byte* in_old;
+  byte* out_old;
+  i = 0;
+  CHUNK = 16384;
+  in_old = in;
+  out_old = out;
+  while (i < num_chunks) (inv inv_sb) {
+    get(buffer, in, CHUNK, tag);
+    wait(tag);
+    in = in + CHUNK;
+    process_data(buffer, CHUNK);
+    put(buffer, out, CHUNK, tag);
+    wait(tag);
+    out = out + CHUNK;
+    i = i + 1;
+  }
+}

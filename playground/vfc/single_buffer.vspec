@@ -1,0 +1,11 @@
+process_data 
+{ !LE(0, len) * array("local", "byte", ptop(), data, len) } 
+{ array("local", "byte", ptop(), data, len) }
+
+inv_pd { !LE (i, len) }
+
+single_buffer 
+{ array("local", "byte", ptop(), buffer, "16384") * array("host", "byte", _p, in, builtin_mult(num_chunks, "16384")) * array("host", "byte", ptop(), out, builtin_mult(num_chunks, "16384")) * !LE(0, num_chunks) * MFCSlot() * MFC(tag, empty()) }
+{ array("local", "byte", ptop(), buffer, "16384") * array("host", "byte", _p, in, builtin_mult(num_chunks, "16384")) * array("host", "byte", ptop(), out, builtin_mult(num_chunks, "16384")) * MFCSlot() * MFC(tag, empty()) }
+
+inv_sb { !LE (i, num_chunks) * in = builtin_plus(in_old, builtin_mult(i,CHUNK)) * out = builtin_plus(out_old, builtin_mult(i,CHUNK)) }
