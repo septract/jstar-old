@@ -11,7 +11,7 @@ memcpy
 { array(_h, "byte", ptop(), @parameter0:, "0", @parameter2:) * array(_h, "byte", _p, @parameter1:, "0", @parameter2:) }
 
 get
-{ array("local", "byte", ptop(), @parameter0:, "0", @parameter2:) * array("host", "byte", _p, @parameter1:, "0", @parameter2:) * MFC(@parameter3:, _O) * MFCSlot() } 
+{ array("local", "byte", ptop(), @parameter1:, "0", @parameter2:) * array("host", "byte", _p, @parameter0:, "0", @parameter2:) * MFC(@parameter3:, _O) * MFCSlot() } 
 { MFC(@parameter3:, cons(tuple(@parameter0:, ptop(), @parameter1:, _p, @parameter2:), _O)) }
 
 put
