@@ -9,10 +9,8 @@ import "blob_logic";
 
 /* Rules for contradictions */
  
-rule blob_blob_contradiction:
-  array(?h,?t,?p,?x,?l) * array(?h,?u,?q,?y,?l) | |- 
-without
-  ?x!=?y
+rule array_array_contradiction:
+  array(?h,?t,?p,?x,?l) * array(?h,?u,?q,?x,?l) | |- 
 if
 
 
