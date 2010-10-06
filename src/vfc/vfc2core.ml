@@ -41,7 +41,7 @@ let constant_to_term c =
 (*  | Null_const -> mkFun "nil" [] *)
 (*  | Int_const i -> mkFun "numeric_const" [mkString (Printf.sprintf "%d" i)] *)
   | Int_const i -> mkString (Printf.sprintf "%d" i)
-(*  | Bool_const -> assert false *)
+  | Bool_const _ -> assert false
 
 
 let term_term_ops = 
@@ -110,6 +110,12 @@ let rec tr_expr2term (e : pexp) : term =
 (* Translation of expression to form *)
 let rec tr_expr2form (e : pexp) : form =      
   match e with
+  | Const (Bool_const b) ->
+    begin
+      match b with
+      | true -> mkEmpty
+      | false -> mkFalse
+    end
   | Prim_op (op_name, args) ->
     if List.mem_assoc op_name form_form_ops then
       let op = List.assoc op_name form_form_ops in

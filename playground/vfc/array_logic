@@ -11,18 +11,24 @@ import "blob_logic";
  
 rule array_array_contradiction:
   array(?h,?t,?p,?x,?l) * array(?h,?u,?q,?x,?l) | |- 
+where
+  !LT(0, ?l) pureguard
 if
 
 
 /* Get rid of arrays with length zero */
 
-rule remove_empty_left :
-  | array(?h,?t,?p,?x,"0") |-
+rule remove_empty_array_left :
+  | array(?h,?t,?p,?x,?l) |-
+where
+  !LE(?l, 0) * !GE(?l, 0) pureguard
 if
   | |-
   
-rule remove_empty_right : 
-  | |- array(?h,?t,?p,?x,"0")
+rule remove_empty_array_right : 
+  | |- array(?h,?t,?p,?x,?l)
+where
+  !LE(?l, 0) * !GE(?l, 0) pureguard
 if 
   | |-
 
@@ -34,7 +40,7 @@ rule array_split_blob:
 where
   !LE(?x,?y) * !LE(?y,builtin_plus(?x,builtin_minus(?l,"1"))) pureguard
 if
-  blob(?h,?t,?p,?y,_c) | array(?h,?t,?p,?x,builtin_minus(?y,?x)) * array(?h,?t,?p,builtin_plus(?y,"1"),builtin_minus(builtin_minus(?l,builtin_minus(?y,?x)),"1")) |-
+  blob(?h,?t,?p,?y,_c) | array(?h,?t,?p,?x,_k) * array(?h,?t,?p,builtin_plus(?y,"1"),builtin_minus(builtin_minus(?l,_k),"1")) |- _k = builtin_minus(?y,?x)
  
 
 /* Arrays with zero permission reduce to emp */

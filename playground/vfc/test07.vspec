@@ -4,4 +4,4 @@ f
 
 g
 {}
-{ blob("local", "byte", ptop(), _x, "5") * blob("local", "byte", ptop(), _y, "8") }
+{ blob("local", "byte", ptop(), x, "5") * blob("local", "byte", ptop(), y, "8") } /* cannot put existentials here! */

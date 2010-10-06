@@ -44,7 +44,7 @@ and op =
 and const =
 (*  | Null_const*)
   | Int_const of int
-(*  | Bool_const of bool*)
+  | Bool_const of bool
   
 and pexp = 
   | Const of const

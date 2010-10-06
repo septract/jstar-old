@@ -3,6 +3,7 @@ void process_data(byte* data, int len) {
   i = 0;
   while (i < len) (inv inv_pd) {
     *data = 0;
+    while (0 != 1) { skip; }
     data = data + 1;
     i = i + 1;
   }

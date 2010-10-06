@@ -1,6 +1,6 @@
 abstraction LE_exists_left :
    !LE(_x,?l) ~~> 
-
+  
 abstraction LT_exists_left :
    !LT(_x,?l) ~~> 
 
@@ -17,7 +17,7 @@ abstraction blob_to_array :
 
 abstraction blob_array_to_array :
   blob(?h,?t,?p,?x,?c) * array(?h,?t,?p,builtin_plus(?x,"1"),?l) ~~> array(?h,?t,?p,?x,builtin_plus(?l,"1"))
-
+  
 abstraction array_blob_array_to_array :
   array(?h,?t,?p,?x,?i) * blob(?h,?t,?p,builtin_plus(?x,?i),?c) * array(?h,?t,?p,builtin_plus(?x,builtin_plus(?i,"1")),?j) ~~> array(?h,?t,?p,?x,"0",builtin_plus(builtin_plus(?i,?j),"1"))
 
