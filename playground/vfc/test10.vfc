@@ -1,0 +1,14 @@
+void f(byte* in, int num_chunks) {
+  int i;
+  int CHUNK;
+  byte* in_new;
+  i = 0;
+  CHUNK = 16384;
+  in_new = in;
+  while (i < num_chunks) (inv i) {
+    *in_new = 0;
+    while (false) { skip; }
+    in_new = in_new + CHUNK;
+    i = i + 1;
+  }
+}

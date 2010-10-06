@@ -6,6 +6,9 @@ let parent_struct = ref ""
 
 %} 
 
+%token TRUE
+%token FALSE
+%token BOOL
 %token BYTE
 %token INT
 %token STRUCT
@@ -54,6 +57,7 @@ let parent_struct = ref ""
 %token WAIT 
 %token INV
 
+%token <bool> BOOL_CONSTANT
 %token <int> INTEGER_CONSTANT
 %token <string> IDENTIFIER 
 
@@ -64,7 +68,8 @@ program:
  | EOF { [] }
  | decl program { $1 :: $2 }
 ;
-basic_type: 
+basic_type:
+ | BOOL { Bool }
  | BYTE { Byte }
  | INT  { Int } 
 ; 
@@ -114,8 +119,9 @@ var_list:
  | full_type IDENTIFIER COMMA var_list { {vname=$2; vtype=$1; kind=Parameter} :: $4 }
 ;
 const:
+ | BOOL_CONSTANT  { Bool_const($1) } 
  | INTEGER_CONSTANT  { Int_const($1) }
- /* todo: BOOLEAN_CONSTANT and NULL_CONSTANT */
+ /* todo: NULL_CONSTANT */
 ; 
 exp: 
  | L_PAREN exp R_PAREN  { $2 }
