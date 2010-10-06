@@ -17,9 +17,15 @@ if
  * Rules for contradictions 
  *************************************/
 
-rule blob_blob_contradiction:
-  blob(?h,?t,?p,?x,?c) * blob(?h,?t,?q,?x,?d) | |- 
+rule blob_blob_contradiction_left:
+  | blob(?h,?t,?p,?x,?c) * blob(?h,?t,?q,?x,?d) |- 
 if
+  | pmeet(?p, ?q) != pbot() |-
+
+rule blob_blob_contradiction_right:
+  | |- blob(?h,?t,?p,?x,?c) * blob(?h,?t,?q,?x,?d)
+if
+  | |- pmeet(?p, ?q) != pbot()
 
 rule blob_nil_contradiction : 
   blob(?h,?t,?p,nil(),?c) | |- 
