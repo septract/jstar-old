@@ -134,11 +134,16 @@ let check wheres seq : bool  =
 	    Cterm.var_not_used_in_term seq.ts v term
 	) varset
     | PureGuard pf -> 
-        begin
-          let sf = convert_to_inner pf in 
-          let (f,ts) = convert_ground seq.ts sf in 
-          Smt.finish_him ts seq.assumption f
-        end
+        if !Config.smt_run then 
+          begin
+            let sf = convert_to_inner pf in 
+            let (f,ts) = convert_ground seq.ts sf in 
+            if Config.smt_debug() then 
+               Format.printf "[Calling SMT to discharge a pure guard]@\nguard:@\n%a@\nheap:@\n%a@\n" 
+               pp_ts_formula (mk_ts_form ts f) pp_sequent seq;  
+            Smt.finish_him ts seq.assumption f
+          end
+        else raise No_match
   ) wheres
 
 
