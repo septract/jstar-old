@@ -1,0 +1,13 @@
+void f (int* a, int n) {
+  int i;
+  i = 0;
+  *a = 0;
+  while (0 != 1) { skip; }
+}
+
+void g (int* a, int n) {
+  int i;
+  i = n-1;
+  *a = 0;
+  while (0 != 1) { skip; }
+}
