@@ -10,6 +10,10 @@ abstraction LE_exists_right :
 abstraction LT_exists_right :
   !LT(?l,_x) ~~> 
 
+
+abstraction array_to_blob :
+  array(?h,?t,?p,?x,"1") ~~> blob(?h,?t,?p,?x,?c)
+
 abstraction blob_array_to_array :
   blob(?h,?t,?p,?x,?c) * array(?h,?t,?p,?y,?l) ~~> array(?h,?t,?p,?x,builtin_plus(?l,"1"))
 where

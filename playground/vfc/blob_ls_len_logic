@@ -1,0 +1,131 @@
+import "blob_logic"; 
+import "array_logic";
+import "boolean_logic";
+
+
+/***************************************
+ *  This file defines 
+ *
+ *  b_NodeLL
+ *  bls
+ *  b_lspe
+ *
+ ***************************************/
+
+
+
+rule b_NodeLL_not_nil:
+  b_NodeLL(?h,?p,nil(),?y) | |-
+if
+
+rule b_ls_not_nil:
+  b_ls(?h,?p,nil(),?y) | |-
+if
+
+rule b_lspe_not_nil:
+  b_lspe(?h,?p,nil(),?y) | |-
+if
+  | ?y=nil() |-
+
+
+rule NodeLL_not_nil:
+  b_NodeLL(?h,?p,?x,?y) | |- ?x!=nil()
+if
+  | |-
+
+rule b_NodeLL_not_eq:
+  b_NodeLL(?x,?y) * b_NodeLL(?x,?w) | |-
+if
+
+
+
+
+/*************************************
+ * Rule for unpacking Nodell 
+ *
+ *  These rules could potentially cycle forever
+ *  but due to their order cannot.
+ *************************************/
+
+//Unroll NodeLL if we are looking for its next field
+rule b_field_remove1:
+  |   b_NodeLL(?h,?p,?x,?e1) |-  blob(?h,?p,?x,?e2)
+if
+  blob(?h,?p,?x,?e1) | |-  ?e1=?e2 
+
+
+//Roll up a complete NodeLL
+rule b_field_remove2:
+  | blob(?h,?p,?x,?e1)  |- 
+if
+  | b_NodeLL(?h,?p,?x,?e1) |-  
+
+
+
+
+
+/*************************************
+ * Simple subtraction rules 
+ *************************************/
+
+
+rule b_ls_unroll_exists :
+| b_ls(?h,?p,?x,?y) |- blob(?h,?p,?x,?Z)
+if
+| b_NodeLL(?h,?p,?x,_fooz) * b_lspe(?h,?p,_fooz,?y)  |- blob(?h,?p,?x,?Z)
+
+
+
+rule b_ls_ls_match :
+  b_ls(?h,?p,?z,?w) | b_ls(?h,?p,?x,?y) |- b_ls(?h,?p,?x,?z)
+if
+  b_ls(?h,?p,?x,?y) | |- b_lspe(?h,?p,?y,?z)
+
+rule b_ls_NodeLL_match :
+  b_NodeLL(?h,?p,?z,?w) | b_ls(?h,?p,?x,?y) |- b_ls(?h,?p,?x,?z)
+if
+  b_ls(?h,?p,?x,?y) | |- b_lspe(?h,?p,?y,?z)
+
+
+
+
+
+rule b_lspe_left :
+  | b_lspe(?h,?p,?x,?y) |- 
+if
+  | b_ls(?h,?p,?x,?y) |- ;
+  | ?x=?y |- 
+
+
+rule b_lspe_right :
+  | |- b_lspe(?h,?p,?x,?y) 
+if
+  | |- b_ls(?h,?p,?x,?y) 
+or
+  | |- ?x=?y 
+
+
+/*************************************
+ * rules for contradictions 
+ *************************************/
+rule b_ls_field_contradiction :
+ b_ls(?h,?p,?x,?t) * blob(?h2,?p2,?x,?z) | |- 
+if
+
+rule b_ls_node_contradiction :
+ b_ls(?h,?p,?x,?t) * b_NodeLL(?h2,?p2,?x,?z) | |- 
+if
+
+rule b_ls_ls_contr :
+ b_ls(?h,?p,?x,?t) * b_ls(?h2,?p2,?x,?z) | |-
+if
+
+rule b_ls_ls_contr :
+ | |- b_ls(?h,?p,?x,?t) * b_ls(?h,?p,?x,?z)
+if
+ | |- x!=x 
+
+
+
+
+

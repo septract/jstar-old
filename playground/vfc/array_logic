@@ -10,9 +10,9 @@ import "blob_logic";
 /* Rules for contradictions */
  
 rule array_array_contradiction:
-  array(?h,?t,?p,?x,?l) * array(?h,?u,?q,?x,?l) | |- 
+  array(?h,?t,?p,?x,?l1) * array(?h,?u,?q,?x,?l2) | |- 
 where
-  !LT(0, ?l) pureguard
+  !LT(0, ?l1) * !LT(0, ?l2) pureguard
 if
 
 
