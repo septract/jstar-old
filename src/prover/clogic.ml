@@ -396,9 +396,10 @@ let rec convert_ground (ts :term_structure) (sf : syntactic_form) : formula * te
   assert (sf.sdisjuncts = []);  (* don't want disjuncts in an SMT pattern *)
   assert (sf.sspat = SMSet.empty); 
   let plain, ts = smset_to_list_ground sf.splain ts in
-  assert (sf.seqs = []); (* TODO: handle this properly *)
+  let eqs, ts = List.fold_left (fun (eqs,ts) (x,y) -> let cx,ts = ground_pattern x ts in let cy,ts = ground_pattern y ts in ((cx,cy)::eqs,ts)) ([],ts) sf.seqs in  
+  (* TODO: handle this properly *)
   assert (sf.sneqs = []); 
-  {spat = RMSet.empty; plain = RMSet.lift_list plain; disjuncts = []; eqs=[]; neqs=[]}, ts
+  {spat = RMSet.empty; plain = RMSet.lift_list plain; disjuncts = []; eqs=eqs; neqs=[]}, ts
 
 
 
@@ -479,7 +480,7 @@ let eliminate_existentials syn_form =
     if cnt = 0 then evars
     else saturate_ev_cnt syn (find_ev_eq_neq syn evars) (cnt-1)
   in  
-  let ev_sp = saturate_ev_cnt syn_form (find_ev_sp syn_form) 0 in
+  let ev_sp = saturate_ev_cnt syn_form (find_ev_sp syn_form) 2 in
   let rec elim_evars syn =
     (* ignore terms with heads from forbidden_heads *)
     let forbidden_heads = ["Ast"] in
@@ -541,8 +542,8 @@ let eliminate_existentials syn_form =
 let abs ts_form = 
   let syn = make_syntactic ts_form in
   let abs_syn = eliminate_existentials syn in (* perform syntactic abstraction *)
-  let ts,form = convert_sf false (new_ts()) abs_syn in 
-  mk_ts_form form ts 
+  let form, ts = convert_sf false (new_ts()) abs_syn in 
+  mk_ts_form ts form
 
 
 let match_and_remove
