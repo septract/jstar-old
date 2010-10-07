@@ -304,6 +304,7 @@ let get_counter_example () =
   r
 
 let pprint_proof (f : formatter) : unit = 
+  Format.pp_print_flush !proof_dump ();  
   fprintf f "%s" (Buffer.contents buffer_dump)
 
 let string_of_proof () =
