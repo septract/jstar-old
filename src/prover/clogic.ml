@@ -397,11 +397,8 @@ let rec convert_ground (ts :term_structure) (sf : syntactic_form) : formula * te
   assert (sf.sspat = SMSet.empty); 
   let plain, ts = smset_to_list_ground sf.splain ts in
   let eqs, ts = List.fold_left (fun (eqs,ts) (x,y) -> let cx,ts = ground_pattern x ts in let cy,ts = ground_pattern y ts in ((cx,cy)::eqs,ts)) ([],ts) sf.seqs in  
-  (* TODO: handle this properly *)
-  assert (sf.sneqs = []); 
-  {spat = RMSet.empty; plain = RMSet.lift_list plain; disjuncts = []; eqs=eqs; neqs=[]}, ts
-
-
+  let neqs, ts = List.fold_left (fun (neqs,ts) (x,y) -> let cx,ts = ground_pattern x ts in let cy,ts = ground_pattern y ts in ((cx,cy)::neqs,ts)) ([],ts) sf.sneqs in  
+  {spat = RMSet.empty; plain = RMSet.lift_list plain; disjuncts = []; eqs=eqs; neqs=neqs}, ts
 
 
 let conjoin fresh (f : ts_formula) (sf : syntactic_form) =
@@ -480,7 +477,8 @@ let eliminate_existentials syn_form =
     if cnt = 0 then evars
     else saturate_ev_cnt syn (find_ev_eq_neq syn evars) (cnt-1)
   in  
-  let ev_sp = saturate_ev_cnt syn_form (find_ev_sp syn_form) 2 in
+  (*let ev_sp = saturate_ev_cnt syn_form (find_ev_sp syn_form) 2 in*)
+  let ev_sp = saturate_ev syn_form (find_ev_sp syn_form) in
   let rec elim_evars syn =
     (* ignore terms with heads from forbidden_heads *)
     let forbidden_heads = ["Ast"] in
