@@ -198,7 +198,11 @@ let rec get_pargs_norecs norm ts rs rep : Psyntax.args =
     let fpt = CMap.find 
          (if norm then find_good_rep ts rep
           else rep) ts.originals
-    in       
+    in
+    let fpt = match fpt with 
+        | FArg_var (EVar _)
+            -> CMap.find (find_good_rep ts rep) ts.originals  
+        | _ -> fpt in
     match fpt with 
       FArg_var v ->
 	begin 
@@ -402,11 +406,11 @@ let add_pattern term ts =
   let c,ts = add_term params_pattern term ts in 
   c,ts
   
-(*
+
 let ground_pattern (pattern : args) (ts : term_structure) : term_handle * term_structure = 
   let c,ts = add_term params_pattern_to_term pattern ts in 
   c, ts
-*)
+
 
 let ground_pattern_tuple (ptl : args list) (ts : term_structure) : term_handle * term_structure = 
   let c,ts,cl = add_term_list (params_pattern_to_term) ptl (ts.tuple,ts) [] in 
