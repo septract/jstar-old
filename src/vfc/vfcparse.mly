@@ -56,6 +56,7 @@ let parent_struct = ref ""
 %token PUT
 %token WAIT 
 %token INV
+%token ABS
 
 %token <bool> BOOL_CONSTANT
 %token <int> INTEGER_CONSTANT
@@ -178,6 +179,7 @@ stmt:
     { Fork($1, $5, $7) }
  | JOIN L_PAREN exp R_PAREN SEMICOLON  { Join($3) }
  | INV IDENTIFIER SEMICOLON  { if Config.parse_debug() then Printf.printf "Inv %!"; Inv($2) }
+ | ABS SEMICOLON  { if Config.parse_debug() then Printf.printf "Abstract %!"; Abstract }
 /*
  | IDENTIFIER EQUALS ALLOC L_PAREN exp R_PAREN SEMICOLON  { Alloc($1, $5) }
  | FREE L_PAREN exp R_PAREN SEMICOLON  { Free($3) }

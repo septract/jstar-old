@@ -29,3 +29,4 @@ abstraction array_array_to_array :
 
 abstraction array_array_array_to_array :
   array(?h,?t,?p,?x,?l,?i) * array(?h,?t,?p,?x,builtin_plus(?x,?i),?j) * array(?h,?t,?p,?x,builtin_plus(?x,builtin_plus(?i,?j)),?k) ~~> array(?h,?t,?p,?x,builtin_plus(builtin_plus(?i,?j),?k))
+

@@ -450,7 +450,36 @@ let eliminate_existentials syn_form =
       ) vs_empty syn.sdisjuncts   
     end
   in
-  let ev_sp = find_ev_sp syn_form in
+  (* finds existentials in equalities and inequalities *)
+  let rec find_ev_eq_neq syn vset =
+    let get_evs a1 a2 =
+      if (vs_is_empty (vs_inter vset (ev_args a1 vs_empty)) <> true ||
+        vs_is_empty (vs_inter vset (ev_args a2 vs_empty)) <> true) then
+        vs_union vset (vs_union (ev_args a1 vs_empty) (ev_args a2 vs_empty))
+      else
+        vset
+    in
+    if syn.sdisjuncts = [] then
+      let evs_eqs = List.fold_left (fun vs (a1, a2) -> vs_union vs (get_evs a1 a2)) vs_empty syn.seqs in
+      let evs_neqs = List.fold_left (fun vs (a1, a2) -> vs_union vs (get_evs a1 a2)) vs_empty syn.sneqs in
+      vs_union evs_eqs evs_neqs
+    else begin
+      List.fold_left (fun vs (s1, s2) -> 
+        vs_union (vs_union (find_ev_eq_neq s1 vset) (find_ev_eq_neq s2 vset)) vs
+      ) vs_empty syn.sdisjuncts   
+    end
+  in
+  (* iterates until the set of existentials becomes saturated *)
+  let rec saturate_ev syn evars =
+    let new_evars = find_ev_eq_neq syn evars in
+    if (vs_is_empty (vs_diff new_evars evars)) then new_evars
+    else saturate_ev syn new_evars
+  in
+  let rec saturate_ev_cnt syn evars cnt =
+    if cnt = 0 then evars
+    else saturate_ev_cnt syn (find_ev_eq_neq syn evars) (cnt-1)
+  in  
+  let ev_sp = saturate_ev_cnt syn_form (find_ev_sp syn_form) 0 in
   let rec elim_evars syn =
     (* ignore terms with heads from forbidden_heads *)
     let forbidden_heads = ["Ast"] in

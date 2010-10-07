@@ -74,6 +74,7 @@ and stmt =
   | Fork of var_id * fun_id * pexp list
   | Join of pexp 
   | Inv of inv_id
+  | Abstract
 (*
   | Alloc of var_id * pexp
   | Free of pexp 

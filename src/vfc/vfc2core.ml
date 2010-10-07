@@ -269,6 +269,11 @@ let rec tr_stmt (s : stmt) : core_statement list =
     let inv = find invs inv_id in
     let spec = mk_spec inv inv excep_post_empty invariants_empty in
     [Assignment_core ([], spec, [])]
+  
+  | Abstract ->
+    let l = fresh_label() in 
+    [Label_stmt_core l]
+
 (*
   | Alloc (v_id, e) -> []
   | Free e -> []

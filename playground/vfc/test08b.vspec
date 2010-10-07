@@ -2,4 +2,4 @@ f
 { array("local", "byte", ptop(), a, n) * !LE(0, n) }
 { array("local", "byte", ptop(), a, n) }
 
-i { !LE(0, i) * !LE (i, n) }
+i { !LE(0, i) * !LE(i, n) }

@@ -7,7 +7,7 @@ void f(byte* in, int num_chunks) {
   in_new = in;
   while (i < num_chunks) (inv i) {
     *in_new = 0;
-    while (false) { skip; }
+    abs;
     in_new = in_new + CHUNK;
     i = i + 1;
   }

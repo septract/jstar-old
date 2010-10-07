@@ -22,6 +22,7 @@ let keyword_al = [
   ( "join", JOIN ); 
   ( "thread", THREAD ); 
   ( "inv", INV ); 
+  ( "abs", ABS ); 
 (*
   ( "alloc", ALLOC ); 
   ( "free", FREE );

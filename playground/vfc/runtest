@@ -11,3 +11,7 @@ run_vfc -f test08a.vfc -s test08a.vspec
 run_vfc -f test08b.vfc -s test08b.vspec
 run_vfc -f test09.vfc -s test09.vspec
 run_vfc -f test10.vfc -s test10.vspec
+
+grep -i contradiction *.txt
+
+grep -i inconsistent *.dot
