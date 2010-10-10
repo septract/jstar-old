@@ -3,6 +3,10 @@
  *  represented with binary trees
  ********************************************/
 
+constructor pcons
+constructor ptop
+constructor pbot 
+
  
 /***********************************
  *  Simplifications of permissions

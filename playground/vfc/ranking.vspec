@@ -3,7 +3,7 @@ blob("local", "byte", ptop(), succ, _s)
 *
 b_ls("host","byte",ptop(),_s,0,len)
 * 
-blob("local", "byte", ptop(), run, "1")
+blob("local", "byte", ptop(), run, 1)
 *
 blob("local", "byte", ptop(), dataIn, _x)
 * 
@@ -16,13 +16,25 @@ array("local", "byte", ptop(), dataIn, buf_size)
 !GT(buf_size,0)
 * 
 !GT(len,0)
+*
+array("host", "byte", ptop(), target, olen)
+* 
+!GT(olen,len)
+*
+blob("local", "byte", ptop(), currlen, 0)
 } 
-{ 
+{}
+
+rank_inv { 
 blob("local", "byte", ptop(), succ, succ_i)
 *
 blob("host", "byte", psplit2(ptop()), succ_i, _x)
 *
-b_ls("host", "byte",ptop(),_x,0,(len-1))
+b_ls("host", "byte",ptop(),_x,0,_len)
 *
 MFC(0, cons(tuple(dataIn, ptop(), succ_i, psplit1(ptop()), 1), empty()))
+*
+array("host", "byte", ptop(), target,_olen)
+* 
+!GT(_olen,_len)
 }

@@ -1,7 +1,7 @@
 import "blob_logic";
 import "array_logic";
 import "mfc_array_logic";
-/*import "blob_ls_len_logic";*/
+import "blob_ls_len_logic";
 
 rule plus_exists :
   | |- ?i = (_j + ?n)
@@ -20,38 +20,6 @@ where
   _j notin ?n
 if
   | |-
-
-/*
-rule b_ls_array : 
-  | b_ls(?h,?t,?p1,?x,?y,?m) |- array(?h,?t,?p2,?x,?j)
-where
-  !GT(?j,0) pureguard; 
-  !GT(?m,0) pureguard
-if 
-   blob(?h,?t,pmeet(?p1,?p2),?x,_z)  
-|  blob(?h,?t,pdiff(?p1, pmeet(?p1,?p2)),?x,_z) * b_ls(?h,?t,?p1,_z,?y,(?m-1)) 
-|- blob(?h,?t,pdiff(?p2, pmeet(?p1,?p2)),?x,_z) * array(?h,?t,?p2,(?x+"1"),(?j-1))
-*/
-
-/*
-rule b_ls_array_very_simple : 
-  | b_ls(?h,?t,ptop(),?x,?y,?m) |- array(?h,?t,_e,?x,?j)
-where
-  !GT(?j,0) pureguard; 
-  !GT(?m,0) pureguard
-if 
-   blob(?h,?t,ptop(),?x,_z) |  b_ls(?h,?t,ptop(),_z,?y,(?m-1)) |- array(?h,?t,ptop(),(?x+"1"),(?j-1))
-*/
-
-
-/*
-b_ls_array_simple : 
-  | b_ls(?h,?t,?p1,?x,?y,?m) |- array(?h,?t,?p2,?x,?j)
-if 
-     blob(?h,?t,?p2,?x,_z)
-  |  blob(?h,?t,pdiff(?p1,?p2),?x,_z) * b_ls(?h,?t,?p1,_z,?y,(?m-1)) 
-  |- !Pless(?p2, ?p1) * array(?h,?t,?p2,(?x+"1"),(?j-1))
-*/
 
 rule b_ls_array_new : 
   | b_ls(?h,?t,?p1,?x,?y,?m)  |-  array(?h,?t,?p2,?x,?j)
