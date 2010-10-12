@@ -67,6 +67,6 @@ let pp_var f =
   function 
     | PVar (n,vn) -> fprintf f "%s%s" vn (p n)
     | EVar (n,vn) -> fprintf f "_%s%s" vn (p n)
-    | AnyVar (n,vn) -> fprintf f "a_%s%s" vn (p n)
+    | AnyVar (n,vn) -> fprintf f "?%s%s" vn (p n)
 
 let string_var = Debug.string_of pp_var

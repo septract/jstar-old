@@ -1,7 +1,13 @@
-rule vapourise_RT:
+rule pureguard_test: 
 | testpred(?x,?y) |- 
 where
   !LT(?x,?y) pureguard
 if 
 | |-
 
+rewrite fg1: 
+  f(?y) = g(?y)
+
+
+rewrite f1: 
+  f(?y) = f(g(?y))

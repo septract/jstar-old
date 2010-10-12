@@ -33,3 +33,7 @@ Implication:
 Implication: 
   !LT(a,b) * testpred(a,b) |- 
 ? True 
+
+Implication: 
+   |- f(1) = g(1) 
+? True 

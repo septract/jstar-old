@@ -189,6 +189,11 @@ let string_sexp_neq (a : Psyntax.args * Psyntax.args) : string =
   match a with a1, a2 -> 
   Printf.sprintf "(distinct %s %s)" (string_sexp_args a1) (string_sexp_args a2)
 
+
+let string_sexp_imp (a : Psyntax.args * Psyntax.args) : string = 
+  match a with a1, a2 -> 
+  Printf.sprintf "(=> %s %s)" (string_sexp_args a1) (string_sexp_args a2) 
+  
   
 let string_sexp_pred (p : string * Psyntax.args) : (string * smttypeset) = 
   match p with 
@@ -323,15 +328,17 @@ let smt_reset () : unit =
 
 
 (* Check whether two args are equal under the current assumptions *)
-let smt_test_eq (a1 : Psyntax.args) (a2 : Psyntax.args) : bool = 
+let smt_test_eq (context : string) (a1 : Psyntax.args) (a2 : Psyntax.args) : bool = 
   smt_push(); 
-  smt_assert (string_sexp_neq (a1,a2)); 
+  let eq_query = "(not (=> (and true "^context^") "^(string_sexp_eq (a1,a2))^"))" in 
+  smt_assert eq_query; 
   let r = smt_check_unsat() in 
   smt_pop(); r 
 
 
 (* try to establish that the pure parts of a sequent are valid using the SMT solver *)
 let finish_him 
+    (logic : Psyntax.logic)
     (ts : term_structure)
     (asm : formula)
     (obl : formula)
@@ -376,7 +383,7 @@ let finish_him
     false 
   
 
-let true_sequent_smt (seq : sequent) : bool =  
+let true_sequent_smt (logic : Psyntax.logic) (seq : sequent) : bool =  
   (Clogic.true_sequent seq)
     ||
   (* Call the SMT if the other check fails *)
@@ -385,10 +392,10 @@ let true_sequent_smt (seq : sequent) : bool =
   (Clogic.plain seq.assumption  &&  Clogic.plain seq.obligation 
     && 
    ((if Config.smt_debug() then Format.printf "Calling SMT to prove@\n %a@\n" Clogic.pp_sequent seq); 
-    finish_him seq.ts seq.assumption seq.obligation)))
+    finish_him logic seq.ts seq.assumption seq.obligation)))
 
 
-let frame_sequent_smt (seq : sequent) : bool = 
+let frame_sequent_smt (logic : Psyntax.logic) (seq : sequent) : bool = 
   (Clogic.frame_sequent seq) 
     ||
   (if (not !Config.smt_run) then false 
@@ -396,25 +403,32 @@ let frame_sequent_smt (seq : sequent) : bool =
   (Clogic.plain seq.obligation
     && 
    ((if Config.smt_debug() then Format.printf "Calling SMT to get frame from@\n %a@\n" Clogic.pp_sequent seq); 
-    finish_him seq.ts seq.assumption seq.obligation)))
+    finish_him logic seq.ts seq.assumption seq.obligation)))
 
+
+let string_sexp_rw (a : Psyntax.args * Psyntax.args) : (string * smttypeset) = 
+  match a with a1, a2 ->  
+  let rw_types = smt_union_list [args_smttype a1; args_smttype a2] in 
+  let vars, other = SMTTypeSet.partition (fun x -> match x with SMT_Var(_) -> true | _ -> false) rw_types in 
+  let sexp = 
+    if SMTTypeSet.is_empty vars then (string_sexp_eq a)
+    else let vstr = SMTTypeSet.fold 
+                     (fun v b -> match v with SMT_Var(v) -> "("^(Vars.string_var v)^" Int) "^b | _ -> b) 
+                     rw_types "" in "(forall "^vstr^" "^(string_sexp_eq a)^")"
+  in 
+  (sexp,other)
 
 
 (* Update the congruence closure using the SMT solver *)
 let ask_the_audience 
+    (logic : Psyntax.logic)
     (ts : term_structure)
     (form : formula)
     : term_structure = 
   if (not !Config.smt_run) then raise Backtrack.No_match 
   else try 
-    if Config.smt_debug() then 
-      begin 
-        Format.printf "Calling SMT to update congruence closure@\n"; 
-        Format.printf "Current formula:@\n %a@\n" Clogic.pp_ts_formula (Clogic.mk_ts_form ts form)
-      end;  
-      
     smt_push(); 
-    
+
     (* Construct equalities and ineqalities from ts *)
     let eqs = filter (fun (a,b) -> a <> b) (get_eqs_norecs ts) in
     let neqs = filter (fun (a,b) -> a <> b) (get_neqs_norecs ts) in 
@@ -426,36 +440,48 @@ let ask_the_audience
     (* Construct sexps and types for assumption and obligation *)
     let form_sexp, form_types = string_sexp_form ts form in 
   
-    let types = smt_union_list [ts_types; form_types] in 
-  
+    (* Get sexps and types for rewrite rules *)
+    let rws = map (fun x -> string_sexp_rw (Arg_op(x.function_name,x.arguments),x.result)) logic.rw_rules in
+    let rw_sexps, rw_types = 
+       fold_right (fun (x,y) (a,b) -> (x^a, (SMTTypeSet.union y b)) ) rws ("", SMTTypeSet.empty) in 
+
     (* declare predicates *)
+    let types = smt_union_list [ts_types; form_types; rw_types] in 
+  
     SMTTypeSet.iter (fun x -> ignore(smt_command (string_sexp_decl x))) types; 
 
     (* Assert the assumption *)                    
-    let assm_query = "(and true " ^ ts_eq_sexp ^" "^ ts_neq_sexp ^" "^ form_sexp ^ ")"
+    let assm_query = "(and true " ^ ts_eq_sexp ^" "^ ts_neq_sexp ^" "^ form_sexp ^")"
     in smt_assert assm_query;    
 
     (* check for a contradiction *)
-    if Config.smt_debug() then Format.printf "[Checking for contradiction in assumption]@\n"; 
+    if Config.smt_debug() then Format.printf "[Checking for contradiction]@\n"; 
     if smt_check_unsat() then (smt_reset(); raise Assm_Contradiction);
     
     (* check whether there are any new equalities to find; otherwise raise Backtrack.No_match *)
+
     if Config.smt_debug() then Format.printf "[Checking for new equalities]@\n"; 
     smt_push(); 
     let reps = get_args_rep ts in 
-    let rep_sexps = String.concat " " (map (fun (x,y) -> string_sexp_neq (snd x,snd y)) 
+    (*
+        let rep_sexps = String.concat " " (map (fun (x,y) -> string_sexp_eq (snd x,snd y)) 
                                                 (list_to_pairs reps) )
     in 
-    smt_assert ( "(and true " ^ rep_sexps ^ " )" ); 
-    if smt_check_sat() then (smt_reset(); raise Backtrack.No_match); 
+    smt_assert ( "(and "^rw_sexps^" (not (and true " ^ rep_sexps ^ " )))" ); 
+    if (smt_check_unsat()) then (smt_reset(); raise Backtrack.No_match); 
+    if Config.smt_debug() then Format.printf "[New equality present]@\n"; 
     smt_pop(); 
+    *)
 
     (* Update the term structure using the new equalities *)  
     let req_equiv = map (map fst)
-                        (equiv_partition (fun x y -> smt_test_eq (snd x) (snd y)) reps) 
+                        (equiv_partition (fun x y -> smt_test_eq rw_sexps (snd x) (snd y)) reps) 
     in 
     smt_pop();
-    fold_left make_list_equal ts req_equiv
+    match filter (fun x -> length x >= 2) req_equiv with 
+      [] -> raise Backtrack.No_match
+    | rs  -> if Config.smt_debug() then Format.printf "[New equality present]@\n";  
+             fold_left make_list_equal ts rs
   with 
   | SMT_error r -> 
     smt_reset(); 

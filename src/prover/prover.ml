@@ -118,7 +118,7 @@ let make_sequent (pseq : pat_sequent) : sequent option =
   sequent_join (empty_sequent ()) pseq
 
 
-let check wheres seq : bool  =
+let check logic wheres seq : bool  =
   let sreps = sequent_reps seq [] in
   List.for_all
     (
@@ -141,7 +141,7 @@ let check wheres seq : bool  =
             if Config.smt_debug() then 
                Format.printf "[Calling SMT to discharge a pure guard]@\nguard:@\n%a@\nheap:@\n%a@\n" 
                pp_ts_formula (mk_ts_form ts f) pp_sequent seq;  
-            Smt.finish_him ts seq.assumption f
+            Smt.finish_him logic ts seq.assumption f
           end
         else raise No_match
   ) wheres
@@ -149,6 +149,7 @@ let check wheres seq : bool  =
 
 (* TODO Doesn't use obligation equalities to help with match. *)
 let apply_rule
+     (logic : Psyntax.logic)
      (sr : inner_sequent_rule)
      (seq : sequent)
      : sequent list list
@@ -169,10 +170,10 @@ let apply_rule
 		raise No_match
 	      else if (not (is_sempty sr.without_right) && contains ts ob sr.without_right) then
 		raise No_match
-	      else if (not (check sr.where {seq with  (* TODO: do we want to use the old asm / ob here for the SMT guard? *)
-					    ts = ts;
-					    obligation = ob;
-					    assumption = ass})) then
+	      else if (not (check logic sr.where {seq with  (* TODO: do we want to use the old asm / ob here for the SMT guard? *)
+				                  ts = ts;
+					          obligation = ob;
+					          assumption = ass})) then
 		  raise No_match
 	      else begin
 		fprintf !(Debug.proof_dump) "Match rule %s@\n" sr.name;
@@ -191,18 +192,18 @@ let apply_rule
     )
 
 
-let rewrite_guard_check seq (ts,guard) =
+let rewrite_guard_check logic seq (ts,guard) =
   if contains ts seq.assumption (convert_to_inner guard.if_form) then
     let without = convert_to_inner guard.without_form in
     if not (is_sempty without) && contains ts seq.assumption without then
       false
     else
-      check guard.rewrite_where seq
+      check logic guard.rewrite_where seq
   else
     false
 
 
-let simplify_sequent rm seq : sequent option
+let simplify_sequent logic rm seq : sequent option
     =
 try
 (*  printf "Before simplification : %a@\n" pp_sequent seq ;*)
@@ -245,7 +246,7 @@ try
 	  duts ts ob_eqs (obeq @ new_ob_eqs) in
     let ts, ob_eqs = try duts ts ob_eqs [] with Contradiction -> raise Failed in
     let ob_neqs = obs.neqs in
-    let ts = try Cterm.rewrite ts rm (rewrite_guard_check seq) with Contradiction -> raise Success in
+    (*let ts = try Cterm.rewrite ts rm (rewrite_guard_check seq) with Contradiction -> raise Success in*)
     let ob_eqs,ts_ob = try remove equal make_equal ts ob_eqs with Contradiction -> raise Failed in
     let ob_neqs,ts_ob = try remove not_equal make_not_equal ts_ob ob_neqs with Contradiction -> raise Failed in
   (* Assuming obligations equalities and inequalities,
@@ -260,7 +261,8 @@ try
     let a_plain = ass.plain in
     let o_plain = obs.plain in
     let (_,o_plain,_) = intersect_with_ts ts_ob false o_plain a_plain in
-    let ts = try Cterm.rewrite ts rm (rewrite_guard_check seq) with Contradiction -> raise Success in
+(*    let ts = try Cterm.rewrite ts rm (rewrite_guard_check logic seq) with Contradiction -> raise Success in*)
+(*    let ts = try Cterm.rewrite ts rm (fun x -> true) with Contradiction -> raise Success in *)
     let seq = {
       ts = ts;
       matched = f_spat;
@@ -314,6 +316,7 @@ exception Failed_eg of Clogic.sequent list
 
 
 let rec apply_rule_list_once 
+   (logic : Psyntax.logic)
    (rules : sequent_rule list) 
    (seq : Clogic.sequent) 
    ep 
@@ -323,9 +326,9 @@ let rec apply_rule_list_once
     [] -> raise No_match
   | rule::rules ->
       try 
-	apply_rule (Clogic.convert_rule rule) seq (*ep*)
+	apply_rule logic (Clogic.convert_rule rule) seq (*ep*)
       with 
-      | No_match -> apply_rule_list_once rules seq ep
+      | No_match -> apply_rule_list_once logic rules seq ep
 
 
 let rec sequents_backtrack 
@@ -359,7 +362,7 @@ let apply_rule_list
     let search seqss : Clogic.sequent list = 
       sequents_backtrack 
 	(fun seqs->apply_rule_list_inner seqs (n+1)) seqss [] in
-    let sequents = map_option (simplify_sequent logic.rw_rules) sequents in 
+    let sequents = map_option (simplify_sequent logic logic.rw_rules) sequents in 
   (* Apply rules lots *)
     List.flatten 
       (List.map 
@@ -369,7 +372,7 @@ let apply_rule_list
 	     [seq]
 	   else
 	   try 
-	     search (apply_rule_list_once logic.seq_rules seq logic.ext_prover)
+	     search (apply_rule_list_once logic logic.seq_rules seq logic.ext_prover)
 	   with No_match -> 
          try
 		 if may_finish seq then 
@@ -380,8 +383,12 @@ let apply_rule_list
 		 try 
 		   search (Clogic.apply_or_right seq)
 		 with No_match -> 
-                 try 
-	             let ts' = Smt.ask_the_audience seq.ts seq.assumption in 
+                 try if Config.smt_debug() then 
+                     begin 
+                        Format.printf "Calling SMT to update congruence closure@\n"; 
+                        Format.printf "Current sequent:@\n %a@\n" Clogic.pp_sequent seq
+                     end;  
+	             let ts' = Smt.ask_the_audience logic seq.ts seq.assumption in 
 	             search [[ {seq with ts = ts'} ]]
                    with 
                    | Assm_Contradiction -> []
@@ -397,7 +404,9 @@ let check_imp (logic : logic) (seq : sequent) : bool =
     try 
       let ts = List.fold_right Cterm.add_constructor logic.consdecl seq.ts in 
       let seq = {seq with ts = ts} in 
-      ignore (apply_rule_list logic [seq] Smt.true_sequent_smt Smt.true_sequent_smt); true
+      ignore (apply_rule_list logic [seq] (Smt.true_sequent_smt logic) 
+                                          (Smt.true_sequent_smt logic) ); 
+      true
     with  
       Failed -> false
     | Failed_eg x -> prover_counter_example := x ; false
@@ -406,7 +415,7 @@ let check_frm (logic : logic) (seq : sequent) : Clogic.ts_formula list option =
   try
     let ts = List.fold_right Cterm.add_constructor logic.consdecl seq.ts in 
     let seq = {seq with ts = ts} in 
-    let leaves = apply_rule_list logic [seq] (fun _ -> false) Smt.frame_sequent_smt in 
+    let leaves = apply_rule_list logic [seq] (fun _ -> false) (Smt.frame_sequent_smt logic) in 
     Some (Clogic.get_frames leaves)
   with 
     Failed -> fprintf !proof_dump "Foo55";None 
