@@ -10,4 +10,6 @@ rewrite fg1:
 
 
 rewrite f1: 
-  f(?y) = f(g(?y))
+  f(?x,?y) = f(g(?y))
+without
+  !GT(?y,?x)

@@ -338,7 +338,17 @@ let smset_to_list fresh a ts =
     else
       rs, ts
   in inner a [] ts
-  
+
+(*
+let rmset_to_list a =
+  let a = RMSet.restart a in
+  let rec inner a rs =
+    if RMSet.has_more a then
+      let (n,t),a = RMSet.remove a in
+      inner a ((n,t)::rs)
+    else rs
+  in inner a []
+*)
 
 let rec add_pair_list fresh xs ts rs =
   match xs with

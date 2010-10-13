@@ -440,7 +440,7 @@ module PersistentCC (A : GrowablePersistentArray) : PCC =
       Hashtbl.fold (fun x _ xs -> x::xs) r []
 
     let pretty_print' has_pp pp_term pp ppf first ts =
-      let eqs = get_eqs has_pp (fun x->x) ts in
+      let eqs = List.filter (fun (x,y) -> x != y)  (get_eqs has_pp (fun x->x) ts) in
       let neqs = get_neqs has_pp (fun x->x) ts in
       let first = 
         List.fold_left (pp.separator (pp_eq pp_term) ppf) first eqs in

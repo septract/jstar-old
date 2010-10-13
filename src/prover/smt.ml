@@ -32,6 +32,7 @@ let smterr = ref Pervasives.stdin;;
 let smtout_lex = ref (Lexing.from_string "");; 
 
 
+
 let smt_init () : unit = 
   let path = ( if (!Config.solver_path <> "") then !Config.solver_path 
                else System.getenv "JSTAR_SMT_PATH")
@@ -195,42 +196,59 @@ let string_sexp_imp (a : Psyntax.args * Psyntax.args) : string =
   Printf.sprintf "(=> %s %s)" (string_sexp_args a1) (string_sexp_args a2) 
   
   
-let string_sexp_pred (p : string * Psyntax.args) : (string * smttypeset) = 
+let string_sexp_pred (p : string * Psyntax.args list) : (string * smttypeset) = 
   match p with 
-  | ("GT",(Arg_op ("tuple",[a1;a2]))) -> 
+  | ("GT",[a1;a2]) -> 
       (Printf.sprintf "(> %s)" (string_sexp_args_list [a1;a2]), SMTTypeSet.empty)
 
-  | ("LT",(Arg_op ("tuple",[a1;a2]))) -> 
+  | ("LT",[a1;a2]) -> 
       (Printf.sprintf "(< %s)" (string_sexp_args_list [a1;a2]), SMTTypeSet.empty)
 
-  | ("GE",(Arg_op ("tuple",[a1;a2]))) -> 
+  | ("GE",[a1;a2]) -> 
       (Printf.sprintf "(>= %s)" (string_sexp_args_list [a1;a2]), SMTTypeSet.empty)
 
-  | ("LE",(Arg_op ("tuple",[a1;a2]))) -> 
+  | ("LE",[a1;a2]) -> 
       (Printf.sprintf "(<= %s)" (string_sexp_args_list [a1;a2]), SMTTypeSet.empty)
       
   | (name, args) -> 
     let name = "pred_"^name in 
-    match args with 
-      | Arg_op ("tuple",al) ->
-          let types = SMTTypeSet.add (SMT_Pred(name,(length al))) (args_smttype args) in 
-        (Printf.sprintf "(%s %s)" name (string_sexp_args_list al), types)
-      | _ -> failwith "TODO"
+    let types = SMTTypeSet.add (SMT_Pred(name,(length args))) (smt_union_list (map args_smttype args)) in 
+    (Printf.sprintf "(%s %s)" name (string_sexp_args_list args), types)
+
+
+let rec make_form_syntactic 
+    (ts : term_structure) 
+    (f : formula) : syntactic_form = 
+  let convert_tuple r =
+    match get_pargs_norecs false ts [] r with
+      Psyntax.Arg_op("tuple",al) -> al
+      | _ -> assert false in
+  let seqs = map (fun (a1,a2) -> ((get_pargs_norecs false ts [] a1),
+                                   (get_pargs_norecs false ts [] a2))) f.eqs in 
+  let sneqs = map (fun (a1,a2) -> ((get_pargs_norecs false ts [] a1),
+                                    (get_pargs_norecs false ts [] a2))) f.neqs in 
+  let sdisjuncts = map (fun (x,y) -> (make_form_syntactic ts x), 
+                                     (make_form_syntactic ts y)) f.disjuncts in 
+  let splain_list = RMSet.map_to_list f.plain (fun (s,t) -> (s,convert_tuple t)) in 
+  let sspat_list = RMSet.map_to_list f.spat (fun (s,t) -> (s,convert_tuple t)) in 
+  {
+    sspat = SMSet.lift_list sspat_list;
+    splain = SMSet.lift_list splain_list;
+    sdisjuncts = sdisjuncts; 
+    seqs = seqs; 
+    sneqs = sneqs;   
+  }
 
 
 let rec string_sexp_form 
     (ts : term_structure)
-    (form : formula) 
+    (sform : syntactic_form)
     : (string * smttypeset) = 
   (* Construct equalities and inequalities *)  
-  let eqs = map (fun (a1,a2) -> ((get_pargs_norecs false ts [] a1),
-                                   (get_pargs_norecs false ts [] a2))) form.eqs in 
-  let neqs = map (fun (a1,a2) -> ((get_pargs_norecs false ts [] a1),
-                                    (get_pargs_norecs false ts [] a2))) form.neqs in 
-  let eq_sexp = String.concat " " (map string_sexp_eq eqs) in 
-  let neq_sexp = String.concat " " (map string_sexp_eq neqs) in 
+  let eq_sexp = String.concat " " (map string_sexp_eq sform.seqs) in 
+  let neq_sexp = String.concat " " (map string_sexp_eq sform.sneqs) in 
   
-  let eqneqs = (let a,b = split (eqs@neqs) in a@b) in 
+  let eqneqs = (let a,b = split (sform.seqs@sform.sneqs) in a@b) in 
   let eq_types = smt_union_list (map args_smttype eqneqs) in 
   
   let disj_list, disj_type_list = 
@@ -238,23 +256,20 @@ let rec string_sexp_form
                   let f1s, f1v = string_sexp_form ts f1 in 
                   let f2s, f2v = string_sexp_form ts f2 in 
                   ( "(or " ^ f1s ^ " " ^ f2s ^ ")", 
-                    SMTTypeSet.union f1v f2v ) ) form.disjuncts) in 
+                    SMTTypeSet.union f1v f2v ) ) sform.sdisjuncts) in 
   let disj_sexp = String.concat " " disj_list in 
   let disj_types = smt_union_list disj_type_list in 
   
-  let plain_list, plain_type_list = 
-     split ( map string_sexp_pred
-            ( RMSet.map_to_list form.plain 
-            (fun (s,r) -> (s, get_pargs_norecs false ts [] r)))) in 
+  let plain_list, plain_type_list = split (SMSet.map_to_list sform.splain string_sexp_pred) in 
   let plain_sexp = String.concat " " plain_list in 
 
   let plain_types = smt_union_list plain_type_list in                     
 
-  let types = smt_union_list [eq_types; disj_types; plain_types]in 
-
-  let form_sexp = "(and true " ^ eq_sexp ^ " " ^ neq_sexp ^ " " ^ 
-                                 disj_sexp ^ " " ^ plain_sexp ^ ")"  in
-  (form_sexp, types) 
+  let types = smt_union_list [eq_types; disj_types; plain_types] in 
+  
+  let sexps = String.concat "" [eq_sexp; neq_sexp; disj_sexp; plain_sexp] in 
+  if sexps = "" then ("",types)
+  else let form_sexp = "(and " ^ sexps ^ ")" in (form_sexp, types) 
 
 
 let string_sexp_decl (t : smt_type) : string = 
@@ -284,7 +299,7 @@ let smt_command
 
 
 let smt_assert (ass : string) : unit =
-  match smt_command ("(assert " ^ ass ^ " )") with 
+  match smt_command ("(assert " ^ ass ^ ")") with 
   | Success -> ()
   | _ -> raise (SMT_error "Assertion failed!")
 
@@ -330,7 +345,9 @@ let smt_reset () : unit =
 (* Check whether two args are equal under the current assumptions *)
 let smt_test_eq (context : string) (a1 : Psyntax.args) (a2 : Psyntax.args) : bool = 
   smt_push(); 
-  let eq_query = "(not (=> (and true "^context^") "^(string_sexp_eq (a1,a2))^"))" in 
+  let eq_query = if context = "" 
+                 then "(not "^(string_sexp_eq (a1,a2))^")"
+                 else "(not (=> (and "^context^") "^(string_sexp_eq (a1,a2))^"))" in 
   smt_assert eq_query; 
   let r = smt_check_unsat() in 
   smt_pop(); r 
@@ -356,18 +373,20 @@ let finish_him
     let ts_types = smt_union_list (map args_smttype (get_args_all ts)) in 
     
     (* Construct sexps and types for assumption and obligation *)
-    let asm_sexp, asm_types = string_sexp_form ts asm in 
-    let obl_sexp, obl_types = string_sexp_form ts obl in
+    let asm_sexp, asm_types = string_sexp_form ts (make_form_syntactic ts asm) in 
+    let obl_sexp, obl_types = string_sexp_form ts (make_form_syntactic ts obl) in
     
     let types = smt_union_list [ts_types; asm_types; obl_types] in 
     
     (* declare variables and predicates *)
     SMTTypeSet.iter (fun x -> ignore (smt_command (string_sexp_decl x))) types; 
 
-    (* Construct and run the query *)                    
-    let query = "(not (=> (and true " ^ asm_eq_sexp ^ " " ^ asm_neq_sexp ^ " " ^ 
-                                        asm_sexp ^ ") " ^ obl_sexp ^ "))" 
-    in smt_assert query;    
+    (* Construct and run the query *) 
+    let sexps = String.concat "" [asm_eq_sexp; asm_neq_sexp; asm_sexp] in 
+    if sexps = "" 
+    then (let query = "(not "^obl_sexp^")" in smt_assert query)
+    else (let query = "(not (=> (and " ^ sexps ^ ") " ^ obl_sexp ^ "))" 
+         in smt_assert query);
                                       
     (* check whether the forumula is unsatisfiable *)
     let r = smt_check_unsat() in 
@@ -406,17 +425,29 @@ let frame_sequent_smt (logic : Psyntax.logic) (seq : sequent) : bool =
     finish_him logic seq.ts seq.assumption seq.obligation)))
 
 
-let string_sexp_rw (a : Psyntax.args * Psyntax.args) : (string * smttypeset) = 
-  match a with a1, a2 ->  
-  let rw_types = smt_union_list [args_smttype a1; args_smttype a2] in 
+let string_sexp_rw (a : Psyntax.rewrite_rule) : (string * smttypeset) = 
+  let lhs = Arg_op(a.function_name,a.arguments) in 
+  let rhs = a.result in 
+
+  let sf = convert_to_inner a.guard.without_form in 
+  let gsexp,gtype = string_sexp_form (new_ts()) sf in 
+
+  let rw_types = smt_union_list [args_smttype lhs; args_smttype rhs] in 
   let vars, other = SMTTypeSet.partition (fun x -> match x with SMT_Var(_) -> true | _ -> false) rw_types in 
-  let sexp = 
-    if SMTTypeSet.is_empty vars then (string_sexp_eq a)
+
+  let sexp = if gsexp = "" 
+             then (string_sexp_eq (lhs,rhs))
+             else "(=> (not "^gsexp^") "^(string_sexp_eq (lhs,rhs))^")"  in 
+
+(*  let sexp = (string_sexp_eq (lhs,rhs)) in  *)
+
+  let forall_sexp = 
+    if SMTTypeSet.is_empty vars then sexp 
     else let vstr = SMTTypeSet.fold 
-                     (fun v b -> match v with SMT_Var(v) -> "("^(Vars.string_var v)^" Int) "^b | _ -> b) 
-                     rw_types "" in "(forall "^vstr^" "^(string_sexp_eq a)^")"
+                    (fun v b -> match v with SMT_Var(v) -> "("^(Vars.string_var v)^" Int) "^b | _ -> b) 
+                    rw_types "" in "(forall "^vstr^" "^sexp^")"
   in 
-  (sexp,other)
+  (forall_sexp,other)
 
 
 (* Update the congruence closure using the SMT solver *)
@@ -426,7 +457,7 @@ let ask_the_audience
     (form : formula)
     : term_structure = 
   if (not !Config.smt_run) then raise Backtrack.No_match 
-  else try 
+  else try
     smt_push(); 
 
     (* Construct equalities and ineqalities from ts *)
@@ -438,10 +469,10 @@ let ask_the_audience
     let ts_types = smt_union_list (map args_smttype (get_args_all ts)) in 
   
     (* Construct sexps and types for assumption and obligation *)
-    let form_sexp, form_types = string_sexp_form ts form in 
+    let form_sexp, form_types = string_sexp_form ts (make_form_syntactic ts form) in 
   
     (* Get sexps and types for rewrite rules *)
-    let rws = map (fun x -> string_sexp_rw (Arg_op(x.function_name,x.arguments),x.result)) logic.rw_rules in
+    let rws = map string_sexp_rw logic.rw_rules in
     let rw_sexps, rw_types = 
        fold_right (fun (x,y) (a,b) -> (x^a, (SMTTypeSet.union y b)) ) rws ("", SMTTypeSet.empty) in 
 
@@ -450,28 +481,21 @@ let ask_the_audience
   
     SMTTypeSet.iter (fun x -> ignore(smt_command (string_sexp_decl x))) types; 
 
-    (* Assert the assumption *)                    
-    let assm_query = "(and true " ^ ts_eq_sexp ^" "^ ts_neq_sexp ^" "^ form_sexp ^")"
-    in smt_assert assm_query;    
+    (* Assert the assumption *) 
+    let sexps = String.concat "" [ts_eq_sexp; ts_neq_sexp; form_sexp] in 
+    if not (sexps = "")
+    then 
+      begin
+        if Config.smt_debug() then Format.printf "[Checking for contradiction]@\n"; 
+        let assm_query = "(and "^sexps^")"
+        in smt_assert assm_query; 
+        if smt_check_unsat() then (smt_reset(); raise Assm_Contradiction)
+      end; 
 
-    (* check for a contradiction *)
-    if Config.smt_debug() then Format.printf "[Checking for contradiction]@\n"; 
-    if smt_check_unsat() then (smt_reset(); raise Assm_Contradiction);
-    
     (* check whether there are any new equalities to find; otherwise raise Backtrack.No_match *)
-
     if Config.smt_debug() then Format.printf "[Checking for new equalities]@\n"; 
     smt_push(); 
     let reps = get_args_rep ts in 
-    (*
-        let rep_sexps = String.concat " " (map (fun (x,y) -> string_sexp_eq (snd x,snd y)) 
-                                                (list_to_pairs reps) )
-    in 
-    smt_assert ( "(and "^rw_sexps^" (not (and true " ^ rep_sexps ^ " )))" ); 
-    if (smt_check_unsat()) then (smt_reset(); raise Backtrack.No_match); 
-    if Config.smt_debug() then Format.printf "[New equality present]@\n"; 
-    smt_pop(); 
-    *)
 
     (* Update the term structure using the new equalities *)  
     let req_equiv = map (map fst)
@@ -480,8 +504,8 @@ let ask_the_audience
     smt_pop();
     match filter (fun x -> length x >= 2) req_equiv with 
       [] -> raise Backtrack.No_match
-    | rs  -> if Config.smt_debug() then Format.printf "[New equality present]@\n";  
-             fold_left make_list_equal ts rs
+    | rs  -> (*if Config.smt_debug() then Format.printf "[New equality present]@\n";*)
+             fold_left (fun x y -> try make_list_equal x y with Contradiction -> raise Assm_Contradiction) ts rs
   with 
   | SMT_error r -> 
     smt_reset(); 
