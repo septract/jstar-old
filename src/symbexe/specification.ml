@@ -12,14 +12,13 @@
  ********************************************************)
 
 
-(* Support functions for simbolic execution and misc conversion facilities *)
 
+(** Support functions for simbolic execution and misc conversion facilities. *)
 
+open Jstar_std
 open Psyntax
 open Sepprover
 open Spec
-
-
 
 type ts_excep_post = inner_form ClassMap.t 
 
@@ -39,10 +38,10 @@ let combine_maps empty fold add find combine_values m1 m2 =
   fold combine_add m1 m2
 
 let disjunction_excep = 
-  combine_maps ClassMap.empty ClassMap.fold ClassMap.add ClassMap.find (Misc.curry mkOr)
+  combine_maps ClassMap.empty ClassMap.fold ClassMap.add ClassMap.find (curry mkOr)
 
 let disjunction_inv =
-  combine_maps LabelMap.empty LabelMap.fold LabelMap.add LabelMap.find (Misc.curry mkOr)
+  combine_maps LabelMap.empty LabelMap.fold LabelMap.add LabelMap.find (curry mkOr)
 
 let spec_conjunction spec1 spec2 =
   let var = Arg_var(Vars.freshe()) in

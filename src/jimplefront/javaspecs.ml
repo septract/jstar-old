@@ -408,7 +408,7 @@ module MethodMap =
     type t = method_signature
     let compare = compare
   end)
-module MethodMapH = Misc.MapHelper (MethodMap)
+module MethodMapH = Jstar_std.MapHelper (MethodMap)
 
 module MethodSet = 
   Set.Make(struct
