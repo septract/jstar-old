@@ -1,3 +1,17 @@
+(********************************************************
+   This file is part of jStar
+        src/symbexe_syntax/core.mli
+   Release
+        $Release$
+   Version
+        $Rev$
+   $Copyright$
+
+   jStar is distributed under a BSD license,  see,
+      LICENSE.txt
+ ********************************************************)
+
+
 type core_statement =
     Nop_stmt_core
   | Label_stmt_core of string

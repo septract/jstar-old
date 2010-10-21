@@ -1,15 +1,16 @@
 (********************************************************
-   This file is part of jStar 
-	src/jimplefront/translatejimple.ml
-   Release 
+   This file is part of jStar
+        src/jimplefront/translatejimple.ml
+   Release
         $Release$
-   Version 
+   Version
         $Rev$
    $Copyright$
-   
-   jStar is distributed under a BSD license,  see, 
+
+   jStar is distributed under a BSD license,  see,
       LICENSE.txt
  ********************************************************)
+
 
 
 open Psyntax
@@ -376,16 +377,13 @@ let add_static_type_info logic locals : Psyntax.logic =
 	
 
 
-(* implements a work-list fidex point algorithm *)
-(* the queue qu is a list of pairs [(node, expression option)...] the expression
-is used to deal with if statement. It is the expression of the if statement is the predecessor
-of the node is a if_stmt otherwise is None. In the beginning is always None for each node *)
-let compute_fixed_point 
+let verify_jimple_file 
     (f : Jimple_global_types.jimple_file) 
     (lo : logic) 
     (abs_rules : logic)
     (sspecs: Javaspecs.methodSpecs) 
-    (dspecs: Javaspecs.methodSpecs)  =  
+    (dspecs: Javaspecs.methodSpecs) :
+    unit =  
   curr_static_methodSpecs:=sspecs;
   curr_dynamic_methodSpecs:=dspecs;
   let cname=Methdec.get_class_name f in
@@ -416,68 +414,53 @@ let compute_fixed_point
           m.bstmts <- mb
   ) mdl;
     
-  (* pretty print the cfg's *)
+  (* generate method bodies in cfg_core format *)
   let xs = 
-          List.map (fun m ->
-                  let meth_sig_str = methdec2signature_str m in
-                  let meth_body_info =
-                          if Methdec.has_body m then
-                                  [(jimple_stmts2core m.bstmts, meth_sig_str)]
-                          else
-                                  []
-                  in
-                  let requires_info = 
-                          if Methdec.has_requires_clause m then
-                                  [(jimple_stmts2core m.req_stmts, meth_sig_str^" requires clause")]
-                          else
-                                  []
-                  in
-                  let old_clause_info = 
-                          List.map (fun o -> (jimple_stmts2core o,meth_sig_str^" old expression")) m.old_stmts_list
-                  in
-                  let ensures_info =
-                          if Methdec.has_ensures_clause m then
-                                  [(jimple_stmts2core m.ens_stmts, meth_sig_str^" ensures clause")]
-                          else
-                                  []
-                  in
-                  List.flatten [meth_body_info;requires_info;old_clause_info;ensures_info]
-          ) mdl in (* TODO HERE *)
+    List.map (fun m ->
+               let sig_str = methdec2signature_str m in
+               let body = if Methdec.has_body m then jimple_stmts2core m.bstmts else [] in
+               let requires = if Methdec.has_requires_clause m then jimple_stmts2core m.req_stmts else [] in
+               let old_clause = List.map (fun o -> jimple_stmts2core o) m.old_stmts_list in
+               let ensures = if Methdec.has_ensures_clause m then jimple_stmts2core m.ens_stmts else [] in
+                 (m, sig_str, body, requires, old_clause, ensures) )
+       mdl in
 
   (* Print core files generated from methods *)
-  List.iter (fun (x,y) -> Cfg_core.print_core !file y x) (List.flatten xs); 
+  List.iter (fun (m,sig_str,body,req,old,ens) -> 
+               begin 
+                 if Methdec.has_body m then Cfg_core.print_core (!file) sig_str body; 
+                 if Methdec.has_requires_clause m then Cfg_core.print_core (!file) (sig_str ^ ".requires") req; 
+ (*     TODO:    list.iter (Cfg_core.print_core (!file) (sig_str ^ ".old_exp")) old;  *)
+                 if Methdec.has_ensures_clause m then Cfg_core.print_core (!file) (sig_str ^ ".ensures") ens 
+               end ) xs; 
 
   (* print dot-file representation of CFG *)
-  Cfg_core.print_icfg_dotty (List.flatten xs) (!file);
+  let annotate = List.map (fun (m,s,b,r,o,e) -> 
+           let b = (b, s) in 
+           let r = (r, s^" requires clause") in 
+           let o = List.map (fun x -> (x,s^" old expression")) o in 
+           let e = (e, s^" ensures clause") in 
+             List.flatten [[b]; [r]; o; [e]]) 
+      xs in 
+  Cfg_core.print_icfg_dotty (List.flatten annotate) (!file);
 
   (* now verify each method *)
-  List.iter (fun m ->
-									let meth_sig_str = methdec2signature_str m in
+  List.iter (fun (m,sig_str,body,req,old,ens) ->
                   (* verify the body only if the method is non-abstract *)
                   if Methdec.has_body m then
-                          let spec = get_spec_for m fields cname in
-                          let body = jimple_stmts2core m.bstmts in
-			  let l = add_static_type_info lo m.locals in
-			  (*let _ = Prover.pprint_sequent_rules l in*)
-                          ignore 
-                            (Symexec.verify meth_sig_str body spec l abs_rules);
+                    let spec = get_spec_for m fields cname in
+                    let l = add_static_type_info lo m.locals in
+	            (*let _ = Prover.pprint_sequent_rules l in*)
+                    ignore (Symexec.verify sig_str body spec l abs_rules);
                   (* verify the requires clause if present *)
                   if Methdec.has_requires_clause m then
-                          let spec = get_requires_clause_spec_for m fields cname in
-                          let body = jimple_stmts2core m.req_stmts in
-		          let l = add_static_type_info lo m.req_locals in
-                          ignore 
-                            (Symexec.verify 
-                              (meth_sig_str^" requires clause") 
-                              body spec l abs_rules);
+                    let spec = get_requires_clause_spec_for m fields cname in
+	            let l = add_static_type_info lo m.req_locals in
+                    ignore (Symexec.verify (sig_str^" requires clause") req spec l abs_rules);
                   (* verify the ensures clause if present *)
-                  if Methdec.has_ensures_clause m then
-                          let spec = get_dyn_spec_for m fields cname in
-			  let l = add_static_type_info lo m.ens_locals in
-                          let frames = List.map (fun oc -> 
-                          let body = jimple_stmts2core oc in
-                          Symexec.get_frame body spec.pre l abs_rules) m.old_stmts_list in
-                          let body = jimple_stmts2core m.ens_stmts in
-                          Symexec.verify_ensures (meth_sig_str^" ensures clause") body spec.post conjoin_with_res_true frames l abs_rules
-            ) mdl
-
+                  if Methdec.has_ensures_clause m then 
+                    let spec = get_dyn_spec_for m fields cname in
+                    let l = add_static_type_info lo m.ens_locals in
+                    let frames = List.map (fun o -> Symexec.get_frame o spec.pre l abs_rules) old in
+                    ignore (Symexec.verify_ensures (sig_str^" ensures clause") ens spec.post conjoin_with_res_true frames l abs_rules)
+            ) xs

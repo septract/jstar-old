@@ -1,15 +1,16 @@
 (********************************************************
-   This file is part of jStar 
-	src/utils/debug.ml
-   Release 
+   This file is part of jStar
+        src/utils/debug.ml
+   Release
         $Release$
-   Version 
+   Version
         $Rev$
    $Copyright$
-   
-   jStar is distributed under a BSD license,  see, 
+
+   jStar is distributed under a BSD license,  see,
       LICENSE.txt
  ********************************************************)
+
 (*
  * Debug helpers. The code of jStar supports debugging in two ways. First, by
  * setting [safe] mode (possibly expensive) sanity checks are run. (There is no

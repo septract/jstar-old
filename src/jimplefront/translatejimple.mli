@@ -1,3 +1,17 @@
+(********************************************************
+   This file is part of jStar
+        src/jimplefront/translatejimple.mli
+   Release
+        $Release$
+   Version
+        $Rev$
+   $Copyright$
+
+   jStar is distributed under a BSD license,  see,
+      LICENSE.txt
+ ********************************************************)
+
+
 exception Contained
 val conjoin_with_res_true : Psyntax.pform -> Psyntax.pform
 module LocalMap :
@@ -18,7 +32,7 @@ module LocalMap :
     val equal : ('a -> 'a -> bool) -> 'a t -> 'a t -> bool
   end
 type local_map = Psyntax.args list Javaspecs.AxiomMap.t
-val compute_fixed_point :
+val verify_jimple_file :
   Jimple_global_types.jimple_file ->
   Psyntax.logic ->
   Psyntax.logic -> Javaspecs.methodSpecs -> Javaspecs.methodSpecs -> unit

@@ -1,15 +1,16 @@
 (********************************************************
-   This file is part of jStar 
-	src/symbexe/symexec.ml
-   Release 
+   This file is part of jStar
+        src/symbexe/symexec.ml
+   Release
         $Release$
-   Version 
+   Version
         $Rev$
    $Copyright$
-   
-   jStar is distributed under a BSD license,  see, 
+
+   jStar is distributed under a BSD license,  see,
       LICENSE.txt
  ********************************************************)
+
 
 open Cfg_core
 open Core
@@ -35,6 +36,8 @@ type etype = ExecE | AbsE | ContE | ExitE
 type id = int
 
 let file = ref ""
+
+let proof_succeeded = ref true
 
 let set_group,grouped = let x = ref false in (fun y -> x := y),(fun () -> !x )
 
@@ -159,7 +162,10 @@ let add_node (label : string) (ty : ntype) (cfg : cfg_node option) =
   graphn := Idmap.add cfgid (node::(try Idmap.find cfgid !graphn with Not_found -> [])) !graphn;
   node
 
-let add_error_node label = add_node label Error None
+let add_error_node label = 
+  proof_succeeded := false; 
+  add_node label Error None
+  
 let add_abs_node label cfg = add_node label Abs (Some cfg)
 let add_good_node label = add_node label Good None
 let add_node_unexplored label cfg = add_node label UnExplored (Some cfg)
@@ -297,11 +303,11 @@ let call_jsr_static (sheap,id) spec il node =
         printf "@[<2>@{<b>ERROR}: While executing node %d:@\n%a@."
             node.sid
             Pprinter_core.pp_stmt_core node.skind;
-        Printing.pp_json_node node.sid 
-            (sprintf "Error while executing %d." node.sid);
 	Sepprover.print_counter_example ();
         printf "%s(end error description)%s@." 
         System.terminal_red System.terminal_white;
+      Printing.pp_json_node node.sid 
+            (sprintf "Error while executing %d." node.sid) (Sepprover.get_counter_example());
 	[]
     | Some r -> fst r
 
@@ -332,7 +338,7 @@ let check_postcondition heaps sheap =
     printf "@{<b>ERROR@}: %s.@." et;
     Sepprover.print_counter_example ();
     printf "@{<b>(end of error)@}@.";
-    Printing.pp_json_node (match node.cfg with None -> -1 | Some x -> x.sid) et;
+    Printing.pp_json_node (match node.cfg with None -> -1 | Some x -> x.sid) et (Sepprover.get_counter_example());
     List.iter (fun heap -> 
                  let form = Sepprover.convert (fst heap) in 
 		 match form with 
@@ -492,11 +498,8 @@ and execute_core_stmt
     | End -> execs_one n [sheap]
     ))
 	
-      
-(* Implements a work-list fixed point algorithm. *)
-(* the queue qu is a list of pairs [(node, expression option)...] the expression
-is used to deal with if statement. It is the expression of the if statement is the predecessor
-of the node is a if_stmt otherwise is None. In the beginning is always None for each node *)
+
+(* TODO: a meaningful description of what this does *)      
 let verify 
     (mname : string) 
     (stmts : cfg_node list)  
@@ -508,7 +511,7 @@ let verify
   (* remove methods that are declared abstraction *)
   curr_logic:= lo;
   curr_abs_rules:=abs_rules;
- 
+  
   stmts_to_cfg stmts;
   match stmts with 
   | [] -> failwith "Internal error: Method body shouldn't be empty."
@@ -520,9 +523,13 @@ let verify
           printf "@{<b>WARNING@}: %s has an unsatisfiable precondition@." mname;
           false
       |	Some pre -> 
+          proof_succeeded := true; (* mutable state recording whether the proof failed.  *)
 	  let post = execute_core_stmt s (pre, id) in 
-	  let id_exit = add_good_node ("Exit") in 
-          List.for_all (check_postcondition [(spec.post, id_exit)]) post
+          let id_exit = add_good_node ("Exit") in 
+          let ret = List.for_all (check_postcondition [(spec.post, id_exit)]) post in 
+          pp_dotty_transition_system (); 
+          (* TODO: the way verification failure is currently handled is stupid *)
+	  if !proof_succeeded then ret else false 
 
 
 let verify_ensures 
@@ -562,7 +569,9 @@ let verify_ensures
       let id_exit = add_good_node ("Exit") in
       ignore (List.map 
 	(fun post -> 
-	  check_postcondition [(ensures_postcond,id_exit)] post) post)
+	  check_postcondition [(ensures_postcond,id_exit)] post) post);
+      pp_dotty_transition_system () 
+         
 
 
 let check_and_get_frame (heap,id) sheap =
@@ -589,7 +598,7 @@ let check_and_get_frame (heap,id) sheap =
               flush_str_formatter ());
       printf "@{<b>(end of error)@}@.";
       Printing.pp_json_node 
-        (match node.cfg with None -> -1 | Some x -> x.sid) et;
+        (match node.cfg with None -> -1 | Some x -> x.sid) et (Sepprover.get_counter_example());
       [])
 
 

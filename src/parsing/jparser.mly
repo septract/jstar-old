@@ -29,7 +29,7 @@ open Spec_def
 open Vars
 
 
-
+(* TODO(rgrig): Functions in Vars should be used instead of new*Var. *)
 let newPVar x = concretep_str x
 
 let newAnyVar x = AnyVar(0,x)
@@ -204,6 +204,7 @@ let add_invariant (label, formula) map =
 %token NOP 
 %token NOTIN
 %token NOTINCONTEXT
+%token PUREGUARD
 %token NULL 
 %token NULL_TYPE 
 %token OLD
@@ -437,7 +438,7 @@ apf_defines:
    | /*empty*/ { [] }
 
 eq_as: 
-   | EQUALS { (* Deprecated *)}
+   | EQUALS { (* Deprecated *)} /* TODO(rgrig): Warn? */
    | AS {}
 
 apf_define:
@@ -670,7 +671,7 @@ method_body:
 ;
 source_pos_tag:
    | SOURCE_POS_TAG COLON identifier COLON integer_constant identifier COLON integer_constant identifier COLON integer_constant identifier COLON integer_constant identifier COLON full_identifier SOURCE_POS_TAG_CLOSE 
-   { {begin_line=$5; begin_column=$8; end_line=$11; end_column=$14} }
+   { {begin_line=$5; begin_column=$11; end_line=$8; end_column=$14} }
 ; 
 source_pos_tag_option:
    | /* empty */ { None }
@@ -1101,6 +1102,7 @@ varterm:
 clause: 
    | varterm NOTINCONTEXT { NotInContext($1) }
    | varterm NOTIN jargument { NotInTerm($1,$3) }
+   | formula PUREGUARD{ PureGuard($1) }   /* TODO: check that the formula here is really pure */ 
 
 clause_list:
    | clause  { [$1] }

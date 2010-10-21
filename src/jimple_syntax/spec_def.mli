@@ -1,3 +1,17 @@
+(********************************************************
+   This file is part of jStar
+        src/jimple_syntax/spec_def.mli
+   Release
+        $Release$
+   Version
+        $Rev$
+   $Copyright$
+
+   jStar is distributed under a BSD license,  see,
+      LICENSE.txt
+ ********************************************************)
+
+
 type methodspec =
     Dynamic of Jparsetree.method_signature_short * Spec.spec list *
       Printing.source_location option

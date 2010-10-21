@@ -1,15 +1,16 @@
 (********************************************************
-   This file is part of jStar 
-	src/proverfront/run.ml
-   Release 
+   This file is part of jStar
+        src/proverfront/run.ml
+   Release
         $Release$
-   Version 
+   Version
         $Rev$
    $Copyright$
-   
-   jStar is distributed under a BSD license,  see, 
+
+   jStar is distributed under a BSD license,  see,
       LICENSE.txt
  ********************************************************)
+
 open Congruence
 open Debug
 open Format
@@ -18,20 +19,12 @@ open Psyntax
 
 let _ = CC.test ()
 
-let program_file_name = ref ""
-let logic_file_name = ref ""
- 
-let set_file_name n = 
-  program_file_name := n 
-
-let set_logic_file_name n = 
-  logic_file_name := n 
+let program_file_name = ref "";;
+let logic_file_name = ref "";;
 
 let arg_list = Config.args_default @ 
-  [ ("-f", Arg.String(set_file_name ), "program file name");
-    ("-l", Arg.String(set_logic_file_name ), "logic file name"); 
-  ]
-
+  [ ("-f", Arg.Set_string(program_file_name), "program file name");
+    ("-l", Arg.Set_string(logic_file_name), "logic file name"); ]
 
 
 let main () =
@@ -43,6 +36,8 @@ let main () =
   else if !logic_file_name="" then
     printf "Logic file name not specified. Can't continue....\n %s \n" usage_msg
   else 
+    if !Config.smt_run then Smt.smt_init(); 
+
     let l1,l2,cn = (load_logic (System.getenv_dirlist "JSTAR_LOGIC_LIBRARY") !logic_file_name) in 
     let logic = {empty_logic with seq_rules = l1; rw_rules=l2; consdecl = cn} in
 (*    let s = System.string_of_file !program_file_name  in*)
@@ -63,6 +58,7 @@ let main () =
 	printf "Find frame for\n %a\n ===> \n %a\n" Psyntax.string_form heap1   Psyntax.string_form heap2;
 	let x = Sepprover.frame_opt logic 
 	    (Sepprover.convert heap1) heap2 in 
+
 	(match x with None -> printf "Can't find frame!" | Some x -> List.iter (fun form -> printf "Frame:\n %a\n" Sepprover.string_inner_form  form) x);
 	printf "\n";
 	if log log_prove then (

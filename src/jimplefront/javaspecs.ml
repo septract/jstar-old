@@ -1,15 +1,16 @@
 (********************************************************
-   This file is part of jStar 
-	src/jimplefront/javaspecs.ml
-   Release 
+   This file is part of jStar
+        src/jimplefront/javaspecs.ml
+   Release
         $Release$
-   Version 
+   Version
         $Rev$
    $Copyright$
-   
-   jStar is distributed under a BSD license,  see, 
+
+   jStar is distributed under a BSD license,  see,
       LICENSE.txt
  ********************************************************)
+
 
 
 (* Support functions for symbolic execution and misc conversion facilities *)
@@ -407,7 +408,7 @@ module MethodMap =
     type t = method_signature
     let compare = compare
   end)
-module MethodMapH = Misc.MapHelper (MethodMap)
+module MethodMapH = Jstar_std.MapHelper (MethodMap)
 
 module MethodSet = 
   Set.Make(struct

@@ -1,15 +1,16 @@
 (********************************************************
-   This file is part of jStar 
-	src/parsing/jlexer.mll
-   Release 
+   This file is part of jStar
+        src/parsing/jlexer.mll
+   Release
         $Release$
-   Version 
+   Version
         $Rev$
    $Copyright$
-   
-   jStar is distributed under a BSD license,  see, 
+
+   jStar is distributed under a BSD license,  see,
       LICENSE.txt
  ********************************************************)
+
 
 
 { (* ddino implementation of a lexer for jimple *)
@@ -113,6 +114,7 @@ let kwd_or_else =
     "nop", NOP;
     "notin", NOTIN;
     "notincontext", NOTINCONTEXT;
+    "pureguard", PUREGUARD;
     "null", NULL;
     "null_type", NULL_TYPE;
     "old", OLD;
@@ -299,7 +301,8 @@ rule token = parse
 
   | float_constant   { FLOAT_CONSTANT(float_of_string(Lexing.lexeme lexbuf))}
 
-  | '"' (string_char* as s) '"' { kwd_or_else (STRING_CONSTANT s) s }
+  (* FIXME: What is the right lexing of string constants? *)
+  | '"' (string_char* as s) '"' { STRING_CONSTANT s }
   | _ { failwith (error_message (Illegal_character ((Lexing.lexeme lexbuf).[0])) lexbuf)}
 and comment = parse 
   | "/*"  { nest lexbuf; comment lexbuf }

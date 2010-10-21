@@ -1,20 +1,20 @@
 (********************************************************
-   This file is part of jStar 
-	src/prover/cterm.ml
-   Release 
+   This file is part of jStar
+        src/prover/cterm.ml
+   Release
         $Release$
-   Version 
+   Version
         $Rev$
    $Copyright$
-   
-   jStar is distributed under a BSD license,  see, 
+
+   jStar is distributed under a BSD license,  see,
       LICENSE.txt
  ********************************************************)
+
 open Congruence
 open Printing
 open Psyntax
 open Vars
-
 
 type term_handle = CC.constant
 
@@ -82,6 +82,7 @@ let new_ts () =
   tuple = c3;
 } 
 let local_debug = false
+
 let has_pp_c ts c : bool =
   try
     match CMap.find c ts.originals with 
@@ -99,16 +100,18 @@ let has_pp_c ts c : bool =
       -> true
   with Not_found ->
     false 
+
 (* Remove pattern match variables from pretty print where possible *)
 let rec get_pargs norm ts rs rep : Psyntax.args =
   if List.mem rep rs then 
     if rep <> CC.normalise ts.cc rep then 
       (* TODO: Add topological sorting to avoid printing this if possible.
          If not possible should introduce a new variable. *)
-      Arg_op ("CYCLE", [])
+     (let cname = Printf.sprintf "CYCLE%i" (CC.const_int rep ts.cc) in 
+      Arg_op (cname, []))
     else get_pargs norm ts rs (CC.normalise ts.cc rep)
   else 
-  try 
+  try  
     let fpt = CMap.find (if norm then (CC.normalise ts.cc rep) else rep) ts.originals in 
     match fpt with 
       FArg_var v ->
@@ -136,7 +139,47 @@ let rec get_pargs norm ts rs rep : Psyntax.args =
 	       n, get_pargs true ts (rep::rs) r) 
 	     fld) in 
 	a	  
-  with Not_found -> Arg_op ("NOT_FOUND", [])
+  with Not_found -> Arg_op ("NOT_FOUND", []) 
+
+
+(* A version of get_pargs which hides records, for use in SMT *)
+(* TODO: factor out both get_pargs into a single function *)
+let rec get_pargs_norecs norm ts rs rep : Psyntax.args =
+  if List.mem rep rs then 
+    if rep <> CC.normalise ts.cc rep then 
+      (* TODO: Add topological sorting to avoid printing this if possible.
+         If not possible should introduce a new variable. *)
+     (let cname = Printf.sprintf "CYCLE%i" (CC.const_int rep ts.cc) in 
+      Arg_op (cname, []))
+    else get_pargs_norecs norm ts rs (CC.normalise ts.cc rep)
+  else 
+  try  
+    let fpt = CMap.find (if norm then (CC.normalise ts.cc rep) else rep) ts.originals in 
+    match fpt with 
+      FArg_var v ->
+	begin 
+	  match v with 
+	    EVar _ -> Arg_var v
+	  | PVar _ -> Arg_var v
+	  | AnyVar _ -> 
+	      let nrep = if local_debug then rep else (CC.normalise ts.cc rep) in 
+	      if nrep <> rep then 
+		get_pargs_norecs norm ts (rep::rs) (CC.normalise ts.cc rep) 
+	      else
+		Arg_var v
+	end
+    | FArg_op (n,ops) -> 
+	Arg_op(n, List.map (get_pargs_norecs true ts (rep::rs)) ops)
+    | FArg_cons (n,ops) ->
+	Arg_cons (n, List.map (get_pargs_norecs true ts (rep::rs)) ops)
+    | FArg_string s ->
+	Arg_string s
+    | FArg_record fld ->
+        (let rname = Printf.sprintf "RECORD%i" (CC.const_int rep ts.cc) in 
+         Arg_op (rname, []))
+  with Not_found -> Arg_op ("NOT_FOUND", []) 
+
+
 
 let pp_c norm ts ppf c : unit =
   try 
@@ -291,9 +334,30 @@ let params_term fresh =
      {ts with originals = CMap.add c (FArg_op(fn,cl)) ts.originals}),
    (fun c rl ts -> {ts with originals = CMap.add c (FArg_record(rl)) ts.originals}))
 
+let params_pattern_to_term = 
+  (true,
+   true,
+   (fun x-> x), 
+   (fun cc x y -> CC.add_app cc x y),
+   (fun c (fn,cl) ts -> 
+     if CMap.mem c ts.originals then ts else 
+     {ts with originals = CMap.add c (FArg_op(fn,cl)) ts.originals}),
+   (fun c rl ts -> {ts with originals = CMap.add c (FArg_record(rl)) ts.originals}))
+
 let add_pattern term ts = 
   (* Add new term *)
   let c,ts = add_term params_pattern term ts in 
+  c,ts
+  
+(*
+let ground_pattern (pattern : args) (ts : term_structure) : term_handle * term_structure = 
+  let c,ts = add_term params_pattern_to_term pattern ts in 
+  c, ts
+*)
+
+let ground_pattern_tuple (ptl : args list) (ts : term_structure) : term_handle * term_structure = 
+  let c,ts,cl = add_term_list (params_pattern_to_term) ptl (ts.tuple,ts) [] in 
+  let ts = {ts with originals = CMap.add c (FArg_op("tuple",List.rev cl)) ts.originals} in
   c,ts
 
 let add_term fresh term ts = 
@@ -349,6 +413,15 @@ let make_not_equal_t fresh ts t1 t2 =
   make_not_equal ts c1 c2
 
 
+let make_list_equal 
+    (ts : term_structure)
+    (xs : term_handle list) 
+    : term_structure =
+  match xs with 
+  | x::xs -> List.fold_left (fun ts' y -> make_equal ts' x y) ts xs
+  | _ -> ts 
+  
+
 let compress ts =
   (* TODO: This does not correctly update the originals, some will be
      lost by overwriting.  Should refactor to make the originals a
@@ -395,6 +468,32 @@ let get_neqs ts : (Psyntax.args * Psyntax.args ) list =
   let mask = has_pp_c ts in 
   let map = fun c -> get_pargs false ts [] c in 
   CC.get_neqs mask map ts.cc 
+
+
+
+(* Versions of get_eqs and get_neqs that hide records *)  
+let get_eqs_norecs ts : (Psyntax.args * Psyntax.args ) list = 
+  let mask = has_pp_c ts in 
+  let map = fun c -> get_pargs_norecs false ts [] c in 
+  CC.get_eqs mask map ts.cc 
+
+let get_neqs_norecs ts : (Psyntax.args * Psyntax.args ) list = 
+  let mask = has_pp_c ts in 
+  let map = fun c -> get_pargs_norecs false ts [] c in 
+  CC.get_neqs mask map ts.cc 
+  
+  
+let get_args_rep
+    (ts : term_structure) 
+    : (term_handle * Psyntax.args) list = 
+  let mask = has_pp_c ts in 
+  let map = fun c -> (c, get_pargs_norecs false ts [] c) in 
+  CC.get_reps mask map ts.cc
+
+let get_args_all
+    (ts : term_structure) 
+    : Psyntax.args list = 
+  List.map (get_pargs_norecs false ts []) (CC.get_consts ts.cc)
 
 let get_term ts r : Psyntax.args = 
   get_pargs true ts [] r

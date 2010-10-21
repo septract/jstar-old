@@ -1,15 +1,17 @@
 (********************************************************
-   This file is part of jStar 
-	src/utils/multiset.mli
-   Release 
+   This file is part of jStar
+        src/utils/multiset.mli
+   Release
         $Release$
-   Version 
+   Version
         $Rev$
    $Copyright$
-   
-   jStar is distributed under a BSD license,  see, 
+
+   jStar is distributed under a BSD license,  see,
       LICENSE.txt
  ********************************************************)
+
+
 (* Multiset that allows for iteration through the elements *)
 
 module MultisetImpl (A : Map.OrderedType) :

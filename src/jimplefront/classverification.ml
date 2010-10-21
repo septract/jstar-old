@@ -1,6 +1,6 @@
 (********************************************************
    This file is part of jStar
-	src/jimplefront/classverification.ml
+        src/jimplefront/classverification.ml
    Release
         $Release$
    Version
@@ -10,6 +10,7 @@
    jStar is distributed under a BSD license,  see,
       LICENSE.txt
  ********************************************************)
+
 
 open Debug
 open Format
@@ -103,7 +104,7 @@ let verify_methods
   let static_specs = keep_cn static_method_specs in
 
   (* Body verification - call symbolic execution for all methods in the jimple file *)
-  Translatejimple.compute_fixed_point
+  Translatejimple.verify_jimple_file
       jimple_file
       logic
       abslogic
@@ -123,10 +124,10 @@ let verify_methods
         (let et =
           sprintf "Dynamic and static specs of %s disagree."
             (Pprinter.name2str mname) in
-        printf "@{<b>WARNING@}: %s@." et; pp_json_location_opt dsp et) in
-    try MethodMap.iter pss static_specs
-    with Not_found ->
-      failwith "Internal error: Couldn't get dynamic specs for some method.";
+        printf "@{<b>WARNING@}: %s@." et; pp_json_location_opt dsp et "") in
+    (try MethodMap.iter pss static_specs
+    with Not_found -> 
+       failwith "Internal error: Couldn't get dynamic specs for some method.");
 
   (* Behavioural subtyping of non-constructor methods *)
   let dynamic_specs =
@@ -148,7 +149,7 @@ let verify_methods
           let et = sprintf "%s#%s not <: %s#%s"
             (Pprinter.class_name2str class_name) (Pprinter.name2str mn)
             (Pprinter.class_name2str p) (Pprinter.name2str mn) in
-          (printf "@{<b>WARNING@}: %s@." et; pp_json_location_opt dsp' et)
+          (printf "@{<b>WARNING@}: %s@." et; pp_json_location_opt dsp' et "")
       with Not_found -> () (* TODO(rgrig): Really ignore this? *) in
     List.iter pp parents in
   MethodMap.iter pds dynamic_specs;
@@ -191,6 +192,6 @@ let verify_methods
             if refinement logic ancestor_static_spec static_spec then
               printf "@{<g> OK@}"
             else
-              (printf "@{<b>NOK@}"; pp_json_location_opt static_pos et);
+              (printf "@{<b>NOK@}"; pp_json_location_opt static_pos et "");
             printf "%s@." et))
       sss

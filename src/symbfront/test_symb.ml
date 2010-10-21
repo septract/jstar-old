@@ -1,15 +1,16 @@
 (********************************************************
-   This file is part of jStar 
-	src/symbfront/symbfront.ml
-   Release 
+   This file is part of jStar
+        src/symbfront/test_symb.ml
+   Release
         $Release$
-   Version 
+   Version
         $Rev$
    $Copyright$
-   
-   jStar is distributed under a BSD license,  see, 
+
+   jStar is distributed under a BSD license,  see,
       LICENSE.txt
  ********************************************************)
+
 
 (* This file is a front end to the symbolic execution *)
 
@@ -24,12 +25,16 @@ let question_file_name = ref "";;
 let logic_file_name = ref "";;
 let absrules_file_name = ref "";;
 
+let set_question_file_name fn =
+  question_file_name := fn;
+  Symexec.file := Filename.basename fn
+
 let proof_succes = ref true;; 
 
 let arg_list = Config.args_default @ 
-  [ ("-f", Arg.Set_string(question_file_name ), "question file name" );
-  ("-l", Arg.Set_string(logic_file_name ), "logic file name" );
-  ("-a", Arg.Set_string(absrules_file_name ), "abstraction rules file name" );
+  [ ("-f", Arg.String set_question_file_name, "question file name" );
+  ("-l", Arg.Set_string logic_file_name, "logic file name" );
+  ("-a", Arg.Set_string absrules_file_name, "abstraction rules file name" );
 ]
 
 
@@ -44,6 +49,7 @@ let main () : unit =
   else if !absrules_file_name="" then
     printf "Abstraction rules file name not specified. Can't continue....\n %s \n" usage_msg
   else
+    if !Config.smt_run then Smt.smt_init(); 
 
     let l1,l2,cn = (load_logic (System.getenv_dirlist "JSTAR_LOGIC_LIBRARY") !logic_file_name) in 
     let lo = {empty_logic with seq_rules = l1; rw_rules = l2; consdecl = cn} in

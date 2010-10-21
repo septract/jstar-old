@@ -1,3 +1,17 @@
+(********************************************************
+   This file is part of jStar
+        src/symbexe_syntax/cfg_core.mli
+   Release
+        $Release$
+   Version
+        $Rev$
+   $Copyright$
+
+   jStar is distributed under a BSD license,  see,
+      LICENSE.txt
+ ********************************************************)
+
+
 type cfg_node = {
   skind : Core.core_statement;
   sid : int;

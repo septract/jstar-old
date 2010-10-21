@@ -1,15 +1,16 @@
 (********************************************************
-   This file is part of jStar 
-	src/proverfront/test.ml
-   Release 
+   This file is part of jStar
+        src/proverfront/test.ml
+   Release
         $Release$
-   Version 
+   Version
         $Rev$
    $Copyright$
-   
-   jStar is distributed under a BSD license,  see, 
+
+   jStar is distributed under a BSD license,  see,
       LICENSE.txt
  ********************************************************)
+
 
 (* TODO(rgrig): Factor the common parts of test.ml and run.ml. *)
 
@@ -22,23 +23,10 @@ let program_file_name = ref ""
 let logic_file_name = ref ""
 let inductive_file_name = ref ""
  
-let set_file_name n = 
-  program_file_name := n 
-
-let set_logic_file_name n = 
-  logic_file_name := n 
-
-let set_inductive_file_name n = 
-  inductive_file_name := n 
-
 let arg_list = Config.args_default @ 
-  [ ("-f", Arg.String(set_file_name ), "program file name" );
-    ("-l", Arg.String(set_logic_file_name ), "logic file name" ); 
-    ("-i", Arg.String(set_inductive_file_name ), "inductive file name" );
-  ] 
-
-
-
+  [ ("-f", Arg.Set_string(program_file_name), "program file name" );
+    ("-l", Arg.Set_string(logic_file_name), "logic file name" ); 
+    ("-i", Arg.Set_string(inductive_file_name), "inductive file name" ); ]
 
 
 
@@ -51,6 +39,7 @@ let main () =
   else if !logic_file_name="" then
     printf "Logic file name not specified. Can't continue....@\n %s @\n" usage_msg
   else 
+    if !Config.smt_run then Smt.smt_init();
     let rl = if !inductive_file_name <> "" then Inductive.convert_inductive_file !inductive_file_name else [] in
     let l1,l2,cn = load_logic_extra_rules (System.getenv_dirlist "JSTAR_LOGIC_LIBRARY") !logic_file_name rl in
     let logic = {empty_logic with seq_rules = l1; rw_rules=l2; consdecl = cn;} in

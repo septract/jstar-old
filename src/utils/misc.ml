@@ -1,15 +1,16 @@
 (********************************************************
-   This file is part of jStar 
-	src/utils/misc.ml
-   Release 
+   This file is part of jStar
+        src/utils/misc.ml
+   Release
         $Release$
-   Version 
+   Version
         $Rev$
    $Copyright$
-   
-   jStar is distributed under a BSD license,  see, 
+
+   jStar is distributed under a BSD license,  see,
       LICENSE.txt
  ********************************************************)
+
 open Backtrack 
 
 let map_option f l
@@ -61,14 +62,20 @@ let remove_duplicates c l =
 	) ((fun _ -> -1),[]) l
     )
 
+
+(* TODO(rgrig): Isn't intcmp x y = compare y x? *)
 let intcmp a b =
   if a<b then -1 else if a=b then 0 else 1
 
+(* TODO(rgrig): Isn't intcmp2 x y = compare y x? *)
 let intcmp2 (x1,x2) (y1,y2) =
   let v = intcmp x1 y1 in 
   if v = 0 then intcmp x2 y2 
   else v
 
+let rec map_and_find f = function
+  | [] -> raise Not_found
+  | x :: xs -> try f x with _ -> map_and_find f xs
 
 let rec find_no_match_simp f l =
   let rec fnm_inner f l =
@@ -87,30 +94,17 @@ let lift_option f =
     Some x -> f x
   | None -> None
 
-(* Similar to the one in Haskell. *)
-let curry f a b = f (a, b)
-    
 let rec add_index 
     ( xs : 'a list ) 
     ( i : int ) : ('a * int) list = 
   match xs with  | []     ->  [] 
                  | y::ys  ->  ( (y,i) :: (add_index ys (i+1)) ) 
 
-(* TODO(rgrig): This module should go away when we move to ocaml 3.12.
- *
- * A few helpers for dealing with maps. This is a workaround for the lack of
- * some functions in the standard Map.S module. Whenever you define a map
- * [module M = Map.Make (...)] you can also define [module MH = MapHelper (M)].
- * Normal functions like [M.fold] are used as before, but you can also say
- * things like [MH.filter].
- *
- * If you tend o repeat yourself when dealing with Maps, then please consider
- * adding a function here.
- *)
-module MapHelper = functor (M : Map.S) -> struct
-  (* The running time is O(m+n lg n), where m is the size of map and n the size
-   * of the result. It is possible in principle to achieve O(m), but the Map.S
-   * interface makes it hard/impossible. *)
-  let filter (p : M.key -> 'a -> bool) (map : 'a M.t) : 'a M.t =
-    M.fold (fun k v a -> if p k v then M.add k v a else a) map M.empty
-end
+let memo2 f =
+  let cache = Hashtbl.create 101 in
+  fun x y ->
+    try Hashtbl.find cache (x, y)
+    with Not_found ->
+      let r = f x y in
+      (Hashtbl.add cache (x, y) r; r)
+

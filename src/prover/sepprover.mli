@@ -1,15 +1,17 @@
 (********************************************************
-   This file is part of jStar 
-	src/prover/sepprover.mli
-   Release 
+   This file is part of jStar
+        src/prover/sepprover.mli
+   Release
         $Release$
-   Version 
+   Version
         $Rev$
    $Copyright$
-   
-   jStar is distributed under a BSD license,  see, 
+
+   jStar is distributed under a BSD license,  see,
       LICENSE.txt
  ********************************************************)
+
+
 open Psyntax
 
 type inner_form
@@ -38,4 +40,5 @@ val pprint_proof : Format.formatter -> unit
 val pprint_counter_example : Format.formatter -> unit -> unit 
 val print_counter_example : unit -> unit 
 val string_of_proof : unit -> string 
+val get_counter_example : unit -> string
 val implies_list : inner_form list -> form -> bool 

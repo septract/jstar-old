@@ -1,15 +1,16 @@
 (********************************************************
-   This file is part of jStar 
-	src/utils/printing.ml
-   Release 
+   This file is part of jStar
+        src/utils/printing.ml
+   Release
         $Release$
-   Version 
+   Version
         $Rev$
    $Copyright$
-   
-   jStar is distributed under a BSD license,  see, 
+
+   jStar is distributed under a BSD license,  see,
       LICENSE.txt
-********************************************************)
+ ********************************************************)
+
 
 open Format
 
@@ -48,15 +49,15 @@ let add_location i = function
 let find_location i =
   try Hashtbl.find locations i with Not_found -> unknown_location
 
-(* TODO(rgrig): This prints invalid json for many [t]s. Fix. *)
-let pp_json_location l t =
-  printf "@[@[<2>json {@\n@[<2>\"error_pos\": {";
-  List.iter (fun (k, v) -> printf "@\n\"%s\": \"%d\"," k v) [
+let pp_json_location l t c =
+  if Config.eclipse_mode() then (
+  printf "@\njson {\"error_pos\": {";
+  List.iter (fun (k, v) -> printf "\"%s\": \"%d\"," k v) [
     ("sline", l.begin_line);
     ("eline", l.end_line);
     ("spos", l.begin_column);
     ("epos", l.end_column)];
-  printf "@]@\n},\"error_text\": \"%s\"@]@\n}@." t
+  printf "},\"error_text\": \"%s\",\"counter_example\": \"%s\"}@\n" (String.escaped t) (String.escaped c))
 
 let pp_json_location_opt = function
   | None -> pp_json_location unknown_location

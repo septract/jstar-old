@@ -1,6 +1,6 @@
 (********************************************************
    This file is part of jStar
-	src/prover/clogic.ml
+        src/prover/clogic.ml
    Release
         $Release$
    Version
@@ -10,6 +10,7 @@
    jStar is distributed under a BSD license,  see,
       LICENSE.txt
  ********************************************************)
+
 open Backtrack
 open Congruence
 open Cterm
@@ -21,6 +22,7 @@ open Psyntax
 
 exception Success
 exception Failed
+exception Assm_Contradiction
 
 module RMSet = MultisetImpl(
   struct
@@ -131,7 +133,7 @@ let pp_ts_formula = pp_whole pp_ts_formula' pp_star
 (* }}} *)
 (* pretty printing }}} *)
 
-let conjunction form1 form2 : formula=
+let conjunction form1 form2 : formula =
   {
   spat = RMSet.union form1.spat form2.spat;
   plain = RMSet.union form1.plain form2.plain;
@@ -300,18 +302,6 @@ let rec normalise ts form : formula * term_structure =
 (*  printf "Normalised formula : %a @\n" pp_ts_form  {ts=ts;form=form};*)
   form,ts
 
-let rec out_normalise ts form =
-  let form,ts = normalise ts form in
-  if form.eqs <> [] || form.neqs <> [] then
-    begin
-      let ts = add_eqs_list form.eqs ts in
-      let ts = add_neqs_list form.neqs ts in
-      let form,ts = out_normalise ts {form with eqs = []; neqs = []} in
-      form,ts
-    end
-  else
-    form,ts
-
 
 
 
@@ -349,6 +339,8 @@ let smset_to_list fresh a ts =
     else
       rs, ts
   in inner a [] ts
+  
+
 let rec add_pair_list fresh xs ts rs =
   match xs with
     [] -> rs,ts
@@ -356,15 +348,17 @@ let rec add_pair_list fresh xs ts rs =
       let c1,ts = add_term fresh a ts in
       let c2,ts = add_term fresh b ts in
       add_pair_list fresh xs ts ((c1,c2)::rs)
-(* Will convert eqs into ts for or which is wrong. *)
-let rec convert fresh (ts :term_structure) (sf : syntactic_form) : formula * term_structure =
+      
+      
+(* TODO: Will convert eqs into ts for or which is wrong. *)
+let rec convert_sf fresh (ts :term_structure) (sf : syntactic_form) : formula * term_structure =
   let spat, ts = smset_to_list fresh sf.sspat ts in
   let plain, ts = smset_to_list fresh sf.splain ts in
   let disj, ts  = convert_sf_pair_list fresh ts sf.sdisjuncts [] in
   let ts = add_eqs_t_list fresh sf.seqs ts in
   let ts = add_neqs_t_list fresh sf.sneqs ts in
   {spat = RMSet.lift_list spat; plain = RMSet.lift_list plain; disjuncts = disj;eqs=[];neqs=[]}, ts
-and convert_without_eqs
+and convert_sf_without_eqs
  fresh (ts :term_structure) (sf : syntactic_form) : formula * term_structure =
   let spat, ts = smset_to_list fresh sf.sspat ts in
   let plain, ts = smset_to_list fresh sf.splain ts in
@@ -373,7 +367,6 @@ and convert_without_eqs
   let neqs,ts = add_pair_list fresh sf.sneqs ts [] in
   {spat = RMSet.lift_list spat; plain = RMSet.lift_list plain; disjuncts = disj;
   eqs=eqs;neqs=neqs}, ts
-
 and convert_sf_pair_list
     fresh (ts :term_structure)
     (sf : (syntactic_form * syntactic_form) list)
@@ -382,12 +375,37 @@ and convert_sf_pair_list
   match sf with
     [] -> rs,ts
   | (x,y)::sf ->
-      let x,ts = convert_without_eqs fresh ts x in
-      let y,ts = convert_without_eqs fresh ts y in
+      let x,ts = convert_sf_without_eqs fresh ts x in
+      let y,ts = convert_sf_without_eqs fresh ts y in
       convert_sf_pair_list fresh ts sf ((x,y)::rs)
 
+
+
+(* convert to a formula with all pattern variables converted to ground *)
+let smset_to_list_ground a ts =
+  let a = SMSet.restart a in
+  let rec inner a rs ts =
+    if SMSet.has_more a then
+      let (n,tl),a = SMSet.remove a in
+      let c,ts = ground_pattern_tuple tl ts in
+      inner a ((n,c)::rs) ts
+    else
+      rs, ts
+  in inner a [] ts
+
+let rec convert_ground (ts :term_structure) (sf : syntactic_form) : formula * term_structure =
+  assert (sf.sdisjuncts = []);  (* don't want disjuncts in an SMT pattern *)
+  assert (sf.sspat = SMSet.empty); 
+  let plain, ts = smset_to_list_ground sf.splain ts in
+  assert (sf.seqs = []); (* TODO: handle this properly *)
+  assert (sf.sneqs = []); 
+  {spat = RMSet.empty; plain = RMSet.lift_list plain; disjuncts = []; eqs=[]; neqs=[]}, ts
+
+
+
+
 let conjoin fresh (f : ts_formula) (sf : syntactic_form) =
-  let nf,ts = convert fresh f.ts sf in
+  let nf,ts = convert_sf fresh f.ts sf in
   let nf = conjunction nf f.form in
   {ts = ts; form = nf; cache_sform = ref None}
 
@@ -396,7 +414,7 @@ let conjoin fresh (f : ts_formula) (sf : syntactic_form) =
 
 
 let match_and_remove
-      remove (* should match terms be removed? - true removes them, false leaves them*)
+      remove (* should match terms be removed - true removes them, false leaves them *)
       ts
       term (*formula to match in *)
       pattern (*pattern to match *)
@@ -693,20 +711,8 @@ and match_disjunct remove ts form pat_disj cont =
       with No_match ->
 	match_form remove ts form y (fun (ts,form) -> match_disjunct remove ts form pat_disj cont)
 
-let contains ts form pat : bool  =
-  try
-    match_form true ts form pat (fun (ts2,_) -> if Cterm.ts_eq ts ts2 (*This checks that no unification has occured in the contains*) then true else  raise Backtrack.No_match)
-  with No_match ->
-    false
 
 
-let rec form_reps form reps =
-  let reps = (RMSet.map_to_list form.spat snd) @ reps in
-  let reps = (RMSet.map_to_list form.plain snd)  @ reps in
-  let reps = List.fold_left (fun acc (a,b) -> a::b::acc) reps form.eqs in
-  let reps = List.fold_left (fun acc (a,b) -> a::b::acc) reps form.neqs in
-  let reps = List.fold_left (fun acc (a,b) -> form_reps a (form_reps b acc)) reps form.disjuncts in
-  reps
 
 let rec sequent_reps sequent reps =
   let reps = (RMSet.map_to_list sequent.matched snd) @ reps in
@@ -901,7 +907,7 @@ let apply_or_right seq : sequent list list =
 
 
 let get_frame seq =
-  assert (frame_sequent seq);
+  (*assert (frame_sequent seq);*) (* TODO: assertion broken by SMT, pick another *)
   mk_ts_form seq.ts seq.assumption
 
 let rec get_frames seqs frms =
@@ -947,11 +953,11 @@ let get_antiframes seqs =
 let convert_with_eqs fresh pform =
   let sf = convert_to_inner pform in
   let ts = new_ts () in
-  let ts,form = convert fresh ts sf in
+  let ts,form = convert_sf fresh ts sf in
   mk_ts_form form ts
 
 let convert fresh ts pform =
-  convert_without_eqs fresh  ts (convert_to_inner pform)
+  convert_sf_without_eqs fresh  ts (convert_to_inner pform)
 
 let make_implies (heap : ts_formula) (pheap : pform) : sequent =
   let ts,form = break_ts_form heap in
@@ -964,8 +970,8 @@ let make_implies (heap : ts_formula) (pheap : pform) : sequent =
 
 let make_syntactic ts_form =
   let ts,form = break_ts_form ts_form in
-  let eqs = get_eqs ts in
-  let neqs = get_neqs ts in
+  let eqs = Cterm.get_eqs ts in
+  let neqs = Cterm.get_neqs ts in
 
   let rec form_to_syntax form =
     let convert_tuple r =
@@ -997,7 +1003,7 @@ let make_implies_inner ts_form1 ts_form2 =
       Some sform -> sform
     | None -> make_syntactic ts_form2 in
   ts_form2.cache_sform := Some sform;
-  let rform,ts =  convert_without_eqs false ts sform in
+  let rform,ts =  convert_sf_without_eqs false ts sform in
   {ts = ts;
     assumption = form;
     obligation = rform;

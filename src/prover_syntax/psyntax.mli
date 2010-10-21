@@ -1,3 +1,17 @@
+(********************************************************
+   This file is part of jStar
+        src/prover_syntax/psyntax.mli
+   Release
+        $Release$
+   Version
+        $Rev$
+   $Copyright$
+
+   jStar is distributed under a BSD license,  see,
+      LICENSE.txt
+ ********************************************************)
+
+
 exception Contradiction
 type args =
     Arg_var of Vars.var
@@ -101,7 +115,10 @@ val subst_pform : varmap -> pform -> pform
 type psequent = pform * pform * pform * pform
 val purify : pform_at list -> pform_at list
 type varterm = Var of varset
-type where = NotInContext of varterm | NotInTerm of varterm * args
+type where = 
+  | NotInContext of varterm 
+  | NotInTerm of varterm * args
+  | PureGuard of pform 
 type sequent_rule =
     psequent * psequent list list * string * (pform * pform) * where list
 val pp_sequent_rule : Format.formatter -> sequent_rule -> unit

@@ -1,3 +1,17 @@
+(********************************************************
+   This file is part of jStar
+        src/utils/persistentarray.mli
+   Release
+        $Release$
+   Version
+        $Rev$
+   $Copyright$
+
+   jStar is distributed under a BSD license,  see,
+      LICENSE.txt
+ ********************************************************)
+
+
 module type GrowablePersistentArray =
   sig
     type 'a t

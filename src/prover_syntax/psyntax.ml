@@ -1,15 +1,16 @@
 (********************************************************
-   This file is part of jStar 
-	src/prover_syntax/psyntax.ml
-   Release 
+   This file is part of jStar
+        src/prover_syntax/psyntax.ml
+   Release
         $Release$
-   Version 
+   Version
         $Rev$
    $Copyright$
-   
-   jStar is distributed under a BSD license,  see, 
+
+   jStar is distributed under a BSD license,  see,
       LICENSE.txt
  ********************************************************)
+
 (******************************************************************
     Syntax for Separation logic theorem prover
 
@@ -192,6 +193,13 @@ and string_args_fldlist ppf fdl =
   | (f,a)::fdl -> Format.fprintf ppf "%s=%a;@ %a" f string_args a string_args_fldlist fdl
 
 
+let rec get_vars arg : Vars.var list = 
+  match arg with
+  | Arg_var v -> [v]
+  | Arg_string s -> []
+  | Arg_op (name, args) -> List.flatten (List.map get_vars args)
+  | Arg_cons (name, args) -> List.flatten (List.map get_vars args)
+  | Arg_record fldlist -> List.flatten (List.map (fun (f,a) -> get_vars a) fldlist)
 
 
 let rec fv_args args set = 
@@ -317,7 +325,7 @@ let rec string_form_at ppf pa =
   match pa with 
     P_NEQ(a1,a2) -> Format.fprintf ppf "%a != %a" string_args a1  string_args a2
   | P_EQ(a1,a2) -> Format.fprintf ppf "%a = %a" string_args a1  string_args a2
-  | P_PPred(op,al) -> Format.fprintf ppf "%s(%a)" op string_args_list al
+  | P_PPred(op,al) -> Format.fprintf ppf "!%s(%a)" op string_args_list al
   | P_SPred (s,al) -> Format.fprintf ppf "%s(%a)" s string_args_list al
   | P_Or(f1,f2) -> Format.fprintf ppf "(%a)@ || (%a)" string_form f1 string_form f2
   | P_Wand(f1,f2) -> Format.fprintf ppf "(%a)@ -* (%a)" string_form f1  string_form f2
@@ -397,6 +405,7 @@ type varterm =
 type where = 
   | NotInContext of varterm
   | NotInTerm of varterm * args
+  | PureGuard of pform 
 
 let string_vs ppf vs =
   vs_iter (fun v -> Format.fprintf ppf "%s" (string_var v)) vs
@@ -410,6 +419,10 @@ let string_where ppf where =
       Format.fprintf ppf "%a notin %a" 
 	string_vs vs 
 	string_args args
+  | PureGuard f -> 
+      Format.fprintf ppf "%a pureguard"
+      string_form f
+        
 
 
 

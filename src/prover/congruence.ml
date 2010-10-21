@@ -1,15 +1,16 @@
 (********************************************************
-   This file is part of jStar 
-	src/prover/congruence.ml
-   Release 
+   This file is part of jStar
+        src/prover/congruence.ml
+   Release
         $Release$
-   Version 
+   Version
         $Rev$
    $Copyright$
-   
-   jStar is distributed under a BSD license,  see, 
+
+   jStar is distributed under a BSD license,  see,
       LICENSE.txt
  ********************************************************)
+
 open Backtrack
 open Format
 open Misc
@@ -158,6 +159,12 @@ module type PCC =
 
       val get_eqs : (constant -> bool) -> (constant -> 'a) -> t -> ('a * 'a) list
       val get_neqs : (constant -> bool) -> (constant -> 'a) -> t -> ('a * 'a) list
+      
+      val get_consts : t -> constant list
+      val get_reps : (constant -> bool) -> (constant -> 'a) -> t -> 'a list 
+
+      (* surjective mapping from constants to integers *)
+      val const_int : constant -> t -> int 
 
       val test : unit -> unit
 
@@ -247,6 +254,14 @@ module PersistentCC (A : GrowablePersistentArray) : PCC =
    Class List : constant -> constant list
    Lookup : constant -> constant -> complex_eq option
  *)
+
+(* Intuitively: 
+
+  representative - mapping from constant to represntative constant. 
+
+  classlist - mapping from represenative constants to the class of represented. 
+
+*)
     type t = 
 	{ uselist : (use list) A.t;
 	  representative : constant A.t;
@@ -267,8 +282,8 @@ module PersistentCC (A : GrowablePersistentArray) : PCC =
        lookup = CCMap.empty;
        rev_lookup = A.create (fun i -> []);
        not_equal = CCMap.empty;
-      constructor = A.create (fun i -> Not);
-      unifiable = A.create (fun i -> Standard);
+       constructor = A.create (fun i -> Not);
+       unifiable = A.create (fun i -> Standard);
      }
 
 
@@ -1184,10 +1199,24 @@ module PersistentCC (A : GrowablePersistentArray) : PCC =
     let others ts c = 
       A.get ts.classlist c 
 
+   let rec inter_list (i : int) (j : int) : int list =  if i > j then [] else (i :: inter_list (i+1) j) 
+
+    let get_consts ts = inter_list 0 (A.size ts.representative - 1)
+
+    let get_reps mask map ts = 
+      List.map map 
+         (List.filter (fun i -> A.get ts.representative i = i && mask i) 
+                      (inter_list 0 (A.size ts.representative - 1)))
+
+
     let rep_uneq ts c d = 
       try 
 	ignore (make_equal ts c d); false
       with Contradiction -> true
+      
+
+    let const_int const ts = const
+
 
     let eq_term (ts : t) (term1 : curry_term) (term2 : curry_term) : bool = 
       normalize ts term1 = normalize ts term2 

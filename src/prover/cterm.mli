@@ -1,15 +1,17 @@
 (********************************************************
-   This file is part of jStar 
-	src/prover/cterm.mli
-   Release 
+   This file is part of jStar
+        src/prover/cterm.mli
+   Release
         $Release$
-   Version 
+   Version
         $Rev$
    $Copyright$
-   
-   jStar is distributed under a BSD license,  see, 
+
+   jStar is distributed under a BSD license,  see,
       LICENSE.txt
  ********************************************************)
+
+
 open Congruence
 open Format
 open Psyntax
@@ -45,6 +47,9 @@ val determined_exists : term_structure -> term_handle -> term_handle -> term_str
 (*
    Add Psyntax to the term_structure, and return a term_handle and updated term structure
 *)
+
+val ground_pattern_tuple : args list -> term_structure -> (term_handle * term_structure)
+        
 val add_term : bool -> Psyntax.args -> term_structure -> (term_handle * term_structure)
 
 val add_pattern : Psyntax.args -> term_structure -> (pattern * term_structure)
@@ -58,6 +63,8 @@ val not_equal : term_structure -> term_handle -> term_handle -> bool
 val unify_not_equal_pattern : term_structure -> pattern -> pattern -> (term_structure -> 'a) -> 'a
 
 val make_equal : term_structure -> term_handle -> term_handle -> term_structure
+
+val make_list_equal  : term_structure -> term_handle list -> term_structure
 
 val normalise : term_structure -> term_handle -> term_handle 
 
@@ -81,10 +88,20 @@ val blank_pattern_vars : term_structure -> term_structure
 
 val pp_ts' : Printing.sep_wrapper -> formatter -> bool -> term_structure -> bool
 
+val get_pargs : bool -> term_structure -> term_handle list -> term_handle -> Psyntax.args
+val get_pargs_norecs : bool -> term_structure -> term_handle list -> term_handle -> Psyntax.args
+
 val pp_c : term_structure -> formatter -> term_handle -> unit
+val has_pp_c : term_structure -> term_handle -> bool
+
+val get_args_rep : term_structure -> (term_handle * Psyntax.args) list
+val get_args_all : term_structure -> Psyntax.args list
 
 val get_eqs : term_structure -> (Psyntax.args * Psyntax.args) list
 val get_neqs : term_structure -> (Psyntax.args * Psyntax.args) list
+
+val get_eqs_norecs : term_structure -> (Psyntax.args * Psyntax.args) list
+val get_neqs_norecs : term_structure -> (Psyntax.args * Psyntax.args) list
 
 val get_term : term_structure -> term_handle-> Psyntax.args
 val kill_var : term_structure -> Vars.var -> term_structure 

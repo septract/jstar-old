@@ -1,0 +1,35 @@
+Implication: 
+  (a + b) != (b + a)  |-  !p(d)
+? True
+
+Implication: 
+  (a + b) = (c + a)  |-  b = c
+? True 
+
+Implication: 
+  (a < b) * (b < a)  |-  False
+? True
+
+Implication:
+  |- (a + b) = (b + a)
+? True 
+
+Implication: 
+  (a < b) * (b < c)  |-  (a < c) 
+? True 
+
+Implication: 
+  |- builtin_mult(b,a) = builtin_mult(a, b)
+? True 
+
+Implication: 
+  |- (x + builtin_mult(k,x)) = builtin_mult((k + 1), x)
+? True 
+
+Implication:  
+  |- ((x + x) + builtin_mult(k,x)) = builtin_mult((k + 2), x)
+? True 
+
+Implication: 
+  !LT(a,b) * testpred(a,b) |- 
+? True 

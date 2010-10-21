@@ -1,6 +1,6 @@
 (********************************************************
    This file is part of jStar
-	src/jimplefront/run_parser.ml
+        src/jimplefront/run_parser.ml
    Release
         $Release$
    Version
@@ -10,6 +10,7 @@
    jStar is distributed under a BSD license,  see,
       LICENSE.txt
  ********************************************************)
+
 
 open Debug
 open Format
@@ -124,6 +125,8 @@ let main () =
        List.iter
 	 (fun s ->  Sys.set_signal s (Sys.Signal_handle (fun x -> Symexec.pp_dotty_transition_system (); exit x)))
          signals;
+       if !Config.smt_run then Smt.smt_init(); 
+         
        let l1,l2,cn = Load_logic.load_logic  (System.getenv_dirlist "JSTAR_LOGIC_LIBRARY") !logic_file_name
        in
        let logic = {empty_logic with seq_rules=l1; rw_rules=l2; consdecl=cn} in
@@ -205,4 +208,3 @@ let _ =
   set_tags true; pp_set_tags err_formatter true;
   try main ()
   with Failure s -> eprintf "@{<b>FAILED:@} %s@." s
-

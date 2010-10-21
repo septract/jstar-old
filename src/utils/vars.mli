@@ -1,3 +1,17 @@
+(********************************************************
+   This file is part of jStar
+        src/utils/vars.mli
+   Release
+        $Release$
+   Version
+        $Rev$
+   $Copyright$
+
+   jStar is distributed under a BSD license,  see,
+      LICENSE.txt
+ ********************************************************)
+
+
 type var =
     PVar of int * string
   | EVar of int * string

@@ -8,7 +8,7 @@ ifndef OCAMLC
 	export OCAMLC = ocamlc.opt -annot
 endif 
 ifndef OCAMLOPT
-	export OCAMLOPT = ocamlopt.opt -annot
+	export OCAMLOPT = ocamlopt.opt -annot -warn-error A
 endif 
 ifndef OCAMLDEP
 	export OCAMLDEP = ocamldep.opt
@@ -40,7 +40,7 @@ PROVERSOURCE = run.ml
 TESTPROVERSOURCE = inductive.ml test.ml
 
 
-DEFAULT_ARGS = LIBS="str utils prover_syntax prover symbexe_syntax jimple_syntax parsing" \
+DEFAULT_ARGS = LIBS="str unix utils prover_syntax prover symbexe_syntax jimple_syntax parsing" \
        OCAMLLDFLAGS=" -I $(LIB)" \
        INCDIRS="../utils ../prover_syntax ../prover ../parsing"
        OCAMLFLAGS="" \

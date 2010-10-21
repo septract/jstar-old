@@ -1,3 +1,17 @@
+(********************************************************
+   This file is part of jStar
+        src/prover/congruence.mli
+   Release
+        $Release$
+   Version
+        $Rev$
+   $Copyright$
+
+   jStar is distributed under a BSD license,  see,
+      LICENSE.txt
+ ********************************************************)
+
+
 module type PCC =
   sig
     type t
@@ -51,6 +65,13 @@ module type PCC =
       (constant -> bool) -> (constant -> 'a) -> t -> ('a * 'a) list
     val get_neqs :
       (constant -> bool) -> (constant -> 'a) -> t -> ('a * 'a) list
+      
+    val get_consts : t -> constant list
+    val get_reps : (constant -> bool) -> (constant -> 'a) -> t -> 'a list 
+
+    (* surjective mapping from constants to integers *)
+    val const_int : constant -> t -> int 
+  
     val test : unit -> unit
     val delete : t -> constant -> t
   end
