@@ -1,0 +1,7 @@
+
+A.java:1: class, interface, or enum expected
+invalid java
+^
+1 error
+
+ERROR: Reported by javac

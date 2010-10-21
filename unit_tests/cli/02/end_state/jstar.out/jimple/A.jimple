@@ -1,0 +1,12 @@
+public class A extends java.lang.Object
+{
+
+    public void <init>()
+    {
+        A r0;
+
+        r0 := @this: A;
+        specialinvoke r0.<java.lang.Object: void <init>()>();
+        return;
+    }
+}

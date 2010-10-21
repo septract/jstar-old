@@ -34,6 +34,9 @@ OB=ocamlbuild -cflags $(CFLAGS) -lflags $(LFLAGS) $(LIBS:%=-lib %)
 ob: clean
 	@$(OB) $(DIRS:%=-I src/%) $(MAINS:=.native)
 
+ob-test: ob
+	cd unit_tests/cli && ./io_test.sh -q
+
 ob-clean:
 	@ocamlbuild -clean -quiet
 	@rm -rf htmldoc

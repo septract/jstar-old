@@ -1,0 +1,12 @@
+Usage
+  io_test -help
+  io_test [-v|-q] [-clean] [testlist]
+
+Options
+  -q     quiet
+  -v     verbose
+  -clean just clean
+
+If no test is explicitly given, then use those from file
+'alltests'. The exit code is 0 if all tests passed, and 1
+otherwise.
