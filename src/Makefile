@@ -1,24 +1,26 @@
-default: 
-	cd proverfront; make
-	cd jimplefront;  make 
-	cd symbfront; make
+default: build
 
+build:
+	$(MAKE) -C jimplefront
+	$(MAKE) -C proverfront
+	$(MAKE) -C symbfront
 
-debug: 
-	cd proverfront; make debug
-	cd jimplefront;  make debug
-	cd symbfront; make debug
+debug:
+	$(MAKE) -C jimplefront debug
+	$(MAKE) -C proverfront debug
+	$(MAKE) -C symbfront debug
 
-
-clean: 
-	cd utils; make clean
-	cd prover_syntax; make clean
-	cd symbexe_syntax; make clean
-	cd jimple_syntax; make clean
-	cd prover; make clean
-	cd parsing; make clean
-	cd proverfront; make clean
-	cd symbexe; make clean
-	cd jimplefront;  make clean
-	cd symbfront; make clean
+clean:
+	$(MAKE) -C jimple_syntax clean
+	$(MAKE) -C jimplefront clean
+	$(MAKE) -C parsing clean
+	$(MAKE) -C prover clean
+	$(MAKE) -C prover_syntax clean
+	$(MAKE) -C proverfront clean
+	$(MAKE) -C symbexe clean
+	$(MAKE) -C symbexe_syntax clean
+	$(MAKE) -C symbfront clean
+	$(MAKE) -C utils clean
 	rm -f ../lib/*.a
+
+# vim:noet:
