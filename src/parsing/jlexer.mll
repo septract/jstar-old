@@ -1,15 +1,16 @@
 (********************************************************
-   This file is part of jStar 
-	src/parsing/jlexer.mll
-   Release 
+   This file is part of jStar
+        src/parsing/jlexer.mll
+   Release
         $Release$
-   Version 
+   Version
         $Rev$
    $Copyright$
-   
-   jStar is distributed under a BSD license,  see, 
+
+   jStar is distributed under a BSD license,  see,
       LICENSE.txt
  ********************************************************)
+
 
 
 { (* ddino implementation of a lexer for jimple *)

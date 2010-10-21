@@ -1,6 +1,6 @@
 (********************************************************
    This file is part of jStar
-	src/jimplefront/classverification.ml
+        src/jimplefront/classverification.ml
    Release
         $Release$
    Version
@@ -10,6 +10,7 @@
    jStar is distributed under a BSD license,  see,
       LICENSE.txt
  ********************************************************)
+
 
 open Debug
 open Format

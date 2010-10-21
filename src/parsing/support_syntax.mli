@@ -1,3 +1,17 @@
+(********************************************************
+   This file is part of jStar
+        src/parsing/support_syntax.mli
+   Release
+        $Release$
+   Version
+        $Rev$
+   $Copyright$
+
+   jStar is distributed under a BSD license,  see,
+      LICENSE.txt
+ ********************************************************)
+
+
 val bop_to_prover_arg : Jparsetree.binop -> string
 val bop_to_prover_pred :
   Jparsetree.binop -> Psyntax.args -> Psyntax.args -> Psyntax.pform_at list

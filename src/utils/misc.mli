@@ -1,3 +1,18 @@
+(********************************************************
+   This file is part of jStar
+        src/utils/misc.mli
+   Release
+        $Release$
+   Version
+        $Rev$
+   $Copyright$
+
+   jStar is distributed under a BSD license,  see,
+      LICENSE.txt
+ ********************************************************)
+
+(** Utilities that do not clearly fit in any other module. *)
+
 val map_option : ('a -> 'b option) -> 'a list -> 'b list
 type ('a, 'b) sum = Inr of 'a | Inl of 'b
 val remove_duplicates : ('a -> 'a -> int) -> 'a list -> 'a list

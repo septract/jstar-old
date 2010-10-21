@@ -1,3 +1,17 @@
+(********************************************************
+   This file is part of jStar
+        src/prover/congruence.mli
+   Release
+        $Release$
+   Version
+        $Rev$
+   $Copyright$
+
+   jStar is distributed under a BSD license,  see,
+      LICENSE.txt
+ ********************************************************)
+
+
 module type PCC =
   sig
     type t

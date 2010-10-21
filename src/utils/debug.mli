@@ -1,3 +1,17 @@
+(********************************************************
+   This file is part of jStar
+        src/utils/debug.mli
+   Release
+        $Release$
+   Version
+        $Rev$
+   $Copyright$
+
+   jStar is distributed under a BSD license,  see,
+      LICENSE.txt
+ ********************************************************)
+
+
 val safe : bool
 val log_specs : int
 val log_phase : int

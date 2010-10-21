@@ -1,15 +1,16 @@
 (********************************************************
-   This file is part of jStar 
-	src/symbfront/symbfront.ml
-   Release 
+   This file is part of jStar
+        src/symbfront/test_symb.ml
+   Release
         $Release$
-   Version 
+   Version
         $Rev$
    $Copyright$
-   
-   jStar is distributed under a BSD license,  see, 
+
+   jStar is distributed under a BSD license,  see,
       LICENSE.txt
  ********************************************************)
+
 
 (* This file is a front end to the symbolic execution *)
 

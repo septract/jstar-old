@@ -1,3 +1,17 @@
+(********************************************************
+   This file is part of jStar
+        src/jimplefront/methdec.mli
+   Release
+        $Release$
+   Version
+        $Rev$
+   $Copyright$
+
+   jStar is distributed under a BSD license,  see,
+      LICENSE.txt
+ ********************************************************)
+
+
 val get_list_methods :
   Jimple_global_types.jimple_file -> Jimple_global_types.member list
 val get_list_fields :

@@ -1,15 +1,16 @@
 (********************************************************
-   This file is part of jStar 
-	src/jimple_syntax/spec_def.ml
-   Release 
+   This file is part of jStar
+        src/jimple_syntax/spec_def.ml
+   Release
         $Release$
-   Version 
+   Version
         $Rev$
    $Copyright$
-   
-   jStar is distributed under a BSD license,  see, 
+
+   jStar is distributed under a BSD license,  see,
       LICENSE.txt
  ********************************************************)
+
 
 (** data types for specifications *)
 

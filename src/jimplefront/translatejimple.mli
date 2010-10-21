@@ -1,3 +1,17 @@
+(********************************************************
+   This file is part of jStar
+        src/jimplefront/translatejimple.mli
+   Release
+        $Release$
+   Version
+        $Rev$
+   $Copyright$
+
+   jStar is distributed under a BSD license,  see,
+      LICENSE.txt
+ ********************************************************)
+
+
 exception Contained
 val conjoin_with_res_true : Psyntax.pform -> Psyntax.pform
 module LocalMap :

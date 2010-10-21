@@ -1,15 +1,16 @@
 (********************************************************
-   This file is part of jStar 
-	src/symbexe/cfg_core.ml
-   Release 
+   This file is part of jStar
+        src/symbexe_syntax/cfg_core.ml
+   Release
         $Release$
-   Version 
+   Version
         $Rev$
    $Copyright$
-   
-   jStar is distributed under a BSD license,  see, 
+
+   jStar is distributed under a BSD license,  see,
       LICENSE.txt
  ********************************************************)
+
 
 (** Data structures for representing flowgraphs of the core languages.
   Also, utilities to build such flowgraphs and to pretty-print them. *)

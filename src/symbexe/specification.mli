@@ -1,3 +1,17 @@
+(********************************************************
+   This file is part of jStar
+        src/symbexe/specification.mli
+   Release
+        $Release$
+   Version
+        $Rev$
+   $Copyright$
+
+   jStar is distributed under a BSD license,  see,
+      LICENSE.txt
+ ********************************************************)
+
+
 type ts_excep_post = Sepprover.inner_form Spec.ClassMap.t
 val spec_conjunction : Spec.spec -> Spec.spec -> Spec.spec
 val sub_spec : Psyntax.varmap -> Spec.spec -> Spec.spec

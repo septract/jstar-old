@@ -1,15 +1,16 @@
 (********************************************************
-   This file is part of jStar 
-	src/prover_syntax/psyntax.ml
-   Release 
+   This file is part of jStar
+        src/prover_syntax/psyntax.ml
+   Release
         $Release$
-   Version 
+   Version
         $Rev$
    $Copyright$
-   
-   jStar is distributed under a BSD license,  see, 
+
+   jStar is distributed under a BSD license,  see,
       LICENSE.txt
  ********************************************************)
+
 (******************************************************************
     Syntax for Separation logic theorem prover
 

@@ -1,3 +1,17 @@
+(********************************************************
+   This file is part of jStar
+        src/symbexe/symexec.mli
+   Release
+        $Release$
+   Version
+        $Rev$
+   $Copyright$
+
+   jStar is distributed under a BSD license,  see,
+      LICENSE.txt
+ ********************************************************)
+
+
 type ntype = Plain | Good | Error | Abs | UnExplored
 type id = int
 val file : string ref

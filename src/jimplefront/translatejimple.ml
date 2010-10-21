@@ -1,15 +1,16 @@
 (********************************************************
-   This file is part of jStar 
-	src/jimplefront/translatejimple.ml
-   Release 
+   This file is part of jStar
+        src/jimplefront/translatejimple.ml
+   Release
         $Release$
-   Version 
+   Version
         $Rev$
    $Copyright$
-   
-   jStar is distributed under a BSD license,  see, 
+
+   jStar is distributed under a BSD license,  see,
       LICENSE.txt
  ********************************************************)
+
 
 
 open Psyntax

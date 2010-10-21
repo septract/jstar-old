@@ -1,15 +1,17 @@
 (********************************************************
-   This file is part of jStar 
-	src/prover/sepprover.mli
-   Release 
+   This file is part of jStar
+        src/prover/sepprover.mli
+   Release
         $Release$
-   Version 
+   Version
         $Rev$
    $Copyright$
-   
-   jStar is distributed under a BSD license,  see, 
+
+   jStar is distributed under a BSD license,  see,
       LICENSE.txt
  ********************************************************)
+
+
 open Psyntax
 
 type inner_form
