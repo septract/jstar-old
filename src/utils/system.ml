@@ -12,16 +12,16 @@
  ********************************************************)
 
 open Debug
+open Jstar_std
 
-let colortty = ref (Sys.getenv "TERM" = "xterm-color");;
+let java_path_delimiter = if Sys.os_type = "Windows" then ";" else ":"
+let java_path_delimiter_re = Str.regexp (java_path_delimiter ^ "+")
 
 let getenv variable = 
-  try Sys.getenv variable 
-  with Not_found -> ""
-
+  try Sys.getenv variable with Not_found -> ""
 
 let getenv_dirlist variable = 
-  Str.split (Str.regexp ":") (getenv variable)
+  Str.split java_path_delimiter_re (getenv variable)
 
    
 (* read a file into a string *)
@@ -52,10 +52,6 @@ let parse_file pars lexe fname ftype =
   with Parsing.Parse_error -> Printf.printf "Failed to parse %s\n" fname; exit 1
   |  Failure s ->  Printf.printf "Failed to parse %s\n%s\n" fname s; exit 1 
 
-
-
-
-
 (* 
   Check if file exists in current directory, or in list of directories supplied.  
   Returns full filename if found,
@@ -67,6 +63,42 @@ let find_file_from_dirs dirs fname =
     let f x = Filename.concat x fname in 
     f (List.find (function d -> Sys.file_exists (f d)) dirs)
 
+let rec fs_postorder m f =
+  if Sys.file_exists f then begin
+    if Sys.is_directory f then begin
+      let children = Array.map (Filename.concat f) (Sys.readdir f) in
+      Array.iter (fs_postorder m) children
+    end;
+    m f
+  end
+
+let fs_filter p f =
+  let r = ref [] in
+  fs_postorder (fun x -> if p x then r =:: x) f; !r
+
+let rm_rf f = 
+  fs_postorder 
+    (fun x -> if Sys.is_directory x then Unix.rmdir x else Unix.unlink x) f
+
+let rec mkdir_p dir =
+  if Sys.file_exists dir then begin
+    if not (Sys.is_directory dir) then 
+      raise (Unix.Unix_error (Unix.EEXIST, "mkdir_p", dir))
+  end else begin
+    mkdir_p (Filename.dirname dir);
+    Unix.mkdir dir 0o755
+  end
+
+let is_executable_available fn =
+  try
+    let candidate = find_file_from_dirs (getenv_dirlist "PATH") fn in
+    Unix.access candidate [Unix.X_OK; Unix.R_OK];
+    true 
+  with _ -> false
+
+let is_file ext fn =
+  Sys.file_exists fn && not (Sys.is_directory fn) &&
+  StringH.ends_with (String.lowercase ext) (String.lowercase fn)
 
 (* TODO(rgrig): Thee should probably depend on the terminal. *)
 (* TODO(rgrig): Is there a (nice) ncurses ocaml inerface? *)
