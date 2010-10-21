@@ -25,12 +25,16 @@ let question_file_name = ref "";;
 let logic_file_name = ref "";;
 let absrules_file_name = ref "";;
 
+let set_question_file_name fn =
+  question_file_name := fn;
+  Symexec.file := Filename.basename fn
+
 let proof_succes = ref true;; 
 
 let arg_list = Config.args_default @ 
-  [ ("-f", Arg.Set_string(question_file_name ), "question file name" );
-  ("-l", Arg.Set_string(logic_file_name ), "logic file name" );
-  ("-a", Arg.Set_string(absrules_file_name ), "abstraction rules file name" );
+  [ ("-f", Arg.String set_question_file_name, "question file name" );
+  ("-l", Arg.Set_string logic_file_name, "logic file name" );
+  ("-a", Arg.Set_string absrules_file_name, "abstraction rules file name" );
 ]
 
 
