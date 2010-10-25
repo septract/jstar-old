@@ -39,6 +39,9 @@ val curry : ('a * 'b -> 'c) -> 'a -> 'b -> 'c
 (** Converts a curried function into an uncurried one. *)
 val uncurry : ('a -> 'b -> 'c) -> 'a * 'b -> 'c
 
+(** Like in Haskell. *)
+val maybe : 'b -> ('a -> 'b) -> 'a option -> 'b
+
 (* }}} *)
 (* {{{ *) (** {2 Sets and maps} *)
 
