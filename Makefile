@@ -39,6 +39,6 @@ ob-test: ob
 
 ob-clean:
 	@ocamlbuild -clean -quiet
-	@rm -rf htmldoc
+	$(MAKE) -C unit_tests/cli clean
 
 #vim:noet:
