@@ -4,12 +4,13 @@ build:
 	$(MAKE) -C jimplefront
 	$(MAKE) -C proverfront
 	$(MAKE) -C symbfront
-
+	$(MAKE) -C vfcfront
+  
 debug:
 	$(MAKE) -C jimplefront debug
 	$(MAKE) -C proverfront debug
 	$(MAKE) -C symbfront debug
-	cd vfc; make debug
+	$(MAKE) -C vfcfront debug
 
 clean:
 	$(MAKE) -C jimple_syntax clean
@@ -21,6 +22,7 @@ clean:
 	$(MAKE) -C symbexe clean
 	$(MAKE) -C symbexe_syntax clean
 	$(MAKE) -C symbfront clean
+	$(MAKE) -C vfcfront clean
 	$(MAKE) -C utils clean
 	rm -f ../lib/*.a
 
