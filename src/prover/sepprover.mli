@@ -42,3 +42,5 @@ val print_counter_example : unit -> unit
 val string_of_proof : unit -> string 
 val get_counter_example : unit -> string
 val implies_list : inner_form list -> form -> bool 
+
+val abduction_opt : logic -> (inner_form option) -> form -> ((inner_form * inner_form) list) option 

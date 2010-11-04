@@ -31,7 +31,9 @@ let empty_sequent () =
   ts = Cterm.new_ts ();
   assumption = Clogic.empty;
   obligation = Clogic.empty;
+  antiframe = Clogic.empty; 
 }
+
 
 let rec out_normalise ts form =
   let form,ts = Clogic.normalise ts form in
@@ -71,41 +73,59 @@ let contains ts form pat : bool  =
 
 let sequent_join fresh (seq : sequent) (pseq : pat_sequent) : sequent option =
   try
+    (* Construct new assumption *)
     let ass,ts =
       try
-	convert_sf fresh  seq.ts pseq.assumption_diff
+      convert_sf fresh  seq.ts pseq.assumption_diff
       with Contradiction ->
-	fprintf !(Debug.proof_dump) 
+        fprintf !(Debug.proof_dump) 
           "Failed to add formula to lhs: %a@\n" 
           pp_syntactic_form pseq.assumption_diff;
-	raise Contradiction
+      raise Contradiction
     in
     let ass = conjunction ass seq.assumption in
+    
+    (* Construct new antiframe *)
+    let ant,ts = 
+      try 
+        convert_sf fresh ts pseq.antiframe_diff 
+      with Contradiction -> 
+        fprintf !(Debug.proof_dump) 
+          "Failed to add formula to antiframe: %a@\n" 
+          pp_syntactic_form pseq.antiframe_diff;
+        raise Contradiction
+    in 
+    let ant = conjunction ant seq.antiframe in
+    
+    (* Construct new matched portion *)
     let sam,ts =
       try
-	convert_sf fresh ts pseq.assumption_same
+        convert_sf fresh ts pseq.assumption_same
       with Contradiction ->
-	fprintf !(Debug.proof_dump) 
+        fprintf !(Debug.proof_dump) 
           "Failed to add formula to matched: %a@\n" 
           pp_syntactic_form pseq.assumption_same;
-	assert false in
+        assert false in
     let sam = RMSet.union sam.spat seq.matched in
+    
+    (* Construct new obligation portion *)
     let obs,ts =
       try
-	let obs,ts = convert_sf_without_eqs fresh ts pseq.obligation_diff in
-	let obs = conjunction obs seq.obligation in
-	obs,ts
+        let obs,ts = convert_sf_without_eqs fresh ts pseq.obligation_diff in
+        let obs = conjunction obs seq.obligation in
+        obs,ts
       with Contradiction ->
-	try
-	  convert_sf_without_eqs true ts false_sform
-	with Contradiction -> assert false
-    in
-    Some {
-     assumption = ass;
-     obligation = obs;
-     matched = sam;
-     ts = ts;
-   }
+        try
+          convert_sf_without_eqs true ts false_sform
+        with Contradiction -> assert false
+          in
+          Some {
+           assumption = ass;
+           obligation = obs;
+           matched = sam;
+           ts = ts;
+           antiframe = ant; 
+         }
   with Contradiction ->
     fprintf !(Debug.proof_dump) "Contradiction detected!!@\n";
     None
@@ -159,9 +179,12 @@ let apply_rule
   (* Match obligation *)
   match_form true ts seq.obligation sr.conclusion.obligation_diff
     (fun (ts,ob) ->
+  (* Match antiframe_diff *)
+  match_form true ts seq.antiframe sr.conclusion.antiframe_diff
+    (fun (ts,ant) -> 
       (* Match assumption_diff *)
       match_form true ts seq.assumption sr.conclusion.assumption_diff
-	(fun (ts,ass) ->
+    (fun (ts,ass) ->
 	  (* match assumption_not removed *)
 	  let ass_f = {ass with spat=RMSet.union ass.spat seq.matched} in
 	  match_form true ts ass_f sr.conclusion.assumption_same
@@ -181,15 +204,17 @@ let apply_rule
 		  {seq with
 		   ts = ts;
 		   obligation = ob;
-		   assumption = ass;} in
+                   assumption = ass;
+                   antiframe = ant; } in 
 		List.map
 		  (map_option
 		     (sequent_join_fresh seq))
 		  sr.premises
 	      end
 	    )
-	)
     )
+    )
+  )
 
 
 let rewrite_guard_check seq (ts,guard) =
@@ -272,7 +297,8 @@ try
 	plain = o_plain;
 	eqs = ob_eqs;
 	neqs=ob_neqs
-      }
+      }; 
+      antiframe = seq.antiframe; (* FIXME: What should this do? *)
     } in
    (*  printf "After simplification : %a@\n" pp_sequent seq; *)
     Some seq

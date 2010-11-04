@@ -30,3 +30,5 @@ val check_frame :
   Clogic.ts_formula -> Clogic.ts_formula -> Clogic.ts_formula list option
 val check_inconsistency : Psyntax.logic -> Clogic.ts_formula -> bool
 val check_implies_list : Clogic.ts_formula list -> Psyntax.pform -> bool
+val check_abduction_pform :
+  Psyntax.logic -> Clogic.ts_formula -> Psyntax.pform -> ((Clogic.ts_formula * Clogic.ts_formula) list) option

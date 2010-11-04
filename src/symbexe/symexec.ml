@@ -138,8 +138,8 @@ let pp_dotty_transition_system () =
     )
     !graphn;
   List.iter (fun edge ->
-    let l = Dot.escape_for_label edge.label in
-    let c = Dot.escape_for_label edge.clabel in
+    (* let l = Dot.escape_for_label edge.label in *)
+    (* let c = Dot.escape_for_label edge.clabel in *)
     fprintf dotty_outf "\n state%i -> state%i [label=\"%s\", tooltip=\"%s\"%s]" edge.src.id edge.dest.id edge.label edge.clabel
 	    (match edge.file with 
 	      None -> ""
