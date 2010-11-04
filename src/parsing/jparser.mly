@@ -660,7 +660,10 @@ nonvoid_type:
    | identifier array_brackets_list_star {Ident_NVT($1,$2)}
    | full_identifier array_brackets_list_star {Full_ident_NVT($1,$2)}
 ;
-/* ddino: dunno what to do with this array_brackets. this in any case does not typr check */
+/* ddino: dunno what to do with this array_brackets. this in any case does not
+   type check
+   TODO: Shouldn't this be an integer, rather than a list of "[]"s?
+ */
 array_brackets_list_star:
    | /* empty */ { [] }
    | L_BRACKET R_BRACKET array_brackets_list_star { "[]"::$3 }
