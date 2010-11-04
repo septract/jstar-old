@@ -1,3 +1,17 @@
+(********************************************************
+   This file is part of jStar
+        src/jimple_syntax/jimple_global_types.mli
+   Release
+        $Release$
+   Version
+        $Rev$
+   $Copyright$
+
+   jStar is distributed under a BSD license,  see,
+      LICENSE.txt
+ ********************************************************)
+
+
 type statement_inner =
     Label_stmt of Jparsetree.label_name
   | Breakpoint_stmt

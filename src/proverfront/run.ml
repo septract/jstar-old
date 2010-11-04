@@ -1,15 +1,16 @@
 (********************************************************
-   This file is part of jStar 
-	src/proverfront/run.ml
-   Release 
+   This file is part of jStar
+        src/proverfront/run.ml
+   Release
         $Release$
-   Version 
+   Version
         $Rev$
    $Copyright$
-   
-   jStar is distributed under a BSD license,  see, 
+
+   jStar is distributed under a BSD license,  see,
       LICENSE.txt
  ********************************************************)
+
 open Congruence
 open Debug
 open Format

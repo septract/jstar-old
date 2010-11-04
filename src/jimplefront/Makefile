@@ -30,10 +30,10 @@ export LIB
 
 INCLUDES = 
 
-SYMBEXE_SOURCES = support_symex.ml jlogic.ml javaspecs.ml methdec.ml translatejimple.ml classverification.ml mkspecs.ml run_parser.ml
+JIMPLEFRONT_SOURCES = support_symex.ml jlogic.ml javaspecs.ml methdec.ml translatejimple.ml classverification.ml mkspecs.ml run_parser.ml
 
 
-TOPLEVEL_SOURCES = $(SYMBEXE_SOURCES)
+TOPLEVEL_SOURCES = $(JIMPLEFRONT_SOURCES)
 
 DEFAULT_ARGS = SOURCES="$(TOPLEVEL_SOURCES)" \
        LIBS="str unix utils prover_syntax symbexe_syntax jimple_syntax prover symbexe parsing" \
@@ -54,10 +54,10 @@ debug: jstar.byte
 all: jstar jstar.byte
 
 
-prebuild: 
-	@(cd ../jimple_syntax; make)
-	@(cd ../symbexe; make)
-	@(cd ../parsing; make)
+prebuild:
+	@$(MAKE) -C ../jimple_syntax
+	@$(MAKE) -C ../symbexe
+	@$(MAKE) -C ../parsing
 
 .PHONY: jstar.byte  
 jstar.byte: prebuild
@@ -79,3 +79,4 @@ clean:
 dummy:
 
 include .depend
+# vim:noet:

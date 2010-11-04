@@ -1,3 +1,17 @@
+(********************************************************
+   This file is part of jStar
+        src/symbexe_syntax/spec.mli
+   Release
+        $Release$
+   Version
+        $Rev$
+   $Copyright$
+
+   jStar is distributed under a BSD license,  see,
+      LICENSE.txt
+ ********************************************************)
+
+
 module ClassMap :
   sig
     type key = string

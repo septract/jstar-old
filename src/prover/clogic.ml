@@ -1,6 +1,6 @@
 (********************************************************
    This file is part of jStar
-	src/prover/clogic.ml
+        src/prover/clogic.ml
    Release
         $Release$
    Version
@@ -10,6 +10,7 @@
    jStar is distributed under a BSD license,  see,
       LICENSE.txt
  ********************************************************)
+
 open Backtrack
 open Congruence
 open Cterm

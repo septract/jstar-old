@@ -1,15 +1,16 @@
 (********************************************************
-   This file is part of jStar 
-	src/proverfront/test.ml
-   Release 
+   This file is part of jStar
+        src/proverfront/test.ml
+   Release
         $Release$
-   Version 
+   Version
         $Rev$
    $Copyright$
-   
-   jStar is distributed under a BSD license,  see, 
+
+   jStar is distributed under a BSD license,  see,
       LICENSE.txt
  ********************************************************)
+
 
 (* TODO(rgrig): Factor the common parts of test.ml and run.ml. *)
 

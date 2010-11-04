@@ -1,3 +1,17 @@
+(********************************************************
+   This file is part of jStar
+        src/jimple_syntax/pprinter.mli
+   Release
+        $Release$
+   Version
+        $Rev$
+   $Copyright$
+
+   jStar is distributed under a BSD license,  see,
+      LICENSE.txt
+ ********************************************************)
+
+
 val binop2str : Jparsetree.binop -> string
 val name2str : Jparsetree.name -> string
 val class_name2str : Jparsetree.class_name -> string

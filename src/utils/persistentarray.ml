@@ -1,15 +1,16 @@
 (********************************************************
-   This file is part of jStar 
-	src/utils/persistentarray.ml
-   Release 
+   This file is part of jStar
+        src/utils/persistentarray.ml
+   Release
         $Release$
-   Version 
+   Version
         $Rev$
    $Copyright$
-   
-   jStar is distributed under a BSD license,  see, 
+
+   jStar is distributed under a BSD license,  see,
       LICENSE.txt
  ********************************************************)
+
 (*   This file contains an implementation of Persistent Array following:
      A Persistent Union-Find Data Structure
      Sylvain Conchon	Jean-Christophe Filliatre

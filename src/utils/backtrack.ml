@@ -1,15 +1,16 @@
 (********************************************************
-   This file is part of jStar 
-	src/utils/backtrack.ml
-   Release 
+   This file is part of jStar
+        src/utils/backtrack.ml
+   Release
         $Release$
-   Version 
+   Version
         $Rev$
    $Copyright$
-   
-   jStar is distributed under a BSD license,  see, 
+
+   jStar is distributed under a BSD license,  see,
       LICENSE.txt
  ********************************************************)
+
 exception No_match
 
 let rec find_no_match_simp f l =

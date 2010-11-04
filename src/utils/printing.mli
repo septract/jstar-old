@@ -1,3 +1,17 @@
+(********************************************************
+   This file is part of jStar
+        src/utils/printing.mli
+   Release
+        $Release$
+   Version
+        $Rev$
+   $Copyright$
+
+   jStar is distributed under a BSD license,  see,
+      LICENSE.txt
+ ********************************************************)
+
+
 type source_location = {
   begin_line : int;
   begin_column : int;

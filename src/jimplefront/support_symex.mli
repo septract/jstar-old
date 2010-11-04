@@ -1,3 +1,17 @@
+(********************************************************
+   This file is part of jStar
+        src/jimplefront/support_symex.mli
+   Release
+        $Release$
+   Version
+        $Rev$
+   $Copyright$
+
+   jStar is distributed under a BSD license,  see,
+      LICENSE.txt
+ ********************************************************)
+
+
 val file : string ref
 val constant2args : Jparsetree.constant -> Psyntax.args
 val default_for : Jparsetree.j_type -> Jparsetree.name -> Psyntax.args

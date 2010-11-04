@@ -1,3 +1,17 @@
+(********************************************************
+   This file is part of jStar
+        src/jimple_syntax/jparsetree.mli
+   Release
+        $Release$
+   Version
+        $Rev$
+   $Copyright$
+
+   jStar is distributed under a BSD license,  see,
+      LICENSE.txt
+ ********************************************************)
+
+
 type binop =
     And
   | Or

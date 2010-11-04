@@ -1,3 +1,17 @@
+(********************************************************
+   This file is part of jStar
+        src/jimplefront/classverification.mli
+   Release
+        $Release$
+   Version
+        $Rev$
+   $Copyright$
+
+   jStar is distributed under a BSD license,  see,
+      LICENSE.txt
+ ********************************************************)
+
+
 val is_interface : Jimple_global_types.jimple_file -> bool
 val parent_classes_and_interfaces :
   Jimple_global_types.jimple_file -> Jparsetree.class_name list

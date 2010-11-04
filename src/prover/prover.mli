@@ -1,3 +1,17 @@
+(********************************************************
+   This file is part of jStar
+        src/prover/prover.mli
+   Release
+        $Release$
+   Version
+        $Rev$
+   $Copyright$
+
+   jStar is distributed under a BSD license,  see,
+      LICENSE.txt
+ ********************************************************)
+
+
 val pprint_counter_example : Format.formatter -> unit -> unit
 val print_counter_example : unit -> unit
 val get_counter_example : unit -> string

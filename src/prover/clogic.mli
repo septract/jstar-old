@@ -1,3 +1,16 @@
+(********************************************************
+   This file is part of jStar
+        src/prover/clogic.mli
+   Release
+        $Release$
+   Version
+        $Rev$
+   $Copyright$
+
+   jStar is distributed under a BSD license,  see,
+      LICENSE.txt
+ ********************************************************)
+
 exception Success
 exception Failed
 exception Assm_Contradiction

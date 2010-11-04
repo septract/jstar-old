@@ -1,15 +1,16 @@
 (********************************************************
-   This file is part of jStar 
-	src/symbexe_syntax/pprinter_core.ml
-   Release 
+   This file is part of jStar
+        src/symbexe_syntax/pprinter_core.ml
+   Release
         $Release$
-   Version 
+   Version
         $Rev$
    $Copyright$
-   
-   jStar is distributed under a BSD license,  see, 
+
+   jStar is distributed under a BSD license,  see,
       LICENSE.txt
  ********************************************************)
+
 open Core
 open Psyntax
 open Spec

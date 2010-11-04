@@ -29,7 +29,7 @@ open Spec_def
 open Vars
 
 
-
+(* TODO(rgrig): Functions in Vars should be used instead of new*Var. *)
 let newPVar x = concretep_str x
 
 let newAnyVar x = AnyVar(0,x)
@@ -439,7 +439,7 @@ apf_defines:
    | /*empty*/ { [] }
 
 eq_as: 
-   | EQUALS { (* Deprecated *)}
+   | EQUALS { (* Deprecated *)} /* TODO(rgrig): Warn? */
    | AS {}
 
 apf_define:

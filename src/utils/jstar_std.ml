@@ -10,6 +10,9 @@ let ( |> ) x f = f x
 let ( =:: ) xs x = xs := x :: !xs
 let ( !* ) = Lazy.force
 
+let curry f a b = f (a, b)
+let uncurry f (a, b) = f a b
+
 module CharH = struct
   let is_space =
     let spaces = " \t\n\r\x0b\x0c" in
@@ -27,23 +30,29 @@ module StringH = struct
       String.sub s !i (!j - !i + 1)
     end
 
-  let starts_with s t =
-    let n = String.length t in
-    if n > String.length s 
+  let starts_with prefix s =
+    let n = String.length prefix in
+    if n > String.length s
     then false
-    else String.sub s 0 n = t
+    else String.sub s 0 n = prefix
 
-  let ends_with s t =
+  let ends_with suffix s =
     let m = String.length s in
-    let n = String.length t in
+    let n = String.length suffix in
     if n > m
     then false
-    else String.sub s (m - n) n = t
+    else String.sub s (m - n) n = suffix
 end
 
 module MapHelper = functor (M : Map.S) -> struct
   let filter (p : M.key -> 'a -> bool) (map : 'a M.t) : 'a M.t =
     M.fold (fun k v a -> if p k v then M.add k v a else a) map M.empty
+end
+
+module HashtblH = struct
+  let of_list l =
+    let h = Hashtbl.create (2 * List.length l + 1) in
+    List.iter (uncurry (Hashtbl.replace h)) l; h
 end
 
 module ListH = struct

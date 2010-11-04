@@ -1,15 +1,16 @@
 (********************************************************
-   This file is part of jStar 
-	src/utils/multiset.ml
-   Release 
+   This file is part of jStar
+        src/utils/multiset.ml
+   Release
         $Release$
-   Version 
+   Version
         $Rev$
    $Copyright$
-   
-   jStar is distributed under a BSD license,  see, 
+
+   jStar is distributed under a BSD license,  see,
       LICENSE.txt
  ********************************************************)
+
 (* Search and remove structure *)
 (* Multiset that allows for iteration through the elements *)
 

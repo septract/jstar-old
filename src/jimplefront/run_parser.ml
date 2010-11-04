@@ -1,6 +1,6 @@
 (********************************************************
    This file is part of jStar
-	src/jimplefront/run_parser.ml
+        src/jimplefront/run_parser.ml
    Release
         $Release$
    Version
@@ -10,6 +10,7 @@
    jStar is distributed under a BSD license,  see,
       LICENSE.txt
  ********************************************************)
+
 
 open Debug
 open Format

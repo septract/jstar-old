@@ -13,6 +13,33 @@
 
 (** Contains utilities that we'd like to have had in OCaml's stdlib. *)
 
+(* {{{ *) (** {2 Common operations} *)
+
+(** 
+  Function composition. Where a function is expected, you can write [g @@
+  f] instead of [fun x -> g (f x)].
+ *)
+val ( @@ ) : ('b -> 'c) -> ('a -> 'b) -> ('a -> 'c)
+
+(** Function feeding. You can write [x |> f |> g] instead of [g (f (x))]. *)
+val ( |> ) : 'a -> ('a -> 'b) -> 'b
+
+(** Function application. You can write [g & f & x] instead of [g (f (x))]. *)
+val ( & ) : ('a -> 'b) -> 'a -> 'b
+
+(** [xs =:: x] prepends [x] to [xs] *)
+val ( =:: ) : 'a list ref -> 'a -> unit
+
+(** Shortcut for [Lazy.force]. *)
+val ( !* ) : 'a Lazy.t -> 'a
+
+(** Converts an uncurried function into a curried one. *)
+val curry : ('a * 'b -> 'c) -> 'a -> 'b -> 'c
+
+(** Converts a curried function into an uncurried one. *)
+val uncurry : ('a -> 'b -> 'c) -> 'a * 'b -> 'c
+
+(* }}} *)
 (* {{{ *) (** {2 Sets and maps} *)
 
 (** A set of strings. *)
@@ -38,27 +65,11 @@ module MapHelper :
      *)
     val filter : (M.key -> 'a -> bool) -> 'a M.t -> 'a M.t 
   end
-(* }}} *)
-(* {{{ *) (** {2 Operators for common operations} *)
 
-(** 
-  Function composition. Where a function is expected, you can write [g @@
-  f] instead of [fun x -> g (f x)].
- *)
-val ( @@ ) : ('b -> 'c) -> ('a -> 'b) -> ('a -> 'c)
-
-(** Function feeding. You can write [x |> f |> g] instead of [g (f (x))]. *)
-val ( |> ) : 'a -> ('a -> 'b) -> 'b
-
-(** Function application. You can write [g & f & x] instead of [g (f (x))]. *)
-val ( & ) : ('a -> 'b) -> 'a -> 'b
-
-(** [xs =:: x] prepends [x] to [xs] *)
-val ( =:: ) : 'a list ref -> 'a -> unit
-
-(** Shortcut for [Lazy.force]. *)
-val ( !* ) : 'a Lazy.t -> 'a
-
+module HashtblH : sig
+  (** Builds a hashtable from an association list. *)
+  val of_list : ('a * 'b) list -> ('a, 'b) Hashtbl.t
+end
 (* }}} *)
 (* {{{ *) (** {2 String and char utilities} *)
 
@@ -77,15 +88,15 @@ module StringH : sig
   *)
   val trim : string -> string
 
-  (** [starts_with s t] says whether [t] is a prefix of [s]. *)
+  (** [starts_with prefix s] says whether [s] starts with [prefix]. *)
   val starts_with : string -> string -> bool
 
-  (** [ends_with s t] says whether [t] is a suffix of [s]. *)
+  (** [ends_with suffix s] says whether [s] ends with [suffix]. *)
   val ends_with : string -> string -> bool
 end
 
 (* }}} *)
-(* {{{ *) (* {2 List and array utilities} *)
+(* {{{ *) (** {2 List and array utilities} *)
 module ListH : sig
   val init : int -> (int -> 'a) -> 'a list
     (** Like [Array.init]. *)
