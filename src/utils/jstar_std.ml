@@ -13,6 +13,10 @@ let ( !* ) = Lazy.force
 let curry f a b = f (a, b)
 let uncurry f (a, b) = f a b
 
+let maybe n f = function
+  | None -> n
+  | Some x -> f x
+
 module CharH = struct
   let is_space =
     let spaces = " \t\n\r\x0b\x0c" in

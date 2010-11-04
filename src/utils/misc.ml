@@ -13,13 +13,11 @@
 
 open Backtrack 
 
-let map_option f l
-    =
-  List.fold_right 
-    (fun el rest-> 
-      match f el  with
-	None -> rest
-   |	Some el -> el::rest) l []
+let map_option f l =
+  let f' acc x = match f x with
+    | None -> acc
+    | Some y -> y :: acc in
+  List.rev (List.fold_left f' [] l)
 
 let map_lift_exists f l
     =

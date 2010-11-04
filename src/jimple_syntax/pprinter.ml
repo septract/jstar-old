@@ -63,12 +63,12 @@ let label_name2str =  identifier2str
 
 let name2str n = 
   match n with 
-  | Quoted_name s -> s
+  | Quoted_name s
   | Identifier_name s -> s
 
 let class_name2str = function
-  | Quoted_clname s -> s
-  | Identifier_clname s -> s
+  | Quoted_clname s 
+  | Identifier_clname s
   | Full_identifier_clname s -> s
 
 let sign2str = function 
