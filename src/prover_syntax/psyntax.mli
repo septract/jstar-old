@@ -50,6 +50,12 @@ module VarSet :
     val split : elt -> t -> t * bool * t
   end
 type varset = VarSet.t
+val vs_add : VarSet.elt -> VarSet.t -> VarSet.t
+val vs_empty : VarSet.t
+val vs_is_empty : VarSet.t -> bool
+val vs_union : VarSet.t -> VarSet.t -> VarSet.t
+val vs_inter : VarSet.t -> VarSet.t -> VarSet.t
+val vs_diff : VarSet.t -> VarSet.t -> VarSet.t
 val vs_fold : (VarSet.elt -> 'a -> 'a) -> VarSet.t -> 'a -> 'a
 val vs_for_all : (VarSet.elt -> bool) -> VarSet.t -> bool
 val vs_from_list : VarSet.elt list -> VarSet.t
@@ -96,6 +102,9 @@ val empty : varmap
 val subst_args : varmap -> args -> args
 val string_args : Format.formatter -> args -> unit
 val string_args_list : Format.formatter -> args list -> unit
+val ev_args : args -> VarSet.t -> VarSet.t
+val ev_args_list : args list -> VarSet.t -> VarSet.t
+val fv_args : args -> VarSet.t -> VarSet.t
 val fv_args_list : args list -> VarSet.t -> VarSet.t
 type pform_at =
     P_EQ of args * args
@@ -168,17 +177,29 @@ type inductive_stmt = IndImport of string | IndDef of inductive
 type var = Vars.var
 type term = args
 type form = pform
+val mkVar : var -> term
+val mkFun : string -> term list -> term
+val mkString : string -> term
 val mkFalse : form
 val mkEQ : term * term -> form
+val mkNEQ : term * term -> form
+val mkPPred : string * term list -> form
+val mkSPred : string * term list -> form
 val mkOr : form * form -> form
+val mkStar : form -> form -> form
 val mkEmpty : form
 val fv_form : pform -> VarSet.t
 val ev_form_acc : pform -> VarSet.t -> VarSet.t
 val ev_form : pform -> VarSet.t
 val string_form : Format.formatter -> form -> unit
+val prog_var : string -> var
+val fresh_exists_var : unit -> var
 type variable_subst = varmap
+val empty_subst : variable_subst
+val add_subst : var -> term -> variable_subst -> variable_subst
 val subst_kill_vars_to_fresh_prog : varset -> variable_subst
 val subst_kill_vars_to_fresh_exist : varset -> variable_subst
+val subst_form : variable_subst -> form -> form
 val mk_seq_rule : psequent * psequent list list * string -> sequent_rule
 type external_prover =
     (pform -> pform -> bool) * (pform -> args list -> args list list)

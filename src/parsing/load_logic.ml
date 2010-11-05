@@ -18,7 +18,6 @@ open Load
 open Psyntax
 open System
 
-
 let load_logic_extra_rules 
     dirs filename extra_rules 
     : (Psyntax.sequent_rule list * Psyntax.rewrite_rule list * string list) =

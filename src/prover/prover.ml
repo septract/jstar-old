@@ -212,9 +212,9 @@ let apply_rule
 		  sr.premises
 	      end
 	    )
+	    )
+	)
     )
-    )
-  )
 
 
 let rewrite_guard_check seq (ts,guard) =

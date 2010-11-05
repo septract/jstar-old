@@ -64,8 +64,11 @@ F#*)
 let vs_mem = VarSet.mem
 let vs_add = VarSet.add
 let vs_empty = VarSet.empty
+let vs_is_empty = VarSet.is_empty
 let vs_fold = VarSet.fold
 let vs_iter = VarSet.iter
+let vs_union = VarSet.union
+let vs_inter = VarSet.inter
 let vs_diff = VarSet.diff
 let vs_exists = VarSet.exists
 let vs_for_all = VarSet.for_all
@@ -176,6 +179,8 @@ let rec string_args ppf arg =
   | Arg_var v -> Format.fprintf ppf "%s" (string_var v)
   | Arg_string s -> Format.fprintf ppf "\"%s\""  s 
   | Arg_op ("builtin_plus",[a1;a2]) -> Format.fprintf ppf "(%a+%a)" string_args a1 string_args a2
+  | Arg_op ("builtin_minus",[a1;a2]) -> Format.fprintf ppf "(%a-%a)" string_args a1 string_args a2
+  | Arg_op ("builtin_mult",[a1;a2]) -> Format.fprintf ppf "(%a*%a)" string_args a1 string_args a2
   | Arg_op ("tuple",al) -> Format.fprintf ppf "(%a)" string_args_list al
   | Arg_op (name,args) -> Format.fprintf ppf "%s(%a)" name string_args_list args 
   | Arg_cons (name,args) -> Format.fprintf ppf "%s(%a)" name string_args_list args 

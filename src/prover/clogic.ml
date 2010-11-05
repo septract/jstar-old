@@ -397,11 +397,9 @@ let rec convert_ground (ts :term_structure) (sf : syntactic_form) : formula * te
   assert (sf.sdisjuncts = []);  (* don't want disjuncts in an SMT pattern *)
   assert (sf.sspat = SMSet.empty); 
   let plain, ts = smset_to_list_ground sf.splain ts in
-  assert (sf.seqs = []); (* TODO: handle this properly *)
-  assert (sf.sneqs = []); 
-  {spat = RMSet.empty; plain = RMSet.lift_list plain; disjuncts = []; eqs=[]; neqs=[]}, ts
-
-
+  let eqs, ts = List.fold_left (fun (eqs,ts) (x,y) -> let cx,ts = ground_pattern x ts in let cy,ts = ground_pattern y ts in ((cx,cy)::eqs,ts)) ([],ts) sf.seqs in  
+  let neqs, ts = List.fold_left (fun (neqs,ts) (x,y) -> let cx,ts = ground_pattern x ts in let cy,ts = ground_pattern y ts in ((cx,cy)::neqs,ts)) ([],ts) sf.sneqs in  
+  {spat = RMSet.empty; plain = RMSet.lift_list plain; disjuncts = []; eqs=eqs; neqs=neqs}, ts
 
 
 let conjoin fresh (f : ts_formula) (sf : syntactic_form) =
@@ -663,6 +661,8 @@ and match_disjunct remove ts form pat_disj cont =
 	match_form remove ts form x (fun (ts,form) -> match_disjunct remove ts form pat_disj cont)
       with No_match ->
 	match_form remove ts form y (fun (ts,form) -> match_disjunct remove ts form pat_disj cont)
+
+
 
 
 (* Takes a formula, and returns a pair of formula with one of the

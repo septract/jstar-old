@@ -83,6 +83,38 @@ let new_ts () =
 } 
 let local_debug = false
 
+let is_good_rep ts rep = 
+		 try 
+		   (match CMap.find rep ts.originals with 
+                   | FArg_var (PVar _)
+		   | FArg_op(_,[])
+                   | FArg_cons(_,[])
+                   | FArg_string _ -> true 
+                   | _ -> false )
+                 with Not_found -> false
+
+let is_evar ts rep = 
+		 try 
+		   (match CMap.find rep ts.originals with 
+                   | FArg_var (EVar _) -> true 
+                   | _ -> false )
+                 with Not_found -> false
+
+let find_good_rep ts rep = 
+        if is_good_rep ts rep then rep else 
+        (try 
+            (List.find 
+              (is_good_rep ts) 
+	      (CC.others ts.cc rep))
+         with Not_found ->
+           try
+            (List.find 
+              (is_evar ts) 
+	      (CC.others ts.cc rep))
+           with Not_found -> 
+              rep
+) 
+
 let has_pp_c ts c : bool =
   try
     match CMap.find c ts.originals with 
@@ -90,7 +122,7 @@ let has_pp_c ts c : bool =
 	begin
 	  match v with 
 	    AnyVar _ -> local_debug
-	  | EVar _ -> local_debug
+	  | EVar _ -> (find_good_rep ts c) = c
 	  | PVar _ -> VarMap.mem v ts.pvars
 	end
     | FArg_op ("tuple",_)
@@ -101,24 +133,32 @@ let has_pp_c ts c : bool =
   with Not_found ->
     false 
 
+
 (* Remove pattern match variables from pretty print where possible *)
 let rec get_pargs norm ts rs rep : Psyntax.args =
   if List.mem rep rs then 
-    if rep <> CC.normalise ts.cc rep then 
+    if rep = find_good_rep ts rep  || (List.mem (find_good_rep ts rep) rs) then 
       (* TODO: Add topological sorting to avoid printing this if possible.
          If not possible should introduce a new variable. *)
      (let cname = Printf.sprintf "CYCLE%i" (CC.const_int rep ts.cc) in 
       Arg_op (cname, []))
-    else get_pargs norm ts rs (CC.normalise ts.cc rep)
+    else get_pargs norm ts (rep::rs) (find_good_rep ts rep)
   else 
   try  
-    let fpt = CMap.find (if norm then (CC.normalise ts.cc rep) else rep) ts.originals in 
+    let fpt = CMap.find 
+         (if norm then find_good_rep ts rep
+          else rep) ts.originals
+    in
+    let fpt = match fpt with 
+        | FArg_var (EVar _)
+            -> CMap.find (find_good_rep ts rep) ts.originals  
+        | _ -> fpt in
     match fpt with 
       FArg_var v ->
 	begin 
 	  match v with 
 	    EVar _ -> Arg_var v
-	  | PVar _ -> Arg_var v
+    	  | PVar _ -> Arg_var v
 	  | AnyVar _ -> 
 	      let nrep = if local_debug then rep else (CC.normalise ts.cc rep) in 
 	      if nrep <> rep then 
@@ -139,22 +179,31 @@ let rec get_pargs norm ts rs rep : Psyntax.args =
 	       n, get_pargs true ts (rep::rs) r) 
 	     fld) in 
 	a	  
-  with Not_found -> Arg_op ("NOT_FOUND", []) 
+  with Not_found -> 
+     (let cname = Printf.sprintf "NOT_FOUND%i" (CC.const_int rep ts.cc) in 
+      Arg_var (Vars.freshe_str cname))
 
 
 (* A version of get_pargs which hides records, for use in SMT *)
 (* TODO: factor out both get_pargs into a single function *)
 let rec get_pargs_norecs norm ts rs rep : Psyntax.args =
   if List.mem rep rs then 
-    if rep <> CC.normalise ts.cc rep then 
+    if rep = find_good_rep ts rep || (List.mem (find_good_rep ts rep) rs)  then 
       (* TODO: Add topological sorting to avoid printing this if possible.
          If not possible should introduce a new variable. *)
      (let cname = Printf.sprintf "CYCLE%i" (CC.const_int rep ts.cc) in 
       Arg_op (cname, []))
-    else get_pargs_norecs norm ts rs (CC.normalise ts.cc rep)
+    else get_pargs norm ts (rep::rs) (find_good_rep ts rep)
   else 
   try  
-    let fpt = CMap.find (if norm then (CC.normalise ts.cc rep) else rep) ts.originals in 
+    let fpt = CMap.find 
+         (if norm then find_good_rep ts rep
+          else rep) ts.originals
+    in
+    let fpt = match fpt with 
+        | FArg_var (EVar _)
+            -> CMap.find (find_good_rep ts rep) ts.originals  
+        | _ -> fpt in
     match fpt with 
       FArg_var v ->
 	begin 
@@ -177,7 +226,10 @@ let rec get_pargs_norecs norm ts rs rep : Psyntax.args =
     | FArg_record fld ->
         (let rname = Printf.sprintf "RECORD%i" (CC.const_int rep ts.cc) in 
          Arg_op (rname, []))
-  with Not_found -> Arg_op ("NOT_FOUND", []) 
+  with Not_found -> 
+     (let cname = Printf.sprintf "NOT_FOUND%i" (CC.const_int rep ts.cc) in 
+      Arg_var (Vars.freshe_str cname))
+
 
 
 
@@ -269,7 +321,13 @@ let rec add_term params pt ts : 'a * term_structure =
 	  match args with 
 	    [] ->
 	      let c,cc = CC.add_app ts.cc c ts.tuple in  
-	      lift c,{ts with cc=cc; originals = CMap.add c (FArg_op(f,[])) ts.originals}
+	      lift c,
+                  if CMap.mem c ts.originals then
+                     {ts with cc=cc} 
+                  else 
+                     {ts with cc=cc; 
+                      originals = 
+                          CMap.add c (FArg_op(f,[])) ts.originals}
 	  | _ -> 
 	      let c2,ts,cl = add_term_list params args (lift c,ts) [] in 
 	      c2, register_op c2 (f, List.rev cl) ts 
@@ -349,11 +407,11 @@ let add_pattern term ts =
   let c,ts = add_term params_pattern term ts in 
   c,ts
   
-(*
+
 let ground_pattern (pattern : args) (ts : term_structure) : term_handle * term_structure = 
   let c,ts = add_term params_pattern_to_term pattern ts in 
   c, ts
-*)
+
 
 let ground_pattern_tuple (ptl : args list) (ts : term_structure) : term_handle * term_structure = 
   let c,ts,cl = add_term_list (params_pattern_to_term) ptl (ts.tuple,ts) [] in 
@@ -496,22 +554,22 @@ let get_args_all
   List.map (get_pargs_norecs false ts []) (CC.get_consts ts.cc)
 
 let get_term ts r : Psyntax.args = 
-  get_pargs true ts [] r
+  get_pargs false ts [] r
 
 let kill_var ts v =
   try 
     let r = VarMap.find v ts.pvars in 
     let cc = CC.delete ts.cc r in 
     let pvars = VarMap.remove v ts.pvars in 
-    begin 
-      match CMap.find r ts.originals with
-	FArg_var v' when (v'=v) -> 
-	  {ts with 
-	    pvars = pvars; 
-	    cc = cc;
-	    originals = CMap.add r (FArg_var (Vars.freshen_exists v)) (CMap.remove r ts.originals)}
-      |  _ -> {ts with cc=cc; pvars = pvars} 
-    end
+    let pp_term = CMap.find r ts.originals in
+    let originals = CMap.remove r ts.originals in 
+    let originals = 
+      match pp_term with
+	FArg_var (PVar (v',n)) when ((PVar (v',n))=v) -> 
+	    CMap.add r (FArg_var (Vars.freshen_exists v)) originals 
+      |  _ -> originals
+      in
+    {ts with pvars = pvars; cc=cc; originals=originals} 
   with Not_found -> 
     ts
 
