@@ -620,10 +620,13 @@ let cn_of_fn fn =
  *)
 let compile_java_to_class class_path source_path java_files =
   if java_files <> [] then begin
-    let start_time = Unix.time () in
+    let start_time = (* The filesystem might be on another machine. *)
+      let f = work_dir / "javac_starttime" in
+      (f |> open_out |> close_out); (* TODO(rgrig): Treat exceptions. *)
+      (Unix.stat f).Unix.st_mtime in
     run "javac" (get_javac_cmd class_path source_path java_files);
     let is_generated_class f = 
-      System.is_file ".class" f && (Unix.stat f).Unix.st_mtime >= start_time in
+      System.is_file ".class" f && start_time <= (Unix.stat f).Unix.st_mtime in
     System.fs_filter is_generated_class classes_dir |> List.map cn_of_fn
   end else []
 
