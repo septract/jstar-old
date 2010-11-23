@@ -13,6 +13,7 @@
 
 open Debug
 open Jstar_std
+open Printf     (* DBG *)
 
 let java_path_delimiter = if Sys.os_type = "Windows" then ";" else ":"
 let java_path_delimiter_re = Str.regexp (java_path_delimiter ^ "+")
@@ -101,7 +102,7 @@ let is_file ext fn =
   StringH.ends_with (String.lowercase ext) (String.lowercase fn)
 
 (* TODO(rgrig): Thee should probably depend on the terminal. *)
-(* TODO(rgrig): Is there a (nice) ncurses ocaml inerface? *)
+(* TODO(rgrig): Is there a (nice) ncurses ocaml interface? *)
 let terminal_red = "\x1B[1;31m"
 let terminal_green = "\x1B[1;32m"
 let terminal_white = "\x1B[0m"
