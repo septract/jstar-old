@@ -1,4 +1,4 @@
-Specification test_while : { ls(p,nil()) } { ls(p,nil()) } ?
+Specification test_while : { } { } ?
 assign x := {} {$ret_v1 = p} ();
 label loop_top;
 goto loop_body, loop_exit;

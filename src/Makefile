@@ -4,13 +4,13 @@ build:
 	$(MAKE) -C jimplefront
 	$(MAKE) -C proverfront
 	$(MAKE) -C symbfront
-#	$(MAKE) -C abductfront
+	$(MAKE) -C abductfront
 
 debug:
 	$(MAKE) -C jimplefront debug
 	$(MAKE) -C proverfront debug
 	$(MAKE) -C symbfront debug
-#	$(MAKE) -C abductfront debug
+	$(MAKE) -C abductfront debug
 
 clean:
 	$(MAKE) -C jimple_syntax clean

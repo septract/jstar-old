@@ -15,7 +15,7 @@
 
 open List
 open Printf
-open Methdec_core
+open Core
 open Pprinter_core
 open Load_logic
 open Psyntax
@@ -25,24 +25,21 @@ let symexec_logic_file_name = ref "";;
 let abduct_logic_file_name = ref "";;
 let absrules_file_name = ref "";;
 
-let proof_succes = ref true;; 
+let set_question_file_name fn =
+  question_file_name := fn;
+  Symexec.file := Filename.basename fn
 
-let set_question_name n =  question_file_name := n 
-let set_symexec_logic_file_name n =  symexec_logic_file_name := n 
-let set_abduct_logic_file_name n =  abduct_logic_file_name := n 
-let set_absrules_file_name n =  absrules_file_name := n 
-
-let arg_list = [ 
-  ("-f", Arg.String(set_question_name ), "question file name" );
-  ("-ls", Arg.String(set_symexec_logic_file_name ), "symbolic execution logic file name" );
-  ("-la", Arg.String(set_abduct_logic_file_name ), "abduction logic file name" );
-  ("-a", Arg.String(set_absrules_file_name ), "abstraction rules file name" );
+let arg_list = Config.args_default @ [ 
+  ("-f", Arg.String set_question_file_name, "question file name");
+  ("-l", Arg.Set_string symexec_logic_file_name, "forward execution logic file name");
+  ("-al", Arg.Set_string abduct_logic_file_name, "abduction logic file name");
+  ("-a", Arg.Set_string absrules_file_name, "abstraction rules file name");
 ]
 
 
 let main () : unit = 
   let usage_msg=
-"Usage: -ls <symexec_logic_file_name>  -la <abduct_logic_file_name>  -a <abstraction_file_name>  -f <question_file_name>" in 
+"Usage: -l <symexec_logic_file_name>  -al <abduct_logic_file_name>  -a <abstraction_file_name>  -f <question_file_name>" in 
   Arg.parse arg_list (fun s ->()) usage_msg;
 
   if !question_file_name="" then 
@@ -54,29 +51,28 @@ let main () : unit =
   else if !absrules_file_name="" then
     printf "Abstraction rules file name not specified. Can't continue....\n %s \n" usage_msg
   else
+    if !Config.smt_run then Smt.smt_init(); 
+    
     let l1,l2,cn = (load_logic (System.getenv_dirlist "JSTAR_LOGIC_LIBRARY") !symexec_logic_file_name) in 
     let symexec_lo = {empty_logic with seq_rules=l1; rw_rules=l2; consdecl=cn} in
     let l1,l2,cn = (load_logic (System.getenv_dirlist "JSTAR_LOGIC_LIBRARY") !abduct_logic_file_name) in 
     let abduct_lo = {empty_logic with seq_rules=l1; rw_rules=l2; consdecl=cn} in
     let l1,l2,cn = Load_logic.load_logic  (System.getenv_dirlist "JSTAR_LOGIC_LIBRARY") !absrules_file_name in 
     let abs_rules = {empty_logic with seq_rules=l1; rw_rules=l2; consdecl=cn} in
-    let question_list = System.parse_file Jparser.symb_question_file Jlexer.token !question_file_name "Question" true in
+    let question_list = System.parse_file Jparser.symb_question_file Jlexer.token !question_file_name "Question" in
+    
     List.iter (
     fun question ->
       match question with 
-      
        | Specification(mname,spec,core)  ->
           Format.printf "\nMethod: %s\nSpec: %a"  mname  Spec.spec2str spec; 
-       	  let stmts_core = map (fun x -> Methdec_core.stmt_create x [] []) core in 
-          let specs = Abduction.bi_abduct mname stmts_core spec symexec_lo abduct_lo abs_rules in
+       	  let stmts_core = map Cfg_core.mk_node core in 
+          let specs = Symexec.bi_abduct mname stmts_core spec symexec_lo abduct_lo abs_rules in
           Format.printf "\nDiscovered specs:\n";
           List.iter (fun (spec_pre, spec_post) ->
             Format.printf "@\npre:@\n    %a@." Sepprover.string_inner_form spec_pre;
             Format.printf "@\npost:@\n    %a@." Sepprover.string_inner_form spec_post;)
             specs
-          
-       | _ -> Format.printf "Currently unsupported"
-       
     ) question_list
 
 

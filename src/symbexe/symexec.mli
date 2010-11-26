@@ -59,7 +59,7 @@ module Idmap :
     val equal : ('a -> 'a -> bool) -> 'a t -> 'a t -> bool
   end
 val pp_dotty_transition_system : unit -> unit
-type formset_entry = Sepprover.inner_form * node
+type formset_entry = Specification.symb_form * node
 type formset = formset_entry list
 type formset_hashtbl = (int, formset) Hashtbl.t
 val parameter : int -> string
@@ -78,3 +78,11 @@ val get_frame :
   Cfg_core.cfg_node list ->
   Psyntax.pform ->
   Psyntax.logic -> Psyntax.logic -> Sepprover.inner_form list
+val bi_abduct :
+  string ->
+  Cfg_core.cfg_node list ->
+  Spec.spec ->
+  Psyntax.logic ->
+  Psyntax.logic ->
+  Psyntax.logic ->
+  (Sepprover.inner_form * Sepprover.inner_form) list

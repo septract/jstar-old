@@ -22,6 +22,17 @@ open Spec
 
 type ts_excep_post = inner_form ClassMap.t 
 
+type symb_form =
+  {
+    heap : inner_form;
+    antiheap : inner_form;
+  }
+
+let empty_inner_form = 
+  match convert mkEmpty with
+    None -> assert false;
+  | Some emp -> emp
+  
 let conjunction_excep excep_post f1 =
   ClassMap.map (fun post -> Psyntax.pconjunction post f1) excep_post
 
@@ -106,21 +117,72 @@ let ev_spec_pre spec =
       ev
 
 
-(* This is the function that performs the symbolic execution! *)
-let jsr logic (pre : inner_form) (spec : spec)  : (inner_form  list * ts_excep_post list) option  = 
+(* if pre_antiframe = None then perform jsr, otherwise perform jsr with abduction *)
+let jsr logic (pre : inner_form) (pre_antiframe : inner_form option) (spec : spec) : (symb_form list) option  = 
   let ev = ev_spec spec in 
   let subst = subst_kill_vars_to_fresh_exist ev in 
   let spec = sub_spec subst spec in 
   match spec with
-    {pre=spec_pre; post=spec_post; excep =spec_excep} -> 
+    {pre=spec_pre; post=spec_post; excep=spec_excep} ->
+    let symb_form_list = 
+      match pre_antiframe with
+        None ->
+        begin
+          let frame_list = Sepprover.frame logic pre spec_pre in
+          match frame_list with
+            None -> None
+          | Some frame_list -> 
+            Some (List.map (fun form -> {heap=form; antiheap=empty_inner_form}) frame_list)
+        end
+      | Some pre_antiframe ->
+        begin
+          let frame_antiframe_list = Sepprover.abduction_opt logic (Some pre) spec_pre in
+          match frame_antiframe_list with
+            None -> None
+          | Some frame_antiframe_list ->
+            Some (List.map (fun (form1, form2) -> {heap=form1; antiheap=form2}) frame_antiframe_list)
+        end
+    in
+    match symb_form_list with
+      None -> None
+    | Some symb_form_list ->
+      let res = Misc.map_option 
+        (fun symb_form ->
+          let pre_antiframe = 
+            match pre_antiframe with
+              None -> empty_inner_form
+            | Some pre_antiframe -> pre_antiframe
+          in
+          try Some (Sepprover.conjoin spec_post symb_form.heap, 
+                    Sepprover.conjoin_inner pre_antiframe symb_form.antiheap) 
+          with Contradiction -> None) 
+        symb_form_list in 
+      let res = List.map (fun (ts1, ts2) -> 
+        let ts1' = vs_fold (fun e ts -> kill_var e ts) ev ts1 in
+        let ts2' = vs_fold (fun e ts -> kill_var e ts) ev ts2 in
+        {heap=ts1'; antiheap=ts2'}) res in 
+      Some res
+
+
+(* TODO: need exceptions in jsr? *)
+let jsr_excep logic (pre : inner_form) (spec : spec) : (inner_form  list * ts_excep_post list) option = 
+  let ev = ev_spec spec in 
+  let subst = subst_kill_vars_to_fresh_exist ev in 
+  let spec = sub_spec subst spec in 
+  match spec with
+    {pre=spec_pre; post=spec_post; excep=spec_excep} -> 
       let frame_list = Sepprover.frame logic pre spec_pre in 
       match frame_list with
-	None -> None
+        None -> None
       |	Some frame_list -> 
-	let res = Misc.map_option (fun post -> (*Prover.tidy_one*) try Some (Sepprover.conjoin spec_post post) with Contradiction -> None) frame_list in 
-	let excep_res = List.map (conjunction_excep_convert spec_excep) frame_list in 
-	let res = List.map (fun ts -> vs_fold (fun e ts -> kill_var e ts) ev ts) res in 
-	Some (res,excep_res)
+        let res = Misc.map_option 
+          (fun post -> (*Prover.tidy_one*) 
+            try Some (Sepprover.conjoin spec_post post) with Contradiction -> None) 
+        frame_list in 
+        let excep_res = List.map (conjunction_excep_convert spec_excep) frame_list in 
+        let res = List.map (fun ts -> vs_fold (fun e ts -> kill_var e ts) ev ts) res in 
+        Some (res,excep_res)
+
 
 let logical_vars_to_prog spec2 = 
   let ev = ev_spec_pre spec2 in 
@@ -138,7 +200,7 @@ let refinement_extra (logic : logic) (spec1 : spec) (spec2 : spec) (extra : pfor
       match (Sepprover.convert (extra&&&pre)) with 
 	None -> true
       |	Some form -> 
-	  match jsr logic form spec1 with 
+	  match jsr_excep logic form spec1 with 
 	    None -> false
 	  | Some (newposts, newexcep_posts) ->
 	      let res = List.for_all (fun newpost -> Sepprover.implies logic newpost post) newposts in 

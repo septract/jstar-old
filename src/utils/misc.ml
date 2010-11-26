@@ -106,3 +106,6 @@ let memo2 f =
       let r = f x y in
       (Hashtbl.add cache (x, y) r; r)
 
+let cross_product l1 l2 =
+  let product l v2 = List.map (fun v1 -> (v1, v2)) l in
+  List.concat (List.map (product l1) l2)
