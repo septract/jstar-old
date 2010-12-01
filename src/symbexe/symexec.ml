@@ -387,9 +387,9 @@ let eliminate_ret_var
       ( h : symb_form ) : symb_form   =
    let ret_var = Vars.concretep_str name_ret_var in
    let heap = update_var_to v (Arg_var ret_var) h.heap in
-   (*let antiheap = update_var_to v (Arg_var ret_var) h.antiheap in*)
+   let antiheap = update_var_to v (Arg_var ret_var) h.antiheap in
    { heap = kill_var ret_var heap;
-     antiheap = h.antiheap (*kill_var ret_var antiheap;*) }
+     antiheap = kill_var ret_var antiheap; }
 
 
 (* extract return values called 'name_template' into variables vs *)
