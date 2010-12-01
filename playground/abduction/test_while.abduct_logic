@@ -162,12 +162,14 @@ if
 /**************************************
  *  Abduction of list
  **************************************/  
+/*
 rule abduct_list :
   | |- ls(?x,nil()) -|
 without
   field(?x,?f,?y)
 if
   | |- -| ls(?x,nil())
+*/
 
 /*  
 rule rearrange1:

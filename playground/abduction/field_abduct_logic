@@ -80,7 +80,9 @@ if
  **************************************/  
 rule abduct_field :
   | |- field(?x,?f,?y) -|
+/*
 without
   ls(?x,?z) || NodeLL(?x,?z) || lspe(?x,?z)
+*/
 if
   | |- -| field(?x,?f,?y)

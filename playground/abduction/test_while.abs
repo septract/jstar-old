@@ -3,18 +3,12 @@
  *************************************/
 
 
-
 //Roll up a complete NodeLL if we have both fields.
 abstraction field_remove2:
-  | field(?x,"<NodeLL: next>",?e1) * field(?x,"<NodeLL: content>",_y) 
+  | field(?x,"<NodeLL: next>",?e1) * field(?x,"<NodeLL: content>",?e2) 
 ~~>
   | NodeLL(?x,?e1) 
 
-
-abstraction type_remove :
-  type(?x,"NodeLL") | NodeLL(?x,?y) 
-~~>
-   | NodeLL(?x,?y)  
 
 /****************nil() rules******************/
 
@@ -224,11 +218,3 @@ if
 | | |- |
 */
 /*************** End Abs2 Rule *******************/
-
-/*
-abstraction rearrange_abs1:
-  | ?x=?p * ls(?x,nil()) ~~> | ls(?p,?x) * ls(?x,nil())
-*/
-
-abstraction pto:
-NodeLL(?x,?y) ~~> ls(?x,?y)
