@@ -32,6 +32,18 @@ let smterr = ref Pervasives.stdin;;
 let smtout_lex = ref (Lexing.from_string "");; 
 
 
+(* timeout code pinched from http://caml.inria.fr/pub/docs/oreilly-book/html/book-ora168.html *)
+exception Timeout 
+
+let sigalrm_handler = Sys.Signal_handle (fun _ -> raise Timeout)
+
+let timeout f arg time =
+  let old_behavior = Sys.signal Sys.sigalrm sigalrm_handler in
+  let reset_sigalrm () = Sys.set_signal Sys.sigalrm old_behavior 
+  in ignore (Unix.alarm time);
+  try let res = f arg in reset_sigalrm (); res  
+  with exc -> reset_sigalrm (); raise exc
+
 
 let smt_init () : unit = 
   let path = ( if (!Config.solver_path <> "") then !Config.solver_path 
@@ -44,6 +56,7 @@ let smt_init () : unit =
         if Config.smt_debug() then Format.printf "Initialising SMT@\n"; 
         let args = System.getenv "JSTAR_SMT_ARGUMENTS" in 
         let command = Filename.quote path ^ " " ^ args in 
+        let pid = Unix.create_process path [||] o i e in 
         let o, i, e = Unix.open_process_full command (environment()) in 
         smtout := o;  smtin := i;  smterr := e;
         smtout_lex := Lexing.from_channel !smtout; 
@@ -72,6 +85,10 @@ let smt_fatal_recover () : unit  =
   Format.printf "SMT off.@\n"; 
   Format.print_flush(); 
   Config.smt_run := false 
+
+(*  
+let smt_restart_solver () : unit 
+*)  
 
 
 
@@ -305,7 +322,7 @@ let smt_assert (ass : string) : unit =
 
 
 let smt_check_sat () : bool =
-  match smt_command "(check-sat)" with 
+  match timeout smt_command "(check-sat)" 10 with 
   | Sat -> true
   | Unsat -> false
   | Unknown -> false
@@ -313,7 +330,7 @@ let smt_check_sat () : bool =
 
 
 let smt_check_unsat () : bool =
-  match smt_command "(check-sat)" with 
+  match timeout smt_command "(check-sat)" 10 with 
   | Unsat -> true
   | Sat -> false
   | Unknown -> false
@@ -394,12 +411,18 @@ let finish_him
   with 
   | SMT_error r -> 
     smt_reset(); 
-    Format.printf "@{<b>SMT ERROR@}: %s@\n" r; 
+    Format.printf "@{<b>SMT ERROR:@} %s@\n" r; 
     Format.print_flush(); 
     false
   | SMT_fatal_error -> 
     smt_fatal_recover(); 
     false 
+  | Timeout -> 
+    smt_reset(); 
+    Format.printf "@{<b>SMT ERROR:@} SMT timed out@\n"; 
+    Format.print_flush(); 
+    false
+
   
 
 let true_sequent_smt (logic : Psyntax.logic) (seq : sequent) : bool =  
@@ -437,7 +460,7 @@ let string_sexp_rw (a : Psyntax.rewrite_rule) : (string * smttypeset) =
 
   let sexp = if gsexp = "" 
              then (string_sexp_eq (lhs,rhs))
-             else "(=> (not "^gsexp^") "^(string_sexp_eq (lhs,rhs))^")"  in 
+             else "(=> (not "^gsexp^") "^(string_sexp_eq (lhs,rhs))^" :pat{"^(string_sexp_args lhs)^"})"  in 
 
 (*  let sexp = (string_sexp_eq (lhs,rhs)) in  *)
 
@@ -508,11 +531,16 @@ let ask_the_audience
              fold_left (fun x y -> try make_list_equal x y with Contradiction -> raise Assm_Contradiction) ts rs
   with 
   | SMT_error r -> 
-    smt_reset(); 
-    Format.printf "@{<b>SMT ERROR@}: %s@\n" r;
+    Format.printf "@{<b>SMT ERROR:@} %s@\n" r;
     Format.print_flush(); 
+    smt_reset(); 
     raise Backtrack.No_match
   | SMT_fatal_error -> 
     smt_fatal_recover(); 
+    raise Backtrack.No_match
+  | Timeout -> 
+    Format.printf "@{<b>SMT ERROR:@} SMT timed out@\n"; 
+    Format.print_flush(); 
+    smt_restart_solver(); 
     raise Backtrack.No_match
   

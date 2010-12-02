@@ -13,3 +13,11 @@ rewrite f1:
   f(?x,?y) = f(g(?y))
 without
   !GT(?y,?x)
+
+
+rewrite app_app_assoc :
+  app(app(?x,?y),?z) = app(?x,app(?y,?z))
+without
+    ?y=empty()
+    || ?z=empty()
+    || ?x=empty()
