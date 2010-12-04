@@ -1,5 +1,7 @@
 *.core
 *.swp
+*.cmo
+*.cmi
 .depend
 _build
 tags
