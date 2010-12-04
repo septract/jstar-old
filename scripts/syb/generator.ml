@@ -4,9 +4,6 @@ open Ast
 open Format
 open Std
 
-(* TODO: collect mentioned but unused types, add them as abstract *)
-(* TODO: collect module names, strip types *)
-
 let modules = ref StringSet.empty
 let evaluators = ref StringMap.empty
 let mentioned_types = ref StringSet.empty
@@ -78,10 +75,9 @@ and type_expr = function
   | TE_id t -> 
       let x = fresh_var () in 
       [(Code.P_var x, Code.V_app ((id t), Code.V_var x))]
-  | TE_application ("option", t) -> [
-      (Code.P_const ("None", []), v Code.default);
+  | TE_application ("option", t) ->
       let x = fresh_var () in
-      (Code.P_const ("Some", [Code.P_var x]), mk_app [mk_abs_te t] (v x))]
+      [Code.P_var x, mk_app [v"maybe"; v Code.default; mk_abs_te t] (v x)]
   | TE_application ("list", t) ->
       let x = fresh_var () in
       [Code.P_var x, mk_combine (mk_map (mk_abs_te t) (v x))]
@@ -111,7 +107,7 @@ let ml_type {type_name=n; type_kind=k} =
 let default_fun = mk_abs [Code.P_var "_", v Code.default]
 
 let process ast =
-  modules := StringSet.empty;
+  modules := StringSet.singleton "Jstar_std";
   evaluators := StringMap.empty;
   mentioned_types := StringSet.empty;
   List.iter ml_type ast;
