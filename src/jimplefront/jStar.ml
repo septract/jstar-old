@@ -22,6 +22,8 @@ open Format
 open Jstar_std
 open Scanf
 
+module JPT = Jparsetree
+
 (* {{{ module Path *)
 (** Functions that deal with Java CLASSPATHs and SOURCEPATHs. *)
 (* TODO(rgrig): Should CLASSPATH and SOURCEPATH be treated differently? *)
@@ -612,7 +614,7 @@ let cn_of_fn fn =
     else go (Filename.basename prefix :: acc) (Filename.dirname prefix) in
   go [] (Filename.chop_suffix fn ".class")
 (* }}} *)
-(* {{{ main phases *)
+(* {{{ *) (** {2 main phases} *)
 (* 
   Returns the classes defined in [java_files], and makes sure their
   bytecode is in [classes_dir]. Note that A.java may define class B, while
@@ -638,6 +640,15 @@ let load_rule_file f =
 
 let load_spec_file f =
   printf "@[TODO: load_spec_file %s@." f
+
+let _ = object 
+  inherit [StringSet.t] Jimple_evaluator.evaluator StringSet.empty
+  method eval_class_name = function
+    | JPT.Quoted_clname cn
+    | JPT.Identifier_clname cn
+    | JPT.Full_identifier_clname cn -> StringSet.singleton cn
+  method combine = StringSet.union
+end
 
 let verify_class c =
   printf "@[TODO: verify_class %s@." c
