@@ -67,15 +67,31 @@ type formula = {
   eqs : (Cterm.term_handle * Cterm.term_handle) list;
   neqs : (Cterm.term_handle * Cterm.term_handle) list;
 }
-type ts_formula = {
-  ts : Cterm.term_structure;
-  form : formula;
-  cache_sform : syntactic_form option ref;
-}
-val mk_ts_form : Cterm.term_structure -> formula -> ts_formula
-val kill_var : ts_formula -> Vars.var -> ts_formula
-val update_var_to : ts_formula -> Vars.var -> Psyntax.args -> ts_formula
-val pp_ts_formula : Format.formatter -> ts_formula -> unit
+module F:
+  sig
+    type ts_formula = {
+      ts : Cterm.term_structure;
+      form : formula;
+    }
+  end
+module AF:
+  sig
+    type ts_formula = {
+      ts : Cterm.term_structure;
+      form : formula;
+      antiform : formula;
+    }
+  end
+val mk_ts_form : Cterm.term_structure -> formula -> F.ts_formula
+val mk_ts_form_af : Cterm.term_structure -> formula -> formula -> AF.ts_formula
+val break_ts_form : F.ts_formula -> Cterm.term_structure * formula
+val break_ts_form_af : AF.ts_formula -> Cterm.term_structure * formula * formula
+val kill_var : F.ts_formula -> Vars.var -> F.ts_formula
+val kill_var_af : AF.ts_formula -> Vars.var -> AF.ts_formula
+val update_var_to : F.ts_formula -> Vars.var -> Psyntax.args -> F.ts_formula
+val update_var_to_af : AF.ts_formula -> Vars.var -> Psyntax.args -> AF.ts_formula
+val pp_ts_formula : Format.formatter -> F.ts_formula -> unit
+val pp_ts_formula_af : Format.formatter -> AF.ts_formula -> unit
 val pp_syntactic_form : Format.formatter -> syntactic_form -> unit
 val conjunction : formula -> formula -> formula 
 val empty : formula
@@ -88,7 +104,9 @@ val intersect_with_ts : Cterm.term_structure -> bool -> RMSet.multiset -> RMSet.
 val normalise :
   Cterm.term_structure -> formula -> formula * Cterm.term_structure
 val convert_to_inner : Psyntax.pform -> syntactic_form
-val conjoin : bool -> ts_formula -> syntactic_form -> ts_formula
+val conjoin : bool -> F.ts_formula -> syntactic_form -> F.ts_formula
+val conjoin_af : bool -> AF.ts_formula -> syntactic_form -> syntactic_form -> AF.ts_formula
+val combine : bool -> F.ts_formula -> syntactic_form -> AF.ts_formula
 type sequent = {
   matched : RMSet.multiset;
   ts : Cterm.term_structure;
@@ -125,15 +143,18 @@ val convert_rule : sequent_rule -> inner_sequent_rule
 val match_form : bool -> Cterm.term_structure -> formula -> syntactic_form -> (Cterm.term_structure * formula -> 'a) -> 'a
 val apply_or_left : sequent -> sequent list
 val apply_or_right : sequent -> sequent list list
-val get_frame : sequent -> ts_formula
-val get_frames : sequent list -> ts_formula list
-val get_frames_a : sequent list -> ts_formula list
-val get_antiframes : sequent list -> ts_formula list
-val convert_with_eqs : bool -> Psyntax.pform -> ts_formula
+val get_frame : sequent -> F.ts_formula
+val get_frames : sequent list -> F.ts_formula list
+val get_frames_antiframes : sequent list -> AF.ts_formula list
+(* TODO: remove
+val get_frames_a : sequent list -> F.ts_formula list
+val get_antiframes : sequent list -> F.ts_formula list
+*)
+val convert_with_eqs : bool -> Psyntax.pform -> F.ts_formula
 val convert :
   bool ->
   Cterm.term_structure -> Psyntax.pform -> formula * Cterm.term_structure
 val convert_ground : Cterm.term_structure -> syntactic_form -> (formula * Cterm.term_structure)
-val make_implies : ts_formula -> Psyntax.pform -> sequent
-val make_syntactic : ts_formula -> syntactic_form
-val make_implies_inner : ts_formula -> ts_formula -> sequent
+val make_implies : F.ts_formula -> Psyntax.pform -> sequent
+val make_syntactic : F.ts_formula -> syntactic_form
+val make_implies_inner : F.ts_formula -> F.ts_formula -> sequent

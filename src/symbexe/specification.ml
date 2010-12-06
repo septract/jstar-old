@@ -22,16 +22,13 @@ open Spec
 
 type ts_excep_post = inner_form ClassMap.t 
 
-type symb_form =
-  {
-    heap : inner_form;
-    antiheap : inner_form;
-  }
-
 let empty_inner_form = 
   match convert mkEmpty with
     None -> assert false;
   | Some emp -> emp
+
+let empty_inner_form_antiform =
+  lift_inner_form empty_inner_form
   
 let conjunction_excep excep_post f1 =
   ClassMap.map (fun post -> Psyntax.pconjunction post f1) excep_post
@@ -118,49 +115,33 @@ let ev_spec_pre spec =
 
 
 (* if pre_antiframe = None then perform jsr, otherwise perform jsr with abduction *)
-let jsr logic (pre : inner_form) (pre_antiframe : inner_form option) (spec : spec) : (symb_form list) option  = 
+let jsr logic (pre : inner_form_antiform) (spec : spec) (abduct : bool) : inner_form_antiform list option  = 
   let ev = ev_spec spec in 
   let subst = subst_kill_vars_to_fresh_exist ev in 
-  let spec = sub_spec subst spec in 
+  let spec = sub_spec subst spec in
+  let pre_form = inner_form_antiform_to_form pre in
   match spec with
     {pre=spec_pre; post=spec_post; excep=spec_excep} ->
-    let symb_form_list = 
-      match pre_antiframe with
-        None ->
-        begin
-          let frame_list = Sepprover.frame logic pre spec_pre in
-          match frame_list with
-            None -> None
-          | Some frame_list -> 
-            Some (List.map (fun form -> {heap=form; antiheap=empty_inner_form}) frame_list)
-        end
-      | Some pre_antiframe ->
-        begin
-          let frame_antiframe_list = Sepprover.abduction_opt logic (Some pre) spec_pre in
-          match frame_antiframe_list with
-            None -> None
-          | Some frame_antiframe_list ->
-            Some (List.map (fun (form1, form2) -> {heap=form1; antiheap=form2}) frame_antiframe_list)
-        end
+    let frame_antiframe_list = 
+      if abduct then
+        Sepprover.abduction_opt logic (Some pre_form) spec_pre
+      else
+        (let frame_list = Sepprover.frame logic pre_form spec_pre in
+        match frame_list with
+          None -> None
+        | Some frame_list -> 
+          Some (List.map (fun inner_form -> lift_inner_form inner_form) frame_list))
     in
-    match symb_form_list with
+    match frame_antiframe_list with
       None -> None
-    | Some symb_form_list ->
+    | Some frame_antiframe_list ->
       let res = Misc.map_option 
-        (fun symb_form ->
-          let pre_antiframe = 
-            match pre_antiframe with
-              None -> empty_inner_form
-            | Some pre_antiframe -> pre_antiframe
-          in
-          try Some (Sepprover.conjoin spec_post symb_form.heap, 
-                    Sepprover.conjoin_inner pre_antiframe symb_form.antiheap) 
+        (fun frame_antiframe ->
+          try Some (Sepprover.conjoin_af frame_antiframe spec_post (inner_form_antiform_to_antiform pre))
           with Contradiction -> None) 
-        symb_form_list in 
-      let res = List.map (fun (ts1, ts2) -> 
-        let ts1' = vs_fold (fun e ts -> kill_var e ts) ev ts1 in
-        let ts2' = vs_fold (fun e ts -> kill_var e ts) ev ts2 in
-        {heap=ts1'; antiheap=ts2'}) res in 
+        frame_antiframe_list in 
+      let res = List.map (fun frame_antiframe -> 
+        vs_fold (fun e ts_form -> kill_var_af e ts_form) ev frame_antiframe) res in 
       Some res
 
 

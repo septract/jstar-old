@@ -429,7 +429,7 @@ let check_imp (logic : logic) (seq : sequent) : bool =
       Failed -> false
     | Failed_eg x -> prover_counter_example := x ; false
 
-let check_frm (logic : logic) (seq : sequent) : Clogic.ts_formula list option =
+let check_frm (logic : logic) (seq : sequent) : Clogic.F.ts_formula list option =
   try
     let ts = List.fold_right Cterm.add_constructor logic.consdecl seq.ts in 
     let seq = {seq with ts = ts} in 
@@ -440,7 +440,17 @@ let check_frm (logic : logic) (seq : sequent) : Clogic.ts_formula list option =
   | Failed_eg x -> fprintf !proof_dump "Foo44"; prover_counter_example := x; None 
 
 
-let check_abduct logic seq : ((ts_formula * ts_formula) list) option = 
+let check_abduct logic seq : Clogic.AF.ts_formula list option = 
+  try 
+    let leaves = apply_rule_list logic [seq] (fun _ -> false) Clogic.abductive_sequent in 
+    (* the lists of frames and antiframes have equal lengths *)
+    Some (Clogic.get_frames_antiframes leaves)
+  with 
+    Failed -> Format.fprintf !(Debug.proof_dump) "Abduction failed"; None
+  | Failed_eg x -> Format.fprintf !(Debug.proof_dump) "Abduction failed"; prover_counter_example := x; None 
+
+(* TODO: remove
+let check_abduct logic seq : ((F.ts_formula * F.ts_formula) list) option = 
   try 
     let leaves = apply_rule_list logic [seq] (fun _ -> false) Clogic.abductive_sequent in 
     (* the lists of frames and antiframes have equal lengths *)
@@ -448,7 +458,7 @@ let check_abduct logic seq : ((ts_formula * ts_formula) list) option =
   with 
     Failed -> Format.fprintf !(Debug.proof_dump) "Abduction failed"; None
   | Failed_eg x -> Format.fprintf !(Debug.proof_dump) "Abduction failed"; prover_counter_example := x; None 
-
+*)
 
 let check_implication_frame_pform logic heap pheap  =  
   check_frm logic (Clogic.make_implies heap pheap)
@@ -456,7 +466,7 @@ let check_implication_frame_pform logic heap pheap  =
 
 let check_implication_pform 
     (logic : logic) 
-    (heap : ts_formula) 
+    (heap : F.ts_formula) 
     (pheap : pform) : bool =  
   check_imp logic (Clogic.make_implies heap pheap)
 
@@ -469,8 +479,8 @@ let check_abduction_pform logic heap pheap =
 (* result should be collection of abstracted frames F implying P *)
 let abs 
     (logic : logic) 
-    (ts_form : ts_formula)
-    : ts_formula list  = 
+    (ts_form : F.ts_formula)
+    : F.ts_formula list  = 
   match check_frm logic  (Clogic.make_implies ts_form []) with 
     Some r -> r
   | None -> 

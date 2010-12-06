@@ -49,7 +49,6 @@ type syntactic_form =
    sneqs : (Psyntax.args * Psyntax.args) list;
   }
 
-
 type formula =
   {
     spat : RMSet.multiset;
@@ -59,24 +58,46 @@ type formula =
     neqs : (term_handle * term_handle) list;
   }
 
-type ts_formula =
-  {
-    ts : Cterm.term_structure;
-    form : formula;
-    cache_sform : syntactic_form option ref;
-  }
+module F = struct
+  type ts_formula =
+    {
+      ts : Cterm.term_structure;
+      form : formula;
+    }
+end;;
+
+module AF = struct
+  type ts_formula =
+    {
+      ts : Cterm.term_structure;
+      form : formula;
+      antiform : formula;
+    }
+end;;
 
 let mk_ts_form ts form =
-  {ts = ts; form = form; cache_sform = ref None}
+  {F.ts = ts; F.form = form;}
+
+let mk_ts_form_af ts form antiform =
+  {AF.ts = ts; AF.form = form; AF.antiform = antiform;}
 
 let break_ts_form ts_form =
-  ts_form.ts, ts_form.form
+  ts_form.F.ts, ts_form.F.form
+  
+let break_ts_form_af ts_form =
+  ts_form.AF.ts, ts_form.AF.form, ts_form.AF.antiform
 
 let kill_var ts_form v =
-  {ts_form with ts = Cterm.kill_var ts_form.ts v}
+  {ts_form with F.ts = Cterm.kill_var ts_form.F.ts v}
+
+let kill_var_af ts_form v =
+  {ts_form with AF.ts = Cterm.kill_var ts_form.AF.ts v}
 
 let update_var_to ts_form v e =
-  {ts_form with ts = Cterm.update_var_to ts_form.ts v e}
+  {ts_form with F.ts = Cterm.update_var_to ts_form.F.ts v e}
+
+let update_var_to_af ts_form v e =
+  {ts_form with AF.ts = Cterm.update_var_to ts_form.AF.ts v e}
 
 (* {{{ pretty printing
  * See 
@@ -124,11 +145,17 @@ let rec pp_syntactic_form' pp ppf first
         (pp.separator (pp_disjunct pp_syntactic_form) ppf) first sdisjuncts
 and pp_syntactic_form ppf sform = pp_whole pp_syntactic_form' pp_star ppf sform
 
-let pp_ts_formula' pp ppf first {ts=ts; form=form; cache_sform=_} =
+let pp_ts_formula' pp ppf first {F.ts=ts; F.form=form} =
   let first = Cterm.pp_ts' pp ppf first ts in
   pp_formula' (pp_c ts) pp ppf first form
 
 let pp_ts_formula = pp_whole pp_ts_formula' pp_star
+
+let pp_ts_formula_af' pp ppf first {AF.ts=ts; AF.form=form; AF.antiform=antiform} =
+  let first = pp_ts_formula' pp ppf first {F.ts=ts; F.form=form;} in
+  (pp_sep "|").separator pp_ts_formula ppf first {F.ts=ts; F.form=antiform;}
+
+let pp_ts_formula_af = pp_whole pp_ts_formula_af' pp_star
 
 (* }}} *)
 (* pretty printing }}} *)
@@ -402,10 +429,25 @@ let rec convert_ground (ts :term_structure) (sf : syntactic_form) : formula * te
   {spat = RMSet.empty; plain = RMSet.lift_list plain; disjuncts = []; eqs=eqs; neqs=neqs}, ts
 
 
-let conjoin fresh (f : ts_formula) (sf : syntactic_form) =
-  let nf,ts = convert_sf fresh f.ts sf in
-  let nf = conjunction nf f.form in
-  {ts = ts; form = nf; cache_sform = ref None}
+let conjoin fresh (f : F.ts_formula) (sf : syntactic_form) =
+  let nf,ts = convert_sf fresh f.F.ts sf in
+  let nf = conjunction nf f.F.form in
+  {F.ts = ts; F.form = nf;}
+
+
+(* Takes AF.ts_formula and conjoins frame with sf, and antiframe with saf *)
+let conjoin_af fresh (f : AF.ts_formula) (sf : syntactic_form) (saf : syntactic_form) =
+  let nf,ts = convert_sf fresh f.AF.ts sf in
+  let nf = conjunction nf f.AF.form in
+  let naf,ts = convert_sf fresh ts saf in
+  let naf = conjunction naf f.AF.antiform in
+  {AF.ts = ts; AF.form = nf; AF.antiform = naf;}
+
+
+(* Takes F.ts_formula and creates a AF.ts_formula with af as antiframe *)
+let combine fresh (f : F.ts_formula) (af : syntactic_form) =
+  let naf,ts = convert_sf fresh f.F.ts af in
+  {AF.ts = ts; AF.form = f.F.form; AF.antiform = naf;}
 
 
 let make_syntactic ts_form =
@@ -416,7 +458,7 @@ let make_syntactic ts_form =
   let rec form_to_syntax form =
     let convert_tuple r =
       match get_term ts r with
-	Psyntax.Arg_op("tuple",al) -> al
+        Psyntax.Arg_op("tuple",al) -> al
       | _ -> assert false in
     let convert_pair = lift_pair (get_term ts) in
     let eqs = List.map convert_pair form.eqs in
@@ -698,6 +740,19 @@ let get_frames seqs =
   get_frames seqs []
 
 
+let get_frame_antiframe seq =
+  assert (abductive_sequent seq);
+  mk_ts_form_af seq.ts seq.assumption seq.antiframe
+
+let rec get_frames_antiframes seqs frms = 
+  match seqs with 
+    [] -> frms
+  | seq::seqs ->  get_frames_antiframes seqs ((get_frame_antiframe seq)::frms)
+
+let get_frames_antiframes seqs = 
+  get_frames_antiframes seqs []
+
+(* TODO: remove
 let get_frame_a seq =
   assert (abductive_sequent seq);
   mk_ts_form seq.ts seq.assumption
@@ -726,7 +781,7 @@ let rec get_antiframes seqs ants =
 
 let get_antiframes seqs =
   get_antiframes seqs [] 
-
+*)
 
 let convert_with_eqs fresh pform =
   let sf = convert_to_inner pform in
@@ -735,9 +790,9 @@ let convert_with_eqs fresh pform =
   mk_ts_form form ts
 
 let convert fresh ts pform =
-  convert_sf_without_eqs fresh  ts (convert_to_inner pform)
+  convert_sf_without_eqs fresh ts (convert_to_inner pform)
 
-let make_implies (heap : ts_formula) (pheap : pform) : sequent =
+let make_implies (heap : F.ts_formula) (pheap : pform) : sequent =
   let ts,form = break_ts_form heap in
   let rh,ts = convert false ts pheap in
   {ts = ts;
@@ -749,12 +804,8 @@ let make_implies (heap : ts_formula) (pheap : pform) : sequent =
 
 let make_implies_inner ts_form1 ts_form2 =
   let ts,form = break_ts_form ts_form1 in
-  let sform =
-    match !(ts_form2.cache_sform) with
-      Some sform -> sform
-    | None -> make_syntactic ts_form2 in
-  ts_form2.cache_sform := Some sform;
-  let rform,ts =  convert_sf_without_eqs false ts sform in
+  let sform = make_syntactic ts_form2 in
+  let rform,ts = convert_sf_without_eqs false ts sform in
   {ts = ts;
     assumption = form;
     obligation = rform;

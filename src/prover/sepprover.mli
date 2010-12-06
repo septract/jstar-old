@@ -15,18 +15,26 @@
 open Psyntax
 
 type inner_form
-
+type inner_form_antiform
+      
+val lift_inner_form : inner_form -> inner_form_antiform
+val inner_form_antiform_to_form : inner_form_antiform -> inner_form
+val inner_form_antiform_to_antiform : inner_form_antiform -> inner_form
 val inner_truth : inner_form 
 val convert : form -> inner_form option
 val conjoin : form -> inner_form -> inner_form
 val conjoin_inner : inner_form -> inner_form -> inner_form
+val conjoin_af : inner_form_antiform -> form -> inner_form -> inner_form_antiform
+val combine : inner_form -> inner_form -> inner_form_antiform
 val kill_var : var -> inner_form -> inner_form
+val kill_var_af : var -> inner_form_antiform -> inner_form_antiform
 val kill_all_exists_names : inner_form -> inner_form
+val kill_all_exists_names_af : inner_form_antiform -> inner_form_antiform
 val update_var_to : var -> term -> inner_form -> inner_form
-val form_clone : inner_form -> inner_form
-val form_clone_abs : inner_form -> inner_form
+val update_var_to_af : var -> term -> inner_form_antiform -> inner_form_antiform
 val string_inner_form : Format.formatter -> inner_form -> unit 
-
+val string_inner_form_af : Format.formatter -> inner_form_antiform -> unit
+    
 val implies : logic -> inner_form -> form -> bool
 val implies_opt : logic -> inner_form option -> form -> bool
 val inconsistent : logic -> inner_form -> bool
@@ -43,4 +51,4 @@ val string_of_proof : unit -> string
 val get_counter_example : unit -> string
 val implies_list : inner_form list -> form -> bool 
 
-val abduction_opt : logic -> (inner_form option) -> form -> ((inner_form * inner_form) list) option 
+val abduction_opt : logic -> (inner_form option) -> form -> inner_form_antiform list option 

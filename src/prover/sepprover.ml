@@ -23,16 +23,30 @@ open Psyntax
        Internal formula operations
      *****************************************)
 
-    type inner_form = Clogic.ts_formula
+    type inner_form = Clogic.F.ts_formula
+    
+    type inner_form_antiform = Clogic.AF.ts_formula
 
-    let inner_truth =  Clogic.mk_ts_form (Cterm.new_ts ()) Clogic.truth 
+    let lift_inner_form inner_form = 
+      let ts,form = Clogic.break_ts_form inner_form in
+      Clogic.mk_ts_form_af ts form Clogic.empty
+
+    let inner_form_antiform_to_form inner_form_af =
+      let ts,form,antiform = Clogic.break_ts_form_af inner_form_af in
+      Clogic.mk_ts_form ts form
+
+    let inner_form_antiform_to_antiform inner_form_af =
+      let ts,form,antiform = Clogic.break_ts_form_af inner_form_af in
+      Clogic.mk_ts_form ts antiform
+      
+    let inner_truth = Clogic.mk_ts_form (Cterm.new_ts ()) Clogic.truth 
 
     let convert : form -> inner_form option  
       = fun form -> 
-	try 
-	  Some (Clogic.convert_with_eqs false form)
-	with Contradiction -> 
-	  None 
+        try 
+          Some (Clogic.convert_with_eqs false form)
+        with Contradiction -> 
+          None 
 
     let conjoin : form -> inner_form -> inner_form 
       = fun form inner_form -> Clogic.conjoin false inner_form (Clogic.convert_to_inner form)
@@ -40,26 +54,41 @@ open Psyntax
     let conjoin_inner : inner_form -> inner_form -> inner_form
       = fun if1 if2 -> Clogic.conjoin false if1 (Clogic.make_syntactic if2)
 
+    (* Takes inner_from_antiform and conjoins frame with form, and antiframe with inner_form *)
+    let conjoin_af : inner_form_antiform -> form -> inner_form -> inner_form_antiform
+      = fun inner_form_antiform form inner_form ->
+        Clogic.conjoin_af false inner_form_antiform (Clogic.convert_to_inner form) (Clogic.make_syntactic inner_form)
+    
+    (* Takes two inner_forms and creates a inner_form_antiform with the second inner_form as antiframe *)
+    let combine : inner_form -> inner_form -> inner_form_antiform
+      = fun if1 if2 -> Clogic.combine false if1 (Clogic.make_syntactic if2)
+    
     let kill_var : var -> inner_form -> inner_form
       = fun v inner_form -> 
-	Clogic.kill_var inner_form v(* Rlogic.kill_var v inner_form *)
+        Clogic.kill_var inner_form v
+
+    let kill_var_af : var -> inner_form_antiform -> inner_form_antiform
+      = fun v inner_form_antiform ->
+        Clogic.kill_var_af inner_form_antiform v
 
     let kill_all_exists_names : inner_form -> inner_form
-	= fun iform -> iform (*assert false  (* TODO. Should do some form of compression of formula *) (*Rlogic.kill_all_exists_names *)*)
+      = fun inner_form -> inner_form (*assert false  (* TODO. Should do some form of compression of formula *) *)
+
+    let kill_all_exists_names_af : inner_form_antiform -> inner_form_antiform
+      = fun inner_form_antiform -> inner_form_antiform (*assert false  (* TODO. Should do some form of compression of formula *) *)
 
     let update_var_to : var -> term -> inner_form -> inner_form
-      = fun v e f -> Clogic.update_var_to f v e (* Rlogic.update_var_to x y z*)
+      = fun v e f -> Clogic.update_var_to f v e
 
-    let form_clone : inner_form -> inner_form 
-      = fun inner_form -> inner_form  (* functional rep now, so easy *)
-
-    let form_clone_abs : inner_form -> inner_form 
-      = fun inner_form -> inner_form  (* TODO. Should do some form of compression of formula *)
-
+    let update_var_to_af : var -> term -> inner_form_antiform -> inner_form_antiform
+      = fun v e f -> Clogic.update_var_to_af f v e
 
     let string_inner_form : Format.formatter -> inner_form -> unit = 
       Clogic.pp_ts_formula
-     
+
+    let string_inner_form_af : Format.formatter -> inner_form_antiform -> unit =
+      Clogic.pp_ts_formula_af
+
     (******************************************
        Entailment operations
      ******************************************)
@@ -82,9 +111,10 @@ open Psyntax
 	  None -> true 
 	| Some inner_form1 -> Prover.check_inconsistency logic inner_form1
 
+(* TODO: remove
     let implies_inner : logic -> inner_form -> inner_form -> bool 
       = fun logic inner_form1 inner_form2 -> Prover.check_implication logic inner_form1 inner_form2
-
+*)
     let frame : logic -> inner_form -> form -> inner_form list option
       = fun logic inner_form1 form2 -> 
 	Prover.check_implication_frame_pform logic inner_form1 form2
@@ -99,7 +129,7 @@ open Psyntax
     let frame_inner 
          (l : logic)
          (i1 : inner_form)
-         (i2 : inner_form )
+         (i2 : inner_form)
          : inner_form list option
          = 
 	Prover.check_frame l i1 i2
@@ -113,13 +143,11 @@ open Psyntax
     let implies_list : inner_form list -> form -> bool 
 	= Prover.check_implies_list 
 
-
-    let abduction_opt (l : logic) (i1 : inner_form option) (f2 : form)
-	     : ((inner_form * inner_form) list) option = 	
+    let abduction_opt (l : logic) (i1 : inner_form option) (f2 : form) : inner_form_antiform list option = 	
       match i1 with 
-	    None -> assert false (* FIXME: Not sure what to do here *)
-	  | Some inner_form1 -> Prover.check_abduction_pform l inner_form1 f2 
-		 
+        None -> Prover.check_abduction_pform l (Clogic.convert_with_eqs false []) f2
+      | Some inner_form -> Prover.check_abduction_pform l inner_form f2 
+
 
 (*
 

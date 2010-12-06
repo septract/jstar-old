@@ -89,10 +89,9 @@ let main () =
       let x = (Sepprover.abduction_opt logic (Sepprover.convert heap1) heap2) in 
       (match x with 
         | None -> Format.printf "Can't find antiframe!\n" 
-        | Some (ls) -> 
-          List.iter (fun (frame, antiframe) -> 
-            Format.printf "Frame:\n %a\n" Sepprover.string_inner_form frame;
-            Format.printf "Antiframe:\n %a\n\n" Sepprover.string_inner_form antiframe) ls;
+        | Some ls -> 
+          List.iter (fun inner_form_antiform -> 
+            Format.printf "%a\n\n" Sepprover.string_inner_form_af inner_form_antiform) ls;
       );
 
 (*	if Prover.check_equal logic heap arg1 arg2 
