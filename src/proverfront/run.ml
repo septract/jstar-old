@@ -17,8 +17,6 @@ open Format
 open Load_logic
 open Psyntax
 
-let _ = CC.test ()
-
 let program_file_name = ref "";;
 let logic_file_name = ref "";;
 

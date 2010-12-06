@@ -43,10 +43,8 @@ open Psyntax
 
     let convert : form -> inner_form option  
       = fun form -> 
-        try 
-          Some (Clogic.convert_with_eqs false form)
-        with Contradiction -> 
-          None 
+        try Some (Clogic.convert_with_eqs false form)
+        with Contradiction -> None 
 
     let conjoin : form -> inner_form -> inner_form 
       = fun form inner_form -> Clogic.conjoin false inner_form (Clogic.convert_to_inner form)
@@ -141,12 +139,15 @@ open Psyntax
       = fun l form -> match form with None -> [] | Some form -> Prover.abs l form
 
     let implies_list : inner_form list -> form -> bool 
-	= Prover.check_implies_list 
+      = Prover.check_implies_list 
 
     let abduction_opt (l : logic) (i1 : inner_form option) (f2 : form) : inner_form_antiform list option = 	
       match i1 with 
         None -> Prover.check_abduction_pform l (Clogic.convert_with_eqs false []) f2
       | Some inner_form -> Prover.check_abduction_pform l inner_form f2 
+
+    let syntactic_abs : inner_form -> inner_form
+      = fun inner_form -> Prover.syntactic_abs inner_form
 
 
 (*

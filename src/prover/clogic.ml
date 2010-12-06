@@ -153,7 +153,7 @@ let pp_ts_formula = pp_whole pp_ts_formula' pp_star
 
 let pp_ts_formula_af' pp ppf first {AF.ts=ts; AF.form=form; AF.antiform=antiform} =
   let first = pp_ts_formula' pp ppf first {F.ts=ts; F.form=form;} in
-  (pp_sep "|").separator pp_ts_formula ppf first {F.ts=ts; F.form=antiform;}
+  (pp_sep " | ").separator pp_ts_formula ppf first {F.ts=ts; F.form=antiform;}
 
 let pp_ts_formula_af = pp_whole pp_ts_formula_af' pp_star
 
@@ -330,8 +330,6 @@ let rec normalise ts form : formula * term_structure =
   form,ts
 
 
-
-
 let rec convert_to_inner (form : Psyntax.pform) : syntactic_form =
   let convert_atomic_to_inner (sspat,splain,sdisj,seqs,sneqs) pat =
     match pat with
@@ -407,7 +405,6 @@ and convert_sf_pair_list
       convert_sf_pair_list fresh ts sf ((x,y)::rs)
 
 
-
 (* convert to a formula with all pattern variables converted to ground *)
 let smset_to_list_ground a ts =
   let a = SMSet.restart a in
@@ -453,7 +450,8 @@ let combine fresh (f : F.ts_formula) (af : syntactic_form) =
 let make_syntactic ts_form =
   let ts,form = break_ts_form ts_form in
   let eqs = Cterm.get_eqs ts in
-  let neqs = Cterm.get_neqs ts in
+  (*let neqs = Cterm.get_neqs ts in*)
+  let neqs = Cterm.get_neqs_all ts in
 
   let rec form_to_syntax form =
     let convert_tuple r =
@@ -476,7 +474,6 @@ let make_syntactic ts_form =
   {sform with
     seqs = sform.seqs @ eqs;
     sneqs = sform.sneqs @ neqs}
-
 
 
 let match_and_remove
@@ -752,36 +749,6 @@ let rec get_frames_antiframes seqs frms =
 let get_frames_antiframes seqs = 
   get_frames_antiframes seqs []
 
-(* TODO: remove
-let get_frame_a seq =
-  assert (abductive_sequent seq);
-  mk_ts_form seq.ts seq.assumption
-
-let rec get_frames_a seqs frms = 
-  match seqs with 
-    [] -> frms
-  | seq::seqs ->  get_frames_a seqs ((get_frame_a seq)::frms)
-
-let get_frames_a seqs = 
-  get_frames_a seqs []
-
-
-let get_antiframe seq =
-  assert (abductive_sequent seq);
-  (*
-  let antiframe, ts = normalise seq.ts seq.antiframe in
-  mk_ts_form ts antiframe
-  *)
-  mk_ts_form seq.ts seq.antiframe
-
-let rec get_antiframes seqs ants = 
-  match seqs with
-  | [] -> ants
-  | seq::seqs -> get_antiframes seqs ((get_antiframe seq)::ants)
-
-let get_antiframes seqs =
-  get_antiframes seqs [] 
-*)
 
 let convert_with_eqs fresh pform =
   let sf = convert_to_inner pform in

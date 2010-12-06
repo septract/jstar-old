@@ -102,6 +102,10 @@ val get_args_all : term_structure -> Psyntax.args list
 val get_eqs : term_structure -> (Psyntax.args * Psyntax.args) list
 val get_neqs : term_structure -> (Psyntax.args * Psyntax.args) list
 
+(* TODO: temporary until the bug in has_pp_c gets resolved *)
+val get_eqs_all : term_structure -> (Psyntax.args * Psyntax.args) list
+val get_neqs_all : term_structure -> (Psyntax.args * Psyntax.args) list
+
 val get_eqs_norecs : term_structure -> (Psyntax.args * Psyntax.args) list
 val get_neqs_norecs : term_structure -> (Psyntax.args * Psyntax.args) list
 

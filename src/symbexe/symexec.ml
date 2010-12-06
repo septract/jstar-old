@@ -459,23 +459,19 @@ and execute_core_stmt
         let frames_abs = Sepprover.abs !curr_abs_rules (inner_form_antiform_to_form sheap_noid) in 
         let antiframes_abs = Sepprover.abs !curr_abs_rules (inner_form_antiform_to_antiform sheap_noid) in 
         (* TODO: Check whether this makes sense *)
-        let antiframes_abs = if antiframes_abs = [] then [ empty_inner_form ] else antiframes_abs in
-        if Config.symb_debug() 
-        then begin
-          Format.printf "@\nPost-abstraction heaps count:@\n    %d@.%!" (List.length frames_abs);
+        (* let antiframes_abs = if antiframes_abs = [] then [ empty_inner_form ] else antiframes_abs in *)
+        if Config.symb_debug() then
+          (Format.printf "@\nPost-abstraction heaps count:@\n    %d@.%!" (List.length frames_abs);
           match !exec_type with
           | Abduct -> Format.printf "@\nPost-abstraction antiheaps count:@\n    %d@.%!" (List.length antiframes_abs);
-          | _ -> ()
-        end;
-        let frames_abs = List.map Sepprover.kill_all_exists_names frames_abs in 
-        let antiframes_abs = List.map Sepprover.kill_all_exists_names antiframes_abs in 
-        if Config.symb_debug() 
-        then begin
-          List.iter (fun sheap -> Format.printf "@\nPost-abstraction heap:@\n    %a@.%!" string_inner_form sheap) frames_abs; 
+          | _ -> ());
+        let frames_abs = List.map (fun heap -> Sepprover.kill_all_exists_names (Sepprover.syntactic_abs heap)) frames_abs in 
+        let antiframes_abs = List.map (fun heap -> Sepprover.kill_all_exists_names (Sepprover.syntactic_abs heap)) antiframes_abs in 
+        if Config.symb_debug() then
+          (List.iter (fun heap -> Format.printf "@\nPost-abstraction heap:@\n    %a@.%!" string_inner_form heap) frames_abs; 
           match !exec_type with
           | Abduct -> List.iter (fun saf -> Format.printf "@\nPost-abstraction antiheap:@\n    %a@.%!" string_inner_form saf) antiframes_abs;
-          | _ -> ()
-        end;
+          | _ -> ());
         
         explore_node (snd sheap);
         let heaps_abs = List.map (fun (if1,if2) -> combine if1 if2) (cross_product frames_abs antiframes_abs) in
@@ -486,6 +482,9 @@ and execute_core_stmt
               ("Abstract@"^(Debug.toString Pprinter_core.pp_stmt_core stm.skind))) 
           sheaps_abs;
         
+        if Config.symb_debug() then
+          (Format.printf "\nAbstracted heaps before filtering: \n%!";
+          List.iter (fun (heap, id) -> Format.printf "@\n    %a\n@.%!" heap_pprinter heap;) sheaps_abs;);
         let formset = (formset_table_find id) in
         let sheaps_abs = List.filter 
           (fun (sheap2,id2) -> 
@@ -493,8 +492,8 @@ and execute_core_stmt
             if 
               (List.for_all
                 (fun (sheap1,id1) -> 
-                  if (frame_inner !curr_logic (inner_form_antiform_to_form sheap2) (inner_form_antiform_to_form sheap1) <> None or 
-                    frame_inner !curr_logic (inner_form_antiform_to_form sheap2) (inner_form_antiform_to_form sheap1) <> None)
+                  if ((frame_inner !curr_logic (inner_form_antiform_to_form sheap2) (inner_form_antiform_to_form sheap1) <> None) || 
+                    (frame_inner !curr_logic (inner_form_antiform_to_antiform sheap2) (inner_form_antiform_to_antiform sheap1) <> None))
                   then 
                    (add_edge_with_proof id2 id1 ContE 
                      ("Contains@"^(Debug.toString Pprinter_core.pp_stmt_core stm.skind)); false) 
@@ -507,13 +506,10 @@ and execute_core_stmt
             )
           )
           sheaps_abs in
-          
-        if Config.symb_debug() 
-        then begin
-          Format.printf "\nAbstracted heaps after filtering: \n%!";
-          List.iter (fun (sheap, id) -> Format.printf "@\n    %a@.%!" heap_pprinter sheap;) sheaps_abs; 
-        end;
-        
+        if Config.symb_debug() then
+          (Format.printf "\nAbstracted heaps after filtering: \n%!";
+          List.iter (fun (heap, id) -> Format.printf "@\n    %a\n@.%!" heap_pprinter heap;) sheaps_abs;);
+
         formset_table_replace id (sheaps_abs @ formset);
         execs_one n sheaps_abs
       with Contained -> 

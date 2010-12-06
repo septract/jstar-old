@@ -11,6 +11,35 @@ import "field_logic";
  ***************************************/
 
 
+rule NodeLL_match_exists_first:
+  | NodeLL(_y, ?x) |- NodeLL(_z, ?x)
+without
+  _y != _z
+if
+  | |-
+
+rule NodeLL_match_exists_second:
+  | NodeLL(?x, _y) |- NodeLL(?x, _z)
+without
+  _y != _z
+if
+  | |-
+
+rule ls_match_exists_first:
+  | ls(_y, ?x) |- ls(_z, ?x)
+without
+  _y != _z
+if
+  | |-
+
+rule ls_match_exists_second:
+  | ls(?x, _y) |- ls(?x, _z)
+without
+  _y != _z
+if
+  | |-
+
+
 
 rule NodeLL_not_nil:
   NodeLL(nil(),?y) | | |- |

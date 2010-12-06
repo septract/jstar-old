@@ -21,6 +21,7 @@ module RMSet :
     val is_empty : multiset -> bool
     val has_more : multiset -> bool
     val next : multiset -> multiset
+    val peek : multiset -> t
     val remove : multiset -> t * multiset
     val restart : multiset -> multiset
     val iter : (t -> unit) -> multiset -> unit
@@ -30,8 +31,8 @@ module RMSet :
     val empty : multiset
     val intersect : multiset -> multiset -> multiset * multiset * multiset
     val back : multiset -> int -> multiset
-    val map_to_list :
-      multiset -> (string * Cterm.term_handle -> 'a) -> 'a list
+    val map_to_list : multiset -> (t -> 'a) -> 'a list
+    val fold_to_list : multiset -> (t -> 'a -> 'a) -> 'a -> 'a
   end
 type multiset = RMSet.multiset
 module SMSet :
@@ -41,6 +42,7 @@ module SMSet :
     val is_empty : multiset -> bool
     val has_more : multiset -> bool
     val next : multiset -> multiset
+    val peek : multiset -> t
     val remove : multiset -> t * multiset
     val restart : multiset -> multiset
     val iter : (t -> unit) -> multiset -> unit
@@ -50,8 +52,8 @@ module SMSet :
     val empty : multiset
     val intersect : multiset -> multiset -> multiset * multiset * multiset
     val back : multiset -> int -> multiset
-    val map_to_list :
-      multiset -> (string * Psyntax.args list -> 'a) -> 'a list
+    val map_to_list : multiset -> (t -> 'a) -> 'a list
+    val fold_to_list : multiset -> (t -> 'a -> 'a) -> 'a -> 'a
   end
 type syntactic_form = {
   sspat : SMSet.multiset;
@@ -146,10 +148,6 @@ val apply_or_right : sequent -> sequent list list
 val get_frame : sequent -> F.ts_formula
 val get_frames : sequent list -> F.ts_formula list
 val get_frames_antiframes : sequent list -> AF.ts_formula list
-(* TODO: remove
-val get_frames_a : sequent list -> F.ts_formula list
-val get_antiframes : sequent list -> F.ts_formula list
-*)
 val convert_with_eqs : bool -> Psyntax.pform -> F.ts_formula
 val convert :
   bool ->
