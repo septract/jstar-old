@@ -51,7 +51,7 @@ let rec find_ev_eq_neq syn vset =
 
 
 (* Heuristic abstraction on syntactic form that eliminates existentials which are not in the spatial part *)
-let eliminate_existentials syn_form =
+let kill_unused_existentials syn_form =
   (* iterates until the set of existentials becomes saturated *)
   let rec saturate_ev syn evars =
     let new_evars = find_ev_eq_neq syn evars in

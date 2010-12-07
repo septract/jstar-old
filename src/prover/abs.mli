@@ -11,4 +11,4 @@
       LICENSE.txt
  ********************************************************)
 
-val eliminate_existentials : Clogic.syntactic_form -> Clogic.syntactic_form
+val kill_unused_existentials : Clogic.syntactic_form -> Clogic.syntactic_form

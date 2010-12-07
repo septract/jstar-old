@@ -436,8 +436,8 @@ let check_frm (logic : logic) (seq : sequent) : Clogic.F.ts_formula list option 
     let leaves = apply_rule_list logic [seq] (fun _ -> false) Smt.frame_sequent_smt in 
     Some (Clogic.get_frames leaves)
   with 
-    Failed -> fprintf !proof_dump "Foo55";None 
-  | Failed_eg x -> fprintf !proof_dump "Foo44"; prover_counter_example := x; None 
+    Failed -> fprintf !proof_dump "Frame failed\n"; None 
+  | Failed_eg x -> fprintf !proof_dump "Frame failed\n"; prover_counter_example := x; None 
 
 
 let check_abduct logic seq : Clogic.AF.ts_formula list option = 
@@ -446,8 +446,8 @@ let check_abduct logic seq : Clogic.AF.ts_formula list option =
     (* the lists of frames and antiframes have equal lengths *)
     Some (Clogic.get_frames_antiframes leaves)
   with 
-    Failed -> Format.fprintf !(Debug.proof_dump) "Abduction failed"; None
-  | Failed_eg x -> Format.fprintf !(Debug.proof_dump) "Abduction failed"; prover_counter_example := x; None 
+    Failed -> Format.fprintf !proof_dump "Abduction failed\n"; None
+  | Failed_eg x -> Format.fprintf !proof_dump "Abduction failed\n"; prover_counter_example := x; None 
 
 
 let check_implication_frame_pform logic heap pheap  =  
@@ -518,6 +518,6 @@ let check_implies_list fl1 pf =
 (* Performs syntactic abstraction of F.ts_formula by eliminating existentials not appearing in spatial predicates *)
 let syntactic_abs ts_form = 
   let syn = Clogic.make_syntactic ts_form in
-  let abs_syn = Abs.eliminate_existentials syn in
+  let abs_syn = Abs.kill_unused_existentials syn in
   let form, ts = Clogic.convert_sf false (Cterm.new_ts()) abs_syn in 
   Clogic.mk_ts_form ts form
