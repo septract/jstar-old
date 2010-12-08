@@ -401,7 +401,6 @@ let heap_pprinter f h =
 
 let rec exec (n : cfg_node) (sheap : formset_entry) = 
   let sheap_noid = fst sheap in
-  let sheap_noid = Sepprover.kill_all_exists_names_af sheap_noid in (* TODO: kill_all_exists_names does nothing *)
   let sheap = (sheap_noid, snd sheap) in
 (*  if Config.symb_debug() then 
     Format.printf "Output to %i with heap@\n   %a@\n" (node_get_id n) (string_ts_form (Rterm.rao_create ())) sform_noid; *)
@@ -438,7 +437,6 @@ and execute_core_stmt
     (sheap : formset_entry) 
     : formset_entry list =
   let sheap_noid = fst sheap in
-  let sheap_noid = Sepprover.kill_all_exists_names_af sheap_noid in
   let stm = n in
   if Config.symb_debug() then
     (Format.printf "@\nExecuting statement:@ %a%!" Pprinter_core.pp_stmt_core stm.skind;
@@ -458,15 +456,15 @@ and execute_core_stmt
         (* TODO: Introduce curr_abduct_abs_rules? *)
         let frames_abs = Sepprover.abs !curr_abs_rules (inner_form_antiform_to_form sheap_noid) in 
         let antiframes_abs = Sepprover.abs !curr_abs_rules (inner_form_antiform_to_antiform sheap_noid) in 
-        (* TODO: Check whether this makes sense *)
-        (* let antiframes_abs = if antiframes_abs = [] then [ empty_inner_form ] else antiframes_abs in *)
+        let antiframes_abs = 
+          if frames_abs != [] && antiframes_abs = [] then [ empty_inner_form ] else antiframes_abs in
         if Config.symb_debug() then
           (Format.printf "@\nPost-abstraction heaps count:@\n    %d@.%!" (List.length frames_abs);
           match !exec_type with
           | Abduct -> Format.printf "@\nPost-abstraction antiheaps count:@\n    %d@.%!" (List.length antiframes_abs);
           | _ -> ());
-        let frames_abs = List.map (fun heap -> Sepprover.kill_all_exists_names (Sepprover.syntactic_abs heap)) frames_abs in 
-        let antiframes_abs = List.map (fun heap -> Sepprover.kill_all_exists_names (Sepprover.syntactic_abs heap)) antiframes_abs in 
+        let frames_abs = List.map (fun heap -> Sepprover.kill_exists_names heap) frames_abs in 
+        let antiframes_abs = List.map (fun heap -> Sepprover.kill_exists_names heap) antiframes_abs in 
         if Config.symb_debug() then
           (List.iter (fun heap -> Format.printf "@\nPost-abstraction heap:@\n    %a@.%!" string_inner_form heap) frames_abs; 
           match !exec_type with

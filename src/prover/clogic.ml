@@ -307,7 +307,6 @@ let rec normalise ts form : formula * term_structure =
 	      ts'
 	      disj
 	| Some (f1,_),Some (f2,_) ->
-	    (* TODO intersect is too discriminating *)
 	    let s,s1,s2 = intersect_with_ts ts true f1.spat f2.spat in
 	    let p,p1,p2 = intersect_with_ts ts true f1.plain f2.plain in
 	    let f1 = {f1 with spat=s1;plain=p1} in
