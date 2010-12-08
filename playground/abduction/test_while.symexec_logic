@@ -39,21 +39,13 @@ without
 if
   | |-
 
-/*
-rule nil_neq_match_exists_first:
-  | _y!=nil() |- _z!=nil()
-without
-  _y != _z
+rule exists_not_equal :
+  | |- _x != ?y
+where
+  _x notincontext;
+  _x notin ?y
 if
   | |-
-
-rule nil_neq_match_exists_second:
-  | nil()!=_y |- nil()!=_z
-without
-  _y != _z
-if
-  | |-
-*/
 
 
 /***************************************/
