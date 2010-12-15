@@ -62,6 +62,11 @@ let rec sequent_reps sequent reps =
   let reps = form_reps sequent.obligation reps in
   reps
 
+let rec sequent_ass_reps sequent reps =
+  let reps = (RMSet.map_to_list sequent.matched snd) @ reps in
+  let reps = form_reps sequent.assumption reps in
+  reps
+
 
 let contains ts form pat : bool  =
   try
@@ -267,7 +272,7 @@ try
       match ob_eqs with
 	[] -> ts,  new_ob_eqs
       | (a,b)::ob_eqs ->
-	  let ts,obeq = determined_exists ts a b in
+	  let ts,obeq = determined_exists ts (sequent_ass_reps seq []) a b in
 	  duts ts ob_eqs (obeq @ new_ob_eqs) in
     let ts, ob_eqs = try duts ts ob_eqs [] with Contradiction -> raise Failed in
     let ob_neqs = obs.neqs in

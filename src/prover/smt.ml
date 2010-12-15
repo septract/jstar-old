@@ -145,7 +145,7 @@ let rec args_smttype (arg : Psyntax.args) : smttypeset =
   | Arg_op ("builtin_plus",args) -> smt_union_list (map args_smttype args)
   | Arg_op ("builtin_minus",args) -> smt_union_list (map args_smttype args)
   | Arg_op ("builtin_mult",args) -> smt_union_list (map args_smttype args)
-
+  | Arg_op ("numeric_const", [Arg_string(a)]) -> SMTTypeSet.empty 
   | Arg_op (name, args) -> 
           let s = SMTTypeSet.singleton (SMT_Op(("op_"^name), (length args))) in 
           smt_union_list (s::(map args_smttype args))
@@ -169,6 +169,7 @@ let rec string_sexp_args (arg : Psyntax.args) : string =
           Printf.sprintf "(- %s %s)" (string_sexp_args a1) (string_sexp_args a2)
   | Arg_op ("builtin_mult",[a1;a2]) -> 
           Printf.sprintf "(* %s %s)" (string_sexp_args a1) (string_sexp_args a2)
+  | Arg_op ("numeric_const", [Arg_string(a)]) -> a
 
   | Arg_op (name,args) -> 
           Printf.sprintf "(%s %s)" ("op_"^name) (string_sexp_args_list args)

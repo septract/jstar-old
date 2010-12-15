@@ -440,9 +440,9 @@ let unifies (ts : term_structure) (pt : pattern) (con : CC.constant) (cont : ter
     =
   CC.unifies ts.cc pt con (fun cc -> cont {ts with cc = cc})
 
-let determined_exists ts c1 c2 : term_structure * (term_handle * term_handle) list
+let determined_exists ts cl c1 c2 : term_structure * (term_handle * term_handle) list
     = 
-  let cc,cp1 = CC.determined_exists ts.cc c1 c2 in
+  let cc,cp1 = CC.determined_exists ts.cc cl c1 c2 in
   {ts with cc=cc}, cp1
 
 

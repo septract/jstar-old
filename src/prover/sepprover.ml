@@ -70,7 +70,7 @@ open Psyntax
         Clogic.kill_var_af inner_form_antiform v
 
     let kill_exists_names : inner_form -> inner_form
-      = fun inner_form -> Prover.kill_unused_existentials inner_form
+      = fun inner_form -> (*Prover.kill_unused_existentials*) inner_form
 
     let kill_exists_names_af : inner_form_antiform -> inner_form_antiform
       = fun inner_form_antiform -> inner_form_antiform (* TODO: Syntactic abstraction for inner_form_antiform *)
