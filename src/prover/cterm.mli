@@ -34,7 +34,7 @@ val new_ts : unit -> term_structure
 
 val unifies : term_structure -> pattern -> term_handle -> (term_structure -> 'a) -> 'a
 
-val determined_exists : term_structure -> term_handle -> term_handle -> term_structure  * (term_handle * term_handle) list
+val determined_exists : term_structure -> (term_handle list) -> term_handle -> term_handle -> term_structure  * (term_handle * term_handle) list
 
 
 (* Match pattern against the term_handle in the current term structure, 
