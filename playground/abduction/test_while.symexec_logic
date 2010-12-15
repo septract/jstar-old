@@ -10,7 +10,6 @@ import "field_logic";
  *
  ***************************************/
 
-/*
 rule NodeLL_remove_exists:
   | NodeLL(_y, ?x) |- NodeLL(_z, ?x)
 without
@@ -36,52 +35,6 @@ if
   ls(?x, ?z) | |- ?y = ?z
 
 rule remove_exists_not_equal :
-  | |- _x != ?y
-where
-  _x notincontext;
-  _x notin ?y
-if
-  | |-
-*/
-
-/* Replace with the commented versions when this bug is fixed:
-
-> | _x_1061!=nil() * p!=nil() * NodeLL(p, _x_1061) * NodeLL(_x_1061, x)
- |- NodeLL(p, x) -|
-
-Match rule NodeLL_remove
-->NodeLL(p, x) | x!=nil() * x!=nil() * p!=nil() * NodeLL(x, x) |-  -|
-
-*/
-rule NodeLL_match_exists_first:
-  | NodeLL(_y, ?x) |- NodeLL(_z, ?x)
-without
-  _y != _z
-if
-  | |-
-
-rule NodeLL_match_exists_second:
-  | NodeLL(?x, _y) |- NodeLL(?x, _z)
-without
-  _y != _z
-if
-  | |-
-
-rule ls_match_exists_first:
-  | ls(_y, ?x) |- ls(_z, ?x)
-without
-  _y != _z
-if
-  | |-
-
-rule ls_match_exists_second:
-  | ls(?x, _y) |- ls(?x, _z)
-without
-  _y != _z
-if
-  | |-
-
-rule exists_not_equal :
   | |- _x != ?y
 where
   _x notincontext;
