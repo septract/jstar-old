@@ -201,12 +201,10 @@ val subst_kill_vars_to_fresh_prog : varset -> variable_subst
 val subst_kill_vars_to_fresh_exist : varset -> variable_subst
 val subst_form : variable_subst -> form -> form
 val mk_seq_rule : psequent * psequent list list * string -> sequent_rule
-type external_prover =
-    (pform -> pform -> bool) * (pform -> args list -> args list list)
 type logic = {
   seq_rules : sequent_rule list;
   rw_rules : rewrite_rule list;
-  ext_prover : external_prover;
   consdecl : string list;
+  dummy : unit;
 }
 val empty_logic : logic

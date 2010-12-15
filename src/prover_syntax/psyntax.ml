@@ -682,32 +682,19 @@ let mk_seq_rule (mat_seq,premises,name) : sequent_rule =
   mat_seq,premises,name,([],[]),[]
 
 
-
 (* rules for simplifying septraction need defining as well *)
 
-
-type external_prover = (pform -> pform -> bool)  * (pform -> args list -> args list list)
-
-let default_pure_prover : external_prover = 
-  (fun x y -> (*Printf.printf "Assume \n %s \nProve\n %s \n" 
-      (Plogic.string_form x) 
-      (Plogic.string_form y);*)
-    match y with 
-      [P_PPred("true",_)] -> true 
-    | _ -> false) , 
-  (fun x y -> [])
 
 type logic = {
   seq_rules : sequent_rule list;
   rw_rules : rewrite_rule list; 
-  ext_prover : external_prover; 
   consdecl : string list;
+  dummy : unit;
 }
 
 let empty_logic : logic = {
   seq_rules = [];
   rw_rules = [];
-  ext_prover = default_pure_prover; 
-  consdecl = []
+  consdecl = [];
+  dummy = ();
 }
-

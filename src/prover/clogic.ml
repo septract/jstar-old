@@ -372,8 +372,8 @@ let rec add_pair_list fresh xs ts rs =
       let c1,ts = add_term fresh a ts in
       let c2,ts = add_term fresh b ts in
       add_pair_list fresh xs ts ((c1,c2)::rs)
-      
-      
+
+
 (* TODO: Will convert eqs into ts for or which is wrong. *)
 let rec convert_sf fresh (ts :term_structure) (sf : syntactic_form) : formula * term_structure =
   let spat, ts = smset_to_list fresh sf.sspat ts in

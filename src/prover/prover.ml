@@ -343,16 +343,15 @@ exception Failed_eg of Clogic.sequent list
 let rec apply_rule_list_once 
    (rules : sequent_rule list) 
    (seq : Clogic.sequent) 
-   ep 
    : Clogic.sequent list list
    =
   match rules with 
     [] -> raise No_match
   | rule::rules ->
       try 
-	apply_rule (Clogic.convert_rule rule) seq (*ep*)
+      apply_rule (Clogic.convert_rule rule) seq
       with 
-      | No_match -> apply_rule_list_once rules seq ep
+      | No_match -> apply_rule_list_once rules seq
 
 
 let rec sequents_backtrack 
@@ -396,9 +395,9 @@ let apply_rule_list
 	     [seq]
 	   else
 	   try 
-	     search (apply_rule_list_once logic.seq_rules seq logic.ext_prover)
+	     search (apply_rule_list_once logic.seq_rules seq)
 	   with No_match -> 
-         try
+	   try 
 		 if may_finish seq then 
 		   [seq]
 		 else 
