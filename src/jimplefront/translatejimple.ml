@@ -363,9 +363,9 @@ let jimple_locals2stattype_rules (locals : local_var list) : sequent_rule list =
 	) locals in
 	let x = Arg_var (Vars.fresha ()) in
 	LocalMap.fold (fun typ vars rules ->
-		let premise : (Psyntax.psequent list list) = List.map (fun var -> [[],[],mkEQ(x,var)]) vars in
+		let premise : (Psyntax.psequent list list) = List.map (fun var -> [mkEmpty,mkEmpty,mkEQ(x,var),mkEmpty]) vars in
 		mk_seq_rule (
-			([],[],[mk_statictyp1 x (Arg_string typ)]),
+			(mkEmpty,mkEmpty,[mk_statictyp1 x (Arg_string typ)],mkEmpty),
 			premise,
 			"static_type_"^typ
 		) :: rules

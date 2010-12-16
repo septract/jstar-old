@@ -25,12 +25,15 @@ let question_file_name = ref "";;
 let logic_file_name = ref "";;
 let absrules_file_name = ref "";;
 
+let set_question_file_name fn =
+  question_file_name := fn;
+  Symexec.file := Filename.basename fn
+
 let arg_list = Config.args_default @ 
-  [ 
-("-f", Arg.Set_string(question_file_name ), "question file name" );
-("-l", Arg.Set_string(logic_file_name ), "logic file name" );
-("-a", Arg.Set_string(absrules_file_name ), "abstraction rules file name" );
-  ]
+  [ ("-f", Arg.String set_question_file_name, "question file name" );
+  ("-l", Arg.Set_string logic_file_name, "logic file name" );
+  ("-a", Arg.Set_string absrules_file_name, "abstraction rules file name" );
+]
 
 
 let main () : unit = 
@@ -64,12 +67,8 @@ let main () : unit =
           Format.printf "Method: %s\nSpec: %a"  mname  Spec.spec2str spec; 
        	  let stmts_core = map Cfg_core.mk_node core in 
           if Symexec.verify mname stmts_core spec lo abs_rules then
-          Format.printf "Good specification!\n\n" else Format.printf "Bad specification!\n\n" 
+          Format.printf "\nGood specification!\n\n" else Format.printf "\nBad specification!\n\n" 
     ) question_list
-
-(*    List.iter (fun x -> pp_stmt_core Format.std_formatter x; 
-	           Format.print_newline ())  core_list; *)
-
 
 
 let _ = main ()

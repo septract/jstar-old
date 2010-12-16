@@ -26,6 +26,8 @@ module MultisetImpl (A : Map.OrderedType) :
     val has_more : multiset -> bool
 (* Move to the next element *)
     val next  : multiset -> multiset
+(* return the current element *)
+    val peek : multiset -> t
 (* return the current element, and remove it from the set *)
     val remove : multiset -> t * multiset
 (* Restart search in multiset *)
@@ -51,5 +53,8 @@ module MultisetImpl (A : Map.OrderedType) :
     val back : multiset -> int -> multiset
 
     val map_to_list : multiset -> (A.t -> 'b) -> 'b list
+
+(* fold_to_list ([x1; ...; xn], []) f a == f xn (f xn-1 (... (f x1 a) ...)) *)
+    val fold_to_list : multiset -> (A.t -> 'a -> 'a) -> 'a -> 'a
   end
 

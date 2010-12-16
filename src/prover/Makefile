@@ -3,8 +3,8 @@ ifndef LIB
 endif
 export LIB
 
-SOURCES = congruence.ml cterm.mli cterm.ml clogic.mli clogic.ml \
-         smtsyntax.ml smtparse.mly smtlex.mll smt.ml prover.ml sepprover.ml 
+SOURCES = congruence.ml cterm.mli cterm.ml clogic.mli clogic.ml synabs.mli synabs.ml \
+         smtsyntax.ml smtparse.mly smtlex.mll smt.ml prover.ml sepprover.ml
 INCLUDES = utils prover_syntax
 RESULT = "$(LIB)/prover"
 OCAMLLDFLAGS="-a"

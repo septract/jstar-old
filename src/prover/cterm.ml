@@ -199,7 +199,11 @@ let rec get_pargs_norecs norm ts rs rep : Psyntax.args =
     let fpt = CMap.find 
          (if norm then find_good_rep ts rep
           else rep) ts.originals
-    in       
+    in
+    let fpt = match fpt with 
+        | FArg_var (EVar _)
+            -> CMap.find (find_good_rep ts rep) ts.originals  
+        | _ -> fpt in
     match fpt with 
       FArg_var v ->
 	begin 
@@ -403,11 +407,11 @@ let add_pattern term ts =
   let c,ts = add_term params_pattern term ts in 
   c,ts
   
-(*
+
 let ground_pattern (pattern : args) (ts : term_structure) : term_handle * term_structure = 
   let c,ts = add_term params_pattern_to_term pattern ts in 
   c, ts
-*)
+
 
 let ground_pattern_tuple (ptl : args list) (ts : term_structure) : term_handle * term_structure = 
   let c,ts,cl = add_term_list (params_pattern_to_term) ptl (ts.tuple,ts) [] in 
@@ -523,7 +527,16 @@ let get_neqs ts : (Psyntax.args * Psyntax.args ) list =
   let map = fun c -> get_pargs false ts [] c in 
   CC.get_neqs mask map ts.cc 
 
+(* TODO: temporary until the bug in has_pp_c gets resolved *)
+let get_eqs_all ts : (Psyntax.args * Psyntax.args ) list = 
+  let mask = fun _ -> true in 
+  let map = fun c -> get_pargs false ts [] c in 
+  CC.get_eqs mask map ts.cc 
 
+let get_neqs_all ts : (Psyntax.args * Psyntax.args ) list = 
+  let mask = fun _ -> true in 
+  let map = fun c -> get_pargs false ts [] c in 
+  CC.get_neqs mask map ts.cc 
 
 (* Versions of get_eqs and get_neqs that hide records *)  
 let get_eqs_norecs ts : (Psyntax.args * Psyntax.args ) list = 
