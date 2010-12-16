@@ -256,8 +256,10 @@ let rec string_sexp_form
 let string_sexp_decl (t : smt_type) : string = 
   match t with 
   | SMT_Var v -> Printf.sprintf "(declare-fun %s () Int)" (Vars.string_var v)
-  | SMT_Pred (s,i) -> Printf.sprintf "(declare-fun %s (%s) Bool)" s (nstr "Int " i)
-  | SMT_Op (s,i) -> Printf.sprintf "(declare-fun %s (%s) Int)" s (nstr "Int " i)
+  | SMT_Pred (s,i) 
+      -> Printf.sprintf "(declare-fun %s (%s) Bool)" s (nstr "Int " i)
+  | SMT_Op (s,i)
+      -> Printf.sprintf "(declare-fun %s (%s) Int)" s (nstr "Int " i)
   
 
 (* Main SMT IO functions *)
@@ -330,6 +332,17 @@ let smt_test_eq (a1 : Psyntax.args) (a2 : Psyntax.args) : bool =
   let r = smt_check_unsat() in 
   smt_pop(); r 
 
+let decl_evars (types : smttypeset) : string = 
+  let evars = 
+    SMTTypeSet.fold 
+      (fun x xs -> match x with | (SMT_Var (Vars.EVar(_,e))) -> e::xs
+                                | _  ->  xs ) 
+       types [] in 
+  match evars with 
+  | [] -> "" 
+  | _  -> let decls = String.concat " " (map (fun x -> "(_"^x^" Int)") evars) in 
+          "exists "^decls^" "
+
 
 (* try to establish that the pure parts of a sequent are valid using the SMT solver *)
 let finish_him 
@@ -358,9 +371,11 @@ let finish_him
     (* declare variables and predicates *)
     SMTTypeSet.iter (fun x -> ignore (smt_command (string_sexp_decl x))) types; 
 
-    (* Construct and run the query *)                    
-    let query = "(not (=> (and true " ^ asm_eq_sexp ^ " " ^ asm_neq_sexp ^ " " ^ 
-                                        asm_sexp ^ ") " ^ obl_sexp ^ "))" 
+    (* Construct and run the query *)      
+    let asm_sexp = "(and true " ^ asm_eq_sexp ^ " " ^ asm_neq_sexp ^ " " ^ asm_sexp ^ ") " in 
+    let obl_sexp = "( " ^ (decl_evars obl_types) ^ obl_sexp ^ ")" in 
+                                   
+    let query = "(not (=> " ^ asm_sexp ^ obl_sexp ^ "))" 
     in smt_assert query;    
                                       
     (* check whether the forumula is unsatisfiable *)
