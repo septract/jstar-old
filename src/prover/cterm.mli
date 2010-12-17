@@ -34,7 +34,7 @@ val new_ts : unit -> term_structure
 
 val unifies : term_structure -> pattern -> term_handle -> (term_structure -> 'a) -> 'a
 
-val determined_exists : term_structure -> term_handle -> term_handle -> term_structure  * (term_handle * term_handle) list
+val determined_exists : term_structure -> (term_handle list) -> term_handle -> term_handle -> term_structure  * (term_handle * term_handle) list
 
 
 (* Match pattern against the term_handle in the current term structure, 
@@ -101,6 +101,10 @@ val get_args_all : term_structure -> Psyntax.args list
 
 val get_eqs : term_structure -> (Psyntax.args * Psyntax.args) list
 val get_neqs : term_structure -> (Psyntax.args * Psyntax.args) list
+
+(* TODO: temporary until the bug in has_pp_c gets resolved *)
+val get_eqs_all : term_structure -> (Psyntax.args * Psyntax.args) list
+val get_neqs_all : term_structure -> (Psyntax.args * Psyntax.args) list
 
 val get_eqs_norecs : term_structure -> (Psyntax.args * Psyntax.args) list
 val get_neqs_norecs : term_structure -> (Psyntax.args * Psyntax.args) list

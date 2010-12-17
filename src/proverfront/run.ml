@@ -17,8 +17,6 @@ open Format
 open Load_logic
 open Psyntax
 
-let _ = CC.test ()
-
 let program_file_name = ref "";;
 let logic_file_name = ref "";;
 
@@ -82,6 +80,18 @@ let main () =
           Prover.pprint_proof logf;
           fprintf logf "@.")
     | Psyntax.Equal (heap,arg1,arg2) -> ()
+    
+    | Psyntax.Abduction (heap1, heap2)  -> 
+      Format.printf "Find antiframe for\n %a\n ===> \n %a \n"  
+      Psyntax.string_form heap1   Psyntax.string_form heap2;
+      let x = (Sepprover.abduction_opt logic (Sepprover.convert heap1) heap2) in 
+      (match x with 
+        | None -> Format.printf "Can't find antiframe!\n" 
+        | Some ls -> 
+          List.iter (fun inner_form_antiform -> 
+            Format.printf "%a\n\n" Sepprover.string_inner_form_af inner_form_antiform) ls;
+      );
+
 (*	if Prover.check_equal logic heap arg1 arg2 
 	then Printf.printf("Equal!\n\n") else Printf.printf("Not equal!\n\n")*) 
 (*    | _ -> Printf.printf "Currently unsupported" *)

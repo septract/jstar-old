@@ -123,7 +123,7 @@ module type PCC =
       val unifies_any : t -> curry_term -> (t * constant -> 'a) -> 'a
 
       (* Unifies two constants, if there is only one possible way to unify them *)
-      val determined_exists : t -> constant -> constant -> t * ((constant * constant) list)
+      val determined_exists : t -> (constant list) -> constant -> constant -> t * ((constant * constant) list)
 
       (*  Make a congruence closure structure that is equivalent in content, 
 	 but each constant is a representative. 
@@ -432,7 +432,7 @@ module PersistentCC (A : GrowablePersistentArray) : PCC =
     let get_neqs mask map ts =
       let r = Hashtbl.create 13 in (* to take care of duplicates *)
       CCMap.iter 
-	(fun (a,b) () -> 
+        (fun (a,b) () -> 
           let a = rep ts a in
           let b = rep ts b in
           if mask a && mask b then
@@ -1164,19 +1164,19 @@ module PersistentCC (A : GrowablePersistentArray) : PCC =
       in f 0
 
 
-    let rec determined_exists ts c1 c2 : t * ((constant * constant) list) =
+    let rec determined_exists ts cl c1 c2 : t * ((constant * constant) list) =
       if rep_eq ts c1 c2 then 
       (* They are equal *)
 	ts, []
       else if rep_uneq ts c1 c2 then 
 	raise Contradiction
-      else if A.get ts.unifiable (rep ts c1) = Exists then 
+      else if A.get ts.unifiable (rep ts c1) = Exists  && rep_not_used_in ts c1 cl then 
 	begin 
           (* They can be made equal *)
 	  (* TODO Add occurs check *)
 	  (make_equal ts c1 c2), []
 	end
-      else if  A.get ts.unifiable (rep ts c2) = Exists then
+      else if  A.get ts.unifiable (rep ts c2) = Exists  && rep_not_used_in ts c2 cl then
 	begin 
           (* They can be made equal *)
 	  (* TODO Add occurs check *)
@@ -1186,8 +1186,8 @@ module PersistentCC (A : GrowablePersistentArray) : PCC =
 	match A.get ts.constructor (rep ts c1), A.get ts.constructor (rep ts c2) with 
 	  IApp(a,b), IApp(c,d) -> 
 	    begin
-	      let ts, cp1 = determined_exists ts a c in
-	      let ts, cp2 = determined_exists ts b d in
+	      let ts, cp1 = determined_exists ts cl a c in
+	      let ts, cp2 = determined_exists ts cl b d in
 	      ts,(cp1 @ cp2)
 	    end
 	| _ -> ts, [c1,c2]

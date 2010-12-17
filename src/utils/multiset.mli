@@ -57,3 +57,4 @@ module MultisetImpl (A : Map.OrderedType) :
 (* fold_to_list ([x1; ...; xn], []) f a == f xn (f xn-1 (... (f x1 a) ...)) *)
     val fold_to_list : multiset -> (A.t -> 'a -> 'a) -> 'a -> 'a
   end
+

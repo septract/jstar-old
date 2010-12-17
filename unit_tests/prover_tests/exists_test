@@ -1,0 +1,9 @@
+Implication: 
+  !p(_a) |- _a = "3"
+? False
+
+
+Implication: 
+  |- _a = "3"
+? True
+

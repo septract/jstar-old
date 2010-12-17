@@ -378,13 +378,13 @@ let rec ev_form_at pa set =
 and ev_form pf set =
  List.fold_left (fun set pa -> ev_form_at pa set) set pf  
 
-type psequent = pform * pform * pform
+type psequent = pform * pform * pform * pform 
 
 
-let fv_psequent (pff,pfl,pfr) = 
+let fv_psequent (pff,pfl,pfr,pfa) = 
   (fv_form pff (fv_form pfl (fv_form pfr vs_empty)))
 
-let subst_psequent subst (pff,pfl,pfr) = 
+let subst_psequent subst (pff,pfl,pfr,pfa) = 
   (subst_pform subst pff, subst_pform subst pfl, subst_pform subst pfr)
 
 
@@ -431,13 +431,18 @@ let string_where ppf where =
 
 
 
-type sequent_rule = psequent * (psequent list list) * string * ((* without *) pform * pform) * (where list)
+type sequent_rule = 
+   psequent * 
+   (psequent list list) * 
+   string * 
+   ((* without *) pform * pform) * 
+   (where list)
 
 let pp_entailment f ((h, c) : pform * pform) =
   fprintf f "%a@ |- %a" string_form h string_form c
 
-let pp_psequent f ((g,l,r) : psequent) =
-  fprintf f "%a@ | %a" string_form g pp_entailment (l, r)
+let pp_psequent f ((g,l,r,a) : psequent) =
+  fprintf f "%a@ | %a -|@ %a" string_form g pp_entailment (l, r) string_form a
 
 let pp_sequent_rule f ((c, hss, n, w, ss) : sequent_rule) =
   let p a b c = fprintf f "@\n@[<4>%s%a@]" a b c in
@@ -488,6 +493,7 @@ type question =
   |  Frame of pform * pform
   |  Equal of pform * args * args
   |  Abs of pform 
+  |  Abduction of pform * pform 
 
 
 type test =
@@ -503,12 +509,12 @@ let expand_equiv_rules rules =
   let equiv_rule_to_seq_rule x list : rules list= 
     match x with 
       EquivRule(name, guard, leftform, rightform, without) -> 
-	(SeqRule((guard, leftform, []), [[([],rightform,[])]],name ^ "_left", (without,mkEmpty) , []))
+	(SeqRule((guard, leftform, [],mkEmpty), [[([],rightform,[],mkEmpty)]],name ^ "_left", (without,mkEmpty) , []))
 	:: 
-	  (SeqRule(([],[],guard&&&leftform), [[([],[],guard&&&rightform)]], name ^"_right", (mkEmpty, without), []))
+	  (SeqRule(([],[],guard&&&leftform,mkEmpty), [[([],[],guard&&&rightform,mkEmpty)]], name ^"_right", (mkEmpty, without), []))
 	::
 	  if(guard <> []) then 
-	    (SeqRule((guard, [], leftform), [[([],[],rightform)]], name ^ "_split", (mkEmpty, without), []))
+	    (SeqRule((guard, [], leftform, mkEmpty), [[([],[],rightform,mkEmpty)]], name ^ "_split", (mkEmpty, without), []))
 	    ::
 	      list
 	  else
@@ -676,32 +682,19 @@ let mk_seq_rule (mat_seq,premises,name) : sequent_rule =
   mat_seq,premises,name,([],[]),[]
 
 
-
 (* rules for simplifying septraction need defining as well *)
 
-
-type external_prover = (pform -> pform -> bool)  * (pform -> args list -> args list list)
-
-let default_pure_prover : external_prover = 
-  (fun x y -> (*Printf.printf "Assume \n %s \nProve\n %s \n" 
-      (Plogic.string_form x) 
-      (Plogic.string_form y);*)
-    match y with 
-      [P_PPred("true",_)] -> true 
-    | _ -> false) , 
-  (fun x y -> [])
 
 type logic = {
   seq_rules : sequent_rule list;
   rw_rules : rewrite_rule list; 
-  ext_prover : external_prover; 
   consdecl : string list;
+  dummy : unit;
 }
 
 let empty_logic : logic = {
   seq_rules = [];
   rw_rules = [];
-  ext_prover = default_pure_prover; 
-  consdecl = []
+  consdecl = [];
+  dummy = ();
 }
-

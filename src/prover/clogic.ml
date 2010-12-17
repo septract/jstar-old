@@ -49,7 +49,6 @@ type syntactic_form =
    sneqs : (Psyntax.args * Psyntax.args) list;
   }
 
-
 type formula =
   {
     spat : RMSet.multiset;
@@ -59,24 +58,46 @@ type formula =
     neqs : (term_handle * term_handle) list;
   }
 
-type ts_formula =
-  {
-    ts : Cterm.term_structure;
-    form : formula;
-    cache_sform : syntactic_form option ref;
-  }
+module F = struct
+  type ts_formula =
+    {
+      ts : Cterm.term_structure;
+      form : formula;
+    }
+end;;
+
+module AF = struct
+  type ts_formula =
+    {
+      ts : Cterm.term_structure;
+      form : formula;
+      antiform : formula;
+    }
+end;;
 
 let mk_ts_form ts form =
-  {ts = ts; form = form; cache_sform = ref None}
+  {F.ts = ts; F.form = form;}
+
+let mk_ts_form_af ts form antiform =
+  {AF.ts = ts; AF.form = form; AF.antiform = antiform;}
 
 let break_ts_form ts_form =
-  ts_form.ts, ts_form.form
+  ts_form.F.ts, ts_form.F.form
+  
+let break_ts_form_af ts_form =
+  ts_form.AF.ts, ts_form.AF.form, ts_form.AF.antiform
 
 let kill_var ts_form v =
-  {ts_form with ts = Cterm.kill_var ts_form.ts v}
+  {ts_form with F.ts = Cterm.kill_var ts_form.F.ts v}
+
+let kill_var_af ts_form v =
+  {ts_form with AF.ts = Cterm.kill_var ts_form.AF.ts v}
 
 let update_var_to ts_form v e =
-  {ts_form with ts = Cterm.update_var_to ts_form.ts v e}
+  {ts_form with F.ts = Cterm.update_var_to ts_form.F.ts v e}
+
+let update_var_to_af ts_form v e =
+  {ts_form with AF.ts = Cterm.update_var_to ts_form.AF.ts v e}
 
 (* {{{ pretty printing
  * See 
@@ -124,11 +145,17 @@ let rec pp_syntactic_form' pp ppf first
         (pp.separator (pp_disjunct pp_syntactic_form) ppf) first sdisjuncts
 and pp_syntactic_form ppf sform = pp_whole pp_syntactic_form' pp_star ppf sform
 
-let pp_ts_formula' pp ppf first {ts=ts; form=form; cache_sform=_} =
+let pp_ts_formula' pp ppf first {F.ts=ts; F.form=form} =
   let first = Cterm.pp_ts' pp ppf first ts in
   pp_formula' (pp_c ts) pp ppf first form
 
 let pp_ts_formula = pp_whole pp_ts_formula' pp_star
+
+let pp_ts_formula_af' pp ppf first {AF.ts=ts; AF.form=form; AF.antiform=antiform} =
+  let first = pp_ts_formula' pp ppf first {F.ts=ts; F.form=form;} in
+  (pp_sep " | ").separator pp_ts_formula ppf first {F.ts=ts; F.form=antiform;}
+
+let pp_ts_formula_af = pp_whole pp_ts_formula_af' pp_star
 
 (* }}} *)
 (* pretty printing }}} *)
@@ -280,7 +307,6 @@ let rec normalise ts form : formula * term_structure =
 	      ts'
 	      disj
 	| Some (f1,_),Some (f2,_) ->
-	    (* TODO intersect is too discriminating *)
 	    let s,s1,s2 = intersect_with_ts ts true f1.spat f2.spat in
 	    let p,p1,p2 = intersect_with_ts ts true f1.plain f2.plain in
 	    let f1 = {f1 with spat=s1;plain=p1} in
@@ -301,8 +327,6 @@ let rec normalise ts form : formula * term_structure =
   let form,ts = f {form with disjuncts=[]} ts form.disjuncts in
 (*  printf "Normalised formula : %a @\n" pp_ts_form  {ts=ts;form=form};*)
   form,ts
-
-
 
 
 let rec convert_to_inner (form : Psyntax.pform) : syntactic_form =
@@ -348,8 +372,8 @@ let rec add_pair_list fresh xs ts rs =
       let c1,ts = add_term fresh a ts in
       let c2,ts = add_term fresh b ts in
       add_pair_list fresh xs ts ((c1,c2)::rs)
-      
-      
+
+
 (* TODO: Will convert eqs into ts for or which is wrong. *)
 let rec convert_sf fresh (ts :term_structure) (sf : syntactic_form) : formula * term_structure =
   let spat, ts = smset_to_list fresh sf.sspat ts in
@@ -380,7 +404,6 @@ and convert_sf_pair_list
       convert_sf_pair_list fresh ts sf ((x,y)::rs)
 
 
-
 (* convert to a formula with all pattern variables converted to ground *)
 let smset_to_list_ground a ts =
   let a = SMSet.restart a in
@@ -402,21 +425,37 @@ let rec convert_ground (ts :term_structure) (sf : syntactic_form) : formula * te
   {spat = RMSet.empty; plain = RMSet.lift_list plain; disjuncts = []; eqs=eqs; neqs=neqs}, ts
 
 
-let conjoin fresh (f : ts_formula) (sf : syntactic_form) =
-  let nf,ts = convert_sf fresh f.ts sf in
-  let nf = conjunction nf f.form in
-  {ts = ts; form = nf; cache_sform = ref None}
+let conjoin fresh (f : F.ts_formula) (sf : syntactic_form) =
+  let nf,ts = convert_sf fresh f.F.ts sf in
+  let nf = conjunction nf f.F.form in
+  {F.ts = ts; F.form = nf;}
+
+
+(* Takes AF.ts_formula and conjoins frame with sf, and antiframe with saf *)
+let conjoin_af fresh (f : AF.ts_formula) (sf : syntactic_form) (saf : syntactic_form) =
+  let nf,ts = convert_sf fresh f.AF.ts sf in
+  let nf = conjunction nf f.AF.form in
+  let naf,ts = convert_sf fresh ts saf in
+  let naf = conjunction naf f.AF.antiform in
+  {AF.ts = ts; AF.form = nf; AF.antiform = naf;}
+
+
+(* Takes F.ts_formula and creates a AF.ts_formula with af as antiframe *)
+let combine fresh (f : F.ts_formula) (af : syntactic_form) =
+  let naf,ts = convert_sf fresh f.F.ts af in
+  {AF.ts = ts; AF.form = f.F.form; AF.antiform = naf;}
 
 
 let make_syntactic ts_form =
   let ts,form = break_ts_form ts_form in
   let eqs = Cterm.get_eqs ts in
-  let neqs = Cterm.get_neqs ts in
+  (*let neqs = Cterm.get_neqs ts in*)
+  let neqs = Cterm.get_neqs_all ts in
 
   let rec form_to_syntax form =
     let convert_tuple r =
       match get_term ts r with
-	Psyntax.Arg_op("tuple",al) -> al
+        Psyntax.Arg_op("tuple",al) -> al
       | _ -> assert false in
     let convert_pair = lift_pair (get_term ts) in
     let eqs = List.map convert_pair form.eqs in
@@ -434,115 +473,6 @@ let make_syntactic ts_form =
   {sform with
     seqs = sform.seqs @ eqs;
     sneqs = sform.sneqs @ neqs}
-
-
-(* Heuristic abstraction on syntactic form that eliminates existentials which are not in the spatial part *)
-let eliminate_existentials syn_form =
-  (* finds existentials in the spatial part *)
-  let rec find_ev_sp syn =
-    if syn.sdisjuncts = [] then
-      SMSet.fold_to_list syn.sspat (fun t vs -> 
-        vs_union (ev_args_list (snd t) vs_empty) vs) vs_empty
-    else begin
-      List.fold_left (fun vs (s1, s2) -> 
-        vs_union (vs_union (find_ev_sp s1) (find_ev_sp s2)) vs
-      ) vs_empty syn.sdisjuncts   
-    end
-  in
-  (* finds existentials in equalities and inequalities *)
-  let rec find_ev_eq_neq syn vset =
-    let get_evs a1 a2 =
-      if (vs_is_empty (vs_inter vset (ev_args a1 vs_empty)) <> true ||
-        vs_is_empty (vs_inter vset (ev_args a2 vs_empty)) <> true) then
-        vs_union vset (vs_union (ev_args a1 vs_empty) (ev_args a2 vs_empty))
-      else
-        vset
-    in
-    if syn.sdisjuncts = [] then
-      let evs_eqs = List.fold_left (fun vs (a1, a2) -> vs_union vs (get_evs a1 a2)) vs_empty syn.seqs in
-      let evs_neqs = List.fold_left (fun vs (a1, a2) -> vs_union vs (get_evs a1 a2)) vs_empty syn.sneqs in
-      vs_union evs_eqs evs_neqs
-    else begin
-      List.fold_left (fun vs (s1, s2) -> 
-        vs_union (vs_union (find_ev_eq_neq s1 vset) (find_ev_eq_neq s2 vset)) vs
-      ) vs_empty syn.sdisjuncts   
-    end
-  in
-  (* iterates until the set of existentials becomes saturated *)
-  let rec saturate_ev syn evars =
-    let new_evars = find_ev_eq_neq syn evars in
-    if (vs_is_empty (vs_diff new_evars evars)) then new_evars
-    else saturate_ev syn new_evars
-  in
-  let rec saturate_ev_cnt syn evars cnt =
-    if cnt = 0 then evars
-    else saturate_ev_cnt syn (find_ev_eq_neq syn evars) (cnt-1)
-  in  
-  (*let ev_sp = saturate_ev_cnt syn_form (find_ev_sp syn_form) 2 in*)
-  let ev_sp = saturate_ev syn_form (find_ev_sp syn_form) in
-  let rec elim_evars syn =
-    (* ignore terms with heads from forbidden_heads *)
-    let forbidden_heads = ["Ast"] in
-    let rec is_not_forbidden arg =
-      match arg with
-      | Arg_var v -> true
-      | Arg_string s -> true
-      | Arg_op (name, args) -> 
-        ((List.mem name forbidden_heads) <> true) && 
-        (List.for_all (fun arg -> is_not_forbidden arg) args)
-      | _ -> assert false
-    in
-    (* condition for killing a term *)
-    let can_kill vs =
-      (vs_is_empty vs <> true) &&  (* the set of free variables must be non empty *)
-      (vs_is_empty (vs_inter ev_sp vs)) &&  (* the intersection with existentials in spatials must be empty *)
-      (vs_for_all (fun v -> match v with Vars.EVar _ -> true | _ -> false) vs) (* in there should be only existential vars *)
-    in
-    (* filters terms in a multiset *)
-    let rec filter_args_mset ms : SMSet.multiset =
-      if SMSet.has_more ms then begin
-        if can_kill (fv_args_list (snd (SMSet.peek ms)) vs_empty) &&
-          ((List.mem (fst (SMSet.peek ms)) forbidden_heads) <> true) then
-          filter_args_mset (snd (SMSet.remove ms))
-        else
-          filter_args_mset (SMSet.next ms)
-      end
-      else SMSet.restart ms
-    in
-    (* filters terms in a list of pairs *)
-    let filter_args_pls xs =
-      List.filter (fun (a1, a2) ->
-        (can_kill (vs_union (fv_args a1 vs_empty) (fv_args a2 vs_empty)) <> true) &&
-        (is_not_forbidden a1) && (is_not_forbidden a2)
-      ) xs
-    in
-    if syn.sdisjuncts = [] then
-      let plain = filter_args_mset syn.splain in
-      let eqs = filter_args_pls syn.seqs in
-      let neqs = filter_args_pls syn.sneqs in
-      { sspat = syn.sspat;
-        splain = plain;
-        sdisjuncts = syn.sdisjuncts;
-        seqs = eqs;
-        sneqs = neqs }
-    else
-      let disjuncts = 
-        List.map (fun (s1, s2) -> (elim_evars s1, elim_evars s2)) syn.sdisjuncts
-      in
-      { sspat = syn.sspat;
-        splain = syn.splain;
-        sdisjuncts = disjuncts;
-        seqs = syn.seqs;
-        sneqs = syn.sneqs }
-  in
-  elim_evars syn_form
-
-
-let abs ts_form = 
-  let syn = make_syntactic ts_form in
-  let abs_syn = eliminate_existentials syn in (* perform syntactic abstraction *)
-  let form, ts = convert_sf false (new_ts()) abs_syn in 
-  mk_ts_form ts form
 
 
 let match_and_remove
@@ -611,6 +541,8 @@ let match_and_remove
 
 
 
+
+
 (* Assume that assumption does not contain eqs or neqs, they are represented in ts *)
 type sequent =
    {
@@ -618,10 +550,12 @@ type sequent =
     ts : term_structure;
     assumption : formula;
     obligation : formula;
+    antiframe : formula; 
   }
 
+
 let pp_sequent ppf
-  {matched=matched; ts=ts; assumption=assumption; obligation=obligation} =
+  {matched=matched; ts=ts; assumption=assumption; obligation=obligation; antiframe=antiframe} =
     let pp_term = pp_c ts in 
     let rmf = pp_star.separator (pp_rmset_element "" pp_term) ppf in
     ignore (RMSet.fold rmf true matched);
@@ -629,7 +563,9 @@ let pp_sequent ppf
     let first = pp_ts' pp_star ppf true ts in
     ignore (pp_formula' pp_term pp_star ppf first assumption);
     fprintf ppf "@ |- ";
-    pp_formula pp_term ppf obligation
+    pp_formula pp_term ppf obligation; 
+    fprintf ppf "@ -| "; 
+    pp_formula pp_term ppf antiframe
 
 
 let rec plain f =
@@ -642,7 +578,10 @@ let true_sequent (seq : sequent) : bool =
     &&
   plain seq.assumption
 
-let frame_sequent (seq : sequent) : bool =
+let frame_sequent (seq : sequent) : bool = 
+  (seq.obligation = empty) && (seq.antiframe = empty)
+
+let abductive_sequent (seq : sequent) : bool = 
   (seq.obligation = empty)
 
 (* Stolen from Prover just for refactor *)
@@ -650,22 +589,24 @@ type sequent_rule = psequent * (psequent list list) * string * ((* without *) pf
 
 
 type pat_sequent =
-    {
+  {
     assumption_same : syntactic_form;
     assumption_diff : syntactic_form;
     obligation_diff : syntactic_form;
+    antiframe_diff : syntactic_form; 
   }
 
 let convert_sequent (ps : psequent) : pat_sequent =
 (*  fprintf !(Debug.proof_dump) "Converting sequent: %a@\n" string_pseq ps;*)
   let ps = match ps with
-    pm,pa,po ->
+    pm,pl,pr,pa -> 
       {
        assumption_same = convert_to_inner pm;
-       assumption_diff = convert_to_inner pa;
-       obligation_diff = convert_to_inner po;
-     } in
-(*  fprintf !(Debug.proof_dump) "Produced sequent: %a@ |@ %a@ |-@ %a@\n@\n" pp_sform ps.assumption_same pp_sform ps.assumption_diff pp_sform ps.obligation_diff; *)
+       assumption_diff = convert_to_inner pl;
+       obligation_diff = convert_to_inner pr;
+       antiframe_diff = convert_to_inner pa;
+     } in 
+(*  Format.fprintf !(Debug.proof_dump) "Produced sequent: %a@ |@ %a@ |-@ %a@\n@\n" pp_sform ps.assumption_same pp_sform ps.assumption_diff pp_sform ps.obligation_diff; *)
   ps
 
 type inner_sequent_rule =
@@ -795,6 +736,19 @@ let get_frames seqs =
   get_frames seqs []
 
 
+let get_frame_antiframe seq =
+  assert (abductive_sequent seq);
+  mk_ts_form_af seq.ts seq.assumption seq.antiframe
+
+let rec get_frames_antiframes seqs frms = 
+  match seqs with 
+    [] -> frms
+  | seq::seqs ->  get_frames_antiframes seqs ((get_frame_antiframe seq)::frms)
+
+let get_frames_antiframes seqs = 
+  get_frames_antiframes seqs []
+
+
 let convert_with_eqs fresh pform =
   let sf = convert_to_inner pform in
   let ts = new_ts () in
@@ -802,28 +756,24 @@ let convert_with_eqs fresh pform =
   mk_ts_form form ts
 
 let convert fresh ts pform =
-  convert_sf_without_eqs fresh  ts (convert_to_inner pform)
+  convert_sf_without_eqs fresh ts (convert_to_inner pform)
 
-let make_implies (heap : ts_formula) (pheap : pform) : sequent =
+let make_implies (heap : F.ts_formula) (pheap : pform) : sequent =
   let ts,form = break_ts_form heap in
   let rh,ts = convert false ts pheap in
   {ts = ts;
      assumption = form;
      obligation = rh;
-     matched = RMSet.empty}
+     matched = RMSet.empty;
+     antiframe = empty; }
 
 
 let make_implies_inner ts_form1 ts_form2 =
   let ts,form = break_ts_form ts_form1 in
-  let sform =
-    match !(ts_form2.cache_sform) with
-      Some sform -> sform
-    | None -> make_syntactic ts_form2 in
-  ts_form2.cache_sform := Some sform;
-  let rform,ts =  convert_sf_without_eqs false ts sform in
+  let sform = make_syntactic ts_form2 in
+  let rform,ts = convert_sf_without_eqs false ts sform in
   {ts = ts;
     assumption = form;
     obligation = rform;
-    matched = RMSet.empty}  
-   
-
+    matched = RMSet.empty;
+    antiframe = empty; }

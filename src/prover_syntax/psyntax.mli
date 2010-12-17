@@ -121,7 +121,7 @@ val pconjunction : pform -> pform -> pform
 val ( &&& ) : pform -> pform -> pform
 val mkGarbage : pform_at list
 val subst_pform : varmap -> pform -> pform
-type psequent = pform * pform * pform
+type psequent = pform * pform * pform * pform
 val purify : pform_at list -> pform_at list
 type varterm = Var of varset
 type where = 
@@ -156,6 +156,7 @@ type question =
   | Frame of pform * pform
   | Equal of pform * args * args
   | Abs of pform
+  | Abduction of pform * pform
 type test =
     TImplication of pform * pform * bool
   | TInconsistency of pform * bool
@@ -200,12 +201,10 @@ val subst_kill_vars_to_fresh_prog : varset -> variable_subst
 val subst_kill_vars_to_fresh_exist : varset -> variable_subst
 val subst_form : variable_subst -> form -> form
 val mk_seq_rule : psequent * psequent list list * string -> sequent_rule
-type external_prover =
-    (pform -> pform -> bool) * (pform -> args list -> args list list)
 type logic = {
   seq_rules : sequent_rule list;
   rw_rules : rewrite_rule list;
-  ext_prover : external_prover;
   consdecl : string list;
+  dummy : unit;
 }
 val empty_logic : logic

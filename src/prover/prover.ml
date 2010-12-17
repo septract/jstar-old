@@ -31,7 +31,9 @@ let empty_sequent () =
   ts = Cterm.new_ts ();
   assumption = Clogic.empty;
   obligation = Clogic.empty;
+  antiframe = Clogic.empty; 
 }
+
 
 let rec out_normalise ts form =
   let form,ts = Clogic.normalise ts form in
@@ -60,6 +62,11 @@ let rec sequent_reps sequent reps =
   let reps = form_reps sequent.obligation reps in
   reps
 
+let rec sequent_ass_reps sequent reps =
+  let reps = (RMSet.map_to_list sequent.matched snd) @ reps in
+  let reps = form_reps sequent.assumption reps in
+  reps
+
 
 let contains ts form pat : bool  =
   try
@@ -71,41 +78,59 @@ let contains ts form pat : bool  =
 
 let sequent_join fresh (seq : sequent) (pseq : pat_sequent) : sequent option =
   try
+    (* Construct new assumption *)
     let ass,ts =
       try
-	convert_sf fresh  seq.ts pseq.assumption_diff
+      convert_sf fresh  seq.ts pseq.assumption_diff
       with Contradiction ->
-	fprintf !(Debug.proof_dump) 
+        fprintf !(Debug.proof_dump) 
           "Failed to add formula to lhs: %a@\n" 
           pp_syntactic_form pseq.assumption_diff;
-	raise Contradiction
+      raise Contradiction
     in
     let ass = conjunction ass seq.assumption in
+    
+    (* Construct new antiframe *)
+    let ant,ts = 
+      try 
+        convert_sf fresh ts pseq.antiframe_diff 
+      with Contradiction -> 
+        fprintf !(Debug.proof_dump) 
+          "Failed to add formula to antiframe: %a@\n" 
+          pp_syntactic_form pseq.antiframe_diff;
+        raise Contradiction
+    in 
+    let ant = conjunction ant seq.antiframe in
+    
+    (* Construct new matched portion *)
     let sam,ts =
       try
-	convert_sf fresh ts pseq.assumption_same
+        convert_sf fresh ts pseq.assumption_same
       with Contradiction ->
-	fprintf !(Debug.proof_dump) 
+        fprintf !(Debug.proof_dump) 
           "Failed to add formula to matched: %a@\n" 
           pp_syntactic_form pseq.assumption_same;
-	assert false in
+        assert false in
     let sam = RMSet.union sam.spat seq.matched in
+    
+    (* Construct new obligation portion *)
     let obs,ts =
       try
-	let obs,ts = convert_sf_without_eqs fresh ts pseq.obligation_diff in
-	let obs = conjunction obs seq.obligation in
-	obs,ts
+        let obs,ts = convert_sf_without_eqs fresh ts pseq.obligation_diff in
+        let obs = conjunction obs seq.obligation in
+        obs,ts
       with Contradiction ->
-	try
-	  convert_sf_without_eqs true ts false_sform
-	with Contradiction -> assert false
-    in
-    Some {
-     assumption = ass;
-     obligation = obs;
-     matched = sam;
-     ts = ts;
-   }
+        try
+          convert_sf_without_eqs true ts false_sform
+        with Contradiction -> assert false
+          in
+          Some {
+           assumption = ass;
+           obligation = obs;
+           matched = sam;
+           ts = ts;
+           antiframe = ant; 
+         }
   with Contradiction ->
     fprintf !(Debug.proof_dump) "Contradiction detected!!@\n";
     None
@@ -159,9 +184,12 @@ let apply_rule
   (* Match obligation *)
   match_form true ts seq.obligation sr.conclusion.obligation_diff
     (fun (ts,ob) ->
+  (* Match antiframe_diff *)
+  match_form true ts seq.antiframe sr.conclusion.antiframe_diff
+    (fun (ts,ant) -> 
       (* Match assumption_diff *)
       match_form true ts seq.assumption sr.conclusion.assumption_diff
-	(fun (ts,ass) ->
+    (fun (ts,ass) ->
 	  (* match assumption_not removed *)
 	  let ass_f = {ass with spat=RMSet.union ass.spat seq.matched} in
 	  match_form true ts ass_f sr.conclusion.assumption_same
@@ -181,12 +209,14 @@ let apply_rule
 		  {seq with
 		   ts = ts;
 		   obligation = ob;
-		   assumption = ass;} in
+                   assumption = ass;
+                   antiframe = ant; } in 
 		List.map
 		  (map_option
 		     (sequent_join_fresh seq))
 		  sr.premises
 	      end
+	    )
 	    )
 	)
     )
@@ -242,7 +272,7 @@ try
       match ob_eqs with
 	[] -> ts,  new_ob_eqs
       | (a,b)::ob_eqs ->
-	  let ts,obeq = determined_exists ts a b in
+	  let ts,obeq = determined_exists ts (sequent_ass_reps seq []) a b in
 	  duts ts ob_eqs (obeq @ new_ob_eqs) in
     let ts, ob_eqs = try duts ts ob_eqs [] with Contradiction -> raise Failed in
     let ob_neqs = obs.neqs in
@@ -272,7 +302,8 @@ try
 	plain = o_plain;
 	eqs = ob_eqs;
 	neqs=ob_neqs
-      }
+      }; 
+      antiframe = seq.antiframe; (* FIXME: What should this do? *)
     } in
    (*  printf "After simplification : %a@\n" pp_sequent seq; *)
     Some seq
@@ -317,16 +348,15 @@ exception Failed_eg of Clogic.sequent list
 let rec apply_rule_list_once 
    (rules : sequent_rule list) 
    (seq : Clogic.sequent) 
-   ep 
    : Clogic.sequent list list
    =
   match rules with 
     [] -> raise No_match
   | rule::rules ->
       try 
-	apply_rule (Clogic.convert_rule rule) seq (*ep*)
+      apply_rule (Clogic.convert_rule rule) seq
       with 
-      | No_match -> apply_rule_list_once rules seq ep
+      | No_match -> apply_rule_list_once rules seq
 
 
 let rec sequents_backtrack 
@@ -370,9 +400,9 @@ let apply_rule_list
 	     [seq]
 	   else
 	   try 
-	     search (apply_rule_list_once logic.seq_rules seq logic.ext_prover)
+	     search (apply_rule_list_once logic.seq_rules seq)
 	   with No_match -> 
-         try
+	   try 
 		 if may_finish seq then 
 		   [seq]
 		 else 
@@ -403,15 +433,25 @@ let check_imp (logic : logic) (seq : sequent) : bool =
       Failed -> false
     | Failed_eg x -> prover_counter_example := x ; false
 
-let check_frm (logic : logic) (seq : sequent) : Clogic.ts_formula list option =
+let check_frm (logic : logic) (seq : sequent) : Clogic.F.ts_formula list option =
   try
     let ts = List.fold_right Cterm.add_constructor logic.consdecl seq.ts in 
     let seq = {seq with ts = ts} in 
     let leaves = apply_rule_list logic [seq] (fun _ -> false) Smt.frame_sequent_smt in 
     Some (Clogic.get_frames leaves)
   with 
-    Failed -> fprintf !proof_dump "Foo55";None 
-  | Failed_eg x -> fprintf !proof_dump "Foo44"; prover_counter_example := x; None 
+    Failed -> fprintf !proof_dump "Frame failed\n"; None 
+  | Failed_eg x -> fprintf !proof_dump "Frame failed\n"; prover_counter_example := x; None 
+
+
+let check_abduct logic seq : Clogic.AF.ts_formula list option = 
+  try 
+    let leaves = apply_rule_list logic [seq] (fun _ -> false) Clogic.abductive_sequent in 
+    (* the lists of frames and antiframes have equal lengths *)
+    Some (Clogic.get_frames_antiframes leaves)
+  with 
+    Failed -> Format.fprintf !proof_dump "Abduction failed\n"; None
+  | Failed_eg x -> Format.fprintf !proof_dump "Abduction failed\n"; prover_counter_example := x; None 
 
 
 let check_implication_frame_pform logic heap pheap  =  
@@ -420,12 +460,21 @@ let check_implication_frame_pform logic heap pheap  =
 
 let check_implication_pform 
     (logic : logic) 
-    (heap : ts_formula) 
+    (heap : F.ts_formula) 
     (pheap : pform) : bool =  
   check_imp logic (Clogic.make_implies heap pheap)
 
 
-let abs logic ts_form  = 
+let check_abduction_pform logic heap pheap = 
+  check_abduct logic (Clogic.make_implies heap pheap)
+
+
+(* abstract P by applying frame inference to P => emp *)
+(* result should be collection of abstracted frames F implying P *)
+let abs 
+    (logic : logic) 
+    (ts_form : F.ts_formula)
+    : F.ts_formula list  = 
   match check_frm logic  (Clogic.make_implies ts_form []) with 
     Some r -> r
   | None -> 
@@ -433,14 +482,14 @@ let abs logic ts_form  =
       assert false
 
 let check_implication_syntactic logic pform pform2 = 
-  let seq = make_sequent (Clogic.convert_sequent ([],pform,pform2)) in
+  let seq = make_sequent (Clogic.convert_sequent ([],pform,pform2,mkEmpty)) in
   match seq with 
     None -> true (* Found contradiction immediately *)
   | Some seq -> 
       check_imp logic seq
 
 let check_implication_frame_syntactic logic pform pform2 = 
-  let seq = make_sequent (Clogic.convert_sequent ([],pform,pform2)) in
+  let seq = make_sequent (Clogic.convert_sequent ([],pform,pform2,mkEmpty)) in
   match seq with 
     None -> Some [] (* Found contradiction immediately *)
   | Some seq -> 
@@ -456,10 +505,11 @@ let check_frame logic ts_form1 ts_form2 =
   check_frm logic seq 
 
 
-let check_inconsistency logic ts_form   = assert false
+(* let check_inconsistency logic ts_form   = assert false *)
 (*  check_implication_inner logic ts heap1 ([],[],[False]) *)
-
-
+(* TODO: Check whether this makes sense *)
+let check_inconsistency logic ts_form =
+  check_implication logic ts_form (Clogic.convert_with_eqs false mkFalse)
 
 
 let check_implies_list fl1 pf =
@@ -469,3 +519,9 @@ let check_implies_list fl1 pf =
     ) fl1 
 
 
+(* Performs syntactic abstraction of F.ts_formula by eliminating existentials not appearing in spatial predicates *)
+let kill_unused_existentials ts_form = 
+  let syn = Clogic.make_syntactic ts_form in
+  let abs_syn = Synabs.kill_unused_existentials syn in
+  let form, ts = Clogic.convert_sf false (Cterm.new_ts()) abs_syn in 
+  Clogic.mk_ts_form ts form

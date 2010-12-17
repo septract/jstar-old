@@ -440,9 +440,9 @@ let unifies (ts : term_structure) (pt : pattern) (con : CC.constant) (cont : ter
     =
   CC.unifies ts.cc pt con (fun cc -> cont {ts with cc = cc})
 
-let determined_exists ts c1 c2 : term_structure * (term_handle * term_handle) list
+let determined_exists ts cl c1 c2 : term_structure * (term_handle * term_handle) list
     = 
-  let cc,cp1 = CC.determined_exists ts.cc c1 c2 in
+  let cc,cp1 = CC.determined_exists ts.cc cl c1 c2 in
   {ts with cc=cc}, cp1
 
 
@@ -527,7 +527,16 @@ let get_neqs ts : (Psyntax.args * Psyntax.args ) list =
   let map = fun c -> get_pargs false ts [] c in 
   CC.get_neqs mask map ts.cc 
 
+(* TODO: temporary until the bug in has_pp_c gets resolved *)
+let get_eqs_all ts : (Psyntax.args * Psyntax.args ) list = 
+  let mask = fun _ -> true in 
+  let map = fun c -> get_pargs false ts [] c in 
+  CC.get_eqs mask map ts.cc 
 
+let get_neqs_all ts : (Psyntax.args * Psyntax.args ) list = 
+  let mask = fun _ -> true in 
+  let map = fun c -> get_pargs false ts [] c in 
+  CC.get_neqs mask map ts.cc 
 
 (* Versions of get_eqs and get_neqs that hide records *)  
 let get_eqs_norecs ts : (Psyntax.args * Psyntax.args ) list = 

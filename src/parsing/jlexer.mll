@@ -57,6 +57,7 @@ let error_message e lb =
 let kwd_or_else = 
   let keyword_table = Hashtbl.create 53 in
   List.iter (fun (kwd, tok) -> Hashtbl.add keyword_table kwd tok) [
+    "Abduction", ABDUCTION;
     "abstract", ABSTRACT;
     "abstraction", ABSRULE;
     "andalso", ANDALSO;
@@ -282,6 +283,7 @@ rule token = parse
   | "?" { QUESTIONMARK }
   | "!" { BANG }
   | "|-" { VDASH }
+  | "-|" { DASHV }
   | "~~>" {LEADSTO}
   | eof { EOF }
 
