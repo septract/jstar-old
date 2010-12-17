@@ -433,16 +433,16 @@ module PersistentCC (A : GrowablePersistentArray) : PCC =
       let r = Hashtbl.create 13 in (* to take care of duplicates *)
       CCMap.iter 
 	(fun (a,b) () -> 
-          if mask a && mask b then
           let a = rep ts a in
           let b = rep ts b in
+          if mask a && mask b then
           Hashtbl.add r (map (min a b), map (max a b)) ())
         ts.not_equal;
       Hashtbl.fold (fun x _ xs -> x::xs) r []
 
     let pretty_print' has_pp pp_term pp ppf first ts =
       let eqs = get_eqs has_pp (fun x->x) ts in
-      let neqs = get_neqs has_pp (fun x->x) ts in
+      let neqs = get_neqs (fun x -> true) (fun x->x) ts in
       let first = 
         List.fold_left (pp.separator (pp_eq pp_term) ppf) first eqs in
       List.fold_left (pp.separator (pp_neq pp_term) ppf) first neqs
