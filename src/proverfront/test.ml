@@ -40,6 +40,9 @@ let main () =
     printf "Logic file name not specified. Can't continue....@\n %s @\n" usage_msg
   else 
     if !Config.smt_run then Smt.smt_init();
+    (* Load abstract interpretation plugins *)
+    List.iter (fun file_name -> Plugin_manager.load_plugin file_name) !Config.abs_int_plugins;
+
     let rl = if !inductive_file_name <> "" then Inductive.convert_inductive_file !inductive_file_name else [] in
     let l1,l2,cn = load_logic_extra_rules (System.getenv_dirlist "JSTAR_LOGIC_LIBRARY") !logic_file_name rl in
     let logic = {empty_logic with seq_rules = l1; rw_rules=l2; consdecl = cn;} in

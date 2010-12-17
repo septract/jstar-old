@@ -116,7 +116,7 @@ let pp_smset_element prefix ppf (n, args) =
 (* NOTE: The pattern match on formula is meant to cause errors if
   * new fields are added to type [formula]. *)
 let rec pp_formula' pp_term pp ppf first 
-  {spat=spat; plain=plain; disjuncts=disjuncts; eqs=eqs; neqs=neqs } =
+  {spat=spat; plain=plain; disjuncts=disjuncts; eqs=eqs; neqs=neqs} =
     let first = 
       List.fold_left (pp.separator (pp_eq pp_term) ppf) first eqs in
     let first = 
@@ -340,9 +340,9 @@ let rec convert_to_inner (form : Psyntax.pform) : syntactic_form =
     | P_Garbage -> ("@Garbage",[])::sspat, splain,sdisj,seqs,sneqs
     | P_False -> sspat, (("@False", [])::splain),sdisj,seqs,sneqs
     | P_Or(f1,f2) ->
-	let f1 = convert_to_inner f1 in
-	let f2 = convert_to_inner f2 in
-	sspat, splain, (f1,f2)::sdisj, seqs, sneqs
+      let f1 = convert_to_inner f1 in
+      let f2 = convert_to_inner f2 in
+      sspat, splain, (f1,f2)::sdisj, seqs, sneqs
   in
   let (sspat,splain,sdisj,seqs,sneqs) = List.fold_left convert_atomic_to_inner ([],[],[],[],[]) form in
   {
@@ -351,7 +351,19 @@ let rec convert_to_inner (form : Psyntax.pform) : syntactic_form =
    sdisjuncts = sdisj;
    seqs = seqs;
    sneqs = sneqs;
- }
+  }
+
+
+let rec convert_to_pform {sspat=sspat; splain=splain; sdisjuncts=sdisjuncts; seqs=seqs; sneqs=sneqs} =
+  if sdisjuncts = [] then
+    let eqs = List.map (fun (a1, a2) -> P_EQ (a1, a2)) seqs in
+    let neqs = List.map (fun (a1, a2) -> P_NEQ (a1, a2)) sneqs in
+    let plain = SMSet.map_to_list splain (fun (s,a) -> P_PPred (s,a)) in
+    let spat = SMSet.map_to_list sspat (fun (s,a) -> P_SPred (s,a)) in
+    eqs @ neqs @ plain @ spat
+  else 
+    List.map (fun (f1, f2) -> P_Or (convert_to_pform f1, convert_to_pform f2)) sdisjuncts
+
 
 let smset_to_list fresh a ts =
   let a = SMSet.restart a in

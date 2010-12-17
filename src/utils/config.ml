@@ -51,10 +51,16 @@ let set_debug_char (c : char) : unit =
   | _ -> () 
 
 
+let abs_int_plugins = ref []
+let set_abs_int_plugins (comma_sep_lis : string) : unit = 
+  abs_int_plugins := Str.split (Str.regexp ":") comma_sep_lis
+
+
 let args_default = [
 ("-q", Arg.Clear(symb_debug_ref), "run in quiet mode" );
 ("-v", Arg.Set(verb_proof_ref), "Verbose proofs");
 ("-d", Arg.String(String.iter set_debug_char), "Set debug modes");
 ("-nosmt", Arg.Clear(smt_run),"Don't use the SMT solver");
-("-p", Arg.Set_string(solver_path), "SMT solver path"); 
-] 
+("-p", Arg.Set_string(solver_path), "SMT solver path");
+("-ai", Arg.String(set_abs_int_plugins), "Colon separated list of AI plugins filenames");
+]

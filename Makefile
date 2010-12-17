@@ -13,7 +13,7 @@ scripts:
 all: test scripts doc
 
 clean:
-	rm -f lib/*.a
+	rm -f lib/*.a lib/*.cmxa lib/*.cmxs
 	$(MAKE) -C src clean
 	$(MAKE) -C unit_tests clean
 	$(MAKE) -C scripts clean

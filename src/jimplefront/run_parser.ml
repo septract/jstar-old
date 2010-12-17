@@ -70,7 +70,7 @@ let parse_program () =
     try
       open_in !program_file_name
     with Sys_error s -> failwith s in
-  let program =Jparser.file Jlexer.token (Lexing.from_channel ch) in
+  let program = Jparser.file Jlexer.token (Lexing.from_channel ch) in
   if log log_phase then fprintf logf "@[<4>Parsed@ %s.@." !program_file_name;
   (* Replace specialinvokes of <init> after news with virtual invokes of <init>*)
   let program = program in
@@ -125,8 +125,10 @@ let main () =
        List.iter
 	 (fun s ->  Sys.set_signal s (Sys.Signal_handle (fun x -> Symexec.pp_dotty_transition_system (); exit x)))
          signals;
-       if !Config.smt_run then Smt.smt_init(); 
-         
+       if !Config.smt_run then Smt.smt_init();
+       (* Load abstract interpretation plugins *)
+       List.iter (fun file_name -> Plugin_manager.load_plugin file_name) !Config.abs_int_plugins;       
+
        let l1,l2,cn = Load_logic.load_logic  (System.getenv_dirlist "JSTAR_LOGIC_LIBRARY") !logic_file_name
        in
        let logic = {empty_logic with seq_rules=l1; rw_rules=l2; consdecl=cn} in

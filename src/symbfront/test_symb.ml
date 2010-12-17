@@ -50,6 +50,8 @@ let main () : unit =
     printf "Abstraction rules file name not specified. Can't continue....\n %s \n" usage_msg
   else
     if !Config.smt_run then Smt.smt_init(); 
+    (* Load abstract interpretation plugins *)
+    List.iter (fun file_name -> Plugin_manager.load_plugin file_name) !Config.abs_int_plugins;
 
     let l1,l2,cn = (load_logic (System.getenv_dirlist "JSTAR_LOGIC_LIBRARY") !logic_file_name) in 
     let lo = {empty_logic with seq_rules = l1; rw_rules = l2; consdecl = cn} in

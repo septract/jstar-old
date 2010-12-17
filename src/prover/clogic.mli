@@ -106,6 +106,7 @@ val intersect_with_ts : Cterm.term_structure -> bool -> RMSet.multiset -> RMSet.
 val normalise :
   Cterm.term_structure -> formula -> formula * Cterm.term_structure
 val convert_to_inner : Psyntax.pform -> syntactic_form
+val convert_to_pform : syntactic_form -> Psyntax.pform
 val conjoin : bool -> F.ts_formula -> syntactic_form -> F.ts_formula
 val conjoin_af : bool -> AF.ts_formula -> syntactic_form -> syntactic_form -> AF.ts_formula
 val combine : bool -> F.ts_formula -> syntactic_form -> AF.ts_formula
