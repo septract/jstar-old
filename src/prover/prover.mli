@@ -32,4 +32,3 @@ val check_inconsistency : Psyntax.logic -> Clogic.F.ts_formula -> bool
 val check_implies_list : Clogic.F.ts_formula list -> Psyntax.pform -> bool
 val check_abduction_pform :
   Psyntax.logic -> Clogic.F.ts_formula -> Psyntax.pform -> Clogic.AF.ts_formula list option
-(*val kill_unused_existentials : Clogic.F.ts_formula -> Clogic.F.ts_formula*)

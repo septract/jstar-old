@@ -11,4 +11,5 @@
       LICENSE.txt
  ********************************************************)
 
+ (* Performs syntactic abstraction of F.ts_formula by eliminating existentials not appearing in spatial predicates *)
 val kill_unused_existentials : Clogic.syntactic_form -> Clogic.syntactic_form

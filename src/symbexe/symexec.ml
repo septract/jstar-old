@@ -463,8 +463,9 @@ and execute_core_stmt
           match !exec_type with
           | Abduct -> Format.printf "@\nPost-abstraction antiheaps count:@\n    %d@.%!" (List.length antiframes_abs);
           | _ -> ());
-        let frames_abs = List.map (fun heap -> Sepprover.kill_exists_names heap) frames_abs in 
-        let antiframes_abs = List.map (fun heap -> Sepprover.kill_exists_names heap) antiframes_abs in 
+        (* Run abstract interpretation on abstracted heaps *)
+        let frames_abs = List.map (fun heap -> Sepprover.abs_int heap) frames_abs in 
+        let antiframes_abs = List.map (fun heap -> Sepprover.abs_int heap) antiframes_abs in 
         if Config.symb_debug() then
           (List.iter (fun heap -> Format.printf "@\nPost-abstraction heap:@\n    %a@.%!" string_inner_form heap) frames_abs; 
           match !exec_type with
