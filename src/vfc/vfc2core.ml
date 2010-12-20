@@ -188,7 +188,7 @@ let rec tr_stmt (s : stmt) : core_statement list =
     (tr_stmt s1) @
     [Goto_stmt_core ([l3])] @
     [Label_stmt_core l2; assume_core (tr_expr2form (negate_expr e))] @
-    (tr_stmt s2); 
+    (tr_stmt s2) @
     [Label_stmt_core l3]
   (*| While of pexp * lexp option * stmt*)
  
