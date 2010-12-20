@@ -291,7 +291,9 @@ let smt_check_sat () : bool =
   match smt_command "(check-sat)" with 
   | Sat -> true
   | Unsat -> false
-  | Unknown -> false
+  | Unknown -> if Config.smt_debug() then Format.printf 
+                   "[Warning: smt returned 'unknown' rather than 'unsat']@\n";
+               false
   | _ -> failwith "TODO"
 
 
@@ -299,7 +301,9 @@ let smt_check_unsat () : bool =
   match smt_command "(check-sat)" with 
   | Unsat -> true
   | Sat -> false
-  | Unknown -> false
+  | Unknown -> if Config.smt_debug() then Format.printf 
+                   "[Warning: smt returned 'unknown' rather than 'sat']@\n";
+               false
   | _ -> failwith "TODO"
 
 
