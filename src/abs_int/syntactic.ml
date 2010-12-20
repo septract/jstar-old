@@ -12,6 +12,8 @@
  ********************************************************)
 
 (* Syntactic abstraction *)
+(* TODO: Possibly incorrect treatment of disjunctions *)
+(* TODO: Rewrite to operate on pform directly *)
 
 open Cterm
 open Clogic
@@ -125,3 +127,13 @@ let kill_unused_existentials syn_form =
   if Config.symb_debug() then
     Format.printf "After syntactic abstraction: %a@\n"  pp_syntactic_form abs_syn_form;
   abs_syn_form
+
+
+let syn_abs pform =
+  let syn_form = convert_to_inner pform in
+  let abs_syn_form = kill_unused_existentials syn_form in
+  convert_to_pform abs_syn_form
+  
+(* Plugin registration *)
+let _ =
+  Plugin_callback.add_abs_int syn_abs

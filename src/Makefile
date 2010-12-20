@@ -5,6 +5,7 @@ build:
 	$(MAKE) -C jimplefront
 	$(MAKE) -C proverfront
 	$(MAKE) -C symbfront
+	$(MAKE) -C abs_int
 
 debug:
 	$(MAKE) -C jimplefront debug
