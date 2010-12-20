@@ -183,10 +183,13 @@ let rec tr_stmt (s : stmt) : core_statement list =
   | If (e, s1, s2) -> 
     let l1 = fresh_label() in 
     let l2 = fresh_label() in 
+    let l3 = fresh_label() in     
     [Goto_stmt_core ([l1; l2]); Label_stmt_core l1; assume_core (tr_expr2form e)] @
     (tr_stmt s1) @
+    [Goto_stmt_core ([l3])] @
     [Label_stmt_core l2; assume_core (tr_expr2form (negate_expr e))] @
-    (tr_stmt s2)
+    (tr_stmt s2); 
+    [Label_stmt_core l3]
   (*| While of pexp * lexp option * stmt*)
  
  | While (e, i, s) ->
