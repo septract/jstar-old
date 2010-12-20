@@ -10,6 +10,10 @@ void ranking (int no_of_dmas) {
     }
     i = i + 1; 
   }
+  
+  inv rank_inv; 
+  
+  inv false_inv; 
 
   flag = 1;
 
