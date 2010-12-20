@@ -335,12 +335,12 @@ let smt_test_eq (a1 : Psyntax.args) (a2 : Psyntax.args) : bool =
 let decl_evars (types : smttypeset) : string = 
   let evars = 
     SMTTypeSet.fold 
-      (fun x xs -> match x with | (SMT_Var (Vars.EVar(_,e))) -> e::xs
+      (fun x xs -> match x with | (SMT_Var (Vars.EVar(i,e))) -> (Vars.EVar(i,e))::xs
                                 | _  ->  xs ) 
        types [] in 
   match evars with 
   | [] -> "" 
-  | _  -> let decls = String.concat " " (map (fun x -> "(_"^x^" Int)") evars) in 
+  | _  -> let decls = String.concat " " (map (fun e -> "("^Vars.string_var e^" Int)") evars) in 
           "exists "^decls^" "
 
 
