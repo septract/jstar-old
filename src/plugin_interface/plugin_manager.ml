@@ -19,3 +19,6 @@ let load_plugin (filename : string) =
 (* Runs abstract interpretation plugins on a given pform *)
 let run_abs_int (pheap : Psyntax.pform) =
   List.fold_left (fun pform abs_int -> abs_int pform) pheap !Registry.abs_int_registry
+
+(* Temporary hack: force Plugin_callback.add_abs_int to be linked with plugin_interface *)
+let _ = Plugin_callback.add_abs_int
