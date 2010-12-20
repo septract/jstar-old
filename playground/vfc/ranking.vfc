@@ -1,23 +1,22 @@
 void ranking (int no_of_dmas) {
   no_of_dmas=1; 
   i = 0; 
+  flag = 0; 
   while(i<no_of_dmas) {
     succ_i = *(succ+i); 
     if(succ_i == 0) {
       *(run+i) = 0; 
     } else {
+      flag = flag+1;
       get(dataIn+i, succ_i, 1, i); 
     }
     i = i + 1; 
   }
-  
-  inv rank_inv; 
-  
-  inv false_inv; 
 
-  flag = 1;
-
-  while(flag != 0) (inv rank_inv) {
+  inv rank_inv;
+  
+  while(flag != 0) {
+    inv false_inv; 
     k = 0; 
     while(k<(buf_size-1)) {
       i = 0; 
