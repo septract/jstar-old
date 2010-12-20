@@ -8,11 +8,14 @@ build:
 	$(MAKE) -C abs_int
 
 debug:
+	$(MAKE) -C plugin_interface debug
 	$(MAKE) -C jimplefront debug
 	$(MAKE) -C proverfront debug
 	$(MAKE) -C symbfront debug
+	$(MAKE) -C abs_int debug
 
 clean:
+	$(MAKE) -C abs_int clean
 	$(MAKE) -C jimple_syntax clean
 	$(MAKE) -C jimplefront clean
 	$(MAKE) -C parsing clean
