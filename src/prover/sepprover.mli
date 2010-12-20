@@ -28,8 +28,8 @@ val conjoin_af : inner_form_antiform -> form -> inner_form -> inner_form_antifor
 val combine : inner_form -> inner_form -> inner_form_antiform
 val kill_var : var -> inner_form -> inner_form
 val kill_var_af : var -> inner_form_antiform -> inner_form_antiform
-val kill_exists_names : inner_form -> inner_form
-val kill_exists_names_af : inner_form_antiform -> inner_form_antiform
+val abs_int : inner_form -> inner_form
+val abs_int_af : inner_form_antiform -> inner_form_antiform
 val update_var_to : var -> term -> inner_form -> inner_form
 val update_var_to_af : var -> term -> inner_form_antiform -> inner_form_antiform
 val string_inner_form : Format.formatter -> inner_form -> unit 

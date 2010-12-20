@@ -95,11 +95,11 @@ module MultisetImpl (A : Set.OrderedType) =
     let map_to_list a f = 
       let a = restart a in
       let rec inner a rs = 
-	if has_more a then
-	  let x,a = remove a in
-	  inner a ((f x)::rs)
-	else
-	  rs
+      if has_more a then
+        let x,a = remove a in
+        inner a ((f x)::rs)
+      else
+        rs
       in inner a []
 
     let fold_to_list a f b = 

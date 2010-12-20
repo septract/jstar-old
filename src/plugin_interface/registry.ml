@@ -1,6 +1,6 @@
 (********************************************************
    This file is part of jStar
-        src/prover/abs.mli
+        src/plugins/registry.ml
    Release
         $Release$
    Version
@@ -11,4 +11,5 @@
       LICENSE.txt
  ********************************************************)
 
-val kill_unused_existentials : Clogic.syntactic_form -> Clogic.syntactic_form
+(* Registry of plugins for abstract interpretation *)
+let abs_int_registry : (Psyntax.pform -> Psyntax.pform) list ref = ref []

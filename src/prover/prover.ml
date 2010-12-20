@@ -517,11 +517,3 @@ let check_implies_list fl1 pf =
     (fun f1 -> 
       check_implication_pform empty_logic f1 pf
     ) fl1 
-
-
-(* Performs syntactic abstraction of F.ts_formula by eliminating existentials not appearing in spatial predicates *)
-let kill_unused_existentials ts_form = 
-  let syn = Clogic.make_syntactic ts_form in
-  let abs_syn = Synabs.kill_unused_existentials syn in
-  let form, ts = Clogic.convert_sf false (Cterm.new_ts()) abs_syn in 
-  Clogic.mk_ts_form ts form

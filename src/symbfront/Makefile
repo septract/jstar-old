@@ -28,15 +28,15 @@ endif
 export LIB
 
 
-INCLUDES = 
+INCLUDES =
 
 SYMBFRONT_SOURCES = symbfront.ml
 
 TESTSYMB_SOURCES = test_symb.ml
 
-DEFAULT_ARGS = LIBS="str unix utils prover_syntax symbexe_syntax jimple_syntax prover symbexe parsing" \
+DEFAULT_ARGS = LIBS="str unix dynlink utils prover_syntax symbexe_syntax jimple_syntax plugin_interface prover symbexe parsing" \
        OCAMLLDFLAGS="-I $(LIB)" \
-       INCDIRS="../prover ../prover_syntax ../parsing ../symbexe_syntax ../utils ../jimple_syntax ../symbexe" \
+       INCDIRS="../prover ../prover_syntax ../parsing ../symbexe_syntax ../utils ../jimple_syntax ../symbexe ../plugin_interface" \
        OCAMLFLAGS="" \
        TRASH=""
 

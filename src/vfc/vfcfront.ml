@@ -25,11 +25,15 @@ let main () : unit =
   else
   begin
     if !Config.smt_run then Smt.smt_init();
+    (* Load abstract interpretation plugins *)
+    List.iter (fun file_name -> Plugin_manager.load_plugin file_name) !Config.abs_int_plugins;
+    
     let l1,l2,cn = Load_logic.load_logic (System.getenv_dirlist "JSTAR_LOGIC_LIBRARY") !logic_file_name in 
     let lo = {empty_logic with seq_rules = l1; rw_rules = l2; consdecl = cn} in
     let l1,l2,cn = Load_logic.load_logic (System.getenv_dirlist "JSTAR_LOGIC_LIBRARY") !absrules_file_name in 
     let abs_rules = {empty_logic with seq_rules = l1; rw_rules = l2; consdecl = cn} in
     let internal_specs = Jparser.vfc_spec_file Jlexer.token (Lexing.from_channel (open_in !internal_spec_file_name)) in 
+    
     if Config.symb_debug() then Printf.printf "Vfc file parsing started...\n%!";
     let prog = Vfcparse.program Vfclex.token (Lexing.from_channel (open_in !vfc_file_name)) in
     if Config.symb_debug() then Printf.printf "\nVfc file successfully parsed...\n%!";

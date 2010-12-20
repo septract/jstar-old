@@ -40,9 +40,9 @@ PROVERSOURCE = run.ml
 TESTPROVERSOURCE = inductive.ml test.ml
 
 
-DEFAULT_ARGS = LIBS="str unix utils prover_syntax prover symbexe_syntax jimple_syntax parsing" \
+DEFAULT_ARGS = LIBS="str unix dynlink utils prover_syntax plugin_interface prover symbexe_syntax jimple_syntax parsing" \
        OCAMLLDFLAGS=" -I $(LIB)" \
-       INCDIRS="../utils ../prover_syntax ../prover ../parsing"
+       INCDIRS="../utils ../prover_syntax ../prover ../parsing ../plugin_interface"
        OCAMLFLAGS="" \
        TRASH=""
 

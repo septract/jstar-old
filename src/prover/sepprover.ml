@@ -69,11 +69,17 @@ open Psyntax
       = fun v inner_form_antiform ->
         Clogic.kill_var_af inner_form_antiform v
 
-    let kill_exists_names : inner_form -> inner_form
-      = fun inner_form -> (*Prover.kill_unused_existentials*) inner_form
+    let abs_int : inner_form -> inner_form
+      = fun inner_form ->
+        (*Format.printf "Before abs_int: %a\n" Clogic.pp_ts_formula inner_form;*)
+        let pform = Clogic.ts_form_to_pform inner_form in
+        let abs_pform = Plugin_manager.run_abs_int pform in
+        let abs_inner_form = Clogic.pform_to_ts_form abs_pform in
+        (*Format.printf "After abs_int: %a\n" Clogic.pp_ts_formula abs_inner_form;*)
+        abs_inner_form
 
-    let kill_exists_names_af : inner_form_antiform -> inner_form_antiform
-      = fun inner_form_antiform -> inner_form_antiform (* TODO: Syntactic abstraction for inner_form_antiform *)
+    let abs_int_af : inner_form_antiform -> inner_form_antiform
+      = fun inner_form_antiform -> inner_form_antiform (* TODO: Abstraction for inner_form_antiform *)
 
     let update_var_to : var -> term -> inner_form -> inner_form
       = fun v e f -> Clogic.update_var_to f v e

@@ -33,9 +33,9 @@ INCLUDES =
 VFCFRONT_SOURCES = vfcAST.ml vfcparse.mly vfclex.mll vfclogic.ml vfc2core.ml vfcfront.ml
 
 DEFAULT_ARGS = SOURCES="$(VFCFRONT_SOURCES)" \
-       LIBS="str unix utils prover_syntax symbexe_syntax jimple_syntax prover symbexe parsing" \
+       LIBS="str unix dynlink utils prover_syntax symbexe_syntax jimple_syntax plugin_interface prover symbexe parsing" \
        OCAMLLDFLAGS="-I $(LIB)" \
-       INCDIRS="../prover ../prover_syntax ../parsing ../symbexe_syntax ../utils ../jimple_syntax ../symbexe" \
+       INCDIRS="../prover ../prover_syntax ../parsing ../symbexe_syntax ../utils ../jimple_syntax ../symbexe ../plugin_interface" \
        OCAMLFLAGS="" \
        TRASH=""
 
