@@ -203,8 +203,7 @@ let add_error_heap_node (heap : inner_form_antiform) =
     Format.fprintf (Format.str_formatter) "%a" string_inner_form (inner_form_antiform_to_form heap););
   add_error_node (Format.flush_str_formatter ())
 
-let add_edge_common = 
-  fun src dst typ lbl f ->
+let add_edge_common src dst typ lbl f= 
   let e = {label=lbl; clabel=""; etype=typ; src=src; dest=dst; file=f} in
   graphe := e :: !graphe;
   src.outedges <- e :: src.outedges;
@@ -220,14 +219,15 @@ let add_edge
     : unit = 
   add_edge_common src dest typ label None
 
-let add_edge_with_proof src dest typ label = 
+let add_edge_with_proof src dest typ label : string = 
   let f = fresh_file() in
   let out = open_out f in
   let fmt = formatter_of_out_channel out in
   Sepprover.pprint_proof fmt;
   pp_print_flush fmt ();
   close_out out;
-  add_edge_common src dest typ label (Some f)
+  add_edge_common src dest typ label (Some f);
+  f
 
 let add_url_to_node src proof = 
   let f = fresh_file() in
@@ -246,11 +246,11 @@ let add_id_formset_edge src label sheaps cfg =
   match sheaps with 
     [] ->
       if Config.symb_debug() then printf "\n\nInconsistent heap. Skip it!\n%!";
-      let idd = add_good_node "Inconsistent" in add_edge_with_proof src idd ExecE (label ^"\n Inconsistent");
+      let idd = add_good_node "Inconsistent" in ignore (add_edge_with_proof src idd ExecE (label ^"\n Inconsistent"));
 	[]
   | _ -> 
   let sheaps_id = add_id_formset cfg sheaps in
-  List.iter (fun dest -> add_edge_with_proof src (snd dest) ExecE label) sheaps_id;
+  List.iter (fun dest -> ignore (add_edge_with_proof src (snd dest) ExecE label)) sheaps_id;
   sheaps_id
 
 
@@ -317,15 +317,17 @@ let call_jsr_static (sheap,id) spec il node =
     (match res with 
       None -> 
         let idd = add_error_node "ERROR" in
-        add_edge_with_proof id idd ExecE	
+        let proof_file = add_edge_with_proof id idd ExecE	
           (fprintf str_formatter "@[%a:@\n %a@]"
             Pprinter_core.pp_stmt_core node.skind
             Sepprover.pprint_counter_example (); 
-            flush_str_formatter ());
-        printf "@[<2>@{<b>ERROR}: While executing node %d:@\n%a@.%!"
+            flush_str_formatter ()) 
+        in 
+        printf "@[<2>@{<b>ERROR@}: While executing node %d:@\n%a@.%!"
           node.sid
           Pprinter_core.pp_stmt_core node.skind;
         Sepprover.print_counter_example ();
+        printf "Proof file: %s@\n" proof_file;
         printf "%s(end error description)%s@.%!" 
           System.terminal_red System.terminal_white;
         Printing.pp_json_node node.sid 
@@ -350,7 +352,7 @@ let check_postcondition (heaps : formset_entry list) (sheap : formset_entry) =
     if Config.symb_debug() then 
       printf "\n\nPost okay \n%!";
     (* let idd = add_good_node ("EXIT: "^(Pprinter.name2str m.name)) in *)
-    add_edge_with_proof node id ExitE "exit";
+    ignore (add_edge_with_proof node id ExitE "exit");
     true
     (* add_edge id idd "";*)
   with Not_found ->
@@ -364,12 +366,13 @@ let check_postcondition (heaps : formset_entry list) (sheap : formset_entry) =
       List.iter 
         (fun (heap, id) ->
           let idd = add_error_heap_node heap in 
-          add_edge_with_proof node idd ExecE
+          ignore (add_edge_with_proof node idd ExecE
             (Format.fprintf 
               (Format.str_formatter) "ERROR EXIT: @\n %a" 
               Sepprover.pprint_counter_example (); 
-              Format.flush_str_formatter ())
-        ) heaps;)
+              Format.flush_str_formatter ()))) 
+         heaps;
+      )
       | Check -> ());
     false
 
@@ -477,8 +480,8 @@ and execute_core_stmt
         let sheaps_abs = add_id_abs_formset n heaps_abs in
         List.iter 
           (fun sheap2 ->  
-            add_edge_with_proof (snd sheap) (snd sheap2) AbsE
-              ("Abstract@"^(Debug.toString Pprinter_core.pp_stmt_core stm.skind))) 
+            ignore (add_edge_with_proof (snd sheap) (snd sheap2) AbsE
+              ("Abstract@"^(Debug.toString Pprinter_core.pp_stmt_core stm.skind))))
           sheaps_abs;
         
         if Config.symb_debug() then
@@ -494,8 +497,8 @@ and execute_core_stmt
                   if ((frame_inner !curr_logic (inner_form_antiform_to_form sheap2) (inner_form_antiform_to_form sheap1) <> None) || 
                     (frame_inner !curr_logic (inner_form_antiform_to_antiform sheap2) (inner_form_antiform_to_antiform sheap1) <> None))
                   then 
-                   (add_edge_with_proof id2 id1 ContE 
-                     ("Contains@"^(Debug.toString Pprinter_core.pp_stmt_core stm.skind)); false) 
+                   (ignore (add_edge_with_proof id2 id1 ContE 
+                     ("Contains@"^(Debug.toString Pprinter_core.pp_stmt_core stm.skind))); false) 
                   else (s := ("\n---------------------------------------------------------\n" ^ 
                     (string_of_proof ())) :: !s; true))
                 formset)
@@ -545,7 +548,7 @@ and execute_core_stmt
     | End -> 
       (match !exec_type with
       | Abduct ->
-        add_edge_with_proof (snd sheap) (add_good_node ("Exit")) ExitE "exit";
+        ignore (add_edge_with_proof (snd sheap) (add_good_node ("Exit")) ExitE "exit")
       | _ -> ());
       execs_one n [sheap]
     )
@@ -646,7 +649,7 @@ let check_and_get_frame (pre_heap,id) post_sheap =
     Some frame -> 
                  if Config.symb_debug() then 
                         (printf "\n\nOld expression okay \n%!";
-                        add_edge_with_proof node id ExitE "exit";
+                        ignore (add_edge_with_proof node id ExitE "exit");
                         frame)
                  else
                         frame
@@ -654,12 +657,12 @@ let check_and_get_frame (pre_heap,id) post_sheap =
       let et = "Cannot prove frame for old expression" in
       (printf "@{<b>ERROR:@} %s.@.%!" et;
       Sepprover.print_counter_example ();
-      add_edge_with_proof
+      ignore (add_edge_with_proof
           node
           (add_error_heap_node pre_heap) ExitE
           (fprintf str_formatter "@[<2>ERROR EXIT:@\n%a@."
               Sepprover.pprint_counter_example ();
-              flush_str_formatter ());
+              flush_str_formatter ()));
       printf "@{<b>(end of error)@}@.%!";
       Printing.pp_json_node 
         (match node.cfg with None -> -1 | Some x -> x.sid) et (Sepprover.get_counter_example());

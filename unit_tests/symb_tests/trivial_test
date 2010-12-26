@@ -3,9 +3,14 @@ SpecTest trivial1:
 end; 
 
 SpecTest trivial2: 
-{False}{Garbage} ? False
+{0=1}{Garbage} ? False
 end; 
 
 SpecTest trivial3: 
-{Garbage}{False} ? False
+{Garbage}{} ? False
+end; 
+
+SpecTest trivial4: 
+{Garbage}{Garbage} ? True
+assign x := {False}{}();
 end; 
