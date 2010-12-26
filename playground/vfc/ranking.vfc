@@ -7,16 +7,14 @@ void ranking (int no_of_dmas) {
     if(succ_i == 0) {
       *(run+i) = 0; 
     } else {
+      *(run+i) = 1; 
       flag = flag+1;
       get(dataIn+i, succ_i, 1, i); 
     }
     i = i + 1; 
   }
 
-  inv rank_inv;
-  
-  while(flag != 0) {
-    inv false_inv; 
+  while(flag != 0) (inv rank_inv) {
     k = 0; 
     while(k<(buf_size-1)) {
       i = 0; 
@@ -37,6 +35,7 @@ void ranking (int no_of_dmas) {
       }
     }
  
+
     i = 0; 
     while(i<no_of_dmas) {
       currlen_i = *(currlen+i); 
@@ -74,6 +73,8 @@ void ranking (int no_of_dmas) {
       i = i+1; 
     } 
 
+    inv false_inv; 
+    
     flag = 0; 
     i = 0; 
     while(i<no_of_dmas) {

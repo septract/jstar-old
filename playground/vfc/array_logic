@@ -24,7 +24,7 @@ if
 rule array_array_contradiction:
   array(?h,?t,?p,?x,?l1) * array(?h,?u,?q,?x,?l2) | |- 
 where
-  !LT(0, ?l1) * !LT(0, ?l2) pureguard
+  ?l1!=0 * ?l2!=0 pureguard
 if
 
 
@@ -33,27 +33,34 @@ if
 rule remove_empty_array_left :
   | array(?h,?t,?p,?x,?l) |-
 where
-  !LE(?l, 0) * !GE(?l, 0) pureguard
+  ?l = 0 pureguard
 if
   | |-
   
 rule remove_empty_array_right : 
   | |- array(?h,?t,?p,?x,?l)
 where
-  !LE(?l, 0) * !GE(?l, 0) pureguard
+  ?l = 0 pureguard
 if 
   | |-
 
 
 /* Array splitting */
 
+/*
 rule array_split_blob:
   | array(?h,?t,?p,?x,?l) |- blob(?h,?t,?p,?y,_c)
 where
   !LE(?x,?y) * !LE(?y,builtin_plus(?x,builtin_minus(?l,"1"))) pureguard
 if
   blob(?h,?t,?p,?y,_c) | array(?h,?t,?p,?x,_k) * array(?h,?t,?p,builtin_plus(?y,"1"),builtin_minus(builtin_minus(?l,_k),"1")) |- _k = builtin_minus(?y,?x)
- 
+*/
+
+rule array_split_blob2:
+  | array(?h,?t,?p,?x,?l) |- blob(?h,?t,?p,?x,_c)
+if 
+  blob(?h,?t,?p,?x,_c) | array(?h,?t,?p,(?x+1),(?l-1)) |- ?p != pbot() * !GT(?l,0)
+
 
 /* Arrays with zero permission reduce to emp */
 

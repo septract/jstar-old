@@ -7,11 +7,11 @@ import "array_logic";
  *************************************/
 
 rule MFC_remove:
-| MFC(?t,?O) |- MFC(?t,?P) 
+| MFC(?t,?o) |- MFC(?t,?p) 
 without
-  ?O!=?P
+  ?o!=?p
 if
-  MFC(?t,?O) | |- ?O=?P 
+  MFC(?t,?o) | |- ?o=?p 
 
 rule MFC_MFC_contradiction:
   MFC(?t,?O) * MFC(?t,?P) | |- 
@@ -22,6 +22,7 @@ if
  * rules for releasing what is owned by MFC
  ******************************************/
 
+/*
 rule release_MFC_empty_right:
   | |- release(MFC(?t, empty()))
 if
@@ -31,6 +32,7 @@ rule release_MFC_cons_right:
   | |- release(MFC(?t, cons(tuple(?d, ?p, ?s, ?q, ?l), ?O)))
 if
   | |- array("local", "byte", ?p, ?d, ?l) * array("host", "byte", ?q, ?s, ?l) * release(MFC(?t, ?O)) * MFCSlot()
+*/
 
 rule release_MFC_empty_left:
   | release(MFC(?t, empty())) |-

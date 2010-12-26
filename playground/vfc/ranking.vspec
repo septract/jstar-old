@@ -65,11 +65,19 @@ b_ls("host", "byte",ptop(),_x,0,_len)
 array("host", "byte", ptop(), target, _olen)
 * 
 !GT(_olen,_len)
+*
+blob("local","byte",ptop(), run, 1)
+* 
+flag != 0 
 )
 
 ||
 
+(
 blob("local","byte",ptop(), run, 0)
+*
+flag = 0
+)
 
 }
 
