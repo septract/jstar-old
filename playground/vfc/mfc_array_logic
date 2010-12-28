@@ -22,17 +22,17 @@ if
  * rules for releasing what is owned by MFC
  ******************************************/
 
-/*
+
 rule release_MFC_empty_right:
   | |- release(MFC(?t, empty()))
 if
   | |- MFC(?t, empty())
 
 rule release_MFC_cons_right:
-  | |- release(MFC(?t, cons(tuple(?d, ?p, ?s, ?q, ?l), ?O)))
+  | |- release(MFC(?t, cons(tuple(?d, ?p, ?s, ?q, ?l, ?vs), ?O)))
 if
-  | |- array("local", "byte", ?p, ?d, ?l) * array("host", "byte", ?q, ?s, ?l) * release(MFC(?t, ?O)) * MFCSlot()
-*/
+  | |- array("local", "byte", ?p, ?d, ?l, ?vs) * array("host", "byte", ?q, ?s, ?l, ?vs) * release(MFC(?t, ?O)) * MFCSlot()
+
 
 rule release_MFC_empty_left:
   | release(MFC(?t, empty())) |-
@@ -40,6 +40,6 @@ if
   | MFC(?t, empty()) |-
 
 rule release_MFC_cons_left:
-  | release(MFC(?t, cons(tuple(?d, ?p, ?s, ?q, ?l), ?O))) |-
+  | release(MFC(?t, cons(tuple(?d, ?p, ?s, ?q, ?l,?vs), ?O))) |-
 if
-  | array("local", "byte", ?p, ?d, ?l) * array("host", "byte", ?q, ?s, ?l) * release(MFC(?t, ?O)) * MFCSlot() |-
+  | array("local", "byte", ?p, ?d, ?l, ?vs) * array("host", "byte", ?q, ?s, ?l, ?vs) * release(MFC(?t, ?O)) * MFCSlot() |-

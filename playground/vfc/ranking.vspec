@@ -11,13 +11,15 @@ MFCSlot()
 *
 MFC(0,empty())
 *
-array("local", "byte", ptop(), dataIn, buf_size)
+blob("local", "byte", ptop(), SPUbuf, _k)
+*
+array("local", "byte", ptop(), _k, buf_size, _bufvs)
 * 
 !GT(buf_size,0)
 * 
 !GT(len,0)
 *
-array("host", "byte", ptop(), target, olen)
+array("host", "byte", ptop(), target, olen, _targvs)
 * 
 !GT(olen,len)
 *
@@ -27,42 +29,18 @@ blob("local", "byte", ptop(), currlen, 0)
 
 
 
-start_inv { 
-
-(
-blob("local", "byte", ptop(), succ, succ_i)
-*
-blob("host", "byte", psplit2(ptop()), succ_i, _x)
-*
-b_ls("host", "byte",ptop(),_x,0,_len)
-*
-MFC(0, cons(tuple(dataIn, ptop(), succ_i, psplit1(ptop()), 1), empty()))
-*
-array("host", "byte", ptop(), target, olen)
-* 
-!GT(olen,_len)
-)
-
-||
-
-blob("local","byte",ptop(), run, 0)
-
-}
-
-
-
 rank_inv { 
 
 (
-MFC(0, cons(tuple(dataIn, ptop(), succ_i, psplit1(ptop()), 1), empty()))
+MFC(0, cons(tuple(dataIn, ptop(), _s, psplit1(ptop()), 1, cons(_x,empty())), empty()))
 *
-blob("local", "byte", ptop(), succ, succ_i)
+blob("local", "byte", ptop(), succ, _s)
 *
-blob("host", "byte", psplit2(ptop()), succ_i, _x)
+blob("host", "byte", psplit2(ptop()), _s, _x)
 *
 b_ls("host", "byte",ptop(),_x,0,_len)
 *
-array("host", "byte", ptop(), target, _olen)
+array("host", "byte", ptop(), target, _olen, _targvs)
 * 
 !GT(_olen,_len)
 *
@@ -80,8 +58,6 @@ flag = 0
 )
 
 }
-
-
 
 
 false_inv { 0=1 }

@@ -5,7 +5,6 @@ import "permissions_logic";
  * Simple subtraction rules 
  *************************************/
 
-
 rule blob_remove_top:
   | blob(?h,?t,ptop(),?x,?c) |-  blob(?h,?t,ptop(),?x,?d)
 without
@@ -13,35 +12,23 @@ without
 if
   blob(?h,?t,?p,?x,?c) | |- ?c=?d 
 
-/*
-   The order of this rule basically makes the decision about how to
-   satisfy an existential permission term. 
-*/
+
+/* This rule decides how to satisfy an existential permission. */
+
 rule blob_remove_split:
-  | blob(?h,?t,?p,?x,?c) |-  blob(?h,?t,_p,?x,?d)
+  | blob(?h,?t,?p1,?x,?c) |-  blob(?h,?t,_p2,?x,?d)
 without
   ?c!=?d
 if
-  blob(?h,?t,psplit1(?p),?x,?c) | blob(?h,?t,psplit2(?p),?x,?c) |- ?c=?d * psplit1(?p) = _p 
+  blob(?h,?t,psplit1(?p1),?x,?c) | blob(?h,?t,psplit2(?p1),?x,?c) |- ?c=?d * psplit1(?p1) = _p2 
 or 
-  blob(?h,?t,?p,?x,?c) | |- ?c=?d * ?p = _p 
+  blob(?h,?t,?p1,?x,?c) | |- ?c=?d * ?p1 = _p2 
 
 
 rule blob_remove2:
   | blob(?h,?t,?p1,?x,?c) |-  blob(?h,?t,?p2,?x,?d)
-without
-  ?c!=?d
 if
-  blob(?h,?t,?p1,?x,?c) | |- ?c=?d * ?p1 = ?p2
-
-/*
-rule blob_remove:
-  | blob(?h,?t,?p,?x,?c) |-  blob(?h,?t,?p,?x,?d)
-without
-  ?c!=?d
-if
-  blob(?h,?t,?p,?x,?c) | |- ?c=?d 
-*/
+  blob(?h,?t,?p1,?x,?c) | |- ?c = ?d * ?p1 = ?p2
 
 
 
@@ -49,22 +36,13 @@ if
  * Rules for contradictions 
  *************************************/
 
-/*
-rule blob_blob_contradiction_left:
+rule blob_blob_left:
   | blob(?h,?t,?p,?x,?c) * blob(?h,?t,?q,?x,?d) |- 
 if
-  | pmeet(?p, ?q) != pbot() |-
-*/
-
-rule blob_blob_contradiction_right:
-  | |- blob(?h,?t,?p,?x,?c) * blob(?h,?t,?q,?x,?d)
-if
-  | |- pmeet(?p, ?q) != pbot()
-
-rule blob_nil_contradiction : 
-  blob(?h,?t,?p,nil(),?c) | |- 
-if
-  | |- ?p != pbot()
+  | blob(?h,?t,pjoin(?p,?q),?x,?c) 
+    * ?c=?d 
+    * pmeet(?p,?q) = pbot() 
+  |-
 
 
 /**************************************
@@ -95,22 +73,3 @@ rule blob_perm_bot_right:
   | |- blob(?h,?t,pbot(),?x,?y)
 if
   | |-
- 
-rule blob_perm_bot_elimination_left:
-  | blob(?h,?t,?p,?x,?y) * blob(?h,?t,pbot(),?x,?y) |- 
-if
-  | blob(?h,?t,?p,?x,?y) |-
-
-rule blob_perm_bot_elimination_right:
-  | |- blob(?h,?t,?p,?x,?y) * blob(?h,?t,pbot(),?x,?y)
-if
-  | |- blob(?h,?t,?p,?x,?y)
-
-/*
-rule blob_perm_pdiff_match:
-  | blob(?h,?t,?p,?x,?y) |- blob(?h,?t,?q,?x,?z) 
-without
-  ?y != ?z || blob(?h,?t,pbot(),?x,?y) || blob(?h,?t,pbot(),?x,?z)
-if
-  blob(?h,?t,?q,?x,?y) | blob(?h,?t,?r,?x,?y) * ?r = pdiff(?p, ?q) |- ?y = ?z
-*/

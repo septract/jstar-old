@@ -3,7 +3,6 @@
  *  represented with binary trees
  ********************************************/
 
-constructor pcons
 constructor ptop
 constructor pbot 
 
@@ -169,3 +168,20 @@ rule Pless_right:
   | |- !Pless(pcons(?x1, ?x2), pcons(?y1, ?y2))
 if
   | |- !Pless(?x1, ?y1) * Pless(?x2, ?y2)
+  
+
+/****************
+ *   Inequality
+ ****************/
+
+rule neq_pbot_psplit1:
+  |  |-  psplit1(?t) != pbot()
+if
+  |  |-  ?t != pbot()
+
+rule neq_pbot_psplit2:
+  |  |-  pbot() != psplit2(?t)
+without 
+  
+if
+  |  |-  pbot() != ?t

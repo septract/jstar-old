@@ -11,8 +11,8 @@ memcpy
 { array(_h, "byte", ptop(), @parameter0:, @parameter2:) * array(_h, "byte", _p, @parameter1:, @parameter2:) }
 
 get
-{ array("local", "byte", ptop(), @parameter0:, @parameter2:) * array("host", "byte", _p, @parameter1:, @parameter2:) * MFC(@parameter3:, _O) * MFCSlot() * _p != pbot() } 
-{ MFC(@parameter3:, cons(tuple(@parameter0:, ptop(), @parameter1:, _p, @parameter2:), _O)) }
+{ array("local", "byte", ptop(), @parameter0:, @parameter2:, _ls) * array("host", "byte", _p, @parameter1:, @parameter2:, _hs) * MFC(@parameter3:, _O) * MFCSlot() * _p != pbot() } 
+{ MFC(@parameter3:, cons(tuple(@parameter0:, ptop(), @parameter1:, _p, @parameter2:, _hs), _O)) }
 
 put
 { array("local", "byte", _p, @parameter0:, @parameter2:) * array("host", "byte", ptop(), @parameter1:, @parameter2:) * MFC(@parameter3:, _O) * MFCSlot() * _p != pbot() } 

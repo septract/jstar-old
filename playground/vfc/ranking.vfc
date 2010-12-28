@@ -13,20 +13,20 @@ void ranking (int no_of_dmas) {
     }
     i = i + 1; 
   }
-
+  
   while(flag != 0) (inv rank_inv) {
-    k = 0; 
+    k = 0;
     while(k<(buf_size-1)) {
-      i = 0; 
+      i = 0;
       while(i<no_of_dmas){
-        wait(i); 
-        run_i = *(run+i); 
-        dataIn_i = *(dataIn+i); 
-        if((run_i == 1) && (dataIn_i>=0)) {
+        wait(i);
+        run_i = *(run+i);
+        dataIn_i = *(dataIn+i);
+        if((run_i == 1) && (dataIn_i!=0)) {
           *(succ+i) = dataIn_i;
-          get(dataIn_i, dataIn+i, size_int, i);
-          currlen_i = *(currlen+i); 
-          SPUbuf_i = *(SPUbuf+i); 
+          get(dataIn+i, dataIn_i, 1, i);
+          currlen_i = *(currlen+i);
+          SPUbuf_i = *(SPUbuf+i);
           *(SPUbuf_i + currlen_i) = dataIn_i;
           *(currlen+i) = currlen_i + 1;
         }
@@ -35,7 +35,8 @@ void ranking (int no_of_dmas) {
       }
     }
  
-
+    inv false_inv; 
+ 
     i = 0; 
     while(i<no_of_dmas) {
       currlen_i = *(currlen+i); 
@@ -73,7 +74,6 @@ void ranking (int no_of_dmas) {
       i = i+1; 
     } 
 
-    inv false_inv; 
     
     flag = 0; 
     i = 0; 

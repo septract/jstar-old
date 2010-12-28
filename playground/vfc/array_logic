@@ -1,17 +1,31 @@
 import "permissions_logic";
 import "blob_logic";
+import "listdatatype_logic";
 
-rule array_match_len: 
-  | array(?h,?t,?p,?x,?l1) |- array(?h,?t,?p,?x,?l2)
+rule blob_array_right:
+  | blob(?h,?t,?p1,?x,?v) |- array(?h,?t,?p2,?x,?l,?ws)
 where
-  !GE(?l1,?l2) pureguard
-if
-array(?h,?t,?p,?x,?l2) | array(?h,?t,?p,(?x + ?l2),(?l1 - ?l2)) |- 
+  !GT(?l,0) pureguard
+if 
+  | blob(?h,?t,?p1,?x,?v) |- blob(?h,?t,?p2,?x,_w) 
+                            * array(?h,?t,?p2,(?x+1),(?l-1),_vs)
+                            * ?ws = cons(_w,_vs)
+                         
 
 rule array_match_len2: 
-  | array(?h,?t,?p,?x,?l1) |- array(?h,?t,?p,?x,?l2)
+  | array(?h,?t,?p,?x,?l,?vs) |- array(?h,?t,?p,?x,_l2,_vs2)
 if
- array(?h,?t,?p,?x,?l1) |  |- ?l1 = ?l2
+ array(?h,?t,?p,?x,?vs) |  |- ?l = _l2 * ?vs = _vs2
+
+
+rule array_blob_right:
+  |  array(?h,?t,?p1,?x,?l,?ws)  |-  blob(?h,?t,?p2,?x,?v)
+where 
+  !GT(?l,0) pureguard
+if 
+  |  blob(?h,?t,?p1,?x,_w) * array(?h,?t,?p2,(?x+1),(?l-1),_vs) 
+     * ?ws = cons(_w,_vs)
+  |- blob(?h,?t,?p2,?x,?v) 
 
 
 /********************************
@@ -19,84 +33,36 @@ if
  ********************************/
 
 
-/* Rules for contradictions */
- 
-rule array_array_contradiction:
-  array(?h,?t,?p,?x,?l1) * array(?h,?u,?q,?x,?l2) | |- 
-where
-  ?l1!=0 * ?l2!=0 pureguard
-if
-
-
 /* Get rid of arrays with length zero */
 
 rule remove_empty_array_left :
-  | array(?h,?t,?p,?x,?l) |-
-where
-  ?l = 0 pureguard
+  | array(?h,?t,?p,?x,0,?vs) |-
 if
-  | |-
+  | ?vs = empty() |-
   
 rule remove_empty_array_right : 
-  | |- array(?h,?t,?p,?x,?l)
-where
-  ?l = 0 pureguard
+  | |- array(?h,?t,?p,?x,0,?vs)
 if 
-  | |-
+  | |- ?vs = empty()
 
 
 /* Array splitting */
 
-/*
-rule array_split_blob:
-  | array(?h,?t,?p,?x,?l) |- blob(?h,?t,?p,?y,_c)
-where
-  !LE(?x,?y) * !LE(?y,builtin_plus(?x,builtin_minus(?l,"1"))) pureguard
-if
-  blob(?h,?t,?p,?y,_c) | array(?h,?t,?p,?x,_k) * array(?h,?t,?p,builtin_plus(?y,"1"),builtin_minus(builtin_minus(?l,_k),"1")) |- _k = builtin_minus(?y,?x)
-*/
-
 rule array_split_blob2:
-  | array(?h,?t,?p,?x,?l) |- blob(?h,?t,?p,?x,_c)
+  | array(?h,?t,?p,?x,?l,cons(?v,?vs)) |- blob(?h,?t,?p,?x,_c)
 if 
-  blob(?h,?t,?p,?x,_c) | array(?h,?t,?p,(?x+1),(?l-1)) |- ?p != pbot() * !GT(?l,0)
+  blob(?h,?t,?p,?x,?v) | array(?h,?t,?p,(?x+1),(?l-1),?vs) |- _c = ?v
 
 
 /* Arrays with zero permission reduce to emp */
 
 rule array_perm_bot_left:
-  | array(?h,?t,pbot(),?x,?l) |-
+  | array(?h,?t,pbot(),?x,?l,?vs) |-
 if
   | |-
 
 rule array_perm_bot_right:
-  | |- array(?h,?t,pbot(),?x,?l)
+  | |- array(?h,?t,pbot(),?x,?l,?vs)
 if
   | |-
  
-rule array_perm_bot_elimination_left:
-  | array(?h,?t,?p,?x,?l) * array(?h,?t,pbot(),?x,?l) |- 
-if
-  | array(?h,?t,?p,?x,?l) |-
-
-rule array_perm_bot_elimination_right:
-  | |- array(?h,?t,?p,?x,?l) * array(?h,?t,pbot(),?x,?l)
-if
-  | |- array(?h,?t,?p,?x,?l)
-
-
-/* Permissions matching */
-
-rule array_perm_pdiff_match:
-  | array(?h,?t,?p,?x,?l) |- array(?h,?t,?q,?x,?l) 
-without
-  array(?h,?t,pbot(),?x,?l)
-if
-  array(?h,?t,?q,?x,?l) | array(?h,?t,?r,?x,?l) * ?r = pdiff(?p, ?q) |-
-
-rule array_simple_match : 
-  | array(?h,?t,?p,?x,?l1) |- array(?h,?t,?q,?x,?l2)
-where
-  !GE(?l1,?l2) pureguard
-if 
-  array(?h,?t,?p,?x,?l2) | array(?h,?t,?q,?x,(?l1-?l2)) |- 

@@ -3,29 +3,20 @@ import "array_logic";
 import "mfc_array_logic";
 import "blob_ls_len_logic";
 
-rule plus_exists :
-  | |- ?i = (_j + ?n)
-where 
-  _j notincontext;
-  _j notin ?i;
-  _j notin ?n
-if
-  | |-
 
-rule minus_exists :
-  | |- ?i = (_j - ?n)
-where 
-  _j notincontext;
-  _j notin ?i;
-  _j notin ?n
-if
-  | |-
+rule b_ls_len_left:
+  | b_ls(?h,?t,?p,?x,?y,?m) * ?x!=?y |- 
+without 
+  ?m > 0
+if 
+  | b_ls(?h,?t,?p,?x,?y,?m) * ?m > 0 |- 
 
-rule b_ls_array_new : 
-  | b_ls(?h,?t,?p1,?x,?y,?m)  |-  array(?h,?t,?p2,?x,?j)
+
+rule b_ls_array: 
+  | b_ls(?h,?t,?p1,?x,?y,?m)  |-  array(?h,?t,?p2,?x,?j,?vs)
 where 
-  !GT(?j,0) pureguard; 
-  !GT(?m,0) pureguard
+  !GT(?m,0) pureguard; 
+  !GT(?j,0) pureguard
 if 
   |  blob(?h,?t,?p1,?x,_z1) * b_ls(?h,?t,?p1,_z1,?y,(?m-1)) 
-  |- blob(?h,?t,?p2,?x,_z2) * array(?h,?t,?p2,(?x+"1"),(?j-1))
+  |- array(?h,?t,?p2,?x,?j,?vs)
