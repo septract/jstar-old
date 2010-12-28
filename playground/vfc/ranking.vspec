@@ -1,12 +1,10 @@
 ranking { 
-blob("local", "byte", ptop(), succ, _s)
+blob("local", "byte", ptop(), dataIn, _s)
 *
 b_ls("host","byte",ptop(),_s,0,len)
 * 
 blob("local", "byte", ptop(), run, 1)
 *
-blob("local", "byte", ptop(), dataIn, _x)
-* 
 MFCSlot()
 *
 MFC(0,empty())
@@ -34,11 +32,9 @@ rank_inv {
 (
 MFC(0, cons(tuple(dataIn, ptop(), _s, psplit1(ptop()), 1, cons(_x,empty())), empty()))
 *
-blob("local", "byte", ptop(), succ, _s)
-*
 blob("host", "byte", psplit2(ptop()), _s, _x)
 *
-b_ls("host", "byte",ptop(),_x,0,_len)
+b_ls("host", "byte", ptop(), _x, 0, _len)
 *
 array("host", "byte", ptop(), target, _olen, _targvs)
 * 

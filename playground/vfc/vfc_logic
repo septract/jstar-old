@@ -3,6 +3,7 @@ import "array_logic";
 import "mfc_array_logic";
 import "blob_ls_len_logic";
 
+constructor tuple 
 
 rule b_ls_len_left:
   | b_ls(?h,?t,?p,?x,?y,?m) * ?x!=?y |- 
