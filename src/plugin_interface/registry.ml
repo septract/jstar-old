@@ -12,4 +12,4 @@
  ********************************************************)
 
 (* Registry of plugins for abstract interpretation *)
-let abs_int_registry : (Psyntax.pform -> Psyntax.pform) list ref = ref []
+let abs_int_registry : ((Psyntax.pform -> Psyntax.pform) ref) list ref = ref []

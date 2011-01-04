@@ -2,6 +2,7 @@ default: build
 
 build:
 	$(MAKE) -C plugin_interface
+	$(MAKE) -C plugin_interface -f Makefile_client
 	$(MAKE) -C jimplefront
 	$(MAKE) -C proverfront
 	$(MAKE) -C symbfront
@@ -9,6 +10,7 @@ build:
 
 debug:
 	$(MAKE) -C plugin_interface debug
+	$(MAKE) -C plugin_interface -f Makefile_client debug
 	$(MAKE) -C jimplefront debug
 	$(MAKE) -C proverfront debug
 	$(MAKE) -C symbfront debug
@@ -20,6 +22,7 @@ clean:
 	$(MAKE) -C jimplefront clean
 	$(MAKE) -C parsing clean
 	$(MAKE) -C plugin_interface clean
+	$(MAKE) -C plugin_interface -f Makefile_client clean
 	$(MAKE) -C prover clean
 	$(MAKE) -C prover_syntax clean
 	$(MAKE) -C proverfront clean

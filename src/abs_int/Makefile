@@ -32,7 +32,7 @@ INCLUDES =
 
 SYNTACTIC_SOURCES = syntactic.ml
 
-DEFAULT_ARGS = LIBS="str unix utils prover_syntax prover plugin_interface" \
+DEFAULT_ARGS = LIBS="str unix utils prover_syntax prover plugin_client_interface" \
        OCAMLLDFLAGS="-I $(LIB)" \
        INCDIRS="../utils ../prover_syntax ../prover ../plugin_interface" \
        OCAMLFLAGS="" \
@@ -42,7 +42,7 @@ BYTECODE_LIBRARY = $(DEFAULT_ARGS) SOURCES="$(SYNTACTIC_SOURCES)" \
        RESULT=$(BIN)/syntactic
 
 SHARED_LIBRARY = $(DEFAULT_ARGS) SOURCES="$(SYNTACTIC_SOURCES)" \
-          RESULT=$(BIN)/syntactic
+       RESULT=$(BIN)/syntactic
 
 default: syntactic_shared
 
