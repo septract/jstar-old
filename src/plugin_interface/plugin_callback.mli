@@ -12,4 +12,4 @@
  ********************************************************)
 
 (* Function to be called by a plugin for abstract interpretation *)
-val add_abs_int : (Psyntax.pform -> Psyntax.pform) -> unit
+val add_abs_int : (Psyntax.pform -> Psyntax.pform) ref -> unit

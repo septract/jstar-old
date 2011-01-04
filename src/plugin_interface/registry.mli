@@ -11,4 +11,4 @@
       LICENSE.txt
  ********************************************************)
 
-val abs_int_registry : (Psyntax.pform -> Psyntax.pform) list ref
+val abs_int_registry : ((Psyntax.pform -> Psyntax.pform) ref) list ref

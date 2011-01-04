@@ -136,4 +136,4 @@ let syn_abs pform =
   
 (* Plugin registration *)
 let _ =
-  Plugin_callback.add_abs_int syn_abs
+  Plugin_callback.add_abs_int (ref syn_abs)
