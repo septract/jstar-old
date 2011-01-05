@@ -12,5 +12,5 @@
  ********************************************************)
 
 (* Function to be called by a plugin for abstract interpretation *)
-let add_abs_int (impl : Psyntax.pform -> Psyntax.pform) =
+let add_abs_int (impl : (Psyntax.pform -> Psyntax.pform) ref) =
   Registry.abs_int_registry := !Registry.abs_int_registry @ [impl]

@@ -246,7 +246,7 @@ let rec string_sexp_form
 
   let plain_types = smt_union_list plain_type_list in                     
 
-  let types = smt_union_list [eq_types; disj_types; plain_types]in 
+  let types = smt_union_list [eq_types; disj_types; plain_types] in 
 
   let form_sexp = "(and true " ^ eq_sexp ^ " " ^ neq_sexp ^ " " ^ 
                                  disj_sexp ^ " " ^ plain_sexp ^ ")"  in
@@ -365,6 +365,9 @@ let finish_him
     let asm_neq_sexp = String.concat " " (map string_sexp_neq neqs) in
     
     let ts_types = smt_union_list (map args_smttype (get_args_all ts)) in 
+
+    let ts_eqneq_types = smt_union_list 
+      (map (fun (a,b) -> SMTTypeSet.union (args_smttype a) (args_smttype b)) (eqs @ neqs)) in
     
     (* Construct sexps and types for assumption and obligation *)
     let asm_sexp, asm_types = string_sexp_form ts asm in 
@@ -377,7 +380,9 @@ let finish_him
 
     (* Construct and run the query *)      
     let asm_sexp = "(and true " ^ asm_eq_sexp ^ " " ^ asm_neq_sexp ^ " " ^ asm_sexp ^ ") " in 
-    let obl_sexp = "( " ^ (decl_evars obl_types) ^ obl_sexp ^ ")" in 
+    let obl_sexp = "( " ^ 
+      (decl_evars (SMTTypeSet.diff obl_types (SMTTypeSet.union ts_eqneq_types asm_types))) ^ 
+      obl_sexp ^ ")" in 
                                    
     let query = "(not (=> " ^ asm_sexp ^ obl_sexp ^ "))" 
     in smt_assert query;    

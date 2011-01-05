@@ -64,8 +64,8 @@ let kill_unused_existentials syn_form =
     if cnt = 0 then evars
     else saturate_ev_cnt syn (find_ev_eq_neq syn evars) (cnt-1)
   in  
-  (*let ev_sp = saturate_ev_cnt syn_form (find_ev_sp syn_form) 2 in*)
-  let ev_sp = saturate_ev syn_form (find_ev_sp syn_form) in
+  let ev_sp = saturate_ev_cnt syn_form (find_ev_sp syn_form) 2 in
+  (*let ev_sp = saturate_ev syn_form (find_ev_sp syn_form) in*)
   let rec elim_evars syn =
     (* ignore terms with heads from forbidden_heads *)
     let forbidden_heads = ["Ast"] in
@@ -136,4 +136,4 @@ let syn_abs pform =
   
 (* Plugin registration *)
 let _ =
-  Plugin_callback.add_abs_int syn_abs
+  Plugin_callback.add_abs_int (ref syn_abs)

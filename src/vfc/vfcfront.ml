@@ -39,7 +39,7 @@ let main () : unit =
     if Config.symb_debug() then Printf.printf "\nVfc file successfully parsed...\n%!";
     if Config.symb_debug() then Printf.printf "Spec file parsing started...\n%!";
     let specs = Jparser.vfc_spec_file Jlexer.token (Lexing.from_channel (open_in !spec_file_name)) in 
-    if Config.symb_debug() then Printf.printf "Spec file successfully parsed...\n%!";
+    if Config.symb_debug() then Printf.printf "\nSpec file successfully parsed...\n%!";
     let file_prefix = String.sub !vfc_file_name 0 (String.index !vfc_file_name '.') in
     Vfc2core.verify file_prefix prog (internal_specs @ specs) lo abs_rules
   end
