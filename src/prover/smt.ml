@@ -377,7 +377,9 @@ let finish_him
 
     (* Construct and run the query *)      
     let asm_sexp = "(and true " ^ asm_eq_sexp ^ " " ^ asm_neq_sexp ^ " " ^ asm_sexp ^ ") " in 
-    let obl_sexp = "( " ^ (decl_evars obl_types) ^ obl_sexp ^ ")" in 
+    let obl_sexp = "( " ^ 
+      (decl_evars (SMTTypeSet.diff obl_types (SMTTypeSet.union ts_types asm_types))) ^ 
+      obl_sexp ^ ")" in 
                                    
     let query = "(not (=> " ^ asm_sexp ^ obl_sexp ^ "))" 
     in smt_assert query;    
