@@ -462,17 +462,17 @@ and execute_core_stmt
         let antiframes_abs = 
           if frames_abs != [] && antiframes_abs = [] then [ empty_inner_form ] else antiframes_abs in
         if Config.symb_debug() then
-          (Format.printf "@\nPost-abstraction heaps count:@\n    %d@.%!" (List.length frames_abs);
+          (List.iter (fun heap -> Format.printf "@\nPost-abstraction heap:@\n    %a@.%!" string_inner_form heap) frames_abs; 
           match !exec_type with
-          | Abduct -> Format.printf "@\nPost-abstraction antiheaps count:@\n    %d@.%!" (List.length antiframes_abs);
+          | Abduct -> List.iter (fun saf -> Format.printf "@\nPost-abstraction antiheap:@\n    %a@.%!" string_inner_form saf) antiframes_abs;
           | _ -> ());
         (* Run abstract interpretation on abstracted heaps *)
         let frames_abs = List.map (fun heap -> Sepprover.abs_int heap) frames_abs in 
         let antiframes_abs = List.map (fun heap -> Sepprover.abs_int heap) antiframes_abs in 
         if Config.symb_debug() then
-          (List.iter (fun heap -> Format.printf "@\nPost-abstraction heap:@\n    %a@.%!" string_inner_form heap) frames_abs; 
+          (List.iter (fun heap -> Format.printf "@\nPost-AI heap:@\n    %a@.%!" string_inner_form heap) frames_abs; 
           match !exec_type with
-          | Abduct -> List.iter (fun saf -> Format.printf "@\nPost-abstraction antiheap:@\n    %a@.%!" string_inner_form saf) antiframes_abs;
+          | Abduct -> List.iter (fun saf -> Format.printf "@\nPost-AI antiheap:@\n    %a@.%!" string_inner_form saf) antiframes_abs;
           | _ -> ());
         
         explore_node (snd sheap);
@@ -488,6 +488,9 @@ and execute_core_stmt
           (Format.printf "\nAbstracted heaps before filtering: \n%!";
           List.iter (fun (heap, id) -> Format.printf "@\n    %a\n@.%!" heap_pprinter heap;) sheaps_abs;);
         let formset = (formset_table_find id) in
+        if Config.symb_debug() then
+          (Format.printf "\nPreviously abstracted heaps: \n%!";
+          List.iter (fun (heap, id) -> Format.printf "@\n    %a\n@.%!" heap_pprinter heap;) formset;);
         let sheaps_abs = List.filter 
           (fun (sheap2,id2) -> 
             (let s = ref [] in 

@@ -609,7 +609,8 @@ module PersistentCC (A : GrowablePersistentArray) : PCC =
 
     let unifiable_merge ts a b : t =
       let vt =
-	match A.get ts.unifiable a , A.get ts.unifiable b with 
+        match A.get ts.unifiable a , A.get ts.unifiable b with
+(*  
 	| _, Standard -> Standard
 	| Standard, _ -> Deleted
 	| _, Deleted  
@@ -623,9 +624,16 @@ module PersistentCC (A : GrowablePersistentArray) : PCC =
 	| Exists, Exists 
 	| Exists, Unifiable 
 	| Unifiable, Exists -> Exists
+*)
+        | Unifiable, Unifiable -> Unifiable
+        | Unifiable, UnifiableExists
+        | UnifiableExists, Unifiable
+        | UnifiableExists, UnifiableExists -> UnifiableExists
+        | _, Unifiable
+        | _, UnifiableExists -> Deleted
+        | _, a -> a
       in
-      {ts with 
-	unifiable = A.set ts.unifiable b vt}
+      {ts with unifiable = A.set ts.unifiable b vt}
 
     let rec propogate (ts : t) (pending : (constant * constant) list) : t = 
       match pending with 
@@ -1170,13 +1178,13 @@ module PersistentCC (A : GrowablePersistentArray) : PCC =
 	ts, []
       else if rep_uneq ts c1 c2 then 
 	raise Contradiction
-      else if A.get ts.unifiable (rep ts c1) = Exists  && rep_not_used_in ts c1 cl then 
+      else if no_live ts c1 && rep_not_used_in ts c1 cl then 
 	begin 
           (* They can be made equal *)
 	  (* TODO Add occurs check *)
 	  (make_equal ts c1 c2), []
 	end
-      else if  A.get ts.unifiable (rep ts c2) = Exists  && rep_not_used_in ts c2 cl then
+      else if no_live ts c2 && rep_not_used_in ts c2 cl then
 	begin 
           (* They can be made equal *)
 	  (* TODO Add occurs check *)
