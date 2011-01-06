@@ -1,30 +1,62 @@
+/*
+abstraction LT_exists_trans : 
+  !LT(_a,_b) * !LT(_b,_c) 
+  ~~> 
+  !LT((_a + 1),_c)
+*/
+
+
 abstraction LE_exists_left :
-  !LE(_x,?l) ~~> 
+  !LE(?x,_l) ~~> 
   
 abstraction LT_exists_left :
-  !LT(_x,?l) ~~> 
+  !LT(?x,_l) ~~> 
 
 abstraction LE_exists_right :
-  !LE(?l,_x) ~~> 
+  !LE(_l,?x) ~~> 
 
 abstraction LT_exists_right :
-  !LT(?l,_x) ~~> 
+  !LT(_l,?x) ~~> 
+  
+
 
 
 abstraction array_to_blob :
-  array(?h,?t,?p,?x,"1") ~~> blob(?h,?t,?p,?x,?c)
+  array(?h,?t,?p,?x,"1",cons(?v,empty())) ~~> blob(?h,?t,?p,?x,?v)
+  
+abstraction array_to_blob_nocons :
+  array(?h,?t,?p,?x,"1",?v) ~~> blob(?h,?t,?p,?x,_vn)
 
 abstraction blob_array_to_array :
-  blob(?h,?t,?p,?x,?c) * array(?h,?t,?p,?y,?l) ~~> array(?h,?t,?p,?x,builtin_plus(?l,"1"))
+  blob(?h,?t,?p,?x,?c) * array(?h,?t,?p,?y,?l,?vs) 
+  ~~> 
+  array(?h,?t,?p,?x,builtin_plus(?l,"1"),cons(?c,?vs))
 where
   ?y = builtin_plus(?x,"1") pureguard
 
-abstraction array_blob_to_array :
-  array(?h,?t,?p,?x,"0",?l) * blob(?h,?t,?p,?y,?c) ~~> array(?h,?t,?p,?x,builtin_plus(?l,"1"))
-where
-  ?y = builtin_plus(?x,?l) pureguard
+
+abstraction b_ls_blob_to_b_ls:
+  b_ls(?h,?t,?p,?x,?y,?l) * blob(?h,?t,?p,?y,?c)
+  ~~> 
+  b_ls(?h,?t,?p,?x,?c,(?l+1))
   
+abstraction b_ls_b_ls: 
+  b_ls(?h,?t,?p,?x,?y,?l1) * b_ls(?h,?t,?p,?y,?z,?l2)
+  ~~>
+  b_ls(?h,?t,?p,?x,?z,(?l1+?l2))
+
+
+abstraction array_blob_to_array :
+  array(?h,?t,?p,?x,?l,?vs) * blob(?h,?t,?p,?y,?c,?v) 
+  ~~> 
+  array(?h,?t,?p,?x,builtin_plus(?l,"1"),_vs2)
+where
+  ?y = (?x + ?l) pureguard
+
+
 abstraction array_array_to_array :
-  array(?h,?t,?p,?x,?i) * array(?h,?t,?p,?y,?j) ~~> array(?h,?t,?p,?x,builtin_plus(?i,?j))
+  array(?h,?t,?p,?x,?i,?vs) * array(?h,?t,?p,?y,?j,?vs2) 
+  ~~> 
+  array(?h,?t,?p,?x,builtin_plus(?i,?j))
 where
   ?y = builtin_plus(?x,?i) pureguard

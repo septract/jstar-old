@@ -1,0 +1,115 @@
+ranking { 
+blob("local", "byte", ptop(), start, _s)
+*
+b_ls("host","byte",ptop(),_s,0,ilen)
+*
+blob("local", "byte", ptop(), dataIn, _d)
+* 
+MFCSlot()
+*
+MFC(0,empty())
+*
+array("local", "byte", ptop(), SPUbuf, buf_size, _bufvs)
+* 
+!GT(buf_size,0)
+* 
+!GT(ilen,0)
+*
+array("host", "byte", ptop(), target, olen, _targvs)
+* 
+!GT(olen,ilen)
+*
+totlen = 0 
+*
+currlen = 0
+* 
+run = 1
+} 
+{}
+
+
+
+rank_inv { 
+
+(
+blob("local", "byte", ptop(), start, _s0)
+*
+b_ls("host","byte",ptop(),_s0,_s,totlen)
+*
+blob("host", "byte", psplit2(ptop()), _s, _x)
+*
+MFC(0, cons(tuple(dataIn, ptop(), _s, psplit1(ptop()), 1, cons(_x,empty())), empty()))
+*
+b_ls("host", "byte", ptop(), _x, 0, ((ilen - totlen) - 1))
+*
+array("host", "byte", ptop(), target, olen, _targvs)
+* 
+!GE(ilen,totlen)
+*
+!GT(olen,totlen)
+*
+run = 1
+* 
+!GT(flag,0)
+* 
+currlen = 0
+)
+
+||
+
+(
+run = 0
+*
+flag = 0
+)
+
+}
+
+
+
+
+get_inv {
+
+(
+blob("local", "byte", ptop(), start, _s0)
+*
+b_ls("host","byte",ptop(),_s0,_s,(totlen+currlen))
+*
+blob("host", "byte", psplit2(ptop()), _s, _x)
+*
+MFC(0, cons(tuple(dataIn, ptop(), _s, psplit1(ptop()), 1, cons(_x,empty())), empty()))
+*
+b_ls("host", "byte", ptop(), _x, 0, (ilen - ((totlen + currlen) + 1)) )
+*
+array("host", "byte", ptop(), target, olen, _targvs)
+*
+run = 1
+* 
+!GT(flag,0)
+* 
+!LT(k,buf_size)
+*
+currlen=k
+)
+
+|| 
+
+(
+run = 0 
+* 
+blob("local", "byte", ptop(), start, _s)
+*
+b_ls("host","byte",ptop(),_s,0,ilen)
+*
+MFC(0,empty())
+* 
+!LT(k,buf_size)
+* 
+!LE(currlen,k)
+)
+
+}
+
+
+
+false_inv { 0=1 }
