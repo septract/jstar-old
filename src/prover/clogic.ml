@@ -489,6 +489,9 @@ let make_syntactic ts_form =
 let make_syntactic_all ts_form =
   make_syntactic' Cterm.get_eqs_all Cterm.get_neqs_all ts_form
 
+let make_syntactic_none ts_form =
+  make_syntactic' (fun _ -> []) (fun _ -> []) ts_form
+
 
 let match_and_remove
       remove (* should match terms be removed - true removes them, false leaves them *)
@@ -794,6 +797,9 @@ let make_implies_inner ts_form1 ts_form2 =
 
 let ts_form_to_pform ts_form =
   convert_to_pform (make_syntactic_all ts_form)
+
+let ts_form_to_pform_no_ts ts_form =
+  convert_to_pform (make_syntactic_none ts_form)
 
 let pform_to_ts_form pform =
   convert_with_eqs false pform

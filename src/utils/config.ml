@@ -66,5 +66,5 @@ let args_default = [
 ("-nosmt", Arg.Clear(smt_run),"Don't use the SMT solver");
 ("-p", Arg.Set_string(solver_path), "SMT solver path");
 ("-ai", Arg.String(set_abs_int_plugins), "Colon separated list of AI plugins filenames");
-("-join", Arg.Clear(abs_int_join_ref), "When checking is abstracted heap already implied ignore numerical obligations and join them in");
+("-join", Arg.Set(abs_int_join_ref), "When checking is abstracted heap already implied ignore numerical obligations and join them in");
 ]

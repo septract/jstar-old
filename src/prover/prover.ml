@@ -457,8 +457,8 @@ let check_frm_ignore_numerical (logic : logic) (seq : sequent) :
   | Failed_eg x ->
     match x with
     | [seq] ->
-      let obligation = Clogic.mk_ts_form (Cterm.new_ts()) seq.obligation in
-      if List.for_all is_numerical_pform_at (ts_form_to_pform obligation) then
+      let obligation = Clogic.mk_ts_form seq.ts seq.obligation in
+      if List.for_all is_numerical_pform_at (Clogic.ts_form_to_pform_no_ts obligation) then
         (Some (Clogic.get_frames !leaves), Some obligation)
       else
         (fprintf !proof_dump "Frame failed\n"; prover_counter_example := x;
