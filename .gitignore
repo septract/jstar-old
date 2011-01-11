@@ -1,7 +1,8 @@
+*.cmi
+*.cmo
 *.core
 *.swp
-*.cmo
-*.cmi
 .depend
 _build
+rg.log
 tags
