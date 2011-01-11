@@ -11,6 +11,19 @@
       LICENSE.txt
  ********************************************************)
 
-val load_plugin : string -> unit
  
-val run_abs_int : Psyntax.pform -> Psyntax.pform
+(* Loads plugin using (nat) dynlink *)
+val load_plugin : string -> unit
+
+
+(* Runs abstract_val from abstract interpretation plugins on a given pform *)
+val abstract_val : Psyntax.pform -> Psyntax.pform
+
+(* Runs join from abstract interpretation plugins on given pforms *)
+val join : Psyntax.pform -> Psyntax.pform -> Psyntax.pform list
+
+(* Runs meet from abstract interpretation plugins on given pforms *)
+val meet : Psyntax.pform -> Psyntax.pform -> Psyntax.pform list
+
+(* Runs widening from abstract interpretation plugins on given pforms *)
+val widening : Psyntax.pform -> Psyntax.pform -> Psyntax.pform list

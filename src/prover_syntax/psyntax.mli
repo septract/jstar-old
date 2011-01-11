@@ -123,6 +123,8 @@ val mkGarbage : pform_at list
 val subst_pform : varmap -> pform -> pform
 type psequent = pform * pform * pform * pform
 val purify : pform_at list -> pform_at list
+val is_numerical_args : args -> bool
+val is_numerical_pform_at : pform_at -> bool
 type varterm = Var of varset
 type where = 
   | NotInContext of varterm 
@@ -192,6 +194,7 @@ val fv_form : pform -> VarSet.t
 val ev_form_acc : pform -> VarSet.t -> VarSet.t
 val ev_form : pform -> VarSet.t
 val string_form : Format.formatter -> form -> unit
+val string_form_at : Format.formatter -> pform_at -> unit
 val prog_var : string -> var
 val fresh_exists_var : unit -> var
 type variable_subst = varmap

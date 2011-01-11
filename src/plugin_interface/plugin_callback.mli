@@ -11,5 +11,6 @@
       LICENSE.txt
  ********************************************************)
 
+
 (* Function to be called by a plugin for abstract interpretation *)
-val add_abs_int : (Psyntax.pform -> Psyntax.pform) ref -> unit
+val add_abs_int : Plugin.abs_int ref -> unit

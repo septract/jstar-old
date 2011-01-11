@@ -38,6 +38,9 @@ let cfg_debug() = !cfg_debug_ref
 let smt_debug_ref = ref false
 let smt_debug() = !smt_debug_ref
 
+let abs_int_join_ref = ref false
+let abs_int_join() = !abs_int_join_ref
+
 let smt_run = ref true 
 let solver_path = ref ""
 
@@ -63,4 +66,5 @@ let args_default = [
 ("-nosmt", Arg.Clear(smt_run),"Don't use the SMT solver");
 ("-p", Arg.Set_string(solver_path), "SMT solver path");
 ("-ai", Arg.String(set_abs_int_plugins), "Colon separated list of AI plugins filenames");
+("-join", Arg.Clear(abs_int_join_ref), "When checking is abstracted heap already implied ignore numerical obligations and join them in");
 ]
