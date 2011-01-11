@@ -89,7 +89,7 @@ open Psyntax
     let join : inner_form -> inner_form -> inner_form
       = fun if1 if2 ->
         let pf1 = Clogic.ts_form_to_pform if1 in
-        let pf2 = Clogic.ts_form_to_pform if2 in
+        let pf2 = Clogic.ts_form_to_pform_no_ts if2 in (* assumes if2 is the remaining obligation *)
         match Plugin_manager.join pf1 pf2 with
         | [] -> Format.printf "No plugin with join loaded!\n"; inner_truth
         | pf::_ -> Clogic.pform_to_ts_form pf
@@ -97,7 +97,7 @@ open Psyntax
     let meet : inner_form -> inner_form -> inner_form
       = fun if1 if2 ->
         let pf1 = Clogic.ts_form_to_pform if1 in
-        let pf2 = Clogic.ts_form_to_pform if2 in
+        let pf2 = Clogic.ts_form_to_pform_no_ts if2 in (* assumes if2 is the remaining obligation *)
         match Plugin_manager.meet pf1 pf2 with
         | [] -> Format.printf "No plugin with meet loaded!\n"; inner_falsum
         | pf::_ -> Clogic.pform_to_ts_form pf
@@ -105,7 +105,7 @@ open Psyntax
     let widening : inner_form -> inner_form -> inner_form
       = fun if1 if2 ->
         let pf1 = Clogic.ts_form_to_pform if1 in
-        let pf2 = Clogic.ts_form_to_pform if2 in
+        let pf2 = Clogic.ts_form_to_pform_no_ts if2 in (* assumes if2 is the remaining obligation *)
         match Plugin_manager.widening pf1 pf2 with
         | [] -> Format.printf "No plugin with widening loaded!\n"; inner_truth
         | pf::_ -> Clogic.pform_to_ts_form pf   
