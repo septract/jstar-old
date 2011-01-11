@@ -32,7 +32,7 @@ rule token = parse
   | '.' {DOT}
   | "->" {ARROW}
   | '\n' {Lexing.new_line lexbuf; token lexbuf}
-  | _ as x {
+  | _ (*DBG as x *) {
     (*DBG eprintf "ignore `%c' (%d)@." x (Char.code x); *)
     token lexbuf}
 and comment = parse

@@ -1,5 +1,5 @@
 open Std
-
+(* types {{{ *)
 type id = Id of string | Dot of id * string
 type type_expr =
     TE_id of id
@@ -7,16 +7,18 @@ type type_expr =
   | TE_tuple of type_expr list
   | TE_arrow of type_expr * type_expr
 type type_kind =
-    TK_abstract
-  | TK_variant of (string * type_expr) list
-  | TK_synonym of type_expr
+    TK_abstract   (* type x *)
+  | TK_variant of (string * type_expr) list  (* eg, type x = A of .. | B of .. *)
+  | TK_synonym of type_expr (* eg, type x = y list *)
 type ml_type = {type_name:string; type_kind:type_kind}
 type ast = ml_type list
-
+(* }}} *)
+(** pretty print {{{1 *)
 let rec id2str = function
   | Id s -> s
   | Dot (m, s) -> id2str m ^ "." ^ s
 
+(** sanity {{{1 *)
 (** Asserts that no id appears with more than one module prefix.
   Reports the offenders. *)
 let check_name_conflicts ast =

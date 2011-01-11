@@ -1,6 +1,6 @@
 open Format
 open Std
-
+(* types {{{ *)
 type pattern =
   | P_var of string
   | P_tuple of pattern list
@@ -8,16 +8,41 @@ type pattern =
 type value =
   | V_var of string
   | V_list of value list
+  | V_tuple of value list
   | V_const of string * value list
   | V_app of value * value
   | V_abs of (pattern * value) list
-type code = {
-  modules : StringSet.t; 
-  evaluators : value option StringMap.t;
+type meth_d = {
+  mt_name : string;
+  mt_type : Ast.type_expr;
+  mt_body : value option
 }
+type cl_ss = {
+  c_name : string;
+  c_type_vars : StringSet.t;
+  c_arguments : string list;
+  c_methods : meth_d StringMap.t
+}
+type modul_ = {
+  md_opens : StringSet.t;
+  md_classes : cl_ss StringMap.t
+}
+(* types }}} *)
+(* sanity checks {{{ *)
+let check_unique xs =
+  let set_of_list xs = List.fold_right StringSet.add xs StringSet.empty in
+  assert (StringSet.cardinal (set_of_list xs) = List.length xs)
+let check_method _ = ()
+let check_class {c_name=_; c_type_vars=_; c_methods=ms; c_arguments=args} =
+  check_unique args;
+  let cm mn m = assert (mn = m.mt_name); check_method m in
+  StringMap.iter cm ms
+let check_module {md_opens=os; md_classes=cs} =
+  let cc cn c = assert (cn = c.c_name); check_class c in
+  StringMap.iter cc cs
 
-let default = "default_value"
-
+(* sanity checks }}} *)
+(* pretty print {{{ *)
 let lgt2 = function
   | _ :: _ -> true
   | _ -> false
@@ -53,7 +78,9 @@ let pp_one_abs r ppf (p, v) =
 let pp_value'' r ppf = function
   | V_var s -> fprintf ppf "%s" s
   | V_list vs -> fprintf ppf "[%a]" (Pp.list "; " r) vs
-  | V_const (c, ((_::_) as vs)) -> fprintf ppf "%s (%a)" c (Pp.list ", " r) vs
+  | V_tuple vs -> fprintf ppf "(%a)" (Pp.list ", " r) vs
+  | V_const (c, []) -> fprintf ppf "%s" c
+  | V_const (c, [v]) -> fprintf ppf "%s %a" c r v
   | V_const (c, vs) -> fprintf ppf "%s (%a)" c (Pp.list ", " r) vs
   | V_app (a, b) -> fprintf ppf "%a %a" r a r b
   | V_abs xs -> fprintf ppf "function@ %a" (Pp.list "| " (pp_one_abs r)) xs
@@ -67,15 +94,31 @@ let rec pp_value' p ppf x =
 
 let pp_value = pp_value' 0
 
-let pp_method ppf name = function
-  | None -> fprintf ppf "@\n@[method virtual eval_%s : %s -> 'a@]" name name
-  | Some body -> 
-      fprintf ppf "@\n@[<2>method eval_%s : %s -> 'a =@ %a@]" 
-        name name pp_value body
+let pp_method ppf _ {mt_name=n; mt_type=t; mt_body=b} =
+  match b with
+    | None -> 
+        fprintf ppf "@\n@[<2>method virtual %s : %a@]" n Pp.Ast.type_expr t
+    | Some b ->
+        fprintf ppf "@\n@[<2>method %s : %a =@ %a@]" 
+          n Pp.Ast.type_expr t pp_value b
 
-let print ppf {modules=ms; evaluators=es} =
-  fprintf ppf "@[";
-  StringSet.iter (fun m -> fprintf ppf "open %s@\n" m) ms;
-  fprintf ppf "@[<2>class virtual ['a] evaluator %s = object(self)" default;
-  StringMap.iter (pp_method ppf) es;
-  fprintf ppf "@\nmethod virtual combine : 'a -> 'a -> 'a@]@\nend@\n@]"
+let pp_class ppf {c_name=n; c_type_vars=ts; c_arguments=args; c_methods=ms} =
+  let v =
+    if StringMap.fold (fun _ m v -> v || m.mt_body = None) ms false
+    then " virtual" else "" in
+  let ts = StringSet.elements ts in
+  let pp_ts ppf = function
+    | [] -> ()
+    | ts -> fprintf ppf " [%a]" (Pp.list "," Pp.string) ts in 
+  fprintf ppf "@[@[<2>class%s%a %s = " v pp_ts ts n;
+  if args <> [] then fprintf ppf "fun %a -> " (Pp.list " " Pp.string) args;
+  fprintf ppf "object(self)";
+  StringMap.iter (pp_method ppf) ms;
+  fprintf ppf "@]@\nend@\n@]"
+
+let pp_module ppf {md_opens=os; md_classes=cs} =
+  let os = StringSet.elements os in
+  let cs = StringMap.fold (fun _ v vs -> v :: vs) cs [] in
+  let pp_o ppf s = fprintf ppf "open %s@\n" s in
+  fprintf ppf "@[%a@\n%a@]" (Pp.list "" pp_o) os (Pp.list "" pp_class) cs
+(* pretty print }}} *)
