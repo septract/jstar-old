@@ -194,6 +194,7 @@ val fv_form : pform -> VarSet.t
 val ev_form_acc : pform -> VarSet.t -> VarSet.t
 val ev_form : pform -> VarSet.t
 val string_form : Format.formatter -> form -> unit
+val string_form_at : Format.formatter -> pform_at -> unit
 val prog_var : string -> var
 val fresh_exists_var : unit -> var
 type variable_subst = varmap
