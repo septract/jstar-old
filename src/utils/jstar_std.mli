@@ -42,6 +42,12 @@ val uncurry : ('a -> 'b -> 'c) -> 'a * 'b -> 'c
 (** Like in Haskell. *)
 val maybe : 'b -> ('a -> 'b) -> 'a option -> 'b
 
+(** Like in Haskell. *)
+val option_map : ('a -> 'b) -> 'a option -> 'b option
+
+(** Like Haskell's [id]. *)
+val identity : 'a -> 'a
+
 (* }}} *)
 (* {{{ *) (** {2 Sets and maps} *)
 
