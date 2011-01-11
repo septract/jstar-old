@@ -399,6 +399,40 @@ let purify pal =
 	    ) pal
 
 
+
+(* Determines whether given term contains only numerical subterms *)
+let rec is_numerical_args (arg : args) : bool =
+  let is_integer_const (s : string) : bool =
+    let rxp = (Str.regexp "^\\(-?[0-9]+\\)") in 
+    Str.string_match rxp s 0
+  in
+  match arg with
+  | Arg_var _ -> true
+  | Arg_op ("numeric_const", [Arg_string (s)])
+  | Arg_string s ->
+    if is_integer_const s then true else false
+  | Arg_op ("builtin_plus", [a1; a2])
+  | Arg_op ("builtin_minus", [a1; a2])
+  | Arg_op ("builtin_mult", [a1; a2]) -> 
+    (is_numerical_args a1) && (is_numerical_args a2)
+  | Arg_op (_,_) -> false
+  | _ -> assert false
+
+
+(* Determines whether given formula represents a numerical constraint *)
+let is_numerical_pform_at (pf_at : pform_at) : bool =
+  match pf_at with 
+  | P_EQ (a1, a2)
+(*  | P_NEQ (a1, a2) *)
+  | P_PPred ("GT", [a1; a2]) | P_PPred ("GT", [Arg_op ("tuple",[a1; a2])])
+  | P_PPred ("LT", [a1; a2]) | P_PPred ("LT", [Arg_op ("tuple",[a1; a2])])
+  | P_PPred ("GE", [a1; a2]) | P_PPred ("GE", [Arg_op ("tuple",[a1; a2])])
+  | P_PPred ("LE", [a1; a2]) | P_PPred ("LE", [Arg_op ("tuple",[a1; a2])]) ->
+    (is_numerical_args a1) && (is_numerical_args a2)
+  | _ -> false
+
+
+
 (***************************************************
   Logic stuff - Rules etc
  ***************************************************)

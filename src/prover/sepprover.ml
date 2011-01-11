@@ -25,21 +25,26 @@ open Psyntax
 
     type inner_form = Clogic.F.ts_formula
     
-    type inner_form_antiform = Clogic.AF.ts_formula
+    type inner_form_af = Clogic.AF.ts_formula
 
     let lift_inner_form inner_form = 
       let ts,form = Clogic.break_ts_form inner_form in
       Clogic.mk_ts_form_af ts form Clogic.empty
 
-    let inner_form_antiform_to_form inner_form_af =
-      let ts,form,antiform = Clogic.break_ts_form_af inner_form_af in
+    let inner_form_af_to_form inner_form_af =
+      let ts,form,af = Clogic.break_ts_form_af inner_form_af in
       Clogic.mk_ts_form ts form
 
-    let inner_form_antiform_to_antiform inner_form_af =
-      let ts,form,antiform = Clogic.break_ts_form_af inner_form_af in
-      Clogic.mk_ts_form ts antiform
+    let inner_form_af_to_af inner_form_af =
+      let ts,form,af = Clogic.break_ts_form_af inner_form_af in
+      Clogic.mk_ts_form ts af
       
-    let inner_truth = Clogic.mk_ts_form (Cterm.new_ts ()) Clogic.truth 
+    let inner_truth = 
+      Clogic.mk_ts_form (Cterm.new_ts ()) Clogic.truth
+    
+    let inner_falsum =
+      let form,ts = Clogic.convert_sf false (Cterm.new_ts ()) Clogic.false_sform in
+      Clogic.mk_ts_form ts form
 
     let convert : form -> inner_form option  
       = fun form -> 
@@ -52,45 +57,69 @@ open Psyntax
     let conjoin_inner : inner_form -> inner_form -> inner_form
       = fun if1 if2 -> Clogic.conjoin false if1 (Clogic.make_syntactic if2)
 
-    (* Takes inner_from_antiform and conjoins frame with form, and antiframe with inner_form *)
-    let conjoin_af : inner_form_antiform -> form -> inner_form -> inner_form_antiform
-      = fun inner_form_antiform form inner_form ->
-        Clogic.conjoin_af false inner_form_antiform (Clogic.convert_to_inner form) (Clogic.make_syntactic inner_form)
-    
-    (* Takes two inner_forms and creates a inner_form_antiform with the second inner_form as antiframe *)
-    let combine : inner_form -> inner_form -> inner_form_antiform
+    (* Takes inner_form_af and conjoins frame with form, and antiframe with inner_form *)
+    let conjoin_af : inner_form_af -> form -> inner_form -> inner_form_af
+      = fun inner_form_af form inner_form ->
+        Clogic.conjoin_af false inner_form_af (Clogic.convert_to_inner form) (Clogic.make_syntactic inner_form)
+
+    (* Takes inner_form_af and conjoins frame with 1st inner_form, and antiframe with 2nd inner_form *)
+    let conjoin_inner_af : inner_form_af -> inner_form -> inner_form -> inner_form_af
+      = fun inner_form_af if1 if2 ->
+        Clogic.conjoin_af false inner_form_af (Clogic.make_syntactic if1) (Clogic.make_syntactic if2)
+        
+    (* Takes two inner_forms and creates a inner_form_af with the second inner_form as antiframe *)
+    let combine : inner_form -> inner_form -> inner_form_af
       = fun if1 if2 -> Clogic.combine false if1 (Clogic.make_syntactic if2)
     
     let kill_var : var -> inner_form -> inner_form
       = fun v inner_form -> 
         Clogic.kill_var inner_form v
 
-    let kill_var_af : var -> inner_form_antiform -> inner_form_antiform
-      = fun v inner_form_antiform ->
-        Clogic.kill_var_af inner_form_antiform v
+    let kill_var_af : var -> inner_form_af -> inner_form_af
+      = fun v inner_form_af ->
+        Clogic.kill_var_af inner_form_af v
 
-    let abs_int : inner_form -> inner_form
+    let abstract_val : inner_form -> inner_form
       = fun inner_form ->
-        (*Format.printf "Before abs_int: %a\n" Clogic.pp_ts_formula inner_form;*)
         let pform = Clogic.ts_form_to_pform inner_form in
-        let abs_pform = Plugin_manager.run_abs_int pform in
+        let abs_pform = Plugin_manager.abstract_val pform in
         let abs_inner_form = Clogic.pform_to_ts_form abs_pform in
-        (*Format.printf "After abs_int: %a\n" Clogic.pp_ts_formula abs_inner_form;*)
         abs_inner_form
 
-    let abs_int_af : inner_form_antiform -> inner_form_antiform
-      = fun inner_form_antiform -> inner_form_antiform (* TODO: Abstraction for inner_form_antiform *)
+    let join : inner_form -> inner_form -> inner_form
+      = fun if1 if2 ->
+        let pf1 = Clogic.ts_form_to_pform if1 in
+        let pf2 = Clogic.ts_form_to_pform if2 in
+        match Plugin_manager.join pf1 pf2 with
+        | [] -> Format.printf "No plugin with join loaded!\n"; inner_truth
+        | pf::_ -> Clogic.pform_to_ts_form pf
+    
+    let meet : inner_form -> inner_form -> inner_form
+      = fun if1 if2 ->
+        let pf1 = Clogic.ts_form_to_pform if1 in
+        let pf2 = Clogic.ts_form_to_pform if2 in
+        match Plugin_manager.meet pf1 pf2 with
+        | [] -> Format.printf "No plugin with meet loaded!\n"; inner_falsum
+        | pf::_ -> Clogic.pform_to_ts_form pf
+    
+    let widening : inner_form -> inner_form -> inner_form
+      = fun if1 if2 ->
+        let pf1 = Clogic.ts_form_to_pform if1 in
+        let pf2 = Clogic.ts_form_to_pform if2 in
+        match Plugin_manager.widening pf1 pf2 with
+        | [] -> Format.printf "No plugin with widening loaded!\n"; inner_truth
+        | pf::_ -> Clogic.pform_to_ts_form pf   
 
     let update_var_to : var -> term -> inner_form -> inner_form
       = fun v e f -> Clogic.update_var_to f v e
 
-    let update_var_to_af : var -> term -> inner_form_antiform -> inner_form_antiform
+    let update_var_to_af : var -> term -> inner_form_af -> inner_form_af
       = fun v e f -> Clogic.update_var_to_af f v e
 
     let string_inner_form : Format.formatter -> inner_form -> unit = 
       Clogic.pp_ts_formula
 
-    let string_inner_form_af : Format.formatter -> inner_form_antiform -> unit =
+    let string_inner_form_af : Format.formatter -> inner_form_af -> unit =
       Clogic.pp_ts_formula_af
 
     (******************************************
@@ -126,13 +155,12 @@ open Psyntax
 	  | Some inner_form1 -> 
 	      Prover.check_implication_frame_pform logic inner_form1 form2
 
-    let frame_inner 
-         (l : logic)
-         (i1 : inner_form)
-         (i2 : inner_form)
-         : inner_form list option
-         = 
-	Prover.check_frame l i1 i2
+    let frame_inner (l : logic) (i1 : inner_form) (i2 : inner_form) : inner_form list option = 
+      Prover.check_frame l i1 i2
+
+    let frame_inner_ignore_numerical (l : logic) (i1 : inner_form) (i2 : inner_form) : 
+      inner_form list option * inner_form option = 
+      Prover.check_frame_ignore_numerical l i1 i2
 
     let abs : logic -> inner_form -> inner_form list 
       = Prover.abs
@@ -143,7 +171,7 @@ open Psyntax
     let implies_list : inner_form list -> form -> bool 
       = Prover.check_implies_list 
 
-    let abduction_opt (l : logic) (i1 : inner_form option) (f2 : form) : inner_form_antiform list option = 	
+    let abduction_opt (l : logic) (i1 : inner_form option) (f2 : form) : inner_form_af list option = 	
       match i1 with 
         None -> Prover.check_abduction_pform l (Clogic.convert_with_eqs false []) f2
       | Some inner_form -> Prover.check_abduction_pform l inner_form f2 

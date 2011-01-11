@@ -179,28 +179,28 @@ let add_node_unexplored label cfg = add_node label UnExplored (Some cfg)
 let add_node label cfg = add_node label UnExplored (Some cfg)
 let explore_node src = if src.ntype = UnExplored then src.ntype <- Plain
 
-let add_abs_heap_node cfg (heap : inner_form_antiform) =
+let add_abs_heap_node cfg (heap : inner_form_af) =
   (match !exec_type with
   | Abduct ->
     Format.fprintf (Format.str_formatter) "%a" string_inner_form_af heap;
   | Check | SymExec ->
-    Format.fprintf (Format.str_formatter) "%a" string_inner_form (inner_form_antiform_to_form heap););
+    Format.fprintf (Format.str_formatter) "%a" string_inner_form (inner_form_af_to_form heap););
   add_abs_node (Format.flush_str_formatter ()) cfg
 
-let add_heap_node cfg (heap : inner_form_antiform) = 
+let add_heap_node cfg (heap : inner_form_af) = 
   (match !exec_type with
   | Abduct ->
     Format.fprintf (Format.str_formatter) "%a" string_inner_form_af heap;
   | Check | SymExec ->
-    Format.fprintf (Format.str_formatter) "%a" string_inner_form (inner_form_antiform_to_form heap););
+    Format.fprintf (Format.str_formatter) "%a" string_inner_form (inner_form_af_to_form heap););
   add_node (Format.flush_str_formatter ()) cfg
 
-let add_error_heap_node (heap : inner_form_antiform) = 
+let add_error_heap_node (heap : inner_form_af) = 
   (match !exec_type with
   | Abduct ->
     Format.fprintf (Format.str_formatter) "%a" string_inner_form_af heap;
   | Check | SymExec ->
-    Format.fprintf (Format.str_formatter) "%a" string_inner_form (inner_form_antiform_to_form heap););
+    Format.fprintf (Format.str_formatter) "%a" string_inner_form (inner_form_af_to_form heap););
   add_error_node (Format.flush_str_formatter ())
 
 let add_edge_common src dst typ lbl f= 
@@ -259,10 +259,10 @@ let add_id_formset_edge src label sheaps cfg =
 (* ================  work list algorithm ==================  *)
 
  (* this type has support for creating a transition system 
-   (inner_form_antiform, id)
+   (inner_form_af, id)
    id is a unique identifier of the formula
  *)
-type formset_entry = inner_form_antiform * node
+type formset_entry = inner_form_af * node
 
 (* eventually this should be a more efficient data structure than list*)
 type formset = formset_entry list 
@@ -347,7 +347,7 @@ let check_postcondition (heaps : formset_entry list) (sheap : formset_entry) =
     let heap,id = 
       List.find 
         (fun (heap,id) -> 
-          (frame_inner !curr_logic (inner_form_antiform_to_form sheap_noid) (inner_form_antiform_to_form heap)) <> None) 
+          (frame_inner !curr_logic (inner_form_af_to_form sheap_noid) (inner_form_af_to_form heap)) <> None) 
         heaps in
     if Config.symb_debug() then 
       printf "\n\nPost okay \n%!";
@@ -381,7 +381,7 @@ let check_postcondition (heaps : formset_entry list) (sheap : formset_entry) =
 let eliminate_ret_var 
       ( name_ret_var : string)
       ( v : Vars.var) 
-      ( h : inner_form_antiform ) : inner_form_antiform =
+      ( h : inner_form_af ) : inner_form_af =
    let ret_var = Vars.concretep_str name_ret_var in
    let h = update_var_to_af v (Arg_var ret_var) h in 
    kill_var_af ret_var h
@@ -391,7 +391,7 @@ let eliminate_ret_var
 let eliminate_ret_vs
       ( name_template : string ) 
       ( vs : Vars.var list )
-      ( h : inner_form_antiform ) : inner_form_antiform  = 
+      ( h : inner_form_af ) : inner_form_af  = 
   let vs_i = Misc.add_index vs 1 in  
   List.fold_right (fun (v,i) -> eliminate_ret_var (name_template ^ string_of_int i) v) vs_i h
 
@@ -399,7 +399,7 @@ let eliminate_ret_vs
 let heap_pprinter f h =
   match !exec_type with 
   | Abduct -> string_inner_form_af f h
-  | Check | SymExec -> string_inner_form f (inner_form_antiform_to_form h) 
+  | Check | SymExec -> string_inner_form f (inner_form_af_to_form h) 
 
 
 let rec exec (n : cfg_node) (sheap : formset_entry) = 
@@ -457,8 +457,8 @@ and execute_core_stmt
         if Config.symb_debug() then
           Format.printf "@\nPre-abstraction heap:@\n    %a@.%!" heap_pprinter sheap_noid; 
         (* TODO: Introduce curr_abduct_abs_rules? *)
-        let frames_abs = Sepprover.abs !curr_abs_rules (inner_form_antiform_to_form sheap_noid) in 
-        let antiframes_abs = Sepprover.abs !curr_abs_rules (inner_form_antiform_to_antiform sheap_noid) in 
+        let frames_abs = Sepprover.abs !curr_abs_rules (inner_form_af_to_form sheap_noid) in 
+        let antiframes_abs = Sepprover.abs !curr_abs_rules (inner_form_af_to_af sheap_noid) in 
         let antiframes_abs = 
           if frames_abs != [] && antiframes_abs = [] then [ empty_inner_form ] else antiframes_abs in
         if Config.symb_debug() then
@@ -466,13 +466,13 @@ and execute_core_stmt
           match !exec_type with
           | Abduct -> List.iter (fun saf -> Format.printf "@\nPost-abstraction antiheap:@\n    %a@.%!" string_inner_form saf) antiframes_abs;
           | _ -> ());
-        (* Run abstract interpretation on abstracted heaps *)
-        let frames_abs = List.map (fun heap -> Sepprover.abs_int heap) frames_abs in 
-        let antiframes_abs = List.map (fun heap -> Sepprover.abs_int heap) antiframes_abs in 
+        (* Obtain abstract values of abstracted heaps using abstract interpretation *)
+        let frames_abs = List.map (fun heap -> Sepprover.abstract_val heap) frames_abs in 
+        let antiframes_abs = List.map (fun heap -> Sepprover.abstract_val heap) antiframes_abs in 
         if Config.symb_debug() then
-          (List.iter (fun heap -> Format.printf "@\nPost-AI heap:@\n    %a@.%!" string_inner_form heap) frames_abs; 
+          (List.iter (fun heap -> Format.printf "@\nPost-abstract_val heap:@\n    %a@.%!" string_inner_form heap) frames_abs; 
           match !exec_type with
-          | Abduct -> List.iter (fun saf -> Format.printf "@\nPost-AI antiheap:@\n    %a@.%!" string_inner_form saf) antiframes_abs;
+          | Abduct -> List.iter (fun saf -> Format.printf "@\nPost-abstract_val antiheap:@\n    %a@.%!" string_inner_form saf) antiframes_abs;
           | _ -> ());
         
         explore_node (snd sheap);
@@ -491,23 +491,55 @@ and execute_core_stmt
         if Config.symb_debug() then
           (Format.printf "\nPreviously abstracted heaps: \n%!";
           List.iter (fun (heap, id) -> Format.printf "@\n    %a\n@.%!" heap_pprinter heap;) formset;);
-        let sheaps_abs = List.filter 
+        let sheaps_abs = map_option
           (fun (sheap2,id2) -> 
             (let s = ref [] in 
-            if 
-              (List.for_all
-                (fun (sheap1,id1) -> 
-                  if ((frame_inner !curr_logic (inner_form_antiform_to_form sheap2) (inner_form_antiform_to_form sheap1) <> None) || 
-                    (frame_inner !curr_logic (inner_form_antiform_to_antiform sheap2) (inner_form_antiform_to_antiform sheap1) <> None))
-                  then 
-                   (ignore (add_edge_with_proof id2 id1 ContE 
-                     ("Contains@"^(Debug.toString Pprinter_core.pp_stmt_core stm.skind))); false) 
-                  else (s := ("\n---------------------------------------------------------\n" ^ 
+            if Config.abs_int_join() then
+              (let leaves_form = ref None in let rest_form = ref None in
+              let leaves_af = ref None in let rest_af = ref None in
+              let sheap2_form = inner_form_af_to_form sheap2 in
+              let sheap2_af = inner_form_af_to_af sheap2 in
+              if (List.for_all
+                (fun (sheap1,id1) ->
+                  let leaves,rest =
+                    frame_inner_ignore_numerical !curr_logic sheap2_form (inner_form_af_to_form sheap1) in
+                  leaves_form := leaves; rest_form := rest;
+                  let leaves,rest =
+                    frame_inner_ignore_numerical !curr_logic sheap2_af (inner_form_af_to_af sheap1) in
+                  leaves_af := leaves; rest_af := rest;
+                  if ((!leaves_form <> None) || (!leaves_af <> None)) then
+                    (ignore (add_edge_with_proof id2 id1 ContE
+                      ("Contains@"^(Debug.toString Pprinter_core.pp_stmt_core stm.skind))); false)
+                  else (s := ("\n---------------------------------------------------------\n" ^
                     (string_of_proof ())) :: !s; true))
                 formset)
-            then ( 
-              if !s <> [] then (add_url_to_node id2 !s); true
-                ) else false
+              then
+                (if !s <> [] then (add_url_to_node id2 !s);
+                match !rest_form, !rest_af with
+                | None, None -> Some (sheap2, id2)
+                | Some r, None -> Some (combine (join sheap2_form r) sheap2_af, id2)
+                | None, Some r -> Some (combine sheap2_form (join sheap2_af r), id2)
+                | Some r1, Some r2 -> Some (combine (join sheap2_form r1) (join sheap2_af r2), id2))
+              else 
+                None)
+            else
+              (if (List.for_all
+                (fun (sheap1,id1) -> 
+                  if ((frame_inner !curr_logic (inner_form_af_to_form sheap2) 
+                      (inner_form_af_to_form sheap1) <> None) || 
+                    (frame_inner !curr_logic (inner_form_af_to_af sheap2) 
+                      (inner_form_af_to_af sheap1) <> None))
+                  then
+                    (ignore (add_edge_with_proof id2 id1 ContE
+                      ("Contains@"^(Debug.toString Pprinter_core.pp_stmt_core stm.skind))); false)
+                  else (s := ("\n---------------------------------------------------------\n" ^
+                    (string_of_proof ())) :: !s; true))
+                formset)
+              then 
+                (if !s <> [] then (add_url_to_node id2 !s);
+                Some (sheap2,id2)) 
+              else 
+                None)
             )
           )
           sheaps_abs in
@@ -534,7 +566,7 @@ and execute_core_stmt
           | _ -> false
         in
         if abort then
-          [ (empty_inner_form_antiform, add_good_node "Abort") ]
+          [ (empty_inner_form_af, add_good_node "Abort") ]
         else
           let hs = match hs with | None -> [] | Some hs -> hs in
           let hs =
@@ -587,7 +619,7 @@ let verify
           let posts = execute_core_stmt s (pre, id) in
           let post = 
             match Sepprover.convert (spec.post) with
-              None -> printf "@{<b>WARNING@}: %s has an unsatisfiable postcondition@.%!" mname; empty_inner_form_antiform
+              None -> printf "@{<b>WARNING@}: %s has an unsatisfiable postcondition@.%!" mname; empty_inner_form_af
             | Some spec_post -> lift_inner_form spec_post
           in
           let id_exit = add_good_node ("Exit") in
@@ -623,7 +655,7 @@ let verify_ensures
     (fun oldexp_result -> lift_inner_form (Sepprover.conjoin post oldexp_result)) oldexp_results in
   let ensures_postcond = 
     match Sepprover.convert (conjoin_with_res_true post) with
-      None -> printf "@{<b>WARNING@}: %s has an unsatisfiable postcondition@.%!" name; empty_inner_form_antiform
+      None -> printf "@{<b>WARNING@}: %s has an unsatisfiable postcondition@.%!" name; empty_inner_form_af
     | Some post -> lift_inner_form post
   in
 	(* now do the verification *)
@@ -647,7 +679,7 @@ let verify_ensures
 let check_and_get_frame (pre_heap,id) post_sheap =
   let post_sheap_noid = fst post_sheap in 
   let node = snd post_sheap in
-  let frame = frame_inner !curr_logic (inner_form_antiform_to_form post_sheap_noid) (inner_form_antiform_to_form pre_heap) in
+  let frame = frame_inner !curr_logic (inner_form_af_to_form post_sheap_noid) (inner_form_af_to_form pre_heap) in
   match frame with 
     Some frame -> 
                  if Config.symb_debug() then 
@@ -755,7 +787,7 @@ let bi_abduct
         let posts = execute_core_stmt s (lift_inner_form pre, id) in
         (* build spec pre/post pairs *)
         let specs = List.map 
-          (fun (heap,_) -> (Sepprover.conjoin_inner pre (inner_form_antiform_to_antiform heap), inner_form_antiform_to_form heap))
+          (fun (heap,_) -> (Sepprover.conjoin_inner pre (inner_form_af_to_af heap), inner_form_af_to_form heap))
           posts in
         if Config.symb_debug() 
         then begin

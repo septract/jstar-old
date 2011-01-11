@@ -27,7 +27,7 @@ let empty_inner_form =
     None -> assert false;
   | Some emp -> emp
 
-let empty_inner_form_antiform =
+let empty_inner_form_af =
   lift_inner_form empty_inner_form
   
 let conjunction_excep excep_post f1 =
@@ -115,11 +115,11 @@ let ev_spec_pre spec =
 
 
 (* if pre_antiframe = None then perform jsr, otherwise perform jsr with abduction *)
-let jsr logic (pre : inner_form_antiform) (spec : spec) (abduct : bool) : inner_form_antiform list option  = 
+let jsr logic (pre : inner_form_af) (spec : spec) (abduct : bool) : inner_form_af list option  = 
   let ev = ev_spec spec in 
   let subst = subst_kill_vars_to_fresh_exist ev in 
   let spec = sub_spec subst spec in
-  let pre_form = inner_form_antiform_to_form pre in
+  let pre_form = inner_form_af_to_form pre in
   match spec with
     {pre=spec_pre; post=spec_post; excep=spec_excep} ->
     let frame_antiframe_list = 
@@ -137,7 +137,7 @@ let jsr logic (pre : inner_form_antiform) (spec : spec) (abduct : bool) : inner_
     | Some frame_antiframe_list ->
       let res = Misc.map_option 
         (fun frame_antiframe ->
-          try Some (Sepprover.conjoin_af frame_antiframe spec_post (inner_form_antiform_to_antiform pre))
+          try Some (Sepprover.conjoin_af frame_antiframe spec_post (inner_form_af_to_af pre))
           with Contradiction -> None) 
         frame_antiframe_list in 
       let res = List.map (fun frame_antiframe -> 

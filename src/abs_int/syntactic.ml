@@ -18,6 +18,7 @@
 open Cterm
 open Clogic
 open Psyntax
+open Plugin
 
 
 (* Finds existentials in the spatial part *)
@@ -133,7 +134,15 @@ let syn_abs pform =
   let syn_form = convert_to_inner pform in
   let abs_syn_form = kill_unused_existentials syn_form in
   convert_to_pform abs_syn_form
-  
+
+
+let my_abs_int = {
+  abstract_val = Some (ref syn_abs);
+  join = None;
+  meet = None;
+  widening = None;
+}
+
 (* Plugin registration *)
 let _ =
-  Plugin_callback.add_abs_int (ref syn_abs)
+  Plugin_callback.add_abs_int (ref my_abs_int)
