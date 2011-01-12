@@ -28,9 +28,6 @@ val check_implication :
 val check_frame :
   Psyntax.logic ->
   Clogic.F.ts_formula -> Clogic.F.ts_formula -> Clogic.F.ts_formula list option
-val check_frame_ignore_numerical :
-  Psyntax.logic -> Clogic.F.ts_formula -> Clogic.F.ts_formula -> 
-  Clogic.F.ts_formula list option * Clogic.F.ts_formula option
 val check_inconsistency : Psyntax.logic -> Clogic.F.ts_formula -> bool
 val check_implies_list : Clogic.F.ts_formula list -> Psyntax.pform -> bool
 val check_abduction_pform :
