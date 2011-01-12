@@ -60,11 +60,11 @@ let set_abs_int_plugins (comma_sep_lis : string) : unit =
 
 
 let args_default = [
-("-q", Arg.Clear(symb_debug_ref), "run in quiet mode" );
+("-q", Arg.Clear(symb_debug_ref), "Run in quiet mode" );
 ("-v", Arg.Set(verb_proof_ref), "Verbose proofs");
 ("-d", Arg.String(String.iter set_debug_char), "Set debug modes");
 ("-nosmt", Arg.Clear(smt_run),"Don't use the SMT solver");
 ("-p", Arg.Set_string(solver_path), "SMT solver path");
 ("-ai", Arg.String(set_abs_int_plugins), "Colon separated list of AI plugins filenames");
-("-join", Arg.Set(abs_int_join_ref), "When checking is abstracted heap already implied ignore numerical obligations and join them in");
+("-join", Arg.Set(abs_int_join_ref), "On abstraction join heaps over their numeric part");
 ]
