@@ -44,6 +44,21 @@ let widening (pheap1 : Psyntax.pform) (pheap2 : Psyntax.pform) : Psyntax.pform l
   List.map (fun widening -> !widening pheap1 pheap2)
     (Misc.map_option (fun abs_int -> (!abs_int).widening) !Registry.abs_int_registry)
 
+(* Checks whether there is a plugin loaded that supports join *)
+let has_join () =
+  List.exists (fun abs_int ->
+    match (!abs_int).join with Some _ -> true | None -> false) !Registry.abs_int_registry
+
+(* Checks whether there is a plugin loaded that supports meet *)
+let has_meet () =
+  List.exists (fun abs_int ->
+    match (!abs_int).meet with Some _ -> true | None -> false) !Registry.abs_int_registry
+
+(* Checks whether there is a plugin loaded that supports widening *)
+let has_widening () =
+  List.exists (fun abs_int ->
+    match (!abs_int).widening with Some _ -> true | None -> false) !Registry.abs_int_registry
+
 
 (* Force Plugin_callback.add_abs_int to be linked with plugin_interface;
    there does not seem to be another way do achieve this from the code *)

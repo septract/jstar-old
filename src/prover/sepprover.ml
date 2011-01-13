@@ -110,18 +110,21 @@ open Psyntax
         | [] -> Format.printf "No plugin with widening loaded!\n"; inner_truth
         | pf::_ -> Clogic.pform_to_ts_form pf   
 
-    let join_over_numeric : inner_form -> inner_form -> inner_form * inner_form
+    let join_over_numeric : inner_form -> inner_form -> (inner_form * inner_form) * (inner_form * inner_form)
       = fun if1 if2 ->
         let split_numerical (pform : pform) : pform * pform =
           List.partition (fun pf_at -> is_numerical_pform_at pf_at) pform in
         let num_pf1,rest_pf1 = split_numerical (Clogic.ts_form_to_pform if1) in
         let num_pf2,rest_pf2 = split_numerical (Clogic.ts_form_to_pform if2) in
-        let join_ts_form =
+        let join_inner =
           match Plugin_manager.join num_pf1 num_pf2 with
-          | [] -> Format.printf "No plugin with join loaded!\n"; inner_truth
+          | [] -> Format.printf "No plugin with join loaded!\n%!"; inner_truth
           | pf::_ -> Clogic.pform_to_ts_form pf
         in
-        (conjoin rest_pf1 join_ts_form, conjoin rest_pf2 join_ts_form)
+        let rest_inner1 = Clogic.convert_with_eqs false rest_pf1 in
+        let rest_inner2 = Clogic.convert_with_eqs false rest_pf2 in
+        ((conjoin_inner join_inner rest_inner1, rest_inner1),
+        (conjoin_inner join_inner rest_inner2, rest_inner2))
 
     let update_var_to : var -> term -> inner_form -> inner_form
       = fun v e f -> Clogic.update_var_to f v e

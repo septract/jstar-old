@@ -36,7 +36,7 @@ let curr_abs_rules : Psyntax.logic ref = ref Psyntax.empty_logic
 (* ================  transition system ==================  *)
 type ntype = Plain | Good | Error | Abs | UnExplored
     
-type etype = ExecE | AbsE | ContE | ExitE
+type etype = ExecE | AbsE | ContE | JoinE | ExitE
 
 type id = int
 
@@ -50,6 +50,12 @@ let fresh_node = let node_counter = ref 0 in fun () ->  let x = !node_counter in
 
 let fresh_file = let file_id = ref 0 in fun () -> let x = !file_id in file_id := x+1;  Sys.getcwd() ^  "/" ^ !file ^ ".proof_file_"^(string_of_int x)^".txt"
 
+
+let cfg_nodes = ref []
+
+let get_cfg_node (sid : int) : cfg_node =
+  List.find (fun cfg_node -> cfg_node.sid = sid) !cfg_nodes
+  
 
 type node = {
   mutable content : string; 
@@ -94,6 +100,11 @@ let node_get_ntype (n:node) : ntype =
 
 let node_get_url (n:node) : string = 
   n.url 
+
+let node_get_cfg_id (n:node) : int =
+  match n.cfg with
+  | Some cfg -> cfg.sid
+  | None -> assert false (* should not happen *)
 
 
 module Idmap = 
@@ -466,7 +477,7 @@ and execute_core_stmt
           match !exec_type with
           | Abduct -> List.iter (fun saf -> Format.printf "@\nPost-abstraction antiheap:@\n    %a@.%!" string_inner_form saf) antiframes_abs;
           | _ -> ());
-        (* Obtain abstract values of abstracted heaps using abstract interpretation *)
+        (* Obtain abstract values using abstract interpretation *)
         let frames_abs = List.map (fun heap -> Sepprover.abstract_val heap) frames_abs in 
         let antiframes_abs = List.map (fun heap -> Sepprover.abstract_val heap) antiframes_abs in 
         if Config.symb_debug() then
@@ -484,50 +495,85 @@ and execute_core_stmt
               ("Abstract@"^(Debug.toString Pprinter_core.pp_stmt_core stm.skind))))
           sheaps_abs;
         
+        let formset = ref (formset_table_find id) in
+        let restart = ref [] in (* list of heaps that sym exec needs to be restarted from *)
+        if Config.symb_debug() then
+          (Format.printf "\nPrevious heaps before filtering: \n%!";
+          List.iter (fun (heap, id) -> Format.printf "@\n    %a\n@.%!" heap_pprinter heap;) !formset;);
         if Config.symb_debug() then
           (Format.printf "\nAbstracted heaps before filtering: \n%!";
           List.iter (fun (heap, id) -> Format.printf "@\n    %a\n@.%!" heap_pprinter heap;) sheaps_abs;);
-        let formset = (formset_table_find id) in
-        if Config.symb_debug() then
-          (Format.printf "\nPreviously abstracted heaps: \n%!";
-          List.iter (fun (heap, id) -> Format.printf "@\n    %a\n@.%!" heap_pprinter heap;) formset;);
+        
         let sheaps_abs = map_option
           (fun (sheap2,id2) -> 
-            (let s = ref [] in 
-              (if (List.for_all
-                (fun (sheap1,id1) ->
-                  let sheap1_form = inner_form_af_to_form sheap1 in
-                  let sheap1_af = inner_form_af_to_af sheap1 in
-                  let sheap2_form = inner_form_af_to_form sheap2 in
-                  let sheap2_af = inner_form_af_to_af sheap2 in
-                  let sheap1_form,sheap2_form =
-                    if Config.abs_int_join() then join_over_numeric sheap1_form sheap2_form
-                    else sheap1_form,sheap2_form in
-                  let sheap1_af,sheap2_af =
-                    if Config.abs_int_join() then join_over_numeric sheap1_af sheap2_af
-                    else sheap1_af,sheap2_af in
-                  if ((frame_inner !curr_logic sheap2_form sheap1_form <> None) ||
-                    (frame_inner !curr_logic sheap2_af sheap1_af <> None))
-                  then
-                    (ignore (add_edge_with_proof id2 id1 ContE
-                      ("Contains@"^(Debug.toString Pprinter_core.pp_stmt_core stm.skind))); false)
-                  else (s := ("\n---------------------------------------------------------\n" ^
-                    (string_of_proof ())) :: !s; true))
-                formset)
-              then 
-                (if !s <> [] then (add_url_to_node id2 !s);
-                Some (sheap2,id2)) 
-              else 
-                None)
-            )
+            let s = ref [] in 
+            let does_not_contain = ref true in
+            formset := List.map (fun (sheap1,id1) ->
+              let sheap1_form = inner_form_af_to_form sheap1 in
+              let sheap1_af = inner_form_af_to_af sheap1 in
+              let sheap2_form = inner_form_af_to_form sheap2 in
+              let sheap2_af = inner_form_af_to_af sheap2 in
+
+              (* Check for inclusion under standard entailment *)
+              if ((frame_inner !curr_logic sheap2_form sheap1_form <> None) &&
+                (frame_inner !curr_logic sheap2_af sheap1_af <> None)) then
+                (ignore (add_edge_with_proof id2 id1 ContE
+                  ("Contains@"^(Debug.toString Pprinter_core.pp_stmt_core stm.skind)));
+                does_not_contain := !does_not_contain && false;
+                (sheap1,id1))
+
+              (* If join available, check for inclusion of heap joined over numerical part *)
+              else if (Plugin_manager.has_join()) then
+                (let (sheap1_form, sheap1_exnum_form),(sheap2_form,_) =
+                  join_over_numeric sheap1_form sheap2_form in
+                let (sheap1_af, sheap1_exnum_af),(sheap2_af,_) =
+                  join_over_numeric sheap1_af sheap2_af in
+
+                if ((frame_inner !curr_logic sheap2_form sheap1_exnum_form <> None) &&
+                  (frame_inner !curr_logic sheap2_af sheap1_exnum_af <> None)) then
+                  (let sheap1_join = combine sheap1_form sheap1_af in
+                  let id1_cfg_node = get_cfg_node (node_get_cfg_id id1) in
+                  let id1_join = add_heap_node id1_cfg_node sheap1_join in
+                  ignore (add_edge id1 id1_join JoinE
+                    ("Join@"^(Debug.toString Pprinter_core.pp_stmt_core stm.skind)));
+                  ignore (add_edge_with_proof id2 id1_join ContE
+                    ("Join-Contains@"^(Debug.toString Pprinter_core.pp_stmt_core stm.skind)));
+                  does_not_contain := !does_not_contain && false;
+                  restart := !restart @ [(id1_cfg_node, (sheap1_join,id1_join))];
+                  (sheap1_join,id1_join))
+                else (s := ("\n---------------------------------------------------------\n" ^
+                  (string_of_proof ())) :: !s; (sheap1,id1)))
+
+              else (s := ("\n---------------------------------------------------------\n" ^
+                (string_of_proof ())) :: !s; (sheap1,id1)))
+              !formset;
+
+            if !does_not_contain then 
+              (if !s <> [] then (add_url_to_node id2 !s);
+              Some (sheap2,id2)) 
+            else 
+              None
           )
           sheaps_abs in
         if Config.symb_debug() then
+          (Format.printf "\nPrevious heaps after filtering: \n%!";
+          List.iter (fun (heap, id) -> Format.printf "@\n    %a\n@.%!" heap_pprinter heap;) !formset;);
+        if Config.symb_debug() then
           (Format.printf "\nAbstracted heaps after filtering: \n%!";
           List.iter (fun (heap, id) -> Format.printf "@\n    %a\n@.%!" heap_pprinter heap;) sheaps_abs;);
+        if Config.symb_debug() then
+          (Format.printf "\nNodes/Heaps to be restarted: \n%!";
+          List.iter (fun (n,(heap,id)) -> Format.printf "@\nnode %i:    %a\n@.%!" n.sid heap_pprinter heap;) !restart;);
+        
+        (* TODO: Need to get rid of previosly abstracted heaps that were modified accross whole formset_table.
+           Since it is not clear how to distinguish them, for now we just get rid of everything. *)
+        if (!restart <> []) then Hashtbl.clear formset_table;
+        formset_table_replace id (!formset @ sheaps_abs);
 
-        formset_table_replace id (sheaps_abs @ formset);
-        execs_one n sheaps_abs
+        (* First execute on nodes/heaps that need to be restarted, then execute on abstracted heaps *)
+        (List.flatten (List.map (fun (n, sheap) -> execs_one n [sheap]) !restart)) @ 
+          (execs_one n (sheaps_abs))
+
       with Contained -> 
         if Config.symb_debug() then Format.printf "Formula contained.\n%!"; [])
 
@@ -583,6 +629,7 @@ let verify
   curr_logic := lo;
   curr_abs_rules := abs_rules;
   stmts_to_cfg stmts;
+  cfg_nodes := stmts;
   match stmts with 
   | [] -> failwith "Internal error: Method body shouldn't be empty."
   | s::_ -> 
@@ -642,6 +689,7 @@ let verify_ensures
 	curr_logic := lo;
   curr_abs_rules := abs_rules;
   stmts_to_cfg stmts;
+  cfg_nodes := stmts;
   match stmts with 
     [] -> assert false
   | s::stmts ->
@@ -694,6 +742,7 @@ let get_frame
   curr_logic := lo;
   curr_abs_rules := abs_rules;
   stmts_to_cfg stmts;
+  cfg_nodes := stmts;
   match stmts with 
     [] -> assert false
   | s::stmts -> 
@@ -727,6 +776,7 @@ let verify_inner
   curr_logic := lo;
   curr_abs_rules := abs_rules;
   stmts_to_cfg stmts;
+  cfg_nodes := stmts;
   match stmts with 
   | [] -> failwith "Internal error: Method body shouldn't be empty."
   | s::_ -> 
@@ -752,6 +802,7 @@ let bi_abduct
   curr_abduct_logic := abduct_lo;
   curr_abs_rules := abs_rules;
   stmts_to_cfg stmts;
+  cfg_nodes := stmts;
   match stmts with 
   | [] -> []
   | s::_ -> 

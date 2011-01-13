@@ -13,7 +13,7 @@
 
 
 type ntype = Plain | Good | Error | Abs | UnExplored
-type etype = ExecE | AbsE | ContE | ExitE
+type etype = ExecE | AbsE | ContE | JoinE | ExitE
 type id = int
 val file : string ref
 val set_group : bool -> unit

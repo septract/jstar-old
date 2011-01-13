@@ -27,3 +27,12 @@ val meet : Psyntax.pform -> Psyntax.pform -> Psyntax.pform list
 
 (* Runs widening from abstract interpretation plugins on given pforms *)
 val widening : Psyntax.pform -> Psyntax.pform -> Psyntax.pform list
+
+(* Checks whether there is a plugin loaded that supports join *)
+val has_join : unit -> bool
+
+(* Checks whether there is a plugin loaded that supports meet *)
+val has_meet : unit -> bool
+
+(* Checks whether there is a plugin loaded that supports widening *)
+val has_widening : unit -> bool
