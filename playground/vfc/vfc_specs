@@ -1,9 +1,9 @@
 alloc 
 { } 
-{ array(@parameter0:, "byte", ptop(), $ret_v1, @parameter1:) * Mem($ret_v1, @parameter1:) }
+{ array(@parameter0:, "byte", ptop(), $ret_v1, @parameter1:,_vs) * Mem($ret_v1, @parameter1:) }
 
 free 
-{ array(_h, "byte", ptop(), @parameter0:, _sz) * Mem(@parameter0:, _sz) } 
+{ array(_h, "byte", ptop(), @parameter0:, _sz, _vs) * Mem(@parameter0:, _sz) } 
 { }
 
 memcpy
@@ -11,14 +11,13 @@ memcpy
 { array(_h, "byte", ptop(), @parameter0:, @parameter2:) * array(_h, "byte", _p, @parameter1:, @parameter2:) }
 
 get
-{ array("local", "byte", ptop(), @parameter0:, @parameter2:, _ls) * array("host", "byte", _p, @parameter1:, @parameter2:, _hs) * MFC(@parameter3:, _O) * MFCSlot() * _p != pbot() } 
+{ array("local", "byte", ptop(), @parameter0:, @parameter2:, _ls) * array("host", "byte", _p, @parameter1:, @parameter2:, _hs) * MFC(@parameter3:, _O) * MFCSlot() * _p != pbot() }
 { MFC(@parameter3:, cons(tuple(@parameter0:, ptop(), @parameter1:, _p, @parameter2:, _hs), _O)) }
 
 put
-{ array("local", "byte", _p, @parameter0:, @parameter2:) * array("host", "byte", ptop(), @parameter1:, @parameter2:) * MFC(@parameter3:, _O) * MFCSlot() * _p != pbot() } 
-{ MFC(@parameter3:, cons(tuple(@parameter0:, _p, @parameter1:, ptop(), @parameter2:), _O))}
+{ array("local", "byte", _p, @parameter0:, @parameter2:, _ls) * array("host", "byte", ptop(), @parameter1:, @parameter2:, _hs) * MFC(@parameter3:, _O) * MFCSlot() * _p != pbot() }
+{ MFC(@parameter3:, cons(tuple(@parameter0:, _p, @parameter1:, ptop(), @parameter2:, _ls), _O))}
 
 wait
 { MFC(@parameter0:,_O) }
 { release(MFC(@parameter0:,_O)) }
-

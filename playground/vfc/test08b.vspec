@@ -1,5 +1,5 @@
 f
-{ array("local", "byte", ptop(), a, n) * !LE(0, n) }
-{ array("local", "byte", ptop(), a, n) }
+{ array("local", "byte", ptop(), a, n, _as) * !LE(0, n) }
+{ array("local", "byte", ptop(), a, n, _as) }
 
 i { !LE(0, i) * !LE(i, n) }

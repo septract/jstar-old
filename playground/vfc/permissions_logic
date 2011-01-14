@@ -181,7 +181,5 @@ if
 
 rule neq_pbot_psplit2:
   |  |-  pbot() != psplit2(?t)
-without 
-  
 if
   |  |-  pbot() != ?t

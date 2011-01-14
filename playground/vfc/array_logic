@@ -1,60 +1,17 @@
-import "permissions_logic";
-import "blob_logic";
-import "listdatatype_logic";
-
-rule blob_array_right:
-  | blob(?h,?t,?p1,?x,?v) |- array(?h,?t,?p2,?x,?l,?ws)
-where
-  !GT(?l,0) pureguard
-if 
-  | blob(?h,?t,?p1,?x,?v) |- blob(?h,?t,?p2,?x,_w) 
-                            * array(?h,?t,?p2,(?x+1),(?l-1),_vs)
-                            * ?ws = cons(_w,_vs)
-                         
-
-rule array_match_len2: 
-  | array(?h,?t,?p,?x,?l,?vs) |- array(?h,?t,?p,?x,_l2,_vs2)
-if
- array(?h,?t,?p,?x,?vs) |  |- ?l = _l2 * ?vs = _vs2
-
-
- rule array_match_len3: 
-   | array(?h,?t,?p,?x,?l,?vs) |- array(?h,?t,?p,?x,?l2,?vs2)
- if
-  array(?h,?t,?p,?x,?vs) |  |- ?l = ?l2 * ?vs = ?vs2
-
-
-rule array_blob_left:
-  |  array(?h,?t,?p1,?x,?l,?ws)  |-  blob(?h,?t,?p2,?y,?v)
-where 
-  !GT(?l,0) pureguard; 
-  ?x = ?y pureguard
-if 
-  |  blob(?h,?t,?p1,?x,_w) 
-     * array(?h,?t,?p2,(?x+1),(?l-1),_vs) 
-     * ?ws = cons(_w,_vs)
-  |- blob(?h,?t,?p2,?x,?v) 
-
-
-rule array_blob_intermediate:
-  |  array(?h,?t,?p,?x,?l,?vs)  |-  blob(?h,?t,?p,?y,?vb)
-where
-  !GE(?y,?x) pureguard; 
-  !LT(?y,(?x+?l)) pureguard
-if 
-  | array(?h,?t,?p,?x,(?y-?h),_vs1)
-    * blob(?h,?t,?p,?y,_v)
-    * array(?h,?t,?p,(?y+1),((?l - (?y-?h))-1),_vs2)
-  |- ?vb = _v
-
-
 /********************************
  * Array logic with permissions
  ********************************/
 
+import "permissions_logic";
+import "blob_logic";
+import "listdatatype_logic";
+
+
+/***********************
+ * Simplification rules
+ ***********************/
 
 /* Get rid of arrays with length zero */
-
 rule remove_empty_array_left :
   | array(?h,?t,?p,?x,0,?vs) |-
 if
@@ -65,17 +22,7 @@ rule remove_empty_array_right :
 if 
   | |- ?vs = empty()
 
-
-/* Array splitting */
-
-rule array_split_blob2:
-  | array(?h,?t,?p,?x,?l,cons(?v,?vs)) |- blob(?h,?t,?p,?x,_c)
-if 
-  blob(?h,?t,?p,?x,?v) | array(?h,?t,?p,(?x+1),(?l-1),?vs) |- _c = ?v
-
-
 /* Arrays with zero permission reduce to emp */
-
 rule array_perm_bot_left:
   | array(?h,?t,pbot(),?x,?l,?vs) |-
 if
@@ -85,4 +32,157 @@ rule array_perm_bot_right:
   | |- array(?h,?t,pbot(),?x,?l,?vs)
 if
   | |-
- 
+
+  
+/******************
+ * Splitting rules
+ ******************/
+
+/* Rules where blob is on the lhs and array is on the rhs */
+rule blob_array_split_first:
+  | blob(?h,?t,?p1,?y,?v) |- array(?h,?t,?p2,?x,?l,?ws)
+where
+  !GT(?l,0) pureguard;
+  ?y = ?x pureguard
+if
+  | blob(?h,?t,?p1,?y,?v) |- blob(?h,?t,?p2,?x,_w) * 
+                             array(?h,?t,?p2,(?x+1),(?l-1),_vs) * 
+                             ?ws = cons(_w,_vs)
+
+rule blob_array_split_last:
+  | blob(?h,?t,?p1,?y,?v) |- array(?h,?t,?p2,?x,?l,?ws)
+where
+  !GT(?l,0) pureguard;
+  ?y = (?x+(?l-1)) pureguard
+if
+  | blob(?h,?t,?p1,?y,?v) |- array(?h,?t,?p2,?x,(?l-1),_vs) * 
+                             blob(?h,?t,?p2,(?x+(?l-1)),_w) * 
+                             ?ws = app(_vs,cons(_w,nil()))
+
+rule blob_array_split_mid:
+  | blob(?h,?t,?p1,?y,?v) |- array(?h,?t,?p2,?x,?l,?ws)
+where
+  !GT(?l,0) pureguard;
+  !GT(?y,?x) pureguard;
+  !LT(?y,(?x+?l)) pureguard
+if
+  | blob(?h,?t,?p1,?y,?v) |- array(?h,?t,?p2,?x,(?y-?x),_us) * 
+                             blob(?h,?t,?p2,?y,_w) * 
+                             array(?h,?t,?p2,(?y+1),((?l-(?y-?x))-1),_vs) * 
+                             ?ws = app(_us,cons(_w,_vs))
+
+/* Rules where array is on the lhs and blob is on the rhs */
+rule array_blob_split_first:
+  |  array(?h,?t,?p1,?x,?l,?ws)  |-  blob(?h,?t,?p2,?y,?v)
+where 
+  !GT(?l,0) pureguard;
+  ?x = ?y pureguard
+if
+  | blob(?h,?t,?p1,?x,_w) * 
+    array(?h,?t,?p2,(?x+1),(?l-1),_vs) * 
+    ?ws = cons(_w,_vs)
+  |- blob(?h,?t,?p2,?y,?v) 
+
+rule array_blob_split_last:
+  |  array(?h,?t,?p1,?x,?l,?ws)  |-  blob(?h,?t,?p2,?y,?v)
+where 
+  !GT(?l,0) pureguard;
+  ?y = (?x+(?l-1)) pureguard
+if
+  | array(?h,?t,?p1,?x,(?l-1),_vs) * 
+    blob(?h,?t,?p1,(?x+(?l-1)),_w) * 
+    ?ws = app(_vs,cons(_w,nil()))
+  |- blob(?h,?t,?p2,?y,?v) 
+
+rule array_blob_intermediate:
+  |  array(?h,?t,?p1,?x,?l,?ws)  |-  blob(?h,?t,?p2,?y,?v)
+where
+  !GT(?l,0) pureguard;
+  !GT(?y,?x) pureguard;
+  !LT(?y,(?x+?l)) pureguard
+if
+  | array(?h,?t,?p1,?x,(?y-?x),_us) * 
+    blob(?h,?t,?p1,?y,_w) * 
+    array(?h,?t,?p1,(?y+1),((?l-(?y-?x))-1),_vs) * 
+    ?ws = app(_us,cons(_w,_vs))
+  |- blob(?h,?t,?p2,?y,?v)
+
+
+/*****************
+ * Matching rules
+ *****************/
+
+/* Rules for array - array matching without splitting of permissions */
+rule array_array_match_len_eq:
+  | array(?h,?t,?p,?x,?l,?vs) |- array(?h,?t,?q,?x,?l2,?vs2)
+where 
+  ?l = ?l2 pureguard
+if
+  array(?h,?t,?p,?x,?l,?vs) 
+  |  
+  |- ?vs = ?vs2 * ?p = ?q
+or
+  array(?h,?t,?p,?x,?l,?vs) 
+  |  
+  |- ?vs = ?vs2 * !Pless(?p,?q) * _r = pdiff(?q, ?p) * array(?h,?t,_r,?x,?l2,?vs2)
+or
+  array(?h,?t,?q,?x,?l,?vs) 
+  | _r = pdiff(?p, ?q) * array(?h,?t,?r,?x,?l,?vs)
+  |- ?vs = ?vs2 * !Pless(?q,?p)
+
+
+rule array_array_match_len_eq_plus_one:
+  | array(?h,?t,?p,?x,?l,?vs) |- array(?h,?t,?p,?x,?l2,?vs2)
+where 
+  ?l = (?l2+1) pureguard
+if
+  array(?h,?t,?p,?x,?l2,?vs2) 
+  | blob(?h,?t,?p,(?x+?l2),_v) 
+  |- ?vs = app(?vs2,cons(_v,nil()))
+
+
+rule array_array_match_len_eq_minus_one:
+  | array(?h,?t,?p,?x,?l,?vs) |- array(?h,?t,?p,?x,?l2,?vs2)
+where 
+  ?l = (?l2-1) pureguard
+if
+  array(?h,?t,?p,?x,?l,?vs) 
+  |  
+  |- blob(?h,?t,?p,(?x+?l),_v) * ?vs2 = app(?vs,cons(_v,nil()))
+
+
+rule array_array_match_len_gt:
+  | array(?h,?t,?p,?x,?l,?vs) |- array(?h,?t,?q,?x,?l2,?vs2)
+where 
+  !GT(?l,?l2) pureguard
+if
+  array(?h,?t,?p,?x,?l2,?vs2) 
+  | array(?h,?t,?p,(?x+?l2),(?l-?l2),_vs1)
+  |- ?vs = app(?vs2,_vs1) * ?p = ?q
+or
+  array(?h,?t,?p,?x,?l2,?vs2) 
+  | array(?h,?t,?p,(?x+?l2),(?l-?l2),_vs1)
+  |- ?vs = app(?vs2,_vs1) * !Pless(?p,?q) * _r = pdiff(?q, ?p) * array(?h,?t,_r,?x,?l2,?vs2)
+or
+  array(?h,?t,?q,?x,?l2,?vs2) 
+  | _r = pdiff(?p, ?q) * array(?h,?t,_r,?x,?l2,?vs2) * array(?h,?t,?p,(?x+?l2),(?l-?l2),_vs1)
+  |- ?vs = app(?vs2,_vs1) * !Pless(?q,?p)
+
+
+rule array_array_match_len_lt:
+  | array(?h,?t,?p,?x,?l,?vs) |- array(?h,?t,?q,?x,?l2,?vs2)
+where 
+  !LT(?l,?l2) pureguard
+if
+  array(?h,?t,?p,?x,?l,?vs) 
+  |  
+  |- ?vs2 = app(?vs,_vs1) * ?p = ?q * array(?h,?t,?p,(?x+?l),(?l2-?l),_vs1)
+or
+  array(?h,?t,?p,?x,?l,?vs)
+  |  
+  |- ?vs2 = app(?vs,_vs1) * !Pless(?p,?q) * _r = pdiff(?q, ?p) * 
+     array(?h,?t,_r,?x,?l,?vs) * array(?h,?t,?q,(?x+?l),(?l2-?l),_vs1)
+or
+  array(?h,?t,?q,?x,?l,?vs)
+  | _r = pdiff(?p, ?q) * array(?h,?t,_r,?x,?l,?vs)
+  |- ?vs2 = app(?vs,_vs1) * !Pless(?q,?p) * array(?h,?t,?q,(?x+?l),(?l2-?l),_vs1)

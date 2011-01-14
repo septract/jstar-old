@@ -1,3 +1,3 @@
 f
-{ array("local", "byte", ptop(), a, sz) * array("host", "byte", ptop(), b, sz) * !LE(0, sz) * MFCSlot() * MFC(t, empty()) }
-{ array("local", "byte", ptop(), a, sz) * array("host", "byte", ptop(), b, sz) * MFCSlot() * MFC(t, empty()) }
+{ array("local", "byte", ptop(), a, sz, _as) * array("host", "byte", ptop(), b, sz, _bs) * !LE(0, sz) * MFCSlot() * MFC(t, empty()) }
+{ array("local", "byte", ptop(), a, sz, _bs) * array("host", "byte", ptop(), b, sz, _bs) * MFCSlot() * MFC(t, empty()) }

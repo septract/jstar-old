@@ -3,7 +3,6 @@ void process_data(byte* data, int len) {
   i = 0;
   while (i < len) (inv inv_pd) {
     *data = 0;
-    while (false) { skip; }
     data = data + 1;
     i = i + 1;
   }
@@ -22,10 +21,7 @@ void single_buffer(byte* buffer, byte* in, byte* out, int num_chunks, int tag) {
     get(buffer, in_new, CHUNK, tag);
     wait(tag);
     in_new = in_new + CHUNK;
-        while (false) { skip; }
     process_data(buffer, CHUNK);
-        while (false) { skip; }
-
     i = i + 1;
   }
 }

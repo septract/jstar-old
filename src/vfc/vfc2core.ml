@@ -330,7 +330,7 @@ let verify
           Assignment_core ([], spec, [])
         ) f.params in
       (* add function body *)
-      let body_stmts = tr_stmt f.body in
+      let body_stmts = (tr_stmt f.body) @ [End] in
       let core_stmts = params_stmts @ body_stmts in
       let cfg_nodes = List.map (fun s -> Cfg_core.mk_node s) core_stmts in
       Cfg_core.print_core (file_prefix ^ ".") fun_name_str cfg_nodes;

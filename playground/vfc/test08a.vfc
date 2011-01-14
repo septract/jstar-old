@@ -2,12 +2,11 @@ void f (int* a, int n) {
   int i;
   i = 0;
   *a = 0;
-  abs;
 }
 
 void g (int* a, int n) {
   int i;
   i = n-1;
+  a = a+i;
   *a = 0;
-  abs;
 }

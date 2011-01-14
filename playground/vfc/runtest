@@ -8,9 +8,9 @@ run_vfc -f test05.vfc -s test05.vspec -ai ../../../jabstr/bin/num_abs.cmxs
 run_vfc -f test06.vfc -s test06.vspec -ai ../../../jabstr/bin/num_abs.cmxs
 run_vfc -f test07.vfc -s test07.vspec
 run_vfc -f test08a.vfc -s test08a.vspec
-run_vfc -f test08b.vfc -s test08b.vspec
+run_vfc -f test08b.vfc -s test08b.vspec -ai ../../../jabstr/bin/num_abs.cmxs
 run_vfc -f test09.vfc -s test09.vspec 
-run_vfc -f test10.vfc -s test10.vspec
+run_vfc -f test10.vfc -s test10.vspec -ai ../../../jabstr/bin/num_abs.cmxs
 
 grep -i contradiction *.txt
 

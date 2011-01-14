@@ -2,9 +2,7 @@ void f (int* a, int n) {
   int i;
   i = 0;
   while (i < n) (inv i) {
-    abs;
     *(a+i) = 0;
-    abs;
     i = i+1;
   }
 }
