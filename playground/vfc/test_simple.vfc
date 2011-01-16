@@ -1,0 +1,51 @@
+struct foo {
+  int blat; 
+  byte bar; 
+}
+
+void test_struct_passing (byte x, int y, struct foo z) {
+  skip;
+  int x;
+  x = 1;
+}
+
+
+int test_callee (int x) {
+  return x + 1;
+}
+
+int test_caller() {
+  int ret;
+  ret = test_callee(2);
+  return ret;
+}
+
+
+void test_pointer_assignment (byte* a, byte* b) {
+  *a = 5;
+  *b = 8;
+}
+
+void test_alloc_free () {
+  byte* x;
+  byte* y;
+  x = alloc (local, 1);
+  y = alloc (local, 1);
+  test_pointer_assignment (x, y);
+  free (local, x);
+  free (local, y);
+}
+
+
+void test_array_set_first_elem (int* a, int n) {
+  int i;
+  i = 0;
+  *a = 0;
+}
+
+void test_array_set_last_elem (int* a, int n) {
+  int i;
+  i = n-1;
+  a = a+i;
+  *a = 0;
+}

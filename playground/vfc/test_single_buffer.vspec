@@ -6,6 +6,6 @@ inv_pd { !LE (i, len) }
 
 single_buffer
 { array("local", "byte", ptop(), buffer, "16384", _bs1) * array("host", "byte", ptop(), in, _l, _is1) * array("host", "byte", ptop(), out, _l, _os1) * _l=builtin_mult(num_chunks, "16384") * !LE(0, num_chunks) * MFCSlot() * MFC(tag, empty()) }
-{ array("local", "byte", ptop(), buffer, "16384", _bs2) * array("host", "byte", ptop(), in, _l, _is2) * array("host", "byte", ptop(), out, _l, _os2) * MFCSlot() * MFC(@parameter4:, empty()) }
+{ array("local", "byte", ptop(), buffer, "16384", _bs2) * array("host", "byte", ptop(), in, _l, _is2) * array("host", "byte", ptop(), out, _l, _os2) * MFCSlot() * MFC(tag, empty()) }
 
-inv_sb { !LE (i, num_chunks) * in_new = builtin_plus(in, builtin_mult(i,CHUNK))  }
+inv_sb { !LE (i, num_chunks) * in_new = builtin_plus(in, builtin_mult(i,CHUNK)) * out_new = builtin_plus(out, builtin_mult(i,CHUNK)) }

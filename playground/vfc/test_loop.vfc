@@ -1,0 +1,69 @@
+int test_loop_countup (int M) {
+  int i;
+  i = 0;
+  while (i < M) (inv inv_loop_countup) {
+    i = i+1;
+  }
+  return i;
+}
+
+
+int test_loop_countdown (int M) {
+  int i;
+  i = M;
+  while (0 < i) (inv inv_loop_countdown) {
+    i = i-1;
+  }
+  return i;
+}
+
+
+void test_loop_countup_const () {
+  int i;
+  int j;
+  i = 0;
+  j = 0;
+  while (i < 100) (inv inv_loop_countup_const) {
+    j = j + 10;
+    i = i + 1;
+  }
+}
+
+
+int test_loop_countup_mult (int L, int M, byte* a) {
+  int i;
+  byte* b;
+  i = 0;
+  b = a;
+  L = 10;
+  while (i < M) (inv inv_loop_countup_mult) {
+    b = b + L;
+    i = i + 1;
+  }
+  return b;
+}
+
+
+void test_loop_array_set_elems_countup (int* a, int n) {
+  int i;
+  i = 0;
+  while (i < n) (inv inv_loop_array_set_elems_countup) {
+    *(a+i) = 0;
+    i = i+1;
+  }
+}
+
+
+void test_loop_array_set_elems_countup_mult  (byte* in, int num_chunks) {
+  int i;
+  int CHUNK;
+  byte* in_new;
+  i = 0;
+  CHUNK = 16384;
+  in_new = in;
+  while (i < num_chunks) (inv inv_loop_array_set_elems_countup_mult) {
+    *in_new = 0;
+    in_new = in_new + CHUNK;
+    i = i + 1;
+  }
+}

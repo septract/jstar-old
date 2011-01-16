@@ -1,16 +1,9 @@
 #!/bin/bash
 
-run_vfc -f test01.vfc -s test01.vspec
-run_vfc -f test02.vfc -s test02.vspec -ai ../../../jabstr/bin/num_abs.cmxs
-run_vfc -f test03.vfc -s test03.vspec
-run_vfc -f test04.vfc -s test04.vspec -ai ../../../jabstr/bin/num_abs.cmxs
-run_vfc -f test05.vfc -s test05.vspec -ai ../../../jabstr/bin/num_abs.cmxs
-run_vfc -f test06.vfc -s test06.vspec -ai ../../../jabstr/bin/num_abs.cmxs
-run_vfc -f test07.vfc -s test07.vspec
-run_vfc -f test08a.vfc -s test08a.vspec
-run_vfc -f test08b.vfc -s test08b.vspec -ai ../../../jabstr/bin/num_abs.cmxs
-run_vfc -f test09.vfc -s test09.vspec 
-run_vfc -f test10.vfc -s test10.vspec -ai ../../../jabstr/bin/num_abs.cmxs
+run_vfc -f test_simple.vfc -s test_simple.vspec
+run_vfc -f test_loop.vfc -s test_loop.vspec -ai ../../../jabstr/bin/num_abs.cmxs
+run_vfc -f test_dma.vfc -s test_dma.vspec 
+#run_vfc -f test_single_buffer.vfc -s test_single_buffer.vspec -ai ../../../jabstr/bin/num_abs.cmxs
 
 grep -i contradiction *.txt
 

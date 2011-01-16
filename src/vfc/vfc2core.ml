@@ -227,10 +227,10 @@ let rec tr_stmt (s : stmt) : core_statement list =
     let (pre, post) = find fun_specs fun_id in
     let params =
       match fun_id with (* TODO: sort this out using function prototypes; need a support for header files for that *)
-      | "free" | "wait"  -> [ { vname="@parameter0:"; vtype=Byte; kind=Parameter; }  ]
-      | "alloc" -> [ { vname="@parameter0:"; vtype=Byte; kind=Parameter; }; { vname="@parameter1:"; vtype=Byte; kind=Parameter; } ]
-      | "memcpy" ->  [ { vname="@parameter0:"; vtype=Byte; kind=Parameter; }; { vname="@parameter1:"; vtype=Byte; kind=Parameter; }; { vname="@parameter2:"; vtype=Byte; kind=Parameter; } ]
+      | "wait"  -> [ { vname="@parameter0:"; vtype=Byte; kind=Parameter; }  ]
+      | "alloc" | "free" -> [ { vname="@parameter0:"; vtype=Byte; kind=Parameter; }; { vname="@parameter1:"; vtype=Byte; kind=Parameter; } ]
       | "get" | "put" -> [ { vname="@parameter0:"; vtype=Byte; kind=Parameter; }; { vname="@parameter1:"; vtype=Byte; kind=Parameter; }; { vname="@parameter2:"; vtype=Byte; kind=Parameter; }; { vname="@parameter3:"; vtype=Byte; kind=Parameter; } ]
+      | "memcpy" ->  [ { vname="@parameter0:"; vtype=Byte; kind=Parameter; }; { vname="@parameter1:"; vtype=Byte; kind=Parameter; }; { vname="@parameter2:"; vtype=Byte; kind=Parameter; }; { vname="@parameter3:"; vtype=Byte; kind=Parameter; }; { vname="@parameter4:"; vtype=Byte; kind=Parameter; } ]
       | _ -> (find fun_decls fun_id).params
     in
     let pvars = List.fold_right (fun v -> vs_add (prog_var v.vname)) params 
@@ -312,7 +312,6 @@ let verify
       Hashtbl.add fun_specs fun_id (pre, post);
   ) specs;
 
-  Symexec.file := file_prefix;
   (* TODO: generate call graph, and perform the fixpoint abduction *)
   (* for now: verification of each method separately against a given spec *)
   List.iter (fun decl ->
@@ -334,6 +333,8 @@ let verify
       let core_stmts = params_stmts @ body_stmts in
       let cfg_nodes = List.map (fun s -> Cfg_core.mk_node s) core_stmts in
       Cfg_core.print_core (file_prefix ^ ".") fun_name_str cfg_nodes;
+      Symexec.file := file_prefix ^ "." ^ fun_name_str;
+      Symexec.file_id := 0;
       let (pre, post) = find fun_specs fun_name_str in
       let spec = mk_spec pre post excep_post_empty invariants_empty in
       let res = Symexec.verify fun_name_str cfg_nodes spec lo abs_rules in

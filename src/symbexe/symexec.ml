@@ -46,10 +46,13 @@ let proof_succeeded = ref true
 
 let set_group,grouped = let x = ref false in (fun y -> x := y),(fun () -> !x)
 
-let fresh_node = let node_counter = ref 0 in fun () ->  let x = !node_counter in node_counter := x+1; x
+let node_counter = ref 0
+let fresh_node = 
+  fun () ->  let x = !node_counter in node_counter := x+1; x
 
-let fresh_file = let file_id = ref 0 in fun () -> let x = !file_id in file_id := x+1;  Sys.getcwd() ^  "/" ^ !file ^ ".proof_file_"^(string_of_int x)^".txt"
-
+let file_id = ref 0
+let fresh_file = fun () -> let x = !file_id in file_id := x+1;  
+  Sys.getcwd() ^  "/" ^ !file ^ ".proof_file_"^(string_of_int x)^".txt"
 
 let cfg_nodes = ref []
 

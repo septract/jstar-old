@@ -1,7 +1,0 @@
-f
-{ blob("local", "byte", ptop(), a, _x) * blob("local", "byte", ptop(), b, _y) }
-{ blob("local", "byte", ptop(), a, "5") * blob("local", "byte", ptop(), b, "8") }
-
-g
-{}
-{ blob("local", "byte", ptop(), x, "5") * blob("local", "byte", ptop(), y, "8") } /* cannot put existentials here! */

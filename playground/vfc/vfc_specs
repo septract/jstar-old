@@ -1,14 +1,14 @@
 alloc 
 { !GE(@parameter1:,0) } 
-{ array(@parameter0:, "byte", ptop(), $ret_v1, @parameter1:, ls(@parameter1:,0)) * Mem($ret_v1, @parameter1:) }
+{ array(@parameter0:, "byte", ptop(), $ret_v1, @parameter1:, ls(@parameter1:,0)) * Mem(@parameter0:, $ret_v1, @parameter1:) }
 
 free 
-{ array(_h, "byte", ptop(), @parameter0:, _sz, _vs) * Mem(@parameter0:, _sz) } 
+{ array(@parameter0:, "byte", ptop(), @parameter1:, _sz, _vs) * Mem(@parameter0:, @parameter1:, _sz) } 
 { }
 
 memcpy
-{ array(_h, "byte", ptop(), @parameter0:, @parameter2:) * array(_h, "byte", _p, @parameter1:, @parameter2:) } 
-{ array(_h, "byte", ptop(), @parameter0:, @parameter2:) * array(_h, "byte", _p, @parameter1:, @parameter2:) }
+{ array(@parameter0:, "byte", ptop(), @parameter1:, @parameter4:) * array(@parameter2:, "byte", _p, @parameter3:, @parameter4:) } 
+{ array(@parameter0:, "byte", ptop(), @parameter1:, @parameter4:) * array(@parameter2:, "byte", _p, @parameter3:, @parameter4:) }
 
 get
 { array("local", "byte", ptop(), @parameter0:, @parameter2:, _ls) * array("host", "byte", _p, @parameter1:, @parameter2:, _hs) * MFC(@parameter3:, _O) * MFCSlot() * _p != pbot() }

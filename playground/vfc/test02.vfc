@@ -1,8 +1,0 @@
-int f (int M) {
-  int i;
-  i = 0;
-  while (i < M) (inv i) {
-    i = i+1;
-  }
-  return i;
-}

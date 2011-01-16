@@ -24,6 +24,9 @@ void single_buffer(byte* buffer, byte* in, byte* out, int num_chunks, int tag) {
     wait(tag);
     in_new = in_new + CHUNK;
     process_data(buffer, CHUNK);
+    put(buffer, out_new, CHUNK, tag);
+    wait(tag);
+    out_new = out_new + CHUNK;
     i = i + 1;
   }
 }

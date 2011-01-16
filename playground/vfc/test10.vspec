@@ -1,5 +1,0 @@
-f 
-{ array("local", "byte", ptop(), in, _l, _xs) * !LT(0, num_chunks) * _l = builtin_mult(num_chunks, "16384") }
-{ array("local", "byte", ptop(), in, _l, _ys) }
-
-i { !LE (i, num_chunks) * in_new = builtin_plus(in, builtin_mult(i,CHUNK)) }

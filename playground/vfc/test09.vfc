@@ -1,6 +1,0 @@
-void f (byte* a, byte* b, int sz, int t) {
-  get(a, b, sz, t); 
-	wait(t);
-  put(a, b, sz, t); 
-	wait(t);
-}

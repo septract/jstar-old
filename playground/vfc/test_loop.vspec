@@ -1,0 +1,35 @@
+test_loop_countup 
+  { !LE(0, M) }
+  { $ret_v1=M }
+inv_loop_countup
+  { !LE (i, M) }
+
+test_loop_countdown
+  { !LE(0, M) }
+  { $ret_v1=0 }
+inv_loop_countdown
+  { !LE (0, i) }
+
+test_loop_countup_const 
+  { }
+  { }
+inv_loop_countup_const
+  { j = builtin_mult(i,"10") }
+
+test_loop_countup_mult
+  { !LE(0, M) * !LE(0, L) }
+  { $ret_v1=builtin_plus(a, builtin_mult(M,L)) }
+inv_loop_countup_mult
+  { !LE (i, M) *  b = builtin_plus(a, builtin_mult(i,L)) }
+
+test_loop_array_set_elems_countup
+  { array("local", "byte", ptop(), a, n, _as) * !LE(0, n) }
+  { array("local", "byte", ptop(), a, n, _bs) }
+inv_loop_array_set_elems_countup
+  { !LE(0, i) * !LE(i, n) }
+
+test_loop_array_set_elems_countup_mult
+  { array("local", "byte", ptop(), in, _l, _xs) * !LT(0, num_chunks) * _l = builtin_mult(num_chunks, "16384") }
+  { array("local", "byte", ptop(), in, _l, _ys) }
+inv_loop_array_set_elems_countup_mult 
+  { !LE (i, num_chunks) * in_new = builtin_plus(in, builtin_mult(i,CHUNK)) }
