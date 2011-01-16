@@ -542,7 +542,10 @@ and execute_core_stmt
                   restart := !restart @ [(id1_cfg_node, (sheap1_join,id1_join))];
                   (sheap1_join,id1_join))
                 else (s := ("\n---------------------------------------------------------\n" ^
-                  (string_of_proof ())) :: !s; (sheap1,id1)))
+                  (string_of_proof ())) :: !s; 
+                  (*ignore (add_edge id1 id2 JoinE
+                    ("Join@"^(Debug.toString Pprinter_core.pp_stmt_core stm.skind)));*)
+                  (sheap1,id1)))
 
               else (s := ("\n---------------------------------------------------------\n" ^
                 (string_of_proof ())) :: !s; (sheap1,id1)))

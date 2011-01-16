@@ -1,11 +1,11 @@
-process_data 
+process_data
 { !LE(0, len) * array("local", "byte", ptop(), data, len, _xs) } 
 { array("local", "byte", ptop(), data, len, _ys) }
 
 inv_pd { !LE (i, len) }
 
-single_buffer 
-{ array("local", "byte", ptop(), buffer, "16384", _bs1) * array("host", "byte", ptop(), in, builtin_mult(num_chunks, "16384"), _is1) * array("host", "byte", ptop(), out, builtin_mult(num_chunks, "16384"), _os1) * !LE(0, num_chunks) * MFCSlot() * MFC(tag, empty()) }
-{ array("local", "byte", ptop(), buffer, "16384", _bs2) * array("host", "byte", ptop(), in, builtin_mult(num_chunks, "16384"), _is2) * array("host", "byte", ptop(), out, builtin_mult(num_chunks, "16384"), _os2) * MFCSlot() * MFC(tag, empty()) }
+single_buffer
+{ array("local", "byte", ptop(), buffer, "16384", _bs1) * array("host", "byte", ptop(), in, _l, _is1) * array("host", "byte", ptop(), out, _l, _os1) * _l=builtin_mult(num_chunks, "16384") * !LE(0, num_chunks) * MFCSlot() * MFC(tag, empty()) }
+{ array("local", "byte", ptop(), buffer, "16384", _bs2) * array("host", "byte", ptop(), in, _l, _is2) * array("host", "byte", ptop(), out, _l, _os2) * MFCSlot() * MFC(@parameter4:, empty()) }
 
-inv_sb { !LE (i, num_chunks) * in_new = builtin_plus(in, builtin_mult(i,CHUNK)) * out_new = builtin_plus(out, builtin_mult(i,CHUNK)) }
+inv_sb { !LE (i, num_chunks) * in_new = builtin_plus(in, builtin_mult(i,CHUNK))  }

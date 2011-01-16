@@ -16,10 +16,10 @@ rewrite cons_hd:
 rewrite cons_tl:
   tl(cons(?x,?y)) = ?y
 
-rewrite app_nil:
+rewrite app_empty:
   app(empty(), ?x) = ?x
 
-rewrite app_nil2:
+rewrite app_empty2:
   app(?x, empty()) = ?x
 
 
@@ -37,7 +37,7 @@ if
 rule app_is_emp_right : 
      | |- app(?x,?y) = empty() 
 without
- ?x = empty() * ?y = empty() |-
+  ?x = empty() * ?y = empty() |-
 if
      | |- ?x = empty() * ?y = empty() 
 
@@ -51,3 +51,59 @@ rule app_neq_emp_right :
      | |- app(?x,?y) != empty() 
 if
      | |- ?x != empty() || ?y != empty()  
+
+
+rule app_cons_equal_left : 
+  | app(?xs,cons(?x,empty())) = app(?ys,cons(?y,empty())) |- 
+without
+  ?xs = ?ys * ?x = ?y
+if
+  | ?xs = ?ys * ?x = ?y |-
+
+rule app_cons_equal_right : 
+  | |- app(?xs,cons(?x,empty())) = app(?ys,cons(?y,empty()))
+without
+  ?xs = ?ys * ?x = ?y
+if
+  | |- ?xs = ?ys * ?x = ?y
+
+
+/***********************************************
+ *  Lists of given length and per-element value
+ ***********************************************/
+
+rewrite hd_ls:
+  hd(ls(?n,?v)) = ?v
+
+rewrite tl_ls:
+  tl(ls(?n,?v)) = ls((?n-1),?v)
+
+rewrite cons_ls:
+  cons(?v,ls(?n,?v)) = ls((?n+1),?v)
+
+rewrite app_ls_empty:
+  app(empty(), ls(?n,?v)) = ls(?n,?v)
+
+rewrite app_ls_empty2:
+  app(ls(?n,?v), empty()) = ls(?n,?v)
+
+rewrite ls_len_0:
+  ls(0,?v) = empty()
+
+rewrite ls_len_1:
+  ls(1,?v) = cons(?v,empty())
+
+
+rule ls_neq_emp_left : 
+     | ls(?n,?v) != empty() |- 
+without
+  !GT(?n,0)
+if
+     | !GT(?n,0) |- 
+
+rule ls_neq_emp_right : 
+     | |- ls(?n,?v) != empty() 
+without
+  !GT(?n,0)
+if
+     | |- !GT(?n,0)

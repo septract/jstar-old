@@ -50,12 +50,12 @@ if
  **************************************/
 
 rule blob_nil_failed :
-  | |- blob(?h,?t,?p,nil(),?c)
+  | |- blob(?h,?t,?p,empty(),?c)
 if
-  | |- blob(?h,?t,?p,nil(),?c) * False
+  | |- blob(?h,?t,?p,empty(),?c) * False
 
 rule blob_not_null :
-  blob(?h,?t,?p,?x,?c) | |- ?x!=nil() 
+  blob(?h,?t,?p,?x,?c) | |- ?x!=empty() 
 if
   | |-
 

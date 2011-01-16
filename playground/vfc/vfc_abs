@@ -5,7 +5,7 @@ abstraction LT_exists_trans :
   !LT((_a + 1),_c)
 */
 
-
+/*
 abstraction LE_exists_left :
   !LE(?x,_l) ~~> 
   
@@ -17,7 +17,7 @@ abstraction LE_exists_right :
 
 abstraction LT_exists_right :
   !LT(_l,?x) ~~> 
-  
+*/ 
 
 
 
@@ -60,3 +60,8 @@ abstraction array_array_to_array :
   array(?h,?t,?p,?x,builtin_plus(?i,?j),_vs)
 where
   ?y = builtin_plus(?x,?i) pureguard
+
+abstraction array_array_to_array_perm :
+  array(?h,?t,?p,?x,?l,?vs) * array(?h,?t,?q,?x,?l,?vs) 
+  ~~> 
+  array(?h,?t,Pjoin(?p,?q),?x,?l,?vs)

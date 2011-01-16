@@ -1,6 +1,6 @@
 alloc 
-{ } 
-{ array(@parameter0:, "byte", ptop(), $ret_v1, @parameter1:,_vs) * Mem($ret_v1, @parameter1:) }
+{ !GE(@parameter1:,0) } 
+{ array(@parameter0:, "byte", ptop(), $ret_v1, @parameter1:, ls(@parameter1:,0)) * Mem($ret_v1, @parameter1:) }
 
 free 
 { array(_h, "byte", ptop(), @parameter0:, _sz, _vs) * Mem(@parameter0:, _sz) } 

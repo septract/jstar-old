@@ -15,21 +15,21 @@ import "boolean_logic";
 
 
 rule b_NodeLL_not_nil:
-  b_NodeLL(?h,?p,nil(),?y) | |-
+  b_NodeLL(?h,?p,empty(),?y) | |-
 if
 
 rule b_ls_not_nil:
-  b_ls(?h,?p,nil(),?y) | |-
+  b_ls(?h,?p,empty(),?y) | |-
 if
 
 rule b_lspe_not_nil:
-  b_lspe(?h,?p,nil(),?y) | |-
+  b_lspe(?h,?p,empty(),?y) | |-
 if
-  | ?y=nil() |-
+  | ?y=empty() |-
 
 
 rule NodeLL_not_nil:
-  b_NodeLL(?h,?p,?x,?y) | |- ?x!=nil()
+  b_NodeLL(?h,?p,?x,?y) | |- ?x!=empty()
 if
   | |-
 

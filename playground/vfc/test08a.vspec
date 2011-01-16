@@ -3,5 +3,5 @@ f
 { array("local", "byte", ptop(), @parameter0:, n, cons("0",_xs)) }
 
 g
-{ array("local", "byte", ptop(), @parameter0:, n, app(_xs,cons(_x,nil()))) * !LE(1, n) }
-{ array("local", "byte", ptop(), @parameter0:, n, app(_xs,cons("0",nil()))) }
+{ array("local", "byte", ptop(), @parameter0:, n, app(_xs,cons(_x,empty()))) * !LE(1, n) }
+{ array("local", "byte", ptop(), @parameter0:, n, app(_xs,cons("0",empty()))) }
