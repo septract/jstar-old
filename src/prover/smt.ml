@@ -334,7 +334,7 @@ let smt_test_eq (a1 : Psyntax.args) (a2 : Psyntax.args) : bool =
   smt_push(); 
   smt_assert (string_sexp_neq (a1,a2)); 
   let r = smt_check_unsat() in 
-  smt_pop(); r 
+  smt_pop(); r
 
 let decl_evars (types : smttypeset) : string = 
   let evars = 
@@ -465,6 +465,7 @@ let ask_the_audience
     if smt_check_unsat() then (smt_reset(); raise Assm_Contradiction);
     
     (* check whether there are any new equalities to find; otherwise raise Backtrack.No_match *)
+    (*
     if Config.smt_debug() then Format.printf "[Checking for new equalities]@\n"; 
     smt_push(); 
     let reps = get_args_rep ts in 
@@ -474,11 +475,14 @@ let ask_the_audience
     smt_assert ( "(and true " ^ rep_sexps ^ " )" ); 
     if smt_check_sat() then (smt_reset(); raise Backtrack.No_match); 
     smt_pop(); 
-
+    *)
     (* Update the term structure using the new equalities *)  
+    let reps = get_args_rep ts in 
     let req_equiv = map (map fst)
                         (equiv_partition (fun x y -> smt_test_eq (snd x) (snd y)) reps) 
-    in 
+    in
+    if for_all (fun ls -> List.length ls = 1) req_equiv then
+      (smt_reset(); raise Backtrack.No_match);
     smt_pop();
     fold_left make_list_equal ts req_equiv
   with 

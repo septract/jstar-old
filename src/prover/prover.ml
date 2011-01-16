@@ -413,7 +413,6 @@ let apply_rule_list
 		 with No_match -> 
                  try 
 	             let ts' = Smt.ask_the_audience seq.ts seq.assumption in
-               if Cterm.ts_eq seq.ts ts' then [] else
 	             search [[ {seq with ts = ts'} ]]
                    with 
                    | Assm_Contradiction -> []
