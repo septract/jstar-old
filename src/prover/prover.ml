@@ -412,7 +412,7 @@ let apply_rule_list
 		   search (Clogic.apply_or_right seq)
 		 with No_match -> 
                  try 
-	             let ts' = Smt.ask_the_audience seq.ts seq.assumption in 
+	             let ts' = Smt.ask_the_audience seq.ts seq.assumption in
 	             search [[ {seq with ts = ts'} ]]
                    with 
                    | Assm_Contradiction -> []
