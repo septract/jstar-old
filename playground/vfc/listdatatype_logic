@@ -27,6 +27,9 @@ rewrite app_empty2:
  *  Rules for simplifying app
  ***********************************/
 
+rewrite app_cons:
+  app(cons(?x,empty()),?xs) = cons(?x,?xs)
+
 rule app_is_emp_left : 
      | app(?x,?y) = empty() |- 
 without
@@ -66,6 +69,20 @@ without
   ?xs = ?ys * ?x = ?y
 if
   | |- ?xs = ?ys * ?x = ?y
+
+rule cons_cons_app_cons_equal_left : 
+  | cons(?z,cons(?x,empty())) = app(?ys,cons(?y,empty())) |-
+without
+  ?ys = cons(?z,empty()) * ?x = ?y
+if
+  | ?ys = cons(?z,empty()) * ?x = ?y |-
+
+rule cons_cons_app_cons_equal_right : 
+  | |- cons(?z,cons(?x,empty())) = app(?ys,cons(?y,empty()))
+without
+  ?ys = cons(?z,empty()) * ?x = ?y
+if
+  | |- ?ys = cons(?z,empty()) * ?x = ?y
 
 
 /***********************************************

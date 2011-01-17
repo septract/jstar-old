@@ -179,6 +179,8 @@ let apply_rule
      (seq : sequent)
      : sequent list list
      =
+  if log log_prove then
+    Format.printf "Trying rule %s@\n" sr.name;
   (* Should reset any matching variables in the ts to avoid clashes. *)
   let ts = blank_pattern_vars seq.ts in
   (* Match obligation *)

@@ -26,8 +26,9 @@ void double_buffer(byte* bufs, byte* in, byte* out, int num_chunks, int* tags) {
       cur_buf = 1;
       next_buf = 0;
     }
-    buf_elem = *(bufs + next_buf);
     tag_elem = *(tags + next_buf);
+    wait(tag_elem);
+    buf_elem = *(bufs + next_buf);
     get(buf_elem, in_addr, SZ, tag_elem);
     tag_elem = *(tags + cur_buf);
     wait(tag_elem);

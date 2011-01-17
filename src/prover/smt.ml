@@ -348,6 +348,14 @@ let decl_evars (types : smttypeset) : string =
           "exists "^decls^" "
 
 
+(* TODO: Need a better handling of background theories *)
+let add_background_axioms (types : smttypeset) : unit =
+  (* list constructor cons *)
+  if (SMTTypeSet.mem (SMT_Op ("op_cons", 2)) types) then
+    smt_assert("(forall ((xs Int) (ys Int) (x Int) (y Int)) (= (= (op_cons x xs) (op_cons y ys)) (and (= x y) (= xs ys))))");
+  ()
+
+
 (* try to establish that the pure parts of a sequent are valid using the SMT solver *)
 let finish_him 
     (ts : term_structure)
@@ -376,7 +384,9 @@ let finish_him
     let types = smt_union_list [ts_types; asm_types; obl_types] in 
     
     (* declare variables and predicates *)
-    SMTTypeSet.iter (fun x -> ignore (smt_command (string_sexp_decl x))) types; 
+    SMTTypeSet.iter (fun x -> ignore (smt_command (string_sexp_decl x))) types;
+    
+    add_background_axioms types;
 
     (* Construct and run the query *)      
     let asm_sexp = "(and true " ^ asm_eq_sexp ^ " " ^ asm_neq_sexp ^ " " ^ asm_sexp ^ ") " in 
@@ -456,6 +466,8 @@ let ask_the_audience
     (* declare predicates *)
     SMTTypeSet.iter (fun x -> ignore(smt_command (string_sexp_decl x))) types; 
 
+    add_background_axioms types;
+        
     (* Assert the assumption *)                    
     let assm_query = "(and true " ^ ts_eq_sexp ^" "^ ts_neq_sexp ^" "^ form_sexp ^ ")"
     in smt_assert assm_query;    
