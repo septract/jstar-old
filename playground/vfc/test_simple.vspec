@@ -24,3 +24,13 @@ test_array_set_first_elem
 test_array_set_last_elem
   { array("local", "byte", ptop(), @parameter0:, n, app(_xs,cons(_x,empty()))) * !LE(1, n) }
   { array("local", "byte", ptop(), @parameter0:, n, app(_xs,cons("0",empty()))) }
+
+test_1d_callee
+  { array("local", "byte", ptop(), @parameter0:, n, _vs) }
+  { array("local", "byte", ptop(), @parameter0:, n, _vs) }
+
+test_2d_caller
+  { array("local", "byte", ptop(), @parameter0:, 2, cons(_a1,cons(_a2,empty()))) * 
+    array("local", "byte", ptop(), _a1, _l1, _vs1) * array("local", "byte", ptop(), _a2, _l2, _vs2) }
+  { array("local", "byte", ptop(), @parameter0:, 2, cons(_a1,cons(_a2,empty()))) * 
+    array("local", "byte", ptop(), _a1, _l1, _vs1) * array("local", "byte", ptop(), _a2, _l2, _vs2) }

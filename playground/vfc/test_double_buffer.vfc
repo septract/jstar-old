@@ -1,0 +1,49 @@
+void double_buffer(byte* bufs, byte* in, byte* out, int num_chunks, int* tags) {
+  int SZ;
+  int cur_buf;
+  int next_buf;
+  byte* buf_elem;
+  int tag_elem;
+  int i;  
+  byte* in_addr;
+  byte* out_addr;
+
+  SZ = 16384;
+  in_addr = in;
+  out_addr = out;
+
+  cur_buf = 0;
+  buf_elem = *(bufs + cur_buf);
+  tag_elem = *(tags + cur_buf);
+  get(buf_elem, in_addr, SZ, tag_elem);
+  in_addr = in_addr + SZ;
+  
+  i = 1;
+  while (i < num_chunks) (inv inv_db) {
+    if (cur_buf == 0)
+      next_buf = 1;
+    else {
+      cur_buf = 1;
+      next_buf = 0;
+    }
+    buf_elem = *(bufs + next_buf);
+    tag_elem = *(tags + next_buf);
+    get(buf_elem, in_addr, SZ, tag_elem);
+    tag_elem = *(tags + cur_buf);
+    wait(tag_elem);
+    
+    buf_elem = *(bufs + cur_buf);
+    put(buf_elem, out_addr, SZ, tag_elem);
+    in_addr = in_addr + SZ;
+    out_addr = out_addr + SZ;
+    cur_buf = next_buf;
+    i = i + 1;
+  }
+
+  tag_elem = *(tags + cur_buf);
+  wait(tag_elem);
+  
+  buf_elem = *(bufs + cur_buf);
+  put(buf_elem, out_addr, SZ, tag_elem);
+  wait(tag_elem);
+}

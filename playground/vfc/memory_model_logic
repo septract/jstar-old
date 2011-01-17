@@ -3,6 +3,6 @@
  *************************************/
 
 rule mem_remove:
-  | Mem(?h,?x,?l) |-  Mem(?h,?x,_l)
+  | Mem(?h,?x,?l) |-  Mem(?h,?x,?m)
 if
-  Mem(?h,?x,?l) | |- ?l = _l
+  Mem(?h,?x,?l) | |- ?l = ?m

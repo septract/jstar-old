@@ -3,7 +3,6 @@
 run_vfc -f test_simple.vfc -s test_simple.vspec
 run_vfc -f test_loop.vfc -s test_loop.vspec -ai ../../../jabstr/bin/num_abs.cmxs
 run_vfc -f test_dma.vfc -s test_dma.vspec 
-#run_vfc -f test_single_buffer.vfc -s test_single_buffer.vspec -ai ../../../jabstr/bin/num_abs.cmxs
 
 grep -i contradiction *.txt
 

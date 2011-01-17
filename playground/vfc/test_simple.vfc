@@ -49,3 +49,15 @@ void test_array_set_last_elem (int* a, int n) {
   a = a+i;
   *a = 0;
 }
+
+void test_1d_callee (byte* buf) {
+  skip;
+}
+
+void test_2d_caller (byte* bufs) {
+  byte* tmp;
+  tmp = *bufs;
+  test_1d_callee(tmp);
+  tmp = *(bufs+1);
+  test_1d_callee(tmp);
+}

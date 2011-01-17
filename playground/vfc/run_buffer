@@ -1,0 +1,7 @@
+#!/bin/bash
+
+run_vfc -f test_single_buffer.vfc -s test_single_buffer.vspec -ai ../../../jabstr/bin/num_abs.cmxs
+
+grep -i contradiction *.txt
+
+grep -i inconsistent *.dot
