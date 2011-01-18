@@ -408,9 +408,8 @@ let rec is_numerical_args (arg : args) : bool =
   in
   match arg with
   | Arg_var _ -> true
-  | Arg_op ("numeric_const", [Arg_string (s)])
-  | Arg_string s ->
-    if is_integer_const s then true else false
+  | Arg_op ("numeric_const", [a]) -> is_numerical_args a
+  | Arg_string s -> if is_integer_const s then true else false
   | Arg_op ("builtin_plus", [a1; a2])
   | Arg_op ("builtin_minus", [a1; a2])
   | Arg_op ("builtin_mult", [a1; a2]) -> 

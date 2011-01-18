@@ -1,13 +1,13 @@
 double_buffer
-{ array("local", "byte", ptop(), bufs, 2, cons(_b1,cons(_b2,empty()))) * 
-    array("local", "byte", ptop(), _b1, 16384, _vs1) * array("local", "byte", ptop(), _b2, 16384, _vs2) *
+{ array("local", "byte", ptop(), bufs, numeric_const("2"), cons(_b1,cons(_b2,empty()))) * 
+    array("local", "byte", ptop(), _b1, "16384", _vs1) * array("local", "byte", ptop(), _b2, "16384", _vs2) *
   array("host", "byte", ptop(), in, _l, _is1) * array("host", "byte", ptop(), out, _l, _os1) *
-  array("local", "byte", ptop(), tags, 2, cons(0,cons(1,empty()))) * MFC(0, empty()) *  MFC(1, empty()) *
+  array("local", "byte", ptop(), tags, numeric_const("2"), cons(0,cons(1,empty()))) * MFC(0, empty()) *  MFC(1, empty()) *
   _l=builtin_mult(num_chunks, "16384") * !LE(1, num_chunks) * MFCSlot() * MFCSlot() }
-{ array("local", "byte", ptop(), bufs, 2, cons(_b1,cons(_b2,empty()))) * 
-    array("local", "byte", ptop(), _b1, 16384, _ws1) * array("local", "byte", ptop(), _b2, 16384, _ws2) *
+{ array("local", "byte", ptop(), bufs, numeric_const("2"), cons(_b1,cons(_b2,empty()))) * 
+    array("local", "byte", ptop(), _b1, "16384", _ws1) * array("local", "byte", ptop(), _b2, "16384", _ws2) *
   array("host", "byte", ptop(), in, _l, _is2) * array("host", "byte", ptop(), out, _l, _os2) * 
-array("local", "byte", ptop(), tags, 2, cons(0,cons(1,empty()))) * MFC(0, empty()) *  MFC(1, empty()) *
+array("local", "byte", ptop(), tags, numeric_const("2"), cons(0,cons(1,empty()))) * MFC(0, empty()) *  MFC(1, empty()) *
   MFCSlot() * MFCSlot() }
 
 inv_db { !LE (i, num_chunks) * 

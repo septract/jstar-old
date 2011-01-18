@@ -1150,11 +1150,10 @@ rule:
 					     if_form=$11};
 				     rewrite_name=$2;
 				     saturate=true})) }
-   |  ABSRULE identifier_op COLON formula LEADSTO formula where  { let seq=(mkEmpty,$4,mkEmpty,mkEmpty) in
-							       let wo=(mkEmpty,mkEmpty) in 
+   |  ABSRULE identifier_op COLON formula LEADSTO formula without where { let seq=(mkEmpty,$4,mkEmpty,mkEmpty) in
 							       let seq2=(mkEmpty,$6,mkEmpty,mkEmpty) in
 							       let seq_list=[[seq2]] in
-							       NormalEntry(SeqRule(seq,seq_list,$2,wo,$7)) }
+							       NormalEntry(SeqRule(seq,seq_list,$2,$7,$8)) }
    | equiv_rule { NormalEntry($1) }
 
 rule_file:
