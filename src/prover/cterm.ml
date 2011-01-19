@@ -39,6 +39,15 @@ module CMap = Map.Make(
       let compare = compare
     end)
 
+(*
+- avars are pattern match variables: e.g. ?x
+- pvars are program variables in formula.
+- apvars are program variables in rules, i.e. a pattern variable that can only match 
+  a program variable.  Not really used.
+- evars are existential variables in formula.
+- aevars are existential variables in rules, i.e. a pattern variable that can only 
+  match an existential.  Used heavily in abstraction rules.
+*)
 type term_structure =
     {
     cc : CC.t;

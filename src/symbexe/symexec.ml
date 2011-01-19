@@ -51,7 +51,7 @@ let fresh_node =
   fun () ->  let x = !node_counter in node_counter := x+1; x
 
 let file_id = ref 0
-let fresh_file = fun () -> let x = !file_id in file_id := x+1;  
+let fresh_file = fun () -> let x = !file_id in file_id := x+1;
   Sys.getcwd() ^  "/" ^ !file ^ ".proof_file_"^(string_of_int x)^".txt"
 
 let cfg_nodes = ref []
@@ -240,6 +240,8 @@ let add_edge_with_proof src dest typ label : string =
   Sepprover.pprint_proof fmt;
   pp_print_flush fmt ();
   close_out out;
+  if Config.symb_debug() then
+    Format.printf "\nDumped proof to proof file %i.\n%!" !file_id;
   add_edge_common src dest typ label (Some f);
   f
 
@@ -248,6 +250,8 @@ let add_url_to_node src proof =
   let out = open_out f in
   List.iter (output_string out) proof;
   close_out out;
+  if Config.symb_debug() then
+    Format.printf "\nDumped proof to proof file %i.\n%!" !file_id;
   src.url <- f
 
 
@@ -481,6 +485,8 @@ and execute_core_stmt
           | Abduct -> List.iter (fun saf -> Format.printf "@\nPost-abstraction antiheap:@\n    %a@.%!" string_inner_form saf) antiframes_abs;
           | _ -> ());
         (* Obtain abstract values using abstract interpretation *)
+        if Config.symb_debug() then
+          Format.printf "@\nObtaining abstract values:@\n%!";
         let frames_abs = List.map (fun heap -> Sepprover.abstract_val heap) frames_abs in 
         let antiframes_abs = List.map (fun heap -> Sepprover.abstract_val heap) antiframes_abs in 
         if Config.symb_debug() then
