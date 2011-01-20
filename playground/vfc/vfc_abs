@@ -58,8 +58,10 @@ abstraction array_array_to_array :
   array(?h,?t,?p,?x,?i,?vs1) * array(?h,?t,?p,?y,?j,?vs2) 
   ~~> 
   array(?h,?t,?p,?x,builtin_plus(?i,?j),_vs)
+/*
 without
   ?i = 1 * ?j = 1
+*/
 where
   ?y = builtin_plus(?x,?i) pureguard
 

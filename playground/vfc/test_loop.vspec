@@ -33,3 +33,8 @@ test_loop_array_set_elems_countup_mult
   { array("local", "byte", ptop(), in, _l, _ys) }
 inv_loop_array_set_elems_countup_mult 
   { !LE (i, num_chunks) * in_new = (in + builtin_mult(i,CHUNK)) }
+
+test_loop_control_flow_double_buffer
+  { !LE(0, n) }
+  { }
+inv_loop_control_flow_double_buffer { !LE (i, n) }

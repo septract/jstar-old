@@ -54,7 +54,7 @@ void test_loop_array_set_elems_countup (int* a, int n) {
 }
 
 
-void test_loop_array_set_elems_countup_mult  (byte* in, int num_chunks) {
+void test_loop_array_set_elems_countup_mult (byte* in, int num_chunks) {
   int i;
   int CHUNK;
   byte* in_new;
@@ -64,6 +64,26 @@ void test_loop_array_set_elems_countup_mult  (byte* in, int num_chunks) {
   while (i < num_chunks) (inv inv_loop_array_set_elems_countup_mult) {
     *in_new = 0;
     in_new = in_new + CHUNK;
+    i = i + 1;
+  }
+}
+
+
+void test_loop_control_flow_double_buffer (int n) {
+  int cur_buf;
+  int next_buf;
+  int i;  
+  cur_buf = 0;
+  next_buf = 0;
+  i = 0;
+  while (i < n) (inv inv_loop_control_flow_double_buffer) {
+    if (cur_buf == 0)
+      next_buf = 1;
+    else {
+      cur_buf = 1;
+      next_buf = 0;
+    }
+    cur_buf = next_buf;
     i = i + 1;
   }
 }

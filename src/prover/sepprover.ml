@@ -110,21 +110,69 @@ open Psyntax
         | [] -> Format.printf "No plugin with widening loaded!\n"; inner_truth
         | pf::_ -> Clogic.pform_to_ts_form pf   
 
-    let join_over_numeric : inner_form -> inner_form -> (inner_form * inner_form) * (inner_form * inner_form)
-      = fun if1 if2 ->
-        let split_numerical (pform : pform) : pform * pform =
+    let join_over_numeric : inner_form -> inner_form -> form -> 
+        (inner_form * inner_form) * (inner_form * inner_form) * form
+      = fun if1 if2 pf_add ->
+        let split_numerical pform =
           List.partition (fun pf_at -> is_numerical_pform_at pf_at) pform in
         let num_pf1,rest_pf1 = split_numerical (Clogic.ts_form_to_pform if1) in
         let num_pf2,rest_pf2 = split_numerical (Clogic.ts_form_to_pform if2) in
-        let join_inner =
+        (* Calculate join over numerical part of the formula *)
+        let join =
           match Plugin_manager.join num_pf1 num_pf2 with
-          | [] -> Format.printf "No plugin with join loaded!\n%!"; inner_truth
-          | pf::_ -> Clogic.pform_to_ts_form pf
+          | [] -> Format.printf "No plugin with join loaded!\n%!"; []
+          | pf::_ -> pf
         in
+        (* Join may expand abstract value of each formula to contain the least common environment
+           of the two during which some constraints important for the spatial part may get lost, 
+           so we put back in what's missing *)
+        let constraints_with_vars pf vars =
+          vs_fold (fun var f ->
+            f @ (List.filter (fun pa -> contains_subterm_pform_at pa (Vars.string_var var)) pf)) 
+            vars []
+          in
+        let inflate_constraints from_pf in_pf not_in_vs =
+          let rec inflate_constraints2 from_pf =
+            let pform_eq pf1 pf2 =
+              String.compare (string_of string_form pf1) (string_of string_form pf2) = 0 in
+            let from_pf_vs = vs_diff (fv_form from_pf) not_in_vs in
+            let from_pf_new = constraints_with_vars in_pf from_pf_vs in
+            if pform_eq from_pf_new from_pf then from_pf
+            else inflate_constraints2 from_pf_new 
+          in
+          inflate_constraints2 from_pf
+        in          
+        let join_vars = fv_form join in
+        let rest_pf1_vars = fv_form rest_pf1 in
+        let rest_pf2_vars = fv_form rest_pf2 in
+        let pf1_not_in_vs = vs_union join_vars rest_pf2_vars in
+        let pf2_not_in_vs = vs_union join_vars rest_pf1_vars in
+        
+        let print_vars vs =
+          vs_fold (fun var s -> s ^ " " ^ (Vars.string_var var)) vs "" in
+        if Config.symb_debug() then
+          (Format.printf "\njoin_vars: %s\n%!" (print_vars join_vars);
+          Format.printf "\nrest_pf1_vars: %s\n%!" (print_vars rest_pf1_vars);
+          Format.printf "\nrest_pf2_vars: %s\n%!" (print_vars rest_pf2_vars);
+          Format.printf "\npf1_not_in_vs: %s\n%!" (print_vars pf1_not_in_vs);
+          Format.printf "\npf2_not_in_vs: %s\n%!" (print_vars pf2_not_in_vs););
+        
+        (* First determine missing contraints mentioning vars from the rest *)
+        let pf1_missing = constraints_with_vars num_pf1 (vs_diff rest_pf1_vars pf1_not_in_vs) in
+        let pf2_missing = constraints_with_vars num_pf2 (vs_diff rest_pf2_vars pf2_not_in_vs) in
+        (* Then keep adding numerical constraints until saturation *)
+        let pf1_missing = inflate_constraints pf1_missing num_pf1 pf1_not_in_vs in
+        let pf2_missing = inflate_constraints pf2_missing num_pf2 pf2_not_in_vs in
+        let pf_missing = pf1_missing @ pf2_missing in
+        let join = join @ pf_missing @ pf_add in
+        if Config.symb_debug() then
+          Format.printf "\nAfter adding missing contraints: %a@.\n%!" string_form join;
+        (* Conjoin the resulting with the remaining parts of formulae and return all *)
+        let join_inner = Clogic.pform_to_ts_form join in
         let rest_inner1 = Clogic.convert_with_eqs false rest_pf1 in
         let rest_inner2 = Clogic.convert_with_eqs false rest_pf2 in
         ((conjoin_inner join_inner rest_inner1, rest_inner1),
-        (conjoin_inner join_inner rest_inner2, rest_inner2))
+        (conjoin_inner join_inner rest_inner2, rest_inner2), pf_missing)
 
     let update_var_to : var -> term -> inner_form -> inner_form
       = fun v e f -> Clogic.update_var_to f v e

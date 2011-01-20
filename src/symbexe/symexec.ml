@@ -533,11 +533,19 @@ and execute_core_stmt
 
               (* If join available, check for inclusion of heap joined over numerical part *)
               else if (Plugin_manager.has_join()) then
-                (let (sheap1_form, sheap1_exnum_form),(sheap2_form,_) =
-                  join_over_numeric sheap1_form sheap2_form in
-                let (sheap1_af, sheap1_exnum_af),(sheap2_af,_) =
-                  join_over_numeric sheap1_af sheap2_af in
+                (let (sheap1_form, sheap1_exnum_form),(sheap2_form,_),missing_pform =
+                  join_over_numeric sheap1_form sheap2_form [] in
+                let (sheap1_af, sheap1_exnum_af),(sheap2_af,_),_ =
+                  join_over_numeric sheap1_af sheap2_af missing_pform in
 
+                if Config.symb_debug() then
+                  (Format.printf "sheap1_form\n    %a\n%!" string_inner_form sheap1_form;
+                  Format.printf "sheap1_exnum_form\n    %a\n%!" string_inner_form sheap1_exnum_form;
+                  Format.printf "sheap2_form\n    %a\n%!" string_inner_form sheap2_form;
+                  Format.printf "sheap1_af\n    %a\n%!" string_inner_form sheap1_af;
+                  Format.printf "sheap1_exnum_af\n    %a\n%!" string_inner_form sheap1_exnum_af;
+                  Format.printf "sheap2_af\n    %a\n%!" string_inner_form sheap2_af;);
+                
                 if ((frame_inner !curr_logic sheap2_form sheap1_exnum_form <> None) &&
                   (frame_inner !curr_logic sheap2_af sheap1_exnum_af <> None)) then
                   (let sheap1_join = combine sheap1_form sheap1_af in

@@ -302,7 +302,7 @@ let mkEmpty = []
 
 let rec subst_pform_at subs pa=
   match pa with 
-   | P_EQ(a1,a2) -> mkEQ(subst_args subs  a1, subst_args subs a2)
+   | P_EQ(a1,a2) -> mkEQ(subst_args subs a1, subst_args subs a2)
    | P_NEQ (a1,a2) ->
        let a1,a2 = subst_args subs a1, subst_args subs a2 in 
        (*if a1=a2 then mkFalse else*) mkNEQ(a1,a2)
@@ -398,6 +398,36 @@ let purify pal =
       |	_ -> unsupported ()
 	    ) pal
 
+
+
+(* Check whether a term contains a subterm given as a string *)
+let rec contains_subterm_args (arg : args) (subterm : string) : bool =
+  if String.compare (string_of string_args arg) subterm = 0 then true
+  else
+    match arg with
+    | Arg_var _ 
+    | Arg_string _ -> false
+    | Arg_op (_, args) -> 
+      List.exists (fun a -> contains_subterm_args a subterm) args
+    | _ -> assert false
+
+
+(* Check whether a formula contains a subterm given as a string *)
+let rec contains_subterm_pform_at (pf_at : pform_at) (subterm : string) : bool =
+  match pf_at with 
+  | P_EQ (a1, a2)
+  | P_NEQ (a1, a2) ->
+    (contains_subterm_args a1 subterm) || (contains_subterm_args a2 subterm)
+  | P_PPred (_,args)
+  | P_SPred (_,args) ->
+    List.exists (fun a -> contains_subterm_args a subterm) args
+  | P_Or (f1,f2)
+  | P_Wand (f1,f2)
+  | P_Septract (f1,f2) ->
+    (List.exists (fun pa -> contains_subterm_pform_at pa subterm) f1) ||
+    (List.exists (fun pa -> contains_subterm_pform_at pa subterm) f2)
+  | P_Garbage
+  | P_False -> false
 
 
 (* Determines whether given term contains only numerical subterms *)

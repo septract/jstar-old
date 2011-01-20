@@ -123,6 +123,8 @@ val mkGarbage : pform_at list
 val subst_pform : varmap -> pform -> pform
 type psequent = pform * pform * pform * pform
 val purify : pform_at list -> pform_at list
+val contains_subterm_args : args -> string -> bool
+val contains_subterm_pform_at : pform_at -> string -> bool
 val is_numerical_args : args -> bool
 val is_numerical_pform_at : pform_at -> bool
 type varterm = Var of varset

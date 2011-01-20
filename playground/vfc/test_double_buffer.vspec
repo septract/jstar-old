@@ -12,4 +12,6 @@ array("local", "byte", ptop(), tags, "2", cons(0,cons(1,empty()))) * MFC(0, empt
 
 inv_db { !LE (i, num_chunks) * 
   in_addr = (in + builtin_mult(i,SZ)) * 
-  out_addr = (out + builtin_mult((i-1),SZ)) }
+  out_addr = (out + builtin_mult((i-1),SZ)) *
+
+  }
