@@ -31,6 +31,10 @@ let smterr = ref Pervasives.stdin;;
 
 let smtout_lex = ref (Lexing.from_string "");; 
 
+let smt_memo = Hashtbl.create 1;; 
+
+let smt_onstack = ref [[]];; 
+
 
 let smt_init () : unit = 
   let path = ( if (!Config.solver_path <> "") then !Config.solver_path 
@@ -282,23 +286,42 @@ let smt_command
 
 
 let smt_assert (ass : string) : unit =
-  match smt_command ("(assert " ^ ass ^ " )") with 
-  | Success -> ()
+  let cmd = "(assert " ^ ass ^ " )" in 
+  match (smt_command cmd) with 
+  | Success -> 
+     begin
+        match !smt_onstack with
+        | x::xs -> smt_onstack := (cmd::x)::xs
+        | [] -> assert false
+     end
   | _ -> raise (SMT_error "Assertion failed!")
 
 
 let smt_check_sat () : bool =
-  match smt_command "(check-sat)" with 
-  | Sat -> true
-  | Unsat -> false
-  | Unknown -> if Config.smt_debug() then Format.printf 
-                   "[Warning: smt returned 'unknown' rather than 'unsat']@\n";
-               false
-  | _ -> failwith "TODO"
+  let res = 
+    try let x = Hashtbl.find smt_memo !smt_onstack in 
+        if Config.smt_debug() then Format.printf "[Found memoised SMT call!]\n"; x
+    with Not_found -> 
+      let x = smt_command "(check-sat)" in 
+      Hashtbl.add smt_memo !smt_onstack x; x
+  in 
+  match res with 
+    | Sat -> true
+    | Unsat -> false
+    | Unknown -> if Config.smt_debug() then Format.printf 
+      "[Warning: smt returned 'unknown' rather than 'unsat']@\n"; false
+    | _ -> failwith "TODO"
 
 
 let smt_check_unsat () : bool =
-  match smt_command "(check-sat)" with 
+  let res = 
+  try let x = Hashtbl.find smt_memo !smt_onstack in 
+      if Config.smt_debug() then Format.printf "[Found memoised SMT call!]\n"; x
+    with Not_found -> 
+      let x = smt_command "(check-sat)" in 
+      Hashtbl.add smt_memo !smt_onstack x; x
+  in 
+  match res with 
   | Unsat -> true
   | Sat -> false
   | Unknown -> if Config.smt_debug() then Format.printf 
@@ -309,13 +332,19 @@ let smt_check_unsat () : bool =
 
 let smt_push () : unit = 
   match smt_command "(push)" with 
-  | Success -> smt_fdepth := (!smt_fdepth + 1) 
+  | Success -> smt_fdepth := (!smt_fdepth + 1);
+               smt_onstack := ([]::!smt_onstack) 
   | _ -> raise (SMT_error "Push failed!")
 
   
 let smt_pop () : unit = 
   match smt_command "(pop)" with 
-  | Success -> smt_fdepth := (!smt_fdepth - 1) 
+  | Success -> smt_fdepth := (!smt_fdepth - 1);
+               begin
+                 match !smt_onstack with 
+                 | x :: xs -> smt_onstack := xs
+                 | [] -> assert false 
+               end
   | _ -> raise (SMT_error "Pop failed!")
 
 
@@ -326,7 +355,8 @@ let smt_reset () : unit =
      | n -> f() ; do_n (n-1) f
   in 
   do_n !smt_fdepth smt_pop; 
-  smt_fdepth := 0
+  smt_fdepth := 0;
+  smt_onstack := [[]]
 
 
 (* Check whether two args are equal under the current assumptions *)
