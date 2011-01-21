@@ -147,7 +147,7 @@ open Psyntax
         let rest_pf2_vars = fv_form rest_pf2 in
         let pf1_not_in_vs = vs_union join_vars rest_pf2_vars in
         let pf2_not_in_vs = vs_union join_vars rest_pf1_vars in
-        
+        (*
         let print_vars vs =
           vs_fold (fun var s -> s ^ " " ^ (Vars.string_var var)) vs "" in
         if Config.symb_debug() then
@@ -156,7 +156,7 @@ open Psyntax
           Format.printf "\nrest_pf2_vars: %s\n%!" (print_vars rest_pf2_vars);
           Format.printf "\npf1_not_in_vs: %s\n%!" (print_vars pf1_not_in_vs);
           Format.printf "\npf2_not_in_vs: %s\n%!" (print_vars pf2_not_in_vs););
-        
+        *)
         (* First determine missing contraints mentioning vars from the rest *)
         let pf1_missing = constraints_with_vars num_pf1 (vs_diff rest_pf1_vars pf1_not_in_vs) in
         let pf2_missing = constraints_with_vars num_pf2 (vs_diff rest_pf2_vars pf2_not_in_vs) in
@@ -167,6 +167,22 @@ open Psyntax
         let join = join @ pf_missing @ pf_add in
         if Config.symb_debug() then
           Format.printf "\nAfter adding missing contraints: %a@.\n%!" string_form join;
+        (* Add equalities setting var to a constant from numerical formulae to the remaining parts *)
+        let is_eq_var_const pf_at =
+          let locals = ["cur_buf"; "next_buf"] in (* ugly hack *)
+          match pf_at with
+          | P_EQ (Arg_var x, Arg_string _)
+          | P_EQ (Arg_var x, Arg_op ("numeric_const", [Arg_string (_)]))
+          | P_EQ (Arg_string _, Arg_var x)
+          | P_EQ (Arg_op ("numeric_const", [Arg_string (_)]), Arg_var x) ->
+            (match x with
+            | Vars.PVar (_, name) -> 
+            (String.compare name (String.uppercase name) = 0) || (List.mem name locals)
+            | _ -> false)
+          | _ -> false
+        in
+        let rest_pf1 = rest_pf1 @ (List.filter (fun pf_at -> is_eq_var_const pf_at) num_pf1) in
+        let rest_pf2 = rest_pf2 @ (List.filter (fun pf_at -> is_eq_var_const pf_at) num_pf2) in
         (* Conjoin the resulting with the remaining parts of formulae and return all *)
         let join_inner = Clogic.pform_to_ts_form join in
         let rest_inner1 = Clogic.convert_with_eqs false rest_pf1 in

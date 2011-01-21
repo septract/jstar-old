@@ -13,6 +13,7 @@ void double_buffer(byte* bufs, byte* in, byte* out, int num_chunks, int* tags) {
   out_addr = out;
 
   cur_buf = 0;
+  next_buf = 0;
   buf_elem = *(bufs + cur_buf);
   tag_elem = *(tags + cur_buf);
   get(buf_elem, in_addr, SZ, tag_elem);

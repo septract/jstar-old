@@ -1,7 +1,7 @@
 import "memory_model_logic";
 import "blob_logic";
-import "array_logic";
 import "mfc_array_logic";
+import "array_logic";
 import "blob_ls_len_logic";
 
 constructor tuple 

@@ -1,27 +1,32 @@
 import "listdatatype_logic";
-import "array_logic";
 
 
 /*************************************
  * rules for matching MFC
  *************************************/
 
-rule MFC_remove:
-| MFC(?t,?o) |- MFC(?t,?p) 
+rule MFC_match:
+  | MFC(?t1,?l1) |- MFC(?t2,?l2)
 without
-  ?o!=?p
+  ?t1 != ?t2
+where
+  ?t1 = ?t2 pureguard
 if
-  MFC(?t,?o) | |- ?o=?p 
+  MFC(?t1,?l1) | |- ?l1 = ?l2 
 
-rule MFC_MFC_contradiction:
-  MFC(?t,?O) * MFC(?t,?P) | |- 
+  
+rule MFC_contradiction:
+  MFC(?t1,?l1) * MFC(?t2,?l2) | |- 
+without
+  ?t1 != ?t2
+where
+  ?t1 = ?t2 pureguard
 if
 
 
 /******************************************
  * rules for releasing what is owned by MFC
  ******************************************/
-
 
 rule release_MFC_empty_right:
   | |- release(MFC(?t, empty()))
