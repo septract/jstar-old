@@ -71,9 +71,7 @@ abstraction array_array_to_array_const_size :
   ~~> 
   array(?h,?t,?p,?x,builtin_plus(?i,?j),cons(?vs1,?vs2))
 where
-  ?i = 1 pureguard;
-  ?j = 1 pureguard;
-  ?y = builtin_plus(?x,?i) pureguard
+  (?i = 1) * (?j = 1) * (?y = builtin_plus(?x,?i)) pureguard
 
 
 abstraction array_array_to_array_perm :

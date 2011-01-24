@@ -12,7 +12,7 @@ without
 where
   ?t1 = ?t2 pureguard
 if
-  MFC(?t1,?l1) | |- ?l1 = ?l2 
+  MFC(?t1,?l1) | |- ?l1 = ?l2
 
   
 rule MFC_contradiction:
