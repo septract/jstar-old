@@ -86,10 +86,16 @@ let local_debug = false
 let is_good_rep ts rep = 
 		 try 
 		   (match CMap.find rep ts.originals with 
-                   | FArg_var (PVar _)
-		   | FArg_op(_,[])
+		           | FArg_op(_,[])
                    | FArg_cons(_,[])
                    | FArg_string _ -> true 
+                   | _ -> false )
+                 with Not_found -> false
+								
+let is_pvar ts rep =
+	try
+		(match CMap.find rep ts.originals with 
+                   | FArg_var (PVar _) -> true 
                    | _ -> false )
                  with Not_found -> false
 
@@ -107,6 +113,11 @@ let find_good_rep ts rep =
               (is_good_rep ts) 
 	      (CC.others ts.cc rep))
          with Not_found ->
+		   try
+            (List.find 
+              (is_pvar ts) 
+	      (CC.others ts.cc rep))
+           with Not_found -> 
            try
             (List.find 
               (is_evar ts) 
