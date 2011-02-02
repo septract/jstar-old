@@ -1,0 +1,22 @@
+All UNIX releases *must* conform to what experienced users expect.
+  tar xaf jstar-VERSION.tar.bz2
+  cd jstar-VERSION
+  ./configure --prefix=HOME # may fail with 'Install such and such.'
+  make
+  make test
+  make install # may fail due to file permissions, but should always work as root
+  HOME/bin/jstar
+
+The commands above may fail only if at least one of these holds:
+ 1. Reasonable versions of bash, tar, bunzip2, bash, GNU Make are
+    are not available.
+ 2. The command ./configure notices that some dependency is unmet.
+ 3. The command 'make install' is run without super-user privilege and
+    there are some permission problems.
+To make this more precise, "reasonable version" means whatever version
+shipped with the latest Ubuntu LTS at the date of the release.
+
+Any other failure is a bug in the release.
+
+Mandatory testing: The above procedure must work on the latest Ubuntu LTS,
+with HOME=/, HOME=~, and HOME=~/temp.
