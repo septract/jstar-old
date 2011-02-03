@@ -1,0 +1,38 @@
+#!/bin/bash
+
+# Helpers {{{
+
+split () {
+  local i=0
+  IFS=$2
+  for x in $3; do
+    eval $1[$i]=$x
+    i=$((i+1))
+  done
+}
+
+# returns 0 iff $1 > $2
+# $1 and $2 must be lists of numbers, dot-separated
+too_old () {
+  local A
+  local B
+  split A . "$1"
+  split B . "$2"
+  for (( i=0; i<${#A[*]} || i<${#B[*]}; ++i )); do
+    if (( ${A[$i]:-0} > ${B[$i]:-0} )); then
+      return 0
+    fi
+  done
+  return 1
+}
+
+# }}}
+
+# Check that an OCaml compiler is present. {{{
+OCAML_VERSION=$(ocamlc -version 2> /dev/null)
+if too_old 3.12 $OCAML_VERSION; then
+  echo "Please make sure that ocamlc >=3.11 is in your PATH." 2>&1
+  echo "See http://caml.inria.fr/ocaml/release.en.html" 2>&1
+  exit 1
+fi
+# }}}
