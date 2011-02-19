@@ -107,6 +107,12 @@ let startnodes : node list ref = ref []
 
 let make_start_node node = startnodes := node::!startnodes
 
+module Idset =
+	Set.Make(struct 
+	     type t = int 
+	     let compare = compare
+	   end)
+
 let pp_dotty_transition_system_graph fname graph_nodes graph_edges =
 	let foname = fname ^ "~" in
   let dotty_out = open_out foname in
@@ -158,6 +164,38 @@ let pp_dotty_transition_system_graph fname graph_nodes graph_edges =
 let pp_dotty_transition_system () =
 	let foname = (!file) ^ ".execution_core.dot" in
 	pp_dotty_transition_system_graph foname !graphn !graphe
+	
+let splice_graph final_node = 
+	(* filter only relevant nodes *)
+	let node_set = ref Idset.empty in
+	let rec find_node_set node =
+		if (not (Idset.mem node.id !node_set)) then begin
+			node_set := Idset.add node.id !node_set;
+			List.iter ( fun edge ->
+				find_node_set edge.src
+			) node.inedges
+		end
+	in
+	find_node_set final_node;
+	let node_map = Idmap.map (List.filter (fun node -> Idset.mem node.id !node_set)) !graphn in
+	(* filter only relevant edges *)
+	let edge_set = List.filter (fun edge -> Idset.mem edge.src.id !node_set && Idset.mem edge.dest.id !node_set) !graphe in
+	(node_map, edge_set)
+	
+let pp_dotty_splice err_node =
+	let node_map, edge_set = splice_graph err_node in
+	(* print the error graph *)
+	let foname = (!file) ^ ".error_splice_" ^ (string_of_int err_node.id) ^ ".dot" in
+	pp_dotty_transition_system_graph foname node_map edge_set
+
+let pp_dotty_splice_error_nodes () =
+	(* find all error nodes *)
+	Idmap.iter (fun _ nodes ->
+		List.iter (fun node ->
+			if node.ntype = Error
+				then pp_dotty_splice node
+		) nodes
+	) !graphn
 
 let add_node (label : string) (ty : ntype) (cfg : cfg_node option) = 
   let id = fresh_node () in 
@@ -606,6 +644,7 @@ let verify
           let id_exit = add_good_node ("Exit") in
           let ret = List.for_all (check_postcondition [(post, id_exit)]) posts in 
           pp_dotty_transition_system (); 
+		  pp_dotty_splice_error_nodes ();
           (* TODO: the way verification failure is currently handled is stupid *)
           if !proof_succeeded then ret else false
 
