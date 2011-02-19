@@ -107,8 +107,8 @@ let startnodes : node list ref = ref []
 
 let make_start_node node = startnodes := node::!startnodes
 
-let pp_dotty_transition_system () =
-  let foname = (!file) ^ ".execution_core.dot~" in
+let pp_dotty_transition_system_graph fname graph_nodes graph_edges =
+	let foname = fname ^ "~" in
   let dotty_out = open_out foname in
   let dotty_outf = formatter_of_out_channel dotty_out in
   if Config.symb_debug() then printf "\n Writing transition system file execution_core.dot  \n";
@@ -141,7 +141,7 @@ let pp_dotty_transition_system () =
 	| Abs -> () )
 	nodes;
     )
-    !graphn;
+    graph_nodes;
   List.iter (fun edge ->
     let l = Dot.escape_for_label edge.label in
     let c = Dot.escape_for_label edge.clabel in
@@ -149,13 +149,15 @@ let pp_dotty_transition_system () =
 	    (match edge.file with 
 	      None -> ""
 	    | Some f -> sprintf ", URL=\"file://%s\", fontcolor=blue" f))
-    !graphe;
+    graph_edges;
   fprintf dotty_outf "\n\n\n}@.";
   close_out dotty_out;
-  let fname = (!file) ^ ".execution_core.dot" in
   if Sys.file_exists fname then Sys.remove fname;
-  Sys.rename foname (!file ^ ".execution_core.dot")
+  Sys.rename foname fname
 
+let pp_dotty_transition_system () =
+	let foname = (!file) ^ ".execution_core.dot" in
+	pp_dotty_transition_system_graph foname !graphn !graphe
 
 let add_node (label : string) (ty : ntype) (cfg : cfg_node option) = 
   let id = fresh_node () in 
