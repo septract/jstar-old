@@ -114,10 +114,10 @@ module Idset =
 	   end)
 
 let pp_dotty_transition_system_graph fname graph_nodes graph_edges =
-	let foname = fname ^ "~" in
+  let foname = fname ^ "~" in
   let dotty_out = open_out foname in
   let dotty_outf = formatter_of_out_channel dotty_out in
-  if Config.symb_debug() then printf "\n Writing transition system file execution_core.dot  \n";
+  if Config.symb_debug() then printf "\n Writing transition system file %s  \n" fname;
   fprintf dotty_outf "digraph main { \nnode [shape=box,  labeljust=l];\n\n";
   Idmap.iter 
     (fun cfg nodes -> (
@@ -182,20 +182,73 @@ let splice_graph final_node =
 	let edge_set = List.filter (fun edge -> Idset.mem edge.src.id !node_set && Idset.mem edge.dest.id !node_set) !graphe in
 	(node_map, edge_set)
 	
+let splice_single_path final_node : node list Idmap.t * edge list =
+	(* BFS *)
+	let node_set = ref Idset.empty in
+	let node_queue = Queue.create () in
+	let node_path = ref [] in
+	Queue.push final_node node_queue;
+	node_set := Idset.add final_node.id !node_set;
+	let start_node = ref None in
+	try
+		while (!start_node = None) do
+			let n = Queue.pop node_queue in
+			List.iter (fun e ->
+				let m = e.src in
+				if (not (Idset.mem m.id !node_set)) then begin
+					Queue.push m node_queue;
+					node_set := Idset.add m.id !node_set;
+					node_path := (m, e) :: !node_path;
+					if List.mem m !startnodes then
+						start_node := Some m
+				end
+			) n.inedges
+		done;
+		(* extract the shortest path from the BFS algorithm *)
+		let node_set = ref Idset.empty in
+		let edge_set = ref [] in
+		let current_node = match !start_node with Some nd -> ref nd.id | None -> raise Queue.Empty  in
+		List.iter (fun (n, e) ->
+				if (!current_node = n.id) then begin
+					edge_set := e :: !edge_set;
+					node_set := Idset.add n.id !node_set;
+					current_node := e.dest.id
+				end
+			) !node_path;
+		node_set := Idset.add final_node.id !node_set;
+		let node_map = Idmap.map (List.filter (fun node -> Idset.mem node.id !node_set)) !graphn in
+		(node_map, !edge_set)
+	with Queue.Empty ->
+		(* in case no path exists *)
+		(Idmap.empty, [])
+	
 let pp_dotty_splice err_node =
 	let node_map, edge_set = splice_graph err_node in
 	(* print the error graph *)
 	let foname = (!file) ^ ".error_splice_" ^ (string_of_int err_node.id) ^ ".dot" in
 	pp_dotty_transition_system_graph foname node_map edge_set
 
-let pp_dotty_splice_error_nodes () =
+let get_error_nodes () =
+	let err_nodes = ref [] in
 	(* find all error nodes *)
 	Idmap.iter (fun _ nodes ->
 		List.iter (fun node ->
 			if node.ntype = Error
-				then pp_dotty_splice node
+				then err_nodes := node :: !err_nodes
 		) nodes
-	) !graphn
+	) !graphn;
+	!err_nodes
+
+let pp_dotty_splice_error_nodes () =
+	List.iter pp_dotty_splice (get_error_nodes ())
+
+let pp_dotty_splice_single_path_error_nodes () =
+	List.iter (fun final_node ->
+		let node_map, edge_set = splice_single_path final_node in
+		(* print the error graph *)
+		let foname = (!file) ^ ".error_splice_single_path_" ^ (string_of_int final_node.id) ^ ".dot" in
+		pp_dotty_transition_system_graph foname node_map edge_set
+	) (get_error_nodes ())
 
 let add_node (label : string) (ty : ntype) (cfg : cfg_node option) = 
   let id = fresh_node () in 
@@ -645,6 +698,7 @@ let verify
           let ret = List.for_all (check_postcondition [(post, id_exit)]) posts in 
           pp_dotty_transition_system (); 
 		  pp_dotty_splice_error_nodes ();
+		  pp_dotty_splice_single_path_error_nodes ();
           (* TODO: the way verification failure is currently handled is stupid *)
           if !proof_succeeded then ret else false
 
