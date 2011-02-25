@@ -165,7 +165,7 @@ let pp_dotty_transition_system () =
 	let foname = (!file) ^ ".execution_core.dot" in
 	pp_dotty_transition_system_graph foname !graphn !graphe
 	
-let splice_graph final_node = 
+let slice_graph final_node = 
 	(* filter only relevant nodes *)
 	let node_set = ref Idset.empty in
 	let rec find_node_set node =
@@ -182,7 +182,7 @@ let splice_graph final_node =
 	let edge_set = List.filter (fun edge -> Idset.mem edge.src.id !node_set && Idset.mem edge.dest.id !node_set) !graphe in
 	(node_map, edge_set)
 	
-let splice_single_path final_node : node list Idmap.t * edge list =
+let slice_single_path final_node : node list Idmap.t * edge list =
 	(* BFS *)
 	let node_set = ref Idset.empty in
 	let node_queue = Queue.create () in
@@ -222,10 +222,10 @@ let splice_single_path final_node : node list Idmap.t * edge list =
 		(* in case no path exists *)
 		(Idmap.empty, [])
 	
-let pp_dotty_splice err_node =
-	let node_map, edge_set = splice_graph err_node in
+let pp_dotty_slice err_node =
+	let node_map, edge_set = slice_graph err_node in
 	(* print the error graph *)
-	let foname = (!file) ^ ".error_splice_" ^ (string_of_int err_node.id) ^ ".dot" in
+	let foname = (!file) ^ ".error_slice_" ^ (string_of_int err_node.id) ^ ".dot" in
 	pp_dotty_transition_system_graph foname node_map edge_set
 
 let get_error_nodes () =
@@ -239,14 +239,14 @@ let get_error_nodes () =
 	) !graphn;
 	!err_nodes
 
-let pp_dotty_splice_error_nodes () =
-	List.iter pp_dotty_splice (get_error_nodes ())
+let pp_dotty_slice_error_nodes () =
+	List.iter pp_dotty_slice (get_error_nodes ())
 
-let pp_dotty_splice_single_path_error_nodes () =
+let pp_dotty_slice_single_path_error_nodes () =
 	List.iter (fun final_node ->
-		let node_map, edge_set = splice_single_path final_node in
+		let node_map, edge_set = slice_single_path final_node in
 		(* print the error graph *)
-		let foname = (!file) ^ ".error_splice_single_path_" ^ (string_of_int final_node.id) ^ ".dot" in
+		let foname = (!file) ^ ".error_slice_single_path_" ^ (string_of_int final_node.id) ^ ".dot" in
 		pp_dotty_transition_system_graph foname node_map edge_set
 	) (get_error_nodes ())
 
@@ -697,8 +697,8 @@ let verify
           let id_exit = add_good_node ("Exit") in
           let ret = List.for_all (check_postcondition [(post, id_exit)]) posts in 
           pp_dotty_transition_system (); 
-		  pp_dotty_splice_error_nodes ();
-		  pp_dotty_splice_single_path_error_nodes ();
+		  pp_dotty_slice_error_nodes ();
+		  pp_dotty_slice_single_path_error_nodes ();
           (* TODO: the way verification failure is currently handled is stupid *)
           if !proof_succeeded then ret else false
 
