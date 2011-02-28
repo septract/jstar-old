@@ -1,3 +1,8 @@
+ifndef JSTAR_HOME
+	JSTAR_HOME=$(CURDIR)
+endif
+export JSTAR_HOME
+
 build:
 	$(MAKE) -C src
 
@@ -10,7 +15,7 @@ doc:
 scripts:
 	$(MAKE) -C scripts
 
-all: test scripts doc
+all: build test
 
 clean:
 	rm -f lib/*.a lib/*.cmxa lib/*.cmxs bin/*.cmxs
@@ -20,5 +25,7 @@ clean:
 	$(MAKE) -C doc/tutorial clean
 
 .PHONY: build test test clean
+
+-include .install.mk
 
 #vim:noet:

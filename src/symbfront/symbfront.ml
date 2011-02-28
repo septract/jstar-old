@@ -53,9 +53,9 @@ let main () : unit =
     (* Load abstract interpretation plugins *)
     List.iter (fun file_name -> Plugin_manager.load_plugin file_name) !Config.abs_int_plugins;
 
-    let l1,l2,cn = (load_logic (System.getenv_dirlist "JSTAR_LOGIC_LIBRARY") !logic_file_name) in 
+    let l1,l2,cn = load_logic !logic_file_name in
     let lo = {empty_logic with seq_rules = l1; rw_rules = l2; consdecl = cn} in
-    let l1,l2,cn = Load_logic.load_logic  (System.getenv_dirlist "JSTAR_LOGIC_LIBRARY") !absrules_file_name in 
+    let l1,l2,cn = Load_logic.load_abstractions !absrules_file_name in 
     let abs_rules = {empty_logic with seq_rules = l1; rw_rules = l2; consdecl = cn} in
     
     if !abduct_logic_file_name="" then
@@ -70,7 +70,7 @@ let main () : unit =
             Format.printf "\nGood specification!\n\n" else Format.printf "\nBad specification!\n\n" 
       ) question_list     
     else
-      let l1,l2,cn = (load_logic (System.getenv_dirlist "JSTAR_LOGIC_LIBRARY") !abduct_logic_file_name) in 
+      let l1,l2,cn = load_logic !abduct_logic_file_name in
       let abduct_lo = {empty_logic with seq_rules=l1; rw_rules=l2; consdecl=cn} in
       let question_list = System.parse_file Jparser.symb_question_file Jlexer.token !question_file_name "Question" in
       List.iter (

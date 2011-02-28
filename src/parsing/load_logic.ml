@@ -38,7 +38,10 @@ let load_logic_extra_rules
     fprintf logf "@[<2>Sequent rules%a@." (pp_list pp_sequent_rule) sl;
   (sl,rm,cn)
 
-let load_logic 
+let load_logic_internal
     dirs filename 
     : (sequent_rule list * rewrite_rule list * string list) = 
   load_logic_extra_rules dirs filename []
+
+let load_logic = load_logic_internal Cli_utils.logic_dirs
+let load_abstractions = load_logic_internal Cli_utils.abs_dirs
