@@ -38,7 +38,7 @@ let main () =
     (* Load abstract interpretation plugins *)
     List.iter (fun file_name -> Plugin_manager.load_plugin file_name) !Config.abs_int_plugins;
 
-    let l1,l2,cn = (load_logic (System.getenv_dirlist "JSTAR_LOGIC_LIBRARY") !logic_file_name) in 
+    let l1,l2,cn = load_logic !logic_file_name in 
     let logic = {empty_logic with seq_rules = l1; rw_rules=l2; consdecl = cn} in
 (*    let s = System.string_of_file !program_file_name  in*)
     let question_list = System.parse_file Jparser.question_file Jlexer.token !program_file_name "Questions" in

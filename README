@@ -15,13 +15,12 @@ Building on *nix / Mac OSX
 ---------------------------
 
 Use the standard incantation.
-  ./configure --prefix=DIR
+  ./configure --prefix DIR
   make
-  make test
   make install
 
 Then run.
-  jstar
+  DIR/jstar
 
 Dependencies:
 
