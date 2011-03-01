@@ -23,19 +23,23 @@ open Psyntax
 
 let question_file_name = ref "";;
 let logic_file_name = ref "";;
+let abduct_logic_file_name = ref "";;
 let absrules_file_name = ref "";;
 
+let set_question_file_name fn =
+  question_file_name := fn;
+  Symexec.file := Filename.basename fn
+
 let arg_list = Config.args_default @ 
-  [ 
-("-f", Arg.Set_string(question_file_name ), "question file name" );
-("-l", Arg.Set_string(logic_file_name ), "logic file name" );
-("-a", Arg.Set_string(absrules_file_name ), "abstraction rules file name" );
-  ]
+  [ ("-f", Arg.String set_question_file_name, "question file name" );
+  ("-l", Arg.Set_string logic_file_name, "logic file name" );
+  ("-al", Arg.Set_string abduct_logic_file_name, "abduction logic file name" );
+  ("-a", Arg.Set_string absrules_file_name, "abstraction rules file name" );
+]
 
 
 let main () : unit = 
-  let usage_msg=
-"Usage: -l <logic_file_name>  -a <abstraction_file_name>  -f <question_file_name>" in 
+  let usage_msg = "Usage: -l <logic_file_name>  [-al <abduct_logic_file_name>]  -a <abstraction_file_name>  -f <question_file_name>" in 
   Arg.parse arg_list (fun s ->()) usage_msg;
 
   if !question_file_name="" then 
@@ -46,30 +50,42 @@ let main () : unit =
     printf "Abstraction rules file name not specified. Can't continue....\n %s \n" usage_msg
   else
     if !Config.smt_run then Smt.smt_init(); 
+    (* Load abstract interpretation plugins *)
+    List.iter (fun file_name -> Plugin_manager.load_plugin file_name) !Config.abs_int_plugins;
 
-    let l1,l2,cn = (load_logic (System.getenv_dirlist "JSTAR_LOGIC_LIBRARY") !logic_file_name) in 
+    let l1,l2,cn = load_logic !logic_file_name in
     let lo = {empty_logic with seq_rules = l1; rw_rules = l2; consdecl = cn} in
-    let l1,l2,cn = Load_logic.load_logic  (System.getenv_dirlist "JSTAR_LOGIC_LIBRARY") !absrules_file_name in 
+    let l1,l2,cn = Load_logic.load_abstractions !absrules_file_name in 
     let abs_rules = {empty_logic with seq_rules = l1; rw_rules = l2; consdecl = cn} in
-    let question_list = 
-      System.parse_file 
-          Jparser.symb_question_file 
-          Jlexer.token 
-          !question_file_name 
-          "Question" in
-    List.iter (
-    fun question ->
-      match question with 
-       | Specification(mname,spec,core)  ->
-          Format.printf "Method: %s\nSpec: %a"  mname  Spec.spec2str spec; 
-       	  let stmts_core = map Cfg_core.mk_node core in 
-          if Symexec.verify mname stmts_core spec lo abs_rules then
-          Format.printf "Good specification!\n\n" else Format.printf "Bad specification!\n\n" 
-    ) question_list
-
-(*    List.iter (fun x -> pp_stmt_core Format.std_formatter x; 
-	           Format.print_newline ())  core_list; *)
-
+    
+    if !abduct_logic_file_name="" then
+      let question_list = System.parse_file Jparser.symb_question_file Jlexer.token !question_file_name "Question" in
+      List.iter (
+      fun question ->
+        match question with 
+         | Specification(mname,spec,core)  ->
+            Format.printf "Method: %s\nSpec: %a"  mname  Spec.spec2str spec; 
+            let stmts_core = map Cfg_core.mk_node core in 
+            if Symexec.verify mname stmts_core spec lo abs_rules then
+            Format.printf "\nGood specification!\n\n" else Format.printf "\nBad specification!\n\n" 
+      ) question_list     
+    else
+      let l1,l2,cn = load_logic !abduct_logic_file_name in
+      let abduct_lo = {empty_logic with seq_rules=l1; rw_rules=l2; consdecl=cn} in
+      let question_list = System.parse_file Jparser.symb_question_file Jlexer.token !question_file_name "Question" in
+      List.iter (
+      fun question ->
+        match question with 
+         | Specification(mname,spec,core)  ->
+            Format.printf "\nMethod: %s\nSpec: %a"  mname  Spec.spec2str spec; 
+            let stmts_core = map Cfg_core.mk_node core in 
+            let specs = Symexec.bi_abduct mname stmts_core spec lo abduct_lo abs_rules in
+            Format.printf "\nDiscovered specs:\n";
+            List.iter (fun (spec_pre, spec_post) ->
+              Format.printf "@\npre:@\n    %a@." Sepprover.string_inner_form spec_pre;
+              Format.printf "@\npost:@\n    %a@." Sepprover.string_inner_form spec_post;)
+              specs
+      ) question_list
 
 
 let _ = main ()

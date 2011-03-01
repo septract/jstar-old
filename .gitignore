@@ -6,3 +6,5 @@
 _build
 rg.log
 tags
+.install.mk
+rg.log

@@ -27,6 +27,7 @@ type sep_wrapper = {
       (Format.formatter -> 'a -> unit) ->
       Format.formatter -> bool -> 'a -> bool;
 }
+val pp_sep : string -> sep_wrapper
 val pp_star : sep_wrapper
 val pp_whole : ('a -> 'b -> bool -> 'c -> 'd) -> 'a -> 'b -> 'c -> unit
 val pp_eq :

@@ -123,7 +123,7 @@ module type PCC =
       val unifies_any : t -> curry_term -> (t * constant -> 'a) -> 'a
 
       (* Unifies two constants, if there is only one possible way to unify them *)
-      val determined_exists : t -> constant -> constant -> t * ((constant * constant) list)
+      val determined_exists : t -> (constant list) -> constant -> constant -> t * ((constant * constant) list)
 
       (*  Make a congruence closure structure that is equivalent in content, 
 	 but each constant is a representative. 
@@ -408,7 +408,7 @@ module PersistentCC (A : GrowablePersistentArray) : PCC =
 	
     let pp_c ts pp ppf i = 
        (*if true then pp ppf i else fprintf ppf "{%a}_%i" pp i i*)
-      pp ppf (rep ts i)
+      pp ppf i (*(rep ts i)*)
 
     let for_each_rep ts (f : constant -> unit) = 
       let n = A.size ts.representative in
@@ -424,7 +424,7 @@ module PersistentCC (A : GrowablePersistentArray) : PCC =
           if mask rep then
 	  let rp = map rep in 
 	  List.iter 
-	    (fun i -> if mask i then acc := (rp,map i)::!acc) 
+	    (fun i -> if mask i && rep <> i then acc := (rp,map i)::!acc) 
 	    (A.get ts.classlist rep)
 	  ) ;
       !acc
@@ -432,17 +432,17 @@ module PersistentCC (A : GrowablePersistentArray) : PCC =
     let get_neqs mask map ts =
       let r = Hashtbl.create 13 in (* to take care of duplicates *)
       CCMap.iter 
-	(fun (a,b) () -> 
-          if mask a && mask b then
+        (fun (a,b) () -> 
           let a = rep ts a in
           let b = rep ts b in
+          if mask a && mask b then
           Hashtbl.add r (map (min a b), map (max a b)) ())
         ts.not_equal;
       Hashtbl.fold (fun x _ xs -> x::xs) r []
 
     let pretty_print' has_pp pp_term pp ppf first ts =
       let eqs = get_eqs has_pp (fun x->x) ts in
-      let neqs = get_neqs has_pp (fun x->x) ts in
+      let neqs = get_neqs (fun x -> true) (fun x->x) ts in
       let first = 
         List.fold_left (pp.separator (pp_eq pp_term) ppf) first eqs in
       List.fold_left (pp.separator (pp_neq pp_term) ppf) first neqs
@@ -609,7 +609,8 @@ module PersistentCC (A : GrowablePersistentArray) : PCC =
 
     let unifiable_merge ts a b : t =
       let vt =
-	match A.get ts.unifiable a , A.get ts.unifiable b with 
+        match A.get ts.unifiable a , A.get ts.unifiable b with
+(*  
 	| _, Standard -> Standard
 	| Standard, _ -> Deleted
 	| _, Deleted  
@@ -623,9 +624,16 @@ module PersistentCC (A : GrowablePersistentArray) : PCC =
 	| Exists, Exists 
 	| Exists, Unifiable 
 	| Unifiable, Exists -> Exists
+*)
+        | Unifiable, Unifiable -> Unifiable
+        | Unifiable, UnifiableExists
+        | UnifiableExists, Unifiable
+        | UnifiableExists, UnifiableExists -> UnifiableExists
+        | _, Unifiable
+        | _, UnifiableExists -> Deleted
+        | _, a -> a
       in
-      {ts with 
-	unifiable = A.set ts.unifiable b vt}
+      {ts with unifiable = A.set ts.unifiable b vt}
 
     let rec propogate (ts : t) (pending : (constant * constant) list) : t = 
       match pending with 
@@ -1164,19 +1172,19 @@ module PersistentCC (A : GrowablePersistentArray) : PCC =
       in f 0
 
 
-    let rec determined_exists ts c1 c2 : t * ((constant * constant) list) =
+    let rec determined_exists ts cl c1 c2 : t * ((constant * constant) list) =
       if rep_eq ts c1 c2 then 
       (* They are equal *)
 	ts, []
       else if rep_uneq ts c1 c2 then 
 	raise Contradiction
-      else if A.get ts.unifiable (rep ts c1) = Exists then 
+      else if no_live ts c1 && rep_not_used_in ts c1 cl then 
 	begin 
           (* They can be made equal *)
 	  (* TODO Add occurs check *)
 	  (make_equal ts c1 c2), []
 	end
-      else if  A.get ts.unifiable (rep ts c2) = Exists then
+      else if no_live ts c2 && rep_not_used_in ts c2 cl then
 	begin 
           (* They can be made equal *)
 	  (* TODO Add occurs check *)
@@ -1186,8 +1194,8 @@ module PersistentCC (A : GrowablePersistentArray) : PCC =
 	match A.get ts.constructor (rep ts c1), A.get ts.constructor (rep ts c2) with 
 	  IApp(a,b), IApp(c,d) -> 
 	    begin
-	      let ts, cp1 = determined_exists ts a c in
-	      let ts, cp2 = determined_exists ts b d in
+	      let ts, cp1 = determined_exists ts cl a c in
+	      let ts, cp2 = determined_exists ts cl b d in
 	      ts,(cp1 @ cp2)
 	    end
 	| _ -> ts, [c1,c2]
@@ -1197,7 +1205,7 @@ module PersistentCC (A : GrowablePersistentArray) : PCC =
     let normalise ts c = 
       rep ts c
     let others ts c = 
-      A.get ts.classlist c 
+      A.get ts.classlist (rep ts c) 
 
    let rec inter_list (i : int) (j : int) : int list =  if i > j then [] else (i :: inter_list (i+1) j) 
 

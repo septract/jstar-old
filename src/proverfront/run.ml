@@ -17,8 +17,6 @@ open Format
 open Load_logic
 open Psyntax
 
-let _ = CC.test ()
-
 let program_file_name = ref "";;
 let logic_file_name = ref "";;
 
@@ -37,8 +35,10 @@ let main () =
     printf "Logic file name not specified. Can't continue....\n %s \n" usage_msg
   else 
     if !Config.smt_run then Smt.smt_init(); 
+    (* Load abstract interpretation plugins *)
+    List.iter (fun file_name -> Plugin_manager.load_plugin file_name) !Config.abs_int_plugins;
 
-    let l1,l2,cn = (load_logic (System.getenv_dirlist "JSTAR_LOGIC_LIBRARY") !logic_file_name) in 
+    let l1,l2,cn = load_logic !logic_file_name in 
     let logic = {empty_logic with seq_rules = l1; rw_rules=l2; consdecl = cn} in
 (*    let s = System.string_of_file !program_file_name  in*)
     let question_list = System.parse_file Jparser.question_file Jlexer.token !program_file_name "Questions" in
@@ -82,6 +82,18 @@ let main () =
           Prover.pprint_proof logf;
           fprintf logf "@.")
     | Psyntax.Equal (heap,arg1,arg2) -> ()
+    
+    | Psyntax.Abduction (heap1, heap2)  -> 
+      Format.printf "Find antiframe for\n %a\n ===> \n %a \n"  
+      Psyntax.string_form heap1   Psyntax.string_form heap2;
+      let x = (Sepprover.abduction_opt logic (Sepprover.convert heap1) heap2) in 
+      (match x with 
+        | None -> Format.printf "Can't find antiframe!\n" 
+        | Some ls -> 
+          List.iter (fun inner_form_antiform -> 
+            Format.printf "%a\n\n" Sepprover.string_inner_form_af inner_form_antiform) ls;
+      );
+
 (*	if Prover.check_equal logic heap arg1 arg2 
 	then Printf.printf("Equal!\n\n") else Printf.printf("Not equal!\n\n")*) 
 (*    | _ -> Printf.printf "Currently unsupported" *)

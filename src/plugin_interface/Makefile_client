@@ -1,0 +1,11 @@
+ifndef LIB
+	LIB := ../../lib
+endif
+export LIB
+
+SOURCES = plugin_callback.mli
+INCLUDES = prover_syntax
+RESULT = "$(LIB)/plugin_client_interface"
+OCAMLLDFLAGS="-c"
+
+include ../Makefile.jstar

@@ -58,6 +58,11 @@ module MultisetImpl (A : Set.OrderedType) =
 	    | (y::ys)  -> back (y::xs,ys) (n-1)
 	  end
 
+    let peek ((x,y) : multiset) : A.t = 
+      match x with 
+      [] -> raise Empty
+      | (x::xs) -> x
+      
     let remove ((x,y) : multiset) : A.t * multiset= 
       match x with 
 	[] -> raise Empty
@@ -90,13 +95,24 @@ module MultisetImpl (A : Set.OrderedType) =
     let map_to_list a f = 
       let a = restart a in
       let rec inner a rs = 
-	if has_more a then
-	  let x,a = remove a in
-	  inner a ((f x)::rs)
-	else
-	  rs
+      if has_more a then
+        let x,a = remove a in
+        inner a ((f x)::rs)
+      else
+        rs
       in inner a []
 
+    let fold_to_list a f b = 
+      let a = restart a in
+      let rec inner a b = 
+	      if has_more a then
+	        let x,a = remove a in
+          let r = f x b in
+	        inner a r
+	      else
+	        b
+      in inner a b
+      
     let intersect set1 set2 = 
       if is_empty set1 then 
 	empty,empty,set2

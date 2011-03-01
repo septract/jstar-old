@@ -64,8 +64,11 @@ F#*)
 let vs_mem = VarSet.mem
 let vs_add = VarSet.add
 let vs_empty = VarSet.empty
+let vs_is_empty = VarSet.is_empty
 let vs_fold = VarSet.fold
 let vs_iter = VarSet.iter
+let vs_union = VarSet.union
+let vs_inter = VarSet.inter
 let vs_diff = VarSet.diff
 let vs_exists = VarSet.exists
 let vs_for_all = VarSet.for_all
@@ -176,6 +179,8 @@ let rec string_args ppf arg =
   | Arg_var v -> Format.fprintf ppf "%s" (string_var v)
   | Arg_string s -> Format.fprintf ppf "\"%s\""  s 
   | Arg_op ("builtin_plus",[a1;a2]) -> Format.fprintf ppf "(%a+%a)" string_args a1 string_args a2
+  | Arg_op ("builtin_minus",[a1;a2]) -> Format.fprintf ppf "(%a-%a)" string_args a1 string_args a2
+  | Arg_op ("builtin_mult",[a1;a2]) -> Format.fprintf ppf "(%a*%a)" string_args a1 string_args a2
   | Arg_op ("tuple",al) -> Format.fprintf ppf "(%a)" string_args_list al
   | Arg_op (name,args) -> Format.fprintf ppf "%s(%a)" name string_args_list args 
   | Arg_cons (name,args) -> Format.fprintf ppf "%s(%a)" name string_args_list args 
@@ -373,13 +378,13 @@ let rec ev_form_at pa set =
 and ev_form pf set =
  List.fold_left (fun set pa -> ev_form_at pa set) set pf  
 
-type psequent = pform * pform * pform
+type psequent = pform * pform * pform * pform 
 
 
-let fv_psequent (pff,pfl,pfr) = 
+let fv_psequent (pff,pfl,pfr,pfa) = 
   (fv_form pff (fv_form pfl (fv_form pfr vs_empty)))
 
-let subst_psequent subst (pff,pfl,pfr) = 
+let subst_psequent subst (pff,pfl,pfr,pfa) = 
   (subst_pform subst pff, subst_pform subst pfl, subst_pform subst pfr)
 
 
@@ -392,6 +397,40 @@ let purify pal =
       |	P_SPred(n,al) -> P_PPred(n,al)
       |	_ -> unsupported ()
 	    ) pal
+
+
+
+(* Determines whether given term contains only numerical subterms *)
+let rec is_numerical_args (arg : args) : bool =
+  let is_integer_const (s : string) : bool =
+    let rxp = (Str.regexp "^\\(-?[0-9]+\\)") in 
+    Str.string_match rxp s 0
+  in
+  match arg with
+  | Arg_var _ -> true
+  | Arg_op ("numeric_const", [Arg_string (s)])
+  | Arg_string s ->
+    if is_integer_const s then true else false
+  | Arg_op ("builtin_plus", [a1; a2])
+  | Arg_op ("builtin_minus", [a1; a2])
+  | Arg_op ("builtin_mult", [a1; a2]) -> 
+    (is_numerical_args a1) && (is_numerical_args a2)
+  | Arg_op (_,_) -> false
+  | _ -> assert false
+
+
+(* Determines whether given formula represents a numerical constraint *)
+let is_numerical_pform_at (pf_at : pform_at) : bool =
+  match pf_at with 
+  | P_EQ (a1, a2)
+(*  | P_NEQ (a1, a2) *)
+  | P_PPred ("GT", [a1; a2]) | P_PPred ("GT", [Arg_op ("tuple",[a1; a2])])
+  | P_PPred ("LT", [a1; a2]) | P_PPred ("LT", [Arg_op ("tuple",[a1; a2])])
+  | P_PPred ("GE", [a1; a2]) | P_PPred ("GE", [Arg_op ("tuple",[a1; a2])])
+  | P_PPred ("LE", [a1; a2]) | P_PPred ("LE", [Arg_op ("tuple",[a1; a2])]) ->
+    (is_numerical_args a1) && (is_numerical_args a2)
+  | _ -> false
+
 
 
 (***************************************************
@@ -426,13 +465,18 @@ let string_where ppf where =
 
 
 
-type sequent_rule = psequent * (psequent list list) * string * ((* without *) pform * pform) * (where list)
+type sequent_rule = 
+   psequent * 
+   (psequent list list) * 
+   string * 
+   ((* without *) pform * pform) * 
+   (where list)
 
 let pp_entailment f ((h, c) : pform * pform) =
   fprintf f "%a@ |- %a" string_form h string_form c
 
-let pp_psequent f ((g,l,r) : psequent) =
-  fprintf f "%a@ | %a" string_form g pp_entailment (l, r)
+let pp_psequent f ((g,l,r,a) : psequent) =
+  fprintf f "%a@ | %a -|@ %a" string_form g pp_entailment (l, r) string_form a
 
 let pp_sequent_rule f ((c, hss, n, w, ss) : sequent_rule) =
   let p a b c = fprintf f "@\n@[<4>%s%a@]" a b c in
@@ -483,6 +527,7 @@ type question =
   |  Frame of pform * pform
   |  Equal of pform * args * args
   |  Abs of pform 
+  |  Abduction of pform * pform 
 
 
 type test =
@@ -498,12 +543,12 @@ let expand_equiv_rules rules =
   let equiv_rule_to_seq_rule x list : rules list= 
     match x with 
       EquivRule(name, guard, leftform, rightform, without) -> 
-	(SeqRule((guard, leftform, []), [[([],rightform,[])]],name ^ "_left", (without,mkEmpty) , []))
+	(SeqRule((guard, leftform, [],mkEmpty), [[([],rightform,[],mkEmpty)]],name ^ "_left", (without,mkEmpty) , []))
 	:: 
-	  (SeqRule(([],[],guard&&&leftform), [[([],[],guard&&&rightform)]], name ^"_right", (mkEmpty, without), []))
+	  (SeqRule(([],[],guard&&&leftform,mkEmpty), [[([],[],guard&&&rightform,mkEmpty)]], name ^"_right", (mkEmpty, without), []))
 	::
 	  if(guard <> []) then 
-	    (SeqRule((guard, [], leftform), [[([],[],rightform)]], name ^ "_split", (mkEmpty, without), []))
+	    (SeqRule((guard, [], leftform, mkEmpty), [[([],[],rightform,mkEmpty)]], name ^ "_split", (mkEmpty, without), []))
 	    ::
 	      list
 	  else
@@ -671,32 +716,19 @@ let mk_seq_rule (mat_seq,premises,name) : sequent_rule =
   mat_seq,premises,name,([],[]),[]
 
 
-
 (* rules for simplifying septraction need defining as well *)
 
-
-type external_prover = (pform -> pform -> bool)  * (pform -> args list -> args list list)
-
-let default_pure_prover : external_prover = 
-  (fun x y -> (*Printf.printf "Assume \n %s \nProve\n %s \n" 
-      (Plogic.string_form x) 
-      (Plogic.string_form y);*)
-    match y with 
-      [P_PPred("true",_)] -> true 
-    | _ -> false) , 
-  (fun x y -> [])
 
 type logic = {
   seq_rules : sequent_rule list;
   rw_rules : rewrite_rule list; 
-  ext_prover : external_prover; 
   consdecl : string list;
+  dummy : unit;
 }
 
 let empty_logic : logic = {
   seq_rules = [];
   rw_rules = [];
-  ext_prover = default_pure_prover; 
-  consdecl = []
+  consdecl = [];
+  dummy = ();
 }
-

@@ -284,6 +284,7 @@ let add_invariant (label, formula) map =
 %token SHR 
 %token USHR 
 %token VDASH
+%token DASHV
 %token VIRTUALINVOKE 
 %token VOID 
 %token VOLATILE 
@@ -315,6 +316,7 @@ let add_invariant (label, formula) map =
 %token IMPLICATION
 %token FRAME
 %token ABS
+%token ABDUCTION
 %token INCONSISTENCY
 %token RULE
 %token PURERULE
@@ -1068,9 +1070,10 @@ spatial_list:
    |    { [] }
 
 sequent:
-   | spatial_list OR formula VDASH formula { ($1,$3,$5) }
-/* used as the collapse form is || is a reserved token */
-   | spatial_list OROR formula VDASH formula {  if Config.parse_debug() then parse_warning "deprecated use of |" ; ($1,$3,$5) }
+   | spatial_list OR formula VDASH formula { ($1,$3,$5,mkEmpty) }
+   | spatial_list OR formula VDASH formula DASHV formula { ($1,$3,$5,$7) }
+/* used because the collapse form is || which is a reserved token */
+   | spatial_list OROR formula VDASH formula {  if Config.symb_debug() then parse_warning "deprecated use of |" ; ($1,$3,$5,mkEmpty) }
 
 sequent_list:
    |  /* empty */ { [] }
@@ -1144,9 +1147,9 @@ rule:
 					     if_form=$11};
 				     rewrite_name=$2;
 				     saturate=true})) }
-   |  ABSRULE identifier_op COLON formula LEADSTO formula where  { let seq=([],$4,[]) in
+   |  ABSRULE identifier_op COLON formula LEADSTO formula where  { let seq=(mkEmpty,$4,mkEmpty,mkEmpty) in
 							       let wo=(mkEmpty,mkEmpty) in 
-							       let seq2=([],$6,[]) in
+							       let seq2=(mkEmpty,$6,mkEmpty,mkEmpty) in
 							       let seq_list=[[seq2]] in
 							       NormalEntry(SeqRule(seq,seq_list,$2,wo,$7)) }
    | equiv_rule { NormalEntry($1) }
@@ -1170,6 +1173,8 @@ question:
    | INCONSISTENCY COLON formula_npv {Inconsistency($3)}
    | FRAME COLON formula_npv VDASH formula_npv {Frame($3,$5)}
    | ABS COLON formula_npv {Abs($3)} 
+   | ABDUCTION COLON formula_npv VDASH formula_npv {Abduction($3,$5)}
+
 
 test:
    | IMPLICATION COLON formula_npv VDASH formula_npv QUESTIONMARK boolean {TImplication($3,$5,$7)}
@@ -1182,6 +1187,7 @@ test:
 question_file: 
    | EOF  { [] }
    | question question_file  {$1 :: $2}
+
 
 test_file: 
    | EOF  { [] }

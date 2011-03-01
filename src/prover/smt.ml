@@ -31,6 +31,10 @@ let smterr = ref Pervasives.stdin;;
 
 let smtout_lex = ref (Lexing.from_string "");; 
 
+let smt_memo = Hashtbl.create 1;; 
+
+let smt_onstack = ref [[]];; 
+
 
 let smt_init () : unit = 
   let path = ( if (!Config.solver_path <> "") then !Config.solver_path 
@@ -145,7 +149,7 @@ let rec args_smttype (arg : Psyntax.args) : smttypeset =
   | Arg_op ("builtin_plus",args) -> smt_union_list (map args_smttype args)
   | Arg_op ("builtin_minus",args) -> smt_union_list (map args_smttype args)
   | Arg_op ("builtin_mult",args) -> smt_union_list (map args_smttype args)
-
+  | Arg_op ("numeric_const", [Arg_string(a)]) -> SMTTypeSet.empty 
   | Arg_op (name, args) -> 
           let s = SMTTypeSet.singleton (SMT_Op(("op_"^name), (length args))) in 
           smt_union_list (s::(map args_smttype args))
@@ -169,6 +173,7 @@ let rec string_sexp_args (arg : Psyntax.args) : string =
           Printf.sprintf "(- %s %s)" (string_sexp_args a1) (string_sexp_args a2)
   | Arg_op ("builtin_mult",[a1;a2]) -> 
           Printf.sprintf "(* %s %s)" (string_sexp_args a1) (string_sexp_args a2)
+  | Arg_op ("numeric_const", [Arg_string(a)]) -> a
 
   | Arg_op (name,args) -> 
           Printf.sprintf "(%s %s)" ("op_"^name) (string_sexp_args_list args)
@@ -245,7 +250,7 @@ let rec string_sexp_form
 
   let plain_types = smt_union_list plain_type_list in                     
 
-  let types = smt_union_list [eq_types; disj_types; plain_types]in 
+  let types = smt_union_list [eq_types; disj_types; plain_types] in 
 
   let form_sexp = "(and true " ^ eq_sexp ^ " " ^ neq_sexp ^ " " ^ 
                                  disj_sexp ^ " " ^ plain_sexp ^ ")"  in
@@ -255,8 +260,10 @@ let rec string_sexp_form
 let string_sexp_decl (t : smt_type) : string = 
   match t with 
   | SMT_Var v -> Printf.sprintf "(declare-fun %s () Int)" (Vars.string_var v)
-  | SMT_Pred (s,i) -> Printf.sprintf "(declare-fun %s (%s) Bool)" s (nstr "Int " i)
-  | SMT_Op (s,i) -> Printf.sprintf "(declare-fun %s (%s) Int)" s (nstr "Int " i)
+  | SMT_Pred (s,i) 
+      -> Printf.sprintf "(declare-fun %s (%s) Bool)" s (nstr "Int " i)
+  | SMT_Op (s,i)
+      -> Printf.sprintf "(declare-fun %s (%s) Int)" s (nstr "Int " i)
   
 
 (* Main SMT IO functions *)
@@ -279,36 +286,65 @@ let smt_command
 
 
 let smt_assert (ass : string) : unit =
-  match smt_command ("(assert " ^ ass ^ " )") with 
-  | Success -> ()
+  let cmd = "(assert " ^ ass ^ " )" in 
+  match (smt_command cmd) with 
+  | Success -> 
+     begin
+        match !smt_onstack with
+        | x::xs -> smt_onstack := (cmd::x)::xs
+        | [] -> assert false
+     end
   | _ -> raise (SMT_error "Assertion failed!")
 
 
 let smt_check_sat () : bool =
-  match smt_command "(check-sat)" with 
-  | Sat -> true
-  | Unsat -> false
-  | Unknown -> false
-  | _ -> failwith "TODO"
+  let res = 
+    try let x = Hashtbl.find smt_memo !smt_onstack in 
+        if Config.smt_debug() then Format.printf "[Found memoised SMT call!]\n"; x
+    with Not_found -> 
+      let x = smt_command "(check-sat)" in 
+      Hashtbl.add smt_memo !smt_onstack x; x
+  in 
+  match res with 
+    | Sat -> true
+    | Unsat -> false
+    | Unknown -> if Config.smt_debug() then Format.printf 
+      "[Warning: smt returned 'unknown' rather than 'unsat']@\n"; false
+    | _ -> failwith "TODO"
 
 
 let smt_check_unsat () : bool =
-  match smt_command "(check-sat)" with 
+  let res = 
+  try let x = Hashtbl.find smt_memo !smt_onstack in 
+      if Config.smt_debug() then Format.printf "[Found memoised SMT call!]\n"; x
+    with Not_found -> 
+      let x = smt_command "(check-sat)" in 
+      Hashtbl.add smt_memo !smt_onstack x; x
+  in 
+  match res with 
   | Unsat -> true
   | Sat -> false
-  | Unknown -> false
+  | Unknown -> if Config.smt_debug() then Format.printf 
+                   "[Warning: smt returned 'unknown' rather than 'sat']@\n";
+               false
   | _ -> failwith "TODO"
 
 
 let smt_push () : unit = 
   match smt_command "(push)" with 
-  | Success -> smt_fdepth := (!smt_fdepth + 1) 
+  | Success -> smt_fdepth := (!smt_fdepth + 1);
+               smt_onstack := ([]::!smt_onstack) 
   | _ -> raise (SMT_error "Push failed!")
 
   
 let smt_pop () : unit = 
   match smt_command "(pop)" with 
-  | Success -> smt_fdepth := (!smt_fdepth - 1) 
+  | Success -> smt_fdepth := (!smt_fdepth - 1);
+               begin
+                 match !smt_onstack with 
+                 | x :: xs -> smt_onstack := xs
+                 | [] -> assert false 
+               end
   | _ -> raise (SMT_error "Pop failed!")
 
 
@@ -319,7 +355,8 @@ let smt_reset () : unit =
      | n -> f() ; do_n (n-1) f
   in 
   do_n !smt_fdepth smt_pop; 
-  smt_fdepth := 0
+  smt_fdepth := 0;
+  smt_onstack := [[]]
 
 
 (* Check whether two args are equal under the current assumptions *)
@@ -328,6 +365,17 @@ let smt_test_eq (a1 : Psyntax.args) (a2 : Psyntax.args) : bool =
   smt_assert (string_sexp_neq (a1,a2)); 
   let r = smt_check_unsat() in 
   smt_pop(); r 
+
+let decl_evars (types : smttypeset) : string = 
+  let evars = 
+    SMTTypeSet.fold 
+      (fun x xs -> match x with | (SMT_Var (Vars.EVar(i,e))) -> (Vars.EVar(i,e))::xs
+                                | _  ->  xs ) 
+       types [] in 
+  match evars with 
+  | [] -> "" 
+  | _  -> let decls = String.concat " " (map (fun e -> "("^Vars.string_var e^" Int)") evars) in 
+          "exists "^decls^" "
 
 
 (* try to establish that the pure parts of a sequent are valid using the SMT solver *)
@@ -347,6 +395,9 @@ let finish_him
     let asm_neq_sexp = String.concat " " (map string_sexp_neq neqs) in
     
     let ts_types = smt_union_list (map args_smttype (get_args_all ts)) in 
+
+    let ts_eqneq_types = smt_union_list 
+      (map (fun (a,b) -> SMTTypeSet.union (args_smttype a) (args_smttype b)) (eqs @ neqs)) in
     
     (* Construct sexps and types for assumption and obligation *)
     let asm_sexp, asm_types = string_sexp_form ts asm in 
@@ -357,9 +408,13 @@ let finish_him
     (* declare variables and predicates *)
     SMTTypeSet.iter (fun x -> ignore (smt_command (string_sexp_decl x))) types; 
 
-    (* Construct and run the query *)                    
-    let query = "(not (=> (and true " ^ asm_eq_sexp ^ " " ^ asm_neq_sexp ^ " " ^ 
-                                        asm_sexp ^ ") " ^ obl_sexp ^ "))" 
+    (* Construct and run the query *)      
+    let asm_sexp = "(and true " ^ asm_eq_sexp ^ " " ^ asm_neq_sexp ^ " " ^ asm_sexp ^ ") " in 
+    let obl_sexp = "( " ^ 
+      (decl_evars (SMTTypeSet.diff obl_types (SMTTypeSet.union ts_eqneq_types asm_types))) ^ 
+      obl_sexp ^ ")" in 
+                                   
+    let query = "(not (=> " ^ asm_sexp ^ obl_sexp ^ "))" 
     in smt_assert query;    
                                       
     (* check whether the forumula is unsatisfiable *)

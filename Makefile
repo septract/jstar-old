@@ -1,3 +1,8 @@
+ifndef JSTAR_HOME
+	JSTAR_HOME=$(CURDIR)
+endif
+export JSTAR_HOME
+
 build:
 	$(MAKE) -C src
 
@@ -10,10 +15,10 @@ doc:
 scripts:
 	$(MAKE) -C scripts
 
-all: build test scripts doc
+all: build test
 
 clean:
-	rm -f lib/*.a
+	rm -f lib/*.a lib/*.cmxa lib/*.cmxs bin/*.cmxs
 	$(MAKE) -C src clean
 	$(MAKE) -C unit_tests clean
 	$(MAKE) -C scripts clean
@@ -23,10 +28,10 @@ clean:
 
 # Experimental ocamlbuild stuff
 DIRS=parsing prover prover_syntax symbexe symbexe_syntax utils jimple_syntax\
-		 jimplefront proverfront symbfront
+		 jimplefront proverfront symbfront abs_int plugin_interface
 MAINS=run_parser run symbfront jStar
 
-LIBS=str unix zip
+LIBS=str unix zip dynlink
 CFLAGS=-annot,-I,+zip#,-warn-error,A
 LFLAGS=-I,+zip
 OB=ocamlbuild -cflags $(CFLAGS) -lflags $(LFLAGS) $(LIBS:%=-lib %)
@@ -40,5 +45,7 @@ ob-test: ob
 ob-clean:
 	@ocamlbuild -clean -quiet
 	$(MAKE) -C unit_tests/cli clean
+
+-include .install.mk
 
 #vim:noet:

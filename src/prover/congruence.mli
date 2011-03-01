@@ -47,7 +47,7 @@ module type PCC =
     val unifies : t -> curry_term -> constant -> (t -> 'a) -> 'a
     val unifies_any : t -> curry_term -> (t * constant -> 'a) -> 'a
     val determined_exists :
-      t -> constant -> constant -> t * (constant * constant) list
+      t -> (constant list) -> constant -> constant -> t * (constant * constant) list
     val compress_full : t -> t * (constant -> constant)
     val print : t -> unit
     val pretty_print :

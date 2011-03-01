@@ -13,12 +13,15 @@
 
 
 type ts_excep_post = Sepprover.inner_form Spec.ClassMap.t
+val empty_inner_form : Sepprover.inner_form
+val empty_inner_form_af : Sepprover.inner_form_af
 val spec_conjunction : Spec.spec -> Spec.spec -> Spec.spec
 val sub_spec : Psyntax.varmap -> Spec.spec -> Spec.spec
 val jsr :
   Psyntax.logic ->
-  Sepprover.inner_form ->
-  Spec.spec -> (Sepprover.inner_form list * ts_excep_post list) option
+  Sepprover.inner_form_af ->
+  Spec.spec ->
+  bool -> (Sepprover.inner_form_af list) option
 val logical_vars_to_prog : Spec.spec -> Spec.spec
 val refinement_extra :
   Psyntax.logic -> Spec.spec -> Spec.spec -> Psyntax.pform -> bool

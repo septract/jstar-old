@@ -36,9 +36,9 @@ JIMPLEFRONT_SOURCES = support_symex.ml jlogic.ml javaspecs.ml methdec.ml transla
 TOPLEVEL_SOURCES = $(JIMPLEFRONT_SOURCES)
 
 DEFAULT_ARGS = SOURCES="$(TOPLEVEL_SOURCES)" \
-       LIBS="str unix utils prover_syntax symbexe_syntax jimple_syntax prover symbexe parsing" \
+       LIBS="str unix dynlink utils prover_syntax symbexe_syntax jimple_syntax plugin_interface prover symbexe parsing" \
        OCAMLLDFLAGS=" -I $(LIB)" \
-       INCDIRS="../prover ../prover_syntax ../parsing ../symbexe_syntax ../utils ../jimple_syntax ../symbexe" \
+       INCDIRS="../prover ../prover_syntax ../parsing ../symbexe_syntax ../utils ../jimple_syntax ../symbexe ../plugin_interface" \
        OCAMLFLAGS="" \
        TRASH=""
 

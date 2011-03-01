@@ -13,6 +13,7 @@
 
 
 type ntype = Plain | Good | Error | Abs | UnExplored
+type etype = ExecE | AbsE | ContE | ExitE
 type id = int
 val file : string ref
 val set_group : bool -> unit
@@ -21,13 +22,25 @@ type node = {
   id : id;
   mutable ntype : ntype;
   mutable url : string;
-  mutable edges : edge list;
+  mutable outedges : edge list;
+  mutable inedges : edge list;
   cfg : Cfg_core.cfg_node option;
 }
-and edge = string * string * node * node * string option
+and edge = {
+  label : string;
+  clabel : string;
+  etype : etype;
+  src : node;
+  dest : node;
+  file : string option;
+}
+
 val mk_node :
   string ->
-  id -> ntype -> string -> edge list -> Cfg_core.cfg_node option -> node
+  id ->
+  ntype ->
+  string ->
+  edge list -> edge list -> Cfg_core.cfg_node option -> node
 module Idmap :
   sig
     type key = int option
@@ -46,7 +59,7 @@ module Idmap :
     val equal : ('a -> 'a -> bool) -> 'a t -> 'a t -> bool
   end
 val pp_dotty_transition_system : unit -> unit
-type formset_entry = Sepprover.inner_form * node
+type formset_entry = Sepprover.inner_form_af * node
 type formset = formset_entry list
 type formset_hashtbl = (int, formset) Hashtbl.t
 val parameter : int -> string
@@ -65,3 +78,11 @@ val get_frame :
   Cfg_core.cfg_node list ->
   Psyntax.pform ->
   Psyntax.logic -> Psyntax.logic -> Sepprover.inner_form list
+val bi_abduct :
+  string ->
+  Cfg_core.cfg_node list ->
+  Spec.spec ->
+  Psyntax.logic ->
+  Psyntax.logic ->
+  Psyntax.logic ->
+  (Sepprover.inner_form * Sepprover.inner_form) list

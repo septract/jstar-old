@@ -1,0 +1,70 @@
+#!/bin/bash
+
+# Helpers {{{
+
+# just a shorthand for populating .install.mk
+inst () {
+  echo -e "\t@install $1" >> .install.mk
+}
+
+split () {
+  local i=0
+  OLDIFS=$IFS
+  IFS=$2
+  for x in $3; do
+    eval $1[$i]=$x
+    i=$((i+1))
+  done
+  IFS=$OLDIFS
+}
+
+# returns 0 iff $1 > $2
+# $1 and $2 must be lists of numbers, dot-separated
+too_old () {
+  local A
+  local B
+  split A . "$1"
+  split B . "$2"
+  for (( i=0; i<${#A[*]} || i<${#B[*]}; ++i )); do
+    if (( ${A[$i]:-0} > ${B[$i]:-0} )); then
+      return 0
+    fi
+  done
+  return 1
+}
+
+# }}}
+# Parse arguments {{{
+while (( $# )); do
+  case "$1" in
+    --prefix=*) 
+      PREFIX="${1:9}";;
+    --prefix)
+      shift
+      if (( $# == 0 )); then
+        echo "Missing prefix."
+        exit 2
+      fi
+      PREFIX=$1;;
+    *) 
+      echo "Strange argument: $1" 2> /dev/stderr
+      exit 2;;
+  esac
+  shift
+done
+# }}}
+# Check that an OCaml compiler is present. {{{
+OCAML_VERSION=$(ocamlc -version 2> /dev/null)
+if too_old 3.11 $OCAML_VERSION; then
+  echo "Please make sure that ocamlc >=3.11 is in your PATH." 2>&1
+  echo "See http://caml.inria.fr/ocaml/release.en.html" 2>&1
+  exit 1
+fi
+# }}}
+# Generate install target {{{
+echo "install: build" > .install.mk
+inst "-d $PREFIX/bin"
+inst "-m=rx bin/jstar $PREFIX/bin"
+for d in `find library -type d`; do inst "-d $PREFIX/$d"; done
+for f in `find library -type f`; do inst "-m=r $f $PREFIX/$f"; done
+# }}}
