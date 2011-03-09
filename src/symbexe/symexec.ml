@@ -778,6 +778,7 @@ let check_and_get_frame (pre_heap,id) post_sheap =
       [])
 
 
+(* TODO: Is this unused? What about the functions it calls? *)
 let get_frame 
      (stmts : cfg_node list) 
      (pre : Psyntax.pform) 

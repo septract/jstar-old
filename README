@@ -14,22 +14,17 @@ For more information, see http://www.jstarverifier.org
 Building on *nix / Mac OSX
 ---------------------------
 
-To run the build process, call: 
-  $ make build
+Use the standard incantation.
+  ./configure --prefix DIR
+  make
+  make install
 
-This will generate the following executable file for jstar:
-  ./bin/jstar
-
-To set the environment variables necessary for jStar to run:
-  $ . setjstarenv
-
-To run all of the tests in the examples directory: 
-  $ make test 
-
+Then run.
+  DIR/jstar
 
 Dependencies:
 
-* OCaml >=3.11.1
+* OCaml >=3.11
   http://caml.inria.fr/download.en.html
   Debian / Ubuntu: ocaml, ocaml-native-compilers
 

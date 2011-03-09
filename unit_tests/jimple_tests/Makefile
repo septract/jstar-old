@@ -22,6 +22,7 @@ endif
 ifdef DIR
   INDENT := $(INDENT) " "
 endif
+
 export INDENT 
 
 all: $(addsuffix .jimple, $(TARGETS)) 
@@ -39,7 +40,7 @@ time :  all $(addsuffix .time, $(TARGETS))
 	java soot.Main $* -f J -d . -print-tags -keep-line-number  || (echo "WARNING: Soot failed, using old Jimple file." ; touch $@)
 
 %.test.dir: 
-	@cd $*; make test
+	@$(MAKE) -C $* test
 
 clean:: 
 	for dir in ${SUBDIRS} ; do ( cd $$dir; make clean ) ; done
@@ -51,4 +52,4 @@ clean::
 
 %.test : %.jimple
 	@echo -n .
-	@./runtest $*.jimple
+	@( ulimit -t 5; ${JSTAR_HOME}/bin/jstar -f $*.jimple ) 2> /dev/null || echo -e "\nFailed $* in $(CURDIR)"
