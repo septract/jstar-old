@@ -21,9 +21,10 @@ void ranking (int no_of_dmas) {
           *(SPUbuf + currlen) = dataIn_i;
           currlen = currlen + 1;
         } else { 
+          inv false_inv; 
           run = 0; 
         }
-      } else { skip; } 
+      } else { inv false_inv; skip; } 
       k = k+1; 
     }
  

@@ -10,20 +10,54 @@ if
 rule b_ls_array: 
   | b_ls(?h,?t,?p1,?x,?y,?m)  |-  array(?h,?t,?p2,?x,?j,?vs)
 where 
-  !GT(?m,0) pureguard; 
-  !GT(?j,0) pureguard
+  !GT(?m,0) * !GT(?j,0) pureguard
 if 
   |  blob(?h,?t,?p1,?x,_z1) * b_ls(?h,?t,?p1,_z1,?y,(?m-1)) 
   |- array(?h,?t,?p2,?x,?j,?vs)
 
 
-rule b_ls_zero: 
+rule b_ls_zero_r1: 
   | |- b_ls(?h,?t,?p,?z1,?z2,?l)
 where
-  ?z1=?z2 pureguard; 
   ?l=0 pureguard
 if
-  | |-
+  | ?z1=?z2 |-
+
+rule b_ls_zero_l1: 
+  | b_ls(?h,?t,?p,?z1,?z2,?l) |- 
+where
+  ?l=0 pureguard
+if
+  | ?z1=?z2 |- 
+
+
+rule b_ls_zero_r2: 
+  | |- b_ls(?h,?t,?p,?z1,?z2,?l)
+where
+  ?z1=?z2 pureguard
+if
+  | |- ?l=0
+
+/*
+rule b_ls_zero_l2: 
+  | b_ls(?h,?t,?p,?z1,?z2,?l) |- 
+where
+  ?z1=?z2 pureguard
+if
+  | ?l=0 |-
+*/
+
+
+rule blob_ls_split:
+  | blob(?h,?t,?p1,?x,?y) |- b_ls(?h,?t,?p2,?z1,?z2,?l)
+where
+  !GT(?l,0) * ?x=?z1 * ?p1=?p2 pureguard
+if
+  blob(?h,?t,?p1,?y,?v) 
+  | 
+  |- b_ls(?h,?t,?p2,?y,?z2,(?l-1))
+
+
 
 /*
 rule b_ls_ls_len_match: 
