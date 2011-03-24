@@ -165,7 +165,123 @@ let pp_dotty_transition_system () =
 	let foname = (!file) ^ ".execution_core.dot" in
 	pp_dotty_transition_system_graph foname !graphn !graphe
 	
-let slice_graph final_node = 
+let fresh_name =
+	let x = ref 0 in
+	fun label ->
+		x := !x + 1;
+		if label = "" 
+		then "fresh_" ^ (string_of_int !x)
+		else label ^ "_" ^ (string_of_int !x)
+		
+(* When extracting a program from a failed proof, *)
+(* we represent each cfg_node as three cfg_nodes: *)
+(* entry label, the original statement, and exit  *)
+(* goto statement. *)
+type cfg_triple = {
+	tlabel         : string;
+	tid            : int;
+	mutable tstmts : core_statement list;
+	mutable tentry : cfg_triple list;
+	mutable texit  : cfg_triple list;
+}
+	
+(* Create a new program from proof graph.           *)
+(* This concentrates on the error that we get.      *)
+(* The resulting program contains only those paths  *)
+(* that lead to an error. Proving that this program *)
+(* is correct shows that the error is spurious.     *)
+(* Otherwise, we should try to find a counter       *)
+(* example.                                         *)
+let slice_program node_map edge_set : cfg_node list =
+	(* map node.id to new cfg nodes *)
+	let new_cfg : (int, cfg_triple) Hashtbl.t = Hashtbl.create 57 in
+	let connect_triples x y =
+		x.texit <- y :: x.texit;
+		y.tentry <- x :: y.tentry 
+	in
+	Idmap.iter (fun _ nodes ->
+		List.iter (fun node ->
+			let stmts =
+				(* remove old labels, since they will be *)
+				(* replaced by new entry labels          *)
+				match node.cfg with
+				| Some cfg -> 
+					(match cfg.skind with
+							| Label_stmt_core lbl -> []
+							| _ -> [cfg.skind])
+				
+				| None -> []
+			in
+			let label = fresh_name "entry" in
+			let entry = [] in
+			let exit = [] in
+			Hashtbl.add new_cfg node.id {tlabel = label; tid = node.id; tstmts = stmts; tentry = entry; texit = exit}
+		) nodes
+	) node_map;
+	(* connect new cfg using proof edges *)
+	List.iter (fun edge ->
+		try
+			let src = Hashtbl.find new_cfg edge.src.id in
+			let dst = Hashtbl.find new_cfg edge.dest.id in
+			connect_triples src dst
+		with Not_found -> printf "[NO EDGE ID] %i : %i \n" edge.src.id edge.dest.id
+	) edge_set;
+	(* remove trivial goto statements *)
+	let toRemove = ref [] in
+	Hashtbl.iter (fun _ triple ->
+			let domore = ref true in
+			while !domore do (* repeat until no more triples can be joined to this triple *)
+				domore := false;
+				match triple.texit with
+				| [next] -> 
+					if not (triple.tlabel = next.tlabel) && (List.length next.tentry = 1) then begin
+						(* join two triples *)
+						triple.tstmts <- List.append triple.tstmts next.tstmts;
+						triple.texit <- next.texit;
+						toRemove := next :: !toRemove;
+						domore := true
+					end
+				| _ -> ()
+			done
+		) new_cfg;
+	List.iter (fun rm -> Hashtbl.remove new_cfg rm.tid) !toRemove;
+	(* add start node *)
+	let start_triple = {
+			tlabel = fresh_name "start";
+			tid = 0;
+			tstmts = [];
+			tentry = [];
+			texit = []
+		}
+	in
+	Hashtbl.iter (fun _ triple -> if triple.tentry = [] then connect_triples start_triple triple ) new_cfg;
+	(* add end node *)
+	let end_triple = {
+			tlabel = fresh_name "end";
+			tid = 0;
+			tstmts = [End];
+			tentry = [];
+			texit = []
+		}
+	in
+	Hashtbl.iter (fun _ triple -> if triple.texit = [] then connect_triples triple end_triple ) new_cfg;
+	(* generate program *)
+	let prog = ref [] in
+	let attach_triple triple =
+		let entry_stmt = [Label_stmt_core triple.tlabel] in
+		let goto_list = List.map (fun triple -> triple.tlabel) triple.texit in
+		let exit_stmt = if goto_list = [] then [] else [Goto_stmt_core goto_list] in
+		let stmts =  List.append (List.append entry_stmt triple.tstmts) exit_stmt in
+		let cnodes = List.map Cfg_core.mk_node stmts in
+		prog := List.append cnodes !prog
+	in
+	attach_triple end_triple;
+	Hashtbl.iter (fun _ x -> attach_triple x) new_cfg;
+	attach_triple start_triple;
+	Cfg_core.stmts_to_cfg !prog;
+	!prog
+	
+let slice_graph final_node =
 	(* filter only relevant nodes *)
 	let node_set = ref Idset.empty in
 	let rec find_node_set node =
@@ -226,7 +342,9 @@ let pp_dotty_slice err_node =
 	let node_map, edge_set = slice_graph err_node in
 	(* print the error graph *)
 	let foname = (!file) ^ ".error_slice_" ^ (string_of_int err_node.id) ^ ".dot" in
-	pp_dotty_transition_system_graph foname node_map edge_set
+	pp_dotty_transition_system_graph foname node_map edge_set;
+	let pname = (!file) ^ ".error_program_" ^ (string_of_int err_node.id) ^ ".dot" in
+	print_icfg_dotty [(slice_program node_map edge_set), "error " ^ (string_of_int err_node.id)] pname
 
 let get_error_nodes () =
 	let err_nodes = ref [] in
@@ -247,7 +365,9 @@ let pp_dotty_slice_single_path_error_nodes () =
 		let node_map, edge_set = slice_single_path final_node in
 		(* print the error graph *)
 		let foname = (!file) ^ ".error_slice_single_path_" ^ (string_of_int final_node.id) ^ ".dot" in
-		pp_dotty_transition_system_graph foname node_map edge_set
+		pp_dotty_transition_system_graph foname node_map edge_set;
+		let pname = (!file) ^ ".error_program_single_path_" ^ (string_of_int final_node.id) ^ ".dot" in
+	    print_icfg_dotty [(slice_program node_map edge_set), "error " ^ (string_of_int final_node.id)] pname
 	) (get_error_nodes ())
 
 let add_node (label : string) (ty : ntype) (cfg : cfg_node option) = 
