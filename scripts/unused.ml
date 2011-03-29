@@ -12,12 +12,15 @@ let list_of_hashtbl h = Hashtbl.fold (fun x () xs -> x :: xs) h []
 
 let get_ids fn lexer =
   let h = Hashtbl.create 101 in
-  let c = open_in fn in
-  let lb = Lexing.from_channel (open_in fn) in
-  lexer h lb;
-  let r = list_of_hashtbl h in
-  close_in c;
-  r
+  try
+    let c = open_in fn in
+    let lb = Lexing.from_channel (open_in fn) in
+    lexer h lb;
+    let r = list_of_hashtbl h in
+    close_in c;
+    r
+  with Sys_error _ ->
+    printf "@[Warning: missing %s@." fn; []
 
 let parse fn = { 
   path = fn;

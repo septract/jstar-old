@@ -14,4 +14,5 @@ and id_decl hash = parse
 and comment = parse
   | "(*" { comment lexbuf; comment lexbuf }
   | "*)" { () }
+  | eof { () }
   | _ { comment lexbuf }
