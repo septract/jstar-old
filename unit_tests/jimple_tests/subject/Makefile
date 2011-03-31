@@ -1,5 +1,5 @@
 ifndef TARGETS
-  TARGETS = Observer Subject IntegerDataBag IntegerSize
+  TARGETS = Observer Subject IntegerSize
 endif
 
 ifndef SUBDIRSDEF
