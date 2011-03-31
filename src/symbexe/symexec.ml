@@ -328,7 +328,7 @@ let call_jsr_static (sheap,id) spec il node =
           Pprinter_core.pp_stmt_core node.skind;
         Sepprover.print_counter_example ();
         printf "Proof file: %s@\n" proof_file;
-        printf "%s(end error description)%s@.%!" 
+        printf "%s(end of error)%s@.%!" 
           System.terminal_red System.terminal_white;
         Printing.pp_json_node node.sid 
           (sprintf "Error while executing %d." node.sid) (Sepprover.get_counter_example());
