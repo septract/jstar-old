@@ -328,7 +328,7 @@ let call_jsr_static (sheap,id) spec il node =
           Pprinter_core.pp_stmt_core node.skind;
         Sepprover.print_counter_example ();
         printf "Proof file: %s@\n" proof_file;
-        printf "%s(end error description)%s@.%!" 
+        printf "%s(end of error)%s@.%!" 
           System.terminal_red System.terminal_white;
         Printing.pp_json_node node.sid 
           (sprintf "Error while executing %d." node.sid) (Sepprover.get_counter_example());
@@ -494,41 +494,20 @@ and execute_core_stmt
         let sheaps_abs = map_option
           (fun (sheap2,id2) -> 
             (let s = ref [] in 
-            if Config.abs_int_join() then
-              (let leaves_form = ref None in let rest_form = ref None in
-              let leaves_af = ref None in let rest_af = ref None in
-              let sheap2_form = inner_form_af_to_form sheap2 in
-              let sheap2_af = inner_form_af_to_af sheap2 in
-              if (List.for_all
-                (fun (sheap1,id1) ->
-                  let leaves,rest =
-                    frame_inner_ignore_numerical !curr_logic sheap2_form (inner_form_af_to_form sheap1) in
-                  leaves_form := leaves; rest_form := rest;
-                  let leaves,rest =
-                    frame_inner_ignore_numerical !curr_logic sheap2_af (inner_form_af_to_af sheap1) in
-                  leaves_af := leaves; rest_af := rest;
-                  if ((!leaves_form <> None) || (!leaves_af <> None)) then
-                    (ignore (add_edge_with_proof id2 id1 ContE
-                      ("Contains@"^(Debug.toString Pprinter_core.pp_stmt_core stm.skind))); false)
-                  else (s := ("\n---------------------------------------------------------\n" ^
-                    (string_of_proof ())) :: !s; true))
-                formset)
-              then
-                (if !s <> [] then (add_url_to_node id2 !s);
-                match !rest_form, !rest_af with
-                | None, None -> Some (sheap2, id2)
-                | Some r, None -> Some (combine (join sheap2_form r) sheap2_af, id2)
-                | None, Some r -> Some (combine sheap2_form (join sheap2_af r), id2)
-                | Some r1, Some r2 -> Some (combine (join sheap2_form r1) (join sheap2_af r2), id2))
-              else 
-                None)
-            else
               (if (List.for_all
-                (fun (sheap1,id1) -> 
-                  if ((frame_inner !curr_logic (inner_form_af_to_form sheap2) 
-                      (inner_form_af_to_form sheap1) <> None) || 
-                    (frame_inner !curr_logic (inner_form_af_to_af sheap2) 
-                      (inner_form_af_to_af sheap1) <> None))
+                (fun (sheap1,id1) ->
+                  let sheap1_form = inner_form_af_to_form sheap1 in
+                  let sheap1_af = inner_form_af_to_af sheap1 in
+                  let sheap2_form = inner_form_af_to_form sheap2 in
+                  let sheap2_af = inner_form_af_to_af sheap2 in
+                  let sheap1_form,sheap2_form =
+                    if Config.abs_int_join() then join_over_numeric sheap1_form sheap2_form
+                    else sheap1_form,sheap2_form in
+                  let sheap1_af,sheap2_af =
+                    if Config.abs_int_join() then join_over_numeric sheap1_af sheap2_af
+                    else sheap1_af,sheap2_af in
+                  if ((frame_inner !curr_logic sheap2_form sheap1_form <> None) ||
+                    (frame_inner !curr_logic sheap2_af sheap1_af <> None))
                   then
                     (ignore (add_edge_with_proof id2 id1 ContE
                       ("Contains@"^(Debug.toString Pprinter_core.pp_stmt_core stm.skind))); false)
@@ -704,6 +683,7 @@ let check_and_get_frame (pre_heap,id) post_sheap =
       [])
 
 
+(* TODO: Is this unused? What about the functions it calls? *)
 let get_frame 
      (stmts : cfg_node list) 
      (pre : Psyntax.pform) 

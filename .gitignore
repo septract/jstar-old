@@ -3,3 +3,5 @@
 .depend
 _build
 tags
+.install.mk
+rg.log

@@ -89,7 +89,7 @@ open Psyntax
     let join : inner_form -> inner_form -> inner_form
       = fun if1 if2 ->
         let pf1 = Clogic.ts_form_to_pform if1 in
-        let pf2 = Clogic.ts_form_to_pform_no_ts if2 in (* assumes if2 is the remaining obligation *)
+        let pf2 = Clogic.ts_form_to_pform if2 in
         match Plugin_manager.join pf1 pf2 with
         | [] -> Format.printf "No plugin with join loaded!\n"; inner_truth
         | pf::_ -> Clogic.pform_to_ts_form pf
@@ -97,7 +97,7 @@ open Psyntax
     let meet : inner_form -> inner_form -> inner_form
       = fun if1 if2 ->
         let pf1 = Clogic.ts_form_to_pform if1 in
-        let pf2 = Clogic.ts_form_to_pform_no_ts if2 in (* assumes if2 is the remaining obligation *)
+        let pf2 = Clogic.ts_form_to_pform if2 in
         match Plugin_manager.meet pf1 pf2 with
         | [] -> Format.printf "No plugin with meet loaded!\n"; inner_falsum
         | pf::_ -> Clogic.pform_to_ts_form pf
@@ -105,10 +105,23 @@ open Psyntax
     let widening : inner_form -> inner_form -> inner_form
       = fun if1 if2 ->
         let pf1 = Clogic.ts_form_to_pform if1 in
-        let pf2 = Clogic.ts_form_to_pform_no_ts if2 in (* assumes if2 is the remaining obligation *)
+        let pf2 = Clogic.ts_form_to_pform if2 in
         match Plugin_manager.widening pf1 pf2 with
         | [] -> Format.printf "No plugin with widening loaded!\n"; inner_truth
         | pf::_ -> Clogic.pform_to_ts_form pf   
+
+    let join_over_numeric : inner_form -> inner_form -> inner_form * inner_form
+      = fun if1 if2 ->
+        let split_numerical (pform : pform) : pform * pform =
+          List.partition (fun pf_at -> is_numerical_pform_at pf_at) pform in
+        let num_pf1,rest_pf1 = split_numerical (Clogic.ts_form_to_pform if1) in
+        let num_pf2,rest_pf2 = split_numerical (Clogic.ts_form_to_pform if2) in
+        let join_ts_form =
+          match Plugin_manager.join num_pf1 num_pf2 with
+          | [] -> Format.printf "No plugin with join loaded!\n"; inner_truth
+          | pf::_ -> Clogic.pform_to_ts_form pf
+        in
+        (conjoin rest_pf1 join_ts_form, conjoin rest_pf2 join_ts_form)
 
     let update_var_to : var -> term -> inner_form -> inner_form
       = fun v e f -> Clogic.update_var_to f v e
@@ -157,10 +170,6 @@ open Psyntax
 
     let frame_inner (l : logic) (i1 : inner_form) (i2 : inner_form) : inner_form list option = 
       Prover.check_frame l i1 i2
-
-    let frame_inner_ignore_numerical (l : logic) (i1 : inner_form) (i2 : inner_form) : 
-      inner_form list option * inner_form option = 
-      Prover.check_frame_ignore_numerical l i1 i2
 
     let abs : logic -> inner_form -> inner_form list 
       = Prover.abs

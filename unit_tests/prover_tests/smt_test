@@ -30,10 +30,6 @@ Implication:
   |- ((x + x) + builtin_mult(k,x)) = builtin_mult((k + 2), x)
 ? True 
 
-Implication: 
-  !LT(a,b) * testpred(a,b) |- 
-? True
-
 Implication:
   i=(_i_7138+"1") |- i=(_i_3524+"1")
 ? True
@@ -43,3 +39,7 @@ Implication:
     i=(_i_8098+"1") * !LE(i, M) * !LE("0", M) * !LE("0", M) * !LT("0", M)
   |- i=_i_8098 * !LE(_i_3524, M) * !LT(_i_3524, M)
 ? False
+
+Implication: 
+  !LT(a,b) |- testpred(a,b) 
+? True

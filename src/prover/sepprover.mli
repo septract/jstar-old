@@ -34,6 +34,7 @@ val abstract_val : inner_form -> inner_form
 val join : inner_form -> inner_form -> inner_form
 val meet : inner_form -> inner_form -> inner_form
 val widening : inner_form -> inner_form -> inner_form
+val join_over_numeric : inner_form -> inner_form -> inner_form * inner_form
 val update_var_to : var -> term -> inner_form -> inner_form
 val update_var_to_af : var -> term -> inner_form_af -> inner_form_af
 val string_inner_form : Format.formatter -> inner_form -> unit 
@@ -46,7 +47,6 @@ val inconsistent_opt : logic -> inner_form option -> bool
 val frame : logic -> inner_form -> form -> inner_form list option
 val frame_opt : logic -> inner_form option -> form -> inner_form list option
 val frame_inner : logic -> inner_form -> inner_form -> inner_form list option
-val frame_inner_ignore_numerical : logic -> inner_form -> inner_form -> inner_form list option * inner_form option
 val abs : logic -> inner_form -> inner_form list
 val abs_opt : logic -> inner_form option -> inner_form list
 val pprint_proof : Format.formatter -> unit

@@ -19,9 +19,9 @@ open Jimple_global_types
 open Psyntax
 
 let program_file_name = ref ""
-let logic_file_name = ref ""
-let spec_file_name = ref ""
-let absrules_file_name = ref ""
+let logic_file_name = ref "logic"
+let spec_file_name = ref "specs"
+let absrules_file_name = ref "abs"
 
 let set_logic_file_name n =
   logic_file_name := n
@@ -129,15 +129,15 @@ let main () =
        (* Load abstract interpretation plugins *)
        List.iter (fun file_name -> Plugin_manager.load_plugin file_name) !Config.abs_int_plugins;       
 
-       let l1,l2,cn = Load_logic.load_logic  (System.getenv_dirlist "JSTAR_LOGIC_LIBRARY") !logic_file_name
+       let l1,l2,cn = Load_logic.load_logic !logic_file_name
        in
        let logic = {empty_logic with seq_rules=l1; rw_rules=l2; consdecl=cn} in
 
-       let l1,l2,cn = Load_logic.load_logic  (System.getenv_dirlist "JSTAR_LOGIC_LIBRARY") !absrules_file_name in
+       let l1,l2,cn = Load_logic.load_abstractions !absrules_file_name in
        let abs_rules = {empty_logic with seq_rules=l1; rw_rules=l2; consdecl=cn} in
 
        let spec_list : (Spec_def.class_spec list) = Load.import_flatten
-           (System.getenv_dirlist "JSTAR_SPECS_LIBRARY")
+           Cli_utils.specs_dirs            
            !spec_file_name
            (Jparser.spec_file Jlexer.token) in
 

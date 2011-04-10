@@ -436,35 +436,13 @@ let check_imp (logic : logic) (seq : sequent) : bool =
 let check_frm (logic : logic) (seq : sequent) : Clogic.F.ts_formula list option =
   try
     let ts = List.fold_right Cterm.add_constructor logic.consdecl seq.ts in 
-    let seq = {seq with ts = ts} in 
+    let seq = {seq with ts = ts} in
     let leaves = apply_rule_list logic [seq] (fun _ -> false) Smt.frame_sequent_smt in 
     Some (Clogic.get_frames leaves)
   with 
     Failed -> fprintf !proof_dump "Frame failed\n"; None 
   | Failed_eg x -> fprintf !proof_dump "Frame failed\n"; prover_counter_example := x; None 
 
-
-let check_frm_ignore_numerical (logic : logic) (seq : sequent) : 
-  Clogic.F.ts_formula list option * Clogic.F.ts_formula option =
-  let leaves = ref [] in
-  try
-    let ts = List.fold_right Cterm.add_constructor logic.consdecl seq.ts in 
-    let seq = {seq with ts = ts} in 
-    leaves := apply_rule_list logic [seq] (fun _ -> false) Smt.frame_sequent_smt;
-    (Some (Clogic.get_frames !leaves), None)
-  with 
-    Failed -> fprintf !proof_dump "Frame failed\n"; (None, None)
-  | Failed_eg x ->
-    match x with
-    | [seq] ->
-      let obligation = Clogic.mk_ts_form seq.ts seq.obligation in
-      if List.for_all is_numerical_pform_at (Clogic.ts_form_to_pform_no_ts obligation) then
-        (Some (Clogic.get_frames !leaves), Some obligation)
-      else
-        (fprintf !proof_dump "Frame failed\n"; prover_counter_example := x;
-        (None, None))
-    | _ -> assert false
-  
 
 let check_abduct logic seq : Clogic.AF.ts_formula list option = 
   try 
@@ -525,10 +503,6 @@ let check_implication logic ts_form1 ts_form2 =
 let check_frame logic ts_form1 ts_form2 =
   let seq = Clogic.make_implies_inner ts_form1 ts_form2 in 
   check_frm logic seq 
-
-let check_frame_ignore_numerical logic ts_form1 ts_form2 = 
-  let seq = Clogic.make_implies_inner ts_form1 ts_form2 in 
-  check_frm_ignore_numerical logic seq 
 
 
 (* let check_inconsistency logic ts_form   = assert false *)

@@ -44,7 +44,7 @@ let main () =
     List.iter (fun file_name -> Plugin_manager.load_plugin file_name) !Config.abs_int_plugins;
 
     let rl = if !inductive_file_name <> "" then Inductive.convert_inductive_file !inductive_file_name else [] in
-    let l1,l2,cn = load_logic_extra_rules (System.getenv_dirlist "JSTAR_LOGIC_LIBRARY") !logic_file_name rl in
+    let l1,l2,cn = load_logic_extra_rules Cli_utils.logic_dirs !logic_file_name rl in
     let logic = {empty_logic with seq_rules = l1; rw_rules=l2; consdecl = cn;} in
     let s = System.string_of_file !program_file_name  in
     if log log_phase then 

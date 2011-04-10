@@ -24,14 +24,6 @@ type error =
 
 exception Error of error * Lexing.lexbuf
 
-let new_line lexbuf =
-  let pos =  lexbuf.Lexing.lex_curr_p in 
-  lexbuf.Lexing.lex_curr_p <- { pos with 
-				Lexing.pos_lnum = pos.Lexing.pos_lnum + 1; 
-				Lexing.pos_bol = pos.Lexing.pos_cnum; 
-			      } 
-
-
 let nest_depth = ref 0
 let nest_start_pos = ref dummy_pos
 let nest x =
@@ -237,7 +229,7 @@ let float_constant = ((dec_constant '.' dec_constant) (('e'|'E') ('+'|'-')? dec_
 (* Translation of section Tokens of jimple.scc *)
 
 rule token = parse
-  | newline { new_line lexbuf; token lexbuf }
+  | newline { Lexing.new_line lexbuf; token lexbuf }
   | "/*Source Line Pos Tag" { SOURCE_POS_TAG }
   | "*/" { SOURCE_POS_TAG_CLOSE }
   | "/*" { nest lexbuf; comment lexbuf; token lexbuf } 
@@ -307,7 +299,7 @@ rule token = parse
 and comment = parse 
   | "/*"  { nest lexbuf; comment lexbuf }
   | "*/"  { if unnest lexbuf then comment lexbuf }
-  | newline  { new_line lexbuf; comment lexbuf }
+  | newline  { Lexing.new_line lexbuf; comment lexbuf }
   | eof      { failwith (error_message Unterminated_comment lexbuf)}
   | _     { comment lexbuf; }
 
