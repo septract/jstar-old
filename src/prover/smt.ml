@@ -88,12 +88,13 @@ let rec nstr (s : string) (n : int) : string =
 (* Partition a list into sublists of equal elements *)
 let rec equiv_partition
     (eq : 'a -> 'a -> bool) 
+    (neq : 'a -> 'a -> bool)
     (xs : 'a list)
     : 'a list list = 
   match xs with 
   | x::xs -> 
-     let (e, xs') = partition (eq x) xs in 
-     let eqs = equiv_partition eq xs' in 
+     let (e, xs') = partition (fun y -> (not (neq x y)) & eq x y) xs in 
+     let eqs = equiv_partition eq neq xs' in 
      (x::e) :: eqs
   | [] -> []
 
@@ -366,6 +367,14 @@ let smt_test_eq (a1 : Psyntax.args) (a2 : Psyntax.args) : bool =
   let r = smt_check_unsat() in 
   smt_pop(); r
 
+
+let smt_test_neq (a1 : Psyntax.args) (a2 : Psyntax.args) : bool = 
+  smt_push(); 
+  smt_assert (string_sexp_eq (a1,a2)); 
+  let r = smt_check_unsat() in 
+  smt_pop(); r
+
+
 let decl_evars (types : smttypeset) : string = 
   let evars = 
     SMTTypeSet.fold 
@@ -429,7 +438,26 @@ let finish_him
   | SMT_fatal_error -> 
     smt_fatal_recover(); 
     false 
-  
+
+
+let find_neqs_single ts x xs = 
+        fold_right 
+          (fun y ys -> 
+             if ( (smt_test_neq (snd x) (snd y)) && (not (Cterm.not_equal ts (fst x) (fst y))) )
+             then (x,y)::ys
+             else ys ) 
+          xs []
+
+
+let rec find_neqs ts xs = 
+  match xs with 
+  | y::ys -> 
+      let es = find_neqs ts ys in 
+      let ns = find_neqs_single ts y ys in 
+      rev_append es ns
+  | [] -> [] 
+
+
 
 let true_sequent_smt (seq : sequent) : bool =  
   (Clogic.true_sequent seq)
@@ -506,12 +534,23 @@ let ask_the_audience
     if smt_check_sat() then (smt_reset(); raise Backtrack.No_match); 
     smt_pop(); 
     *)
-    (* Update the term structure using the new equalities *)  
+
     let reps = get_args_rep ts in 
+    
+    (* Update the term structure using new inequalities *)
+    
+    let req_nequiv = find_neqs ts reps in 
+    let ts = fold_left (fun a (b,c) -> make_not_equal a (fst b) (fst c)) ts req_nequiv in 
+    
+    (* Update the term structure using new equalities *)  
     let req_equiv = map (map fst)
-                        (equiv_partition (fun x y -> smt_test_eq (snd x) (snd y)) reps) 
+                        (equiv_partition 
+                                (fun x y -> smt_test_eq (snd x) (snd y)) 
+                                (fun x y -> (Cterm.not_equal ts (fst x) (fst y)))
+                                reps ) 
     in
-    if for_all (fun ls -> List.length ls = 1) req_equiv then
+    if for_all (fun ls -> List.length ls = 1) req_equiv && (List.length req_nequiv = 0)
+    then
       (smt_reset(); raise Backtrack.No_match);
     smt_pop();
     fold_left make_list_equal ts req_equiv
