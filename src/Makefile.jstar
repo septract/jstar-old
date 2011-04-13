@@ -1,11 +1,11 @@
 BCSUFFIX = .cma
 NCSUFFIX = .cmxa
 TRASH = *.annot *.output
-INCDIRS = $(addprefix ../, $(INCLUDES))
+INCDIRS = $(addprefix $(CORESTAR_HOME)/src/, $(CORESTAR_INCLUDES)) $(addprefix ../, $(JSTAR_INCLUDES))
 
-INCLIBS = $(addsuffix $(NCSUFFIX), $(addprefix $(LIB)/, $(INCLUDES))) 
+INCLIBS = $(addsuffix $(NCSUFFIX), $(addprefix $(LIB)/, $(JSTAR_INCLUDES)))
 
-INCBLIBS = $(addsuffix $(BCSUFFIX), $(addprefix $(LIB)/, $(INCLUDES))) 
+INCBLIBS = $(addsuffix $(BCSUFFIX), $(addprefix $(LIB)/, $(JSTAR_INCLUDES)))
 
 .PHONY: default
 default: prebuild native-code

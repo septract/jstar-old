@@ -1,5 +1,0 @@
-rewrite rz_plus4: 
-  rz2(plus(?y,?z)) = plus(?y,?z)
-if 
-  ?y != numeric_const("0") 
-* ?z != numeric_const("0")

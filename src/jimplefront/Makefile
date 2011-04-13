@@ -36,15 +36,15 @@ JIMPLEFRONT_SOURCES = support_symex.ml jlogic.ml javaspecs.ml methdec.ml transla
 TOPLEVEL_SOURCES = $(JIMPLEFRONT_SOURCES)
 
 DEFAULT_ARGS = SOURCES="$(TOPLEVEL_SOURCES)" \
-       LIBS="str unix dynlink utils prover_syntax symbexe_syntax jimple_syntax plugin_interface prover symbexe parsing" \
-       OCAMLLDFLAGS=" -I $(LIB)" \
-       INCDIRS="../prover ../prover_syntax ../parsing ../symbexe_syntax ../utils ../jimple_syntax ../symbexe ../plugin_interface" \
+       LIBS="str unix dynlink utils prover_syntax symbexe_syntax plugin_interface prover symbexe jimple_syntax parsing" \
+       OCAMLLDFLAGS=" -I $(LIB) -I $(CORESTAR_HOME)/lib" \
+       INCDIRS="$(CORESTAR_HOME)/src/prover $(CORESTAR_HOME)/src/prover_syntax $(CORESTAR_HOME)/src/symbexe_syntax $(CORESTAR_HOME)/src/utils $(CORESTAR_HOME)/src/symbexe $(CORESTAR_HOME)/src/plugin_interface ../parsing ../jimple_syntax" \
        OCAMLFLAGS="" \
        TRASH=""
 
 MAIN = $(DEFAULT_ARGS) RESULT=$(BIN)/jstar.byte
 
-MAINOPT = $(DEFAULT_ARGS)  RESULT=$(BIN)/jstar
+MAINOPT = $(DEFAULT_ARGS) RESULT=$(BIN)/jstar
 
 default: jstar
 
@@ -56,7 +56,6 @@ all: jstar jstar.byte
 
 prebuild:
 	@$(MAKE) -C ../jimple_syntax
-	@$(MAKE) -C ../symbexe
 	@$(MAKE) -C ../parsing
 
 .PHONY: jstar.byte  

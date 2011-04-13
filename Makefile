@@ -1,3 +1,8 @@
+ifndef CORESTAR_HOME
+	CORESTAR_HOME=$(CURDIR)/../corestar
+endif
+export CORESTAR_HOME
+
 ifndef JSTAR_HOME
 	JSTAR_HOME=$(CURDIR)
 endif

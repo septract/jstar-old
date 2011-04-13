@@ -1,6 +1,0 @@
-rule abs_list :
-   |  ls(?x,_y) * ls(_y,nil()) |-
-where 
-      _y notincontext
-if
-   |  ls(?x,nil()) |-

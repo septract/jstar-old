@@ -3,9 +3,10 @@ ifndef LIB
 endif
 export LIB
 
-SOURCES =   support_syntax.ml jparser.mly jlexer.mll load_logic.ml
+SOURCES = support_syntax.ml jparser.mly jlexer.mll load_logic.ml
 
-INCLUDES = utils prover_syntax symbexe_syntax jimple_syntax
+CORESTAR_INCLUDES = utils prover_syntax symbexe_syntax
+JSTAR_INCLUDES = jimple_syntax
 RESULT = "$(LIB)/parsing"
 OCAMLLDFLAGS="-a"
 

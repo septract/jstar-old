@@ -1,4 +1,0 @@
-rule abduct_remove:
-| |-  field(?x,?f,?t) -|
-if
- | |-  -| field(?x,BAR,?t)

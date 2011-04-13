@@ -408,7 +408,7 @@ module MethodMap =
     type t = method_signature
     let compare = compare
   end)
-module MethodMapH = Jstar_std.MapHelper (MethodMap)
+module MethodMapH = Corestar_std.MapHelper (MethodMap)
 
 module MethodSet = 
   Set.Make(struct
@@ -455,11 +455,10 @@ let remove_this_type_info prepure =
     | _ -> true 
   in List.filter is_this_type prepure
 
-let static_to_dynamic {pre=pre; post=post; excep=excep; invariants=invariants} =
+let static_to_dynamic {pre=pre; post=post; excep=excep} =
   { pre=remove_this_type_info pre; 
     post=post; 
-    excep=excep; 
-    invariants=invariants (* TODO INV *) }
+    excep=excep }
 
 let rec filtertype_spat classname spat =
   match spat with
@@ -502,17 +501,15 @@ and filterdollar x = List.map (filterdollar_at) x
 
 let dynamic_to_static cn spec = 
   match spec with
-    {pre=f1; post=f2; excep=excep; invariants=invariants}
+    {pre=f1; post=f2; excep=excep}
       -> {pre=filtertype cn f1; 
 	  post=filtertype cn f2; 
-	  excep=ClassMap.map (filtertype cn) excep;
-          invariants=LabelMap.map (filtertype cn) invariants (* TODO INV *) }
+	  excep=ClassMap.map (filtertype cn) excep }
 
-let filter_dollar_spec {pre=f1; post=f2; excep=excep; invariants=invariants} =
+let filter_dollar_spec {pre=f1; post=f2; excep=excep} =
   { pre=filterdollar f1; 
     post=filterdollar f2; 
-    excep=ClassMap.map filterdollar excep;
-    invariants=LabelMap.map filterdollar invariants (* TODO INV *) }
+    excep=ClassMap.map filterdollar excep }
 
 let fix_spec_inheritance_gaps classes mmap spec_file exclude_function spec_type =
 	let mmapr = ref mmap in
@@ -528,10 +525,8 @@ let fix_spec_inheritance_gaps classes mmap spec_file exclude_function spec_type 
 										if same_elements samesig then
 											mmapr := MethodMap.add msig (spec,pos) (!mmapr)
 										else
-											if
-                                                                                          Config.symb_debug()
-                                                                                then
-                                                                                  printf "@{<b>WARNING:@} There is no %s spec listed for %s, and its parents do not agree on one!\n" spec_type (Pprinter.signature2str (Method_signature msig));
+											if Config.symb_debug() then
+                        printf "@{<b>WARNING:@} There is no %s spec listed for %s, and its parents do not agree on one!\n" spec_type (Pprinter.signature2str (Method_signature msig));
 					in
 					propagate_specs cn othersigs  
 	in

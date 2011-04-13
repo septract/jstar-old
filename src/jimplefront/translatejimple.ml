@@ -113,12 +113,12 @@ let rec translate_assign_stmt  (v:Jparsetree.variable) (e:Jparsetree.expression)
       let p1 = immediate2args e' in
       let pre=mk_pointsto p0 (signature2args si) pointed_to_var in
       let post=mk_pointsto p0 (signature2args si) p1 in
-      let spec=mk_spec pre post ClassMap.empty LabelMap.empty in (* TODO INV *)
+      let spec=mk_spec pre post ClassMap.empty in
       Assignment_core ([],spec,[])	
   | Var_name n, Immediate_exp e' -> 
       (* execute  v=e' --> v:={emp}{return=param0}(e') *)
       let post= mkEQ(retvar_term,immediate2args e') in
-      let spec=mk_spec [] post ClassMap.empty LabelMap.empty in (* TODO INV *)
+      let spec=mk_spec [] post ClassMap.empty in
       Assignment_core  ([variable2var (Var_name(n))],spec,[])
 
   | Var_name v, Reference_exp (Field_local_ref (n,si))  -> 
@@ -128,19 +128,19 @@ let rec translate_assign_stmt  (v:Jparsetree.variable) (e:Jparsetree.expression)
       let x = (immediate2args (Immediate_local_name(n))) in 
       let pre=mk_pointsto x (signature2args si) pointed_to_var in
       let post=pconjunction (mkEQ(retvar_term,pointed_to_var)) (mk_pointsto x (signature2args si) pointed_to_var) in
-      let spec=mk_spec pre post ClassMap.empty LabelMap.empty in (* TODO INV *)
+      let spec=mk_spec pre post ClassMap.empty in
       Assignment_core ([variable2var (Var_name v)],spec,[])
   | Var_name n, New_simple_exp ty ->
       (* execute x=new(ty)
 	 The rest of the job will be performed by the invocation to specialinvoke <init>
       *)
 			let post = mk_type_all retvar_term ty in
-			let spec = mk_spec [] post ClassMap.empty LabelMap.empty in (* TODO INV *)
+			let spec = mk_spec [] post ClassMap.empty in
 			Assignment_core ([variable2var (Var_name n)],spec,[])
   | Var_name n , Binop_exp(name,x,y)-> 
       let args = Arg_op(Support_syntax.bop_to_prover_arg name, [immediate2args x;immediate2args y]) in
       let post= mkEQ(retvar_term,args) in
-      let spec=mk_spec [] post ClassMap.empty LabelMap.empty in (* TODO INV *)
+      let spec=mk_spec [] post ClassMap.empty in
       Assignment_core  ([variable2var (Var_name(n))],spec,[])
   | Var_name n , Cast_exp (_,e') -> (* TODO : needs something for the cast *) 
       translate_assign_stmt (Var_name n) (Immediate_exp(e'))
@@ -154,7 +154,7 @@ let assert_core b =
   | Binop_exp (op,i1,i2) -> 
       let b_pred = Support_syntax.bop_to_prover_pred op (immediate2args i1) (immediate2args i2) in
       Assignment_core([], 
-		      mk_spec [] b_pred ClassMap.empty LabelMap.empty, (* TODO INV *)
+		      mk_spec [] b_pred ClassMap.empty,
 		      []) 
   | _ -> assert false
   
@@ -173,7 +173,7 @@ let jimple_statement2core_statement s : core_statement list =
 	Printf.printf "\n Translating a jimple identity statement \n  %s\n" (Pprinter.statement2str s);
       let id'=Immediate_local_name(Identifier_name(id)) in 
       let post= mkEQ(retvar_term,immediate2args id') in
-      let spec=mk_spec [] post ClassMap.empty LabelMap.empty in (* TODO INV *)
+      let spec=mk_spec [] post ClassMap.empty in
       [Assignment_core  ([variable2var (Var_name(nn))],spec,[]) ]
   | Identity_no_type_stmt(n,i) -> assert false
   | Assign_stmt(v,e) -> 
@@ -201,7 +201,7 @@ let jimple_statement2core_statement s : core_statement list =
        | Some e' -> 
 	 let p0 = Arg_var(mk_parameter 0) in (* ddino: should it be a fresh program variable? *)
 	 let post= mkEQ(retvar_term,p0) in
-	 let spec=mk_spec [] post ClassMap.empty LabelMap.empty in (* TODO INV *)
+	 let spec=mk_spec [] post ClassMap.empty in
 	 [Assignment_core  ([],spec,[immediate2args e']); End ]
       )
   | Throw_stmt(i) ->
@@ -214,13 +214,6 @@ let jimple_statement2core_statement s : core_statement list =
 	| Spec_stmt(vars,spec) -> [Assignment_core (vars,spec,[])]
 
 (* ================   ==================  *)
-
-
-
-
-
-
-
 
 
 
@@ -279,8 +272,7 @@ let get_spec_for m fields cname=
   if is_init_method m then (* we treat <init> in a special way*)
     { pre=pconjunction spec.pre class_this_fields; 
       post=spec.post; 
-      excep=spec.excep;
-      invariants=spec.invariants } (* TODO INV *)
+      excep=spec.excep }
   else spec
 
 
@@ -304,8 +296,7 @@ let get_requires_clause_spec_for m fields cname =
         {
                 pre=dynspec.pre;
                 post=conjoin_with_res_true (dynspec.pre);
-                excep=ClassMap.empty;
-                invariants=LabelMap.empty (* TODO INV *)
+                excep=ClassMap.empty
         }
 
 let get_dyn_spec_for m fields cname =

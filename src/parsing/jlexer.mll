@@ -89,12 +89,10 @@ let kwd_or_else =
     "Implication", IMPLICATION;
     "import", IMPORT;
     "Inconsistency", INCONSISTENCY;
-    "inductive", INDUCTIVE;
     "instanceof", INSTANCEOF;
     "int", INT;
     "interface", INTERFACE;
     "interfaceinvoke", INTERFACEINVOKE;
-    "invariant", INVARIANT;
     "label", LABEL;
     "lengthof", LENGTHOF;
     "long", LONG;
@@ -304,10 +302,7 @@ and comment = parse
   | _     { comment lexbuf; }
 
 
-
 (* ====================================================================== *)
-
-
 
 
 { (* trailer *)

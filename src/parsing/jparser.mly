@@ -48,7 +48,7 @@ let msig_simp (mods,typ,name,args_list) =
 
 let bind_spec_vars 
     (mods,typ,name,args_list) 
-    {pre=pre;post=post;excep=excep;invariants=invariants} =
+    {pre=pre;post=post;excep=excep} =
   (* Make substitution to normalise names *)
   let subst = Psyntax.empty in 
   let subst = Psyntax.add (newPVar("this")) (Arg_var(Support_syntax.this_var)) subst in 
@@ -66,11 +66,9 @@ let bind_spec_vars
 	       subst
 	)) 
 	  (0,subst) args_list in
-
   {pre=subst_pform subst pre;
    post=subst_pform subst post;
-   excep=ClassMap.map (subst_pform subst) excep;
-   invariants=LabelMap.map (subst_pform subst) invariants }
+   excep=ClassMap.map (subst_pform subst) excep}
 
 let mkDynamic (msig, specs, source_pos) =
   let specs = List.map (bind_spec_vars msig) specs in 
@@ -81,8 +79,6 @@ let mkStatic (msig, specs, source_pos) =
   let specs = List.map (bind_spec_vars msig) specs in 
   let msig = msig_simp msig in   
   Static(msig, specs, source_pos)
-  
-    
   
 
 let location_to_string pos = 
@@ -104,16 +100,21 @@ let field_signature2str fs =
   | _ -> assert false
 
 
-let add_invariant (label, formula) map =
-  let old =
-    try LabelMap.find label map
-    with Not_found -> mkFalse in
-  LabelMap.add label (old &&& formula) map
-
 %} /* declarations */
 
 /* ============================================================= */
 /* tokens */
+%token <float> FLOAT_CONSTANT 
+%token <int> INTEGER_CONSTANT 
+%token <int> INTEGER_CONSTANT_LONG 
+%token <string> AT_IDENTIFIER 
+%token <string> CORE_LABEL
+%token <string> FULL_IDENTIFIER 
+%token <string> IDENTIFIER 
+%token <string> QUOTED_NAME 
+%token <string> STRING_CONSTANT 
+
+%token ABDUCTION
 %token ABS
 %token ABSRULE
 %token ABSTRACT
@@ -121,6 +122,7 @@ let add_invariant (label, formula) map =
 %token ANDALSO 
 %token ANNOTATION 
 %token AS
+%token ASSIGN
 %token AT_IDENTIFIER 
 %token AXIOMS
 %token BANG
@@ -145,12 +147,16 @@ let add_invariant (label, formula) map =
 %token COLON
 %token COLON_EQUALS 
 %token COMMA 
+%token CONSTRUCTOR
+%token DASHV
 %token DEFAULT 
 %token DEFINE
 %token DIV 
 %token DOT 
 %token DOUBLE 
+%token EMP
 %token EMPRULE
+%token END
 %token ENSURES
 %token ENTERMONITOR 
 %token ENUM 
@@ -171,13 +177,13 @@ let add_invariant (label, formula) map =
 %token GARBAGE
 %token GOTO 
 %token IDENTIFIER 
+%token IF
 %token IF 
 %token IMP
 %token IMPLEMENTS 
 %token IMPLICATION
 %token IMPORT 
 %token INCONSISTENCY
-%token INDUCTIVE
 %token INSTANCEOF  
 %token INT 
 %token INTEGER_CONSTANT 
@@ -188,6 +194,7 @@ let add_invariant (label, formula) map =
 %token L_BRACE 
 %token L_BRACKET 
 %token L_PAREN 
+%token LABEL
 %token LEADSTO
 %token LENGTHOF 
 %token LONG 
@@ -204,7 +211,6 @@ let add_invariant (label, formula) map =
 %token NOP 
 %token NOTIN
 %token NOTINCONTEXT
-%token PUREGUARD
 %token NULL 
 %token NULL_TYPE 
 %token OLD
@@ -216,12 +222,12 @@ let add_invariant (label, formula) map =
 %token PRIVATE 
 %token PROTECTED 
 %token PUBLIC 
+%token PUREGUARD
 %token PURERULE
 %token QUESTIONMARK 
 %token QUOTE
 %token QUOTED_NAME 
 %token R_BRACE 
-%token R_BRACKET 
 %token R_BRACKET 
 %token R_PAREN 
 %token REQUIRES
@@ -233,7 +239,11 @@ let add_invariant (label, formula) map =
 %token SHL 
 %token SHORT 
 %token SHR 
+%token SOURCE_POS_TAG
+%token SOURCE_POS_TAG_CLOSE
 %token SPECIALINVOKE 
+%token SPECIFICATION
+%token SPECTEST
 %token STATIC 
 %token STATICINVOKE 
 %token STRICTFP 
@@ -244,47 +254,11 @@ let add_invariant (label, formula) map =
 %token THROWS 
 %token TO 
 %token TRANSIENT 
+%token TRUE
+%token UNDERSCORE 
 %token UNKNOWN 
-%token WITH 
-%token CLS 
-%token COMMA 
-%token L_BRACE 
-%token R_BRACE 
-%token SEMICOLON 
-%token L_BRACKET 
-%token R_BRACKET 
-%token L_PAREN 
-%token R_PAREN 
-%token COLON
-%token DOT 
-%token QUOTE
-%token <int> INTEGER_CONSTANT 
-%token <int> INTEGER_CONSTANT_LONG 
-%token <float> FLOAT_CONSTANT 
-%token <string> STRING_CONSTANT 
-%token <string> QUOTED_NAME 
-%token <string> IDENTIFIER 
-%token <string> AT_IDENTIFIER 
-%token <string> FULL_IDENTIFIER 
-%token <string> CORE_LABEL
-%token COLON_EQUALS 
-%token EQUALS 
-%token AND 
-%token OR 
-%token OROR 
-%token XOR 
-%token MOD 
-%token CMPEQ 
-%token CMPNE 
-%token CMPGT 
-%token CMPGE 
-%token CMPLT 
-%token CMPLE 
-%token SHL 
-%token SHR 
 %token USHR 
 %token VDASH
-%token DASHV
 %token VIRTUALINVOKE 
 %token VOID 
 %token VOLATILE 
@@ -293,63 +267,16 @@ let add_invariant (label, formula) map =
 %token WITH 
 %token WITHOUT
 %token XOR 
-%token MULT 
-%token DIV 
-%token L_BRACKET 
-%token R_BRACKET 
-%token UNDERSCORE 
-%token QUESTIONMARK 
-%token IMP
-%token BIMP
-%token SOURCE_POS_TAG
-%token SOURCE_POS_TAG_CLOSE
-
-
-%token EOF
-
-
-%token ANDALSO 
-%token DEFINE
-
-%token FALSE
-%token TRUE
-%token IMPLICATION
-%token FRAME
-%token ABS
-%token ABDUCTION
-%token INCONSISTENCY
-%token RULE
-%token PURERULE
-%token CONSTRUCTOR
-%token PRED
-%token REWRITERULE
-%token EMPRULE
-%token IF
-%token WITHOUT
-%token WHERE
-%token NOTIN
-%token NOTINCONTEXT
-%token ORTEXT
-%token GARBAGE
-%token EMP
-%token IMPORT 
-%token SPECIFICATION
-%token SPECTEST
 
 %type <float> FLOAT_CONSTANT 
-
 %type <int> INTEGER_CONSTANT 
 %type <int> INTEGER_CONSTANT_LONG 
-%token LABEL
-%token END
-%token ASSIGN
-
-
 %type <string> AT_IDENTIFIER 
 %type <string> FULL_IDENTIFIER 
 %type <string> IDENTIFIER 
 %type <string> QUOTED_NAME 
 %type <string> STRING_CONSTANT 
+
 
 /* === associativity and precedence === */
 
@@ -402,9 +329,6 @@ let add_invariant (label, formula) map =
 
 %start test_file
 %type <Psyntax.test list> test_file
-
-%start inductive_file
-%type <Psyntax.inductive_stmt list> inductive_file
 
 %start spec
 %type <Spec.spec> spec
@@ -475,24 +399,16 @@ methods_specs:
    | /*empty*/ { [] }
 
 spec:
-   | L_BRACE formula R_BRACE L_BRACE formula R_BRACE exp_posts invariants 
-     {  {pre=$2;post=$5;excep=$7;invariants=$8} } 
+   | L_BRACE formula R_BRACE L_BRACE formula R_BRACE exp_posts  {  {pre=$2;post=$5;excep=$7} } 
 specs:
    | spec ANDALSO specs  { $1 :: $3 }
-   | spec     {[$1]}
-
-invariant:
-  | INVARIANT identifier COLON formula SEMICOLON { ($2, $4) }
-
-invariants:
-  | invariant invariants { add_invariant $1 $2 }
-  | /* empty */ { LabelMap.empty }
+   | spec  {[$1]}
 
 spec_npv:
-   | L_BRACE formula_npv R_BRACE L_BRACE formula_npv R_BRACE exp_posts_npv  {  {pre=$2;post=$5;excep=$7;invariants=LabelMap.empty}  }
+   | L_BRACE formula_npv R_BRACE L_BRACE formula_npv R_BRACE exp_posts_npv  {  {pre=$2;post=$5;excep=$7}  }
 specs_npv:
    | spec_npv ANDALSO specs_npv  { $1 :: $3 }
-   | spec_npv     {[$1]}
+   | spec_npv  {[$1]}
 
 method_spec:
    | method_signature_short COLON specs  SEMICOLON source_pos_tag_option { mkDynamic($1, $3, $5) }
@@ -937,14 +853,14 @@ lvariable_npv:
    | identifier { newVar($1) }
 ;
 
-lvariable_list_ne_npv:
+lvariable_npv_list_ne:
    |  lvariable_npv    { [$1] }
-   |  lvariable_npv COMMA lvariable_list_ne_npv  { $1 :: $3 }
+   |  lvariable_npv COMMA lvariable_npv_list_ne  { $1 :: $3 }
 ;
 
-lvariable_list_npv:
+lvariable_npv_list:
    |  {[]}
-   | lvariable_list_ne_npv { $1 }
+   | lvariable_npv_list_ne { $1 }
 ;
 
 fldlist: 
@@ -976,7 +892,7 @@ paramlist:
 jargument_npv:
    | RETURN { Arg_var (newPVar(Spec.name_ret_v1)) }
    | lvariable_npv {Arg_var ($1)}
-   | identifier L_PAREN jargument_list_npv R_PAREN {Arg_op($1,$3) }        
+   | identifier L_PAREN jargument_npv_list R_PAREN {Arg_op($1,$3) }        
    | INTEGER_CONSTANT {Arg_string(string_of_int $1)} 
    | MINUS INTEGER_CONSTANT {Arg_string("-" ^(string_of_int $2))}
    | STRING_CONSTANT {Arg_string($1)} 
@@ -985,12 +901,12 @@ jargument_npv:
    | L_PAREN jargument_npv binop_val_no_multor jargument_npv R_PAREN { Arg_op(Support_syntax.bop_to_prover_arg $3, [$2;$4]) }
 ;
 
-jargument_list_ne_npv:
+jargument_npv_list_ne:
    | jargument_npv {$1::[]}
-   | jargument_npv COMMA jargument_list_ne_npv { $1::$3 }
-jargument_list_npv:
+   | jargument_npv COMMA jargument_npv_list_ne { $1::$3 }
+jargument_npv_list:
    | /*empty*/  {[]}
-   | jargument_list_ne_npv {$1}
+   | jargument_npv_list_ne {$1}
 ;
 
 
@@ -1041,10 +957,10 @@ formula_npv:
    | FALSE { mkFalse}
    | GARBAGE { mkGarbage}
    | lvariable_npv DOT jargument_npv MAPSTO  jargument_npv { [P_SPred("field", [Arg_var $1; $3; $5] )] }
-   | BANG identifier L_PAREN jargument_list_npv R_PAREN { [P_PPred($2, $4)] } 
-   | identifier L_PAREN jargument_list_npv R_PAREN 
+   | BANG identifier L_PAREN jargument_npv_list R_PAREN { [P_PPred($2, $4)] } 
+   | identifier L_PAREN jargument_npv_list R_PAREN 
        {if List.length $3 =1 then [P_SPred($1,$3 @ [mkArgRecord []])] else [P_SPred($1,$3)] }
-   | full_identifier L_PAREN jargument_list_npv R_PAREN {if List.length $3 =1 then [P_SPred($1,$3 @ [mkArgRecord []])] else [P_SPred($1,$3)] }
+   | full_identifier L_PAREN jargument_npv_list R_PAREN {if List.length $3 =1 then [P_SPred($1,$3 @ [mkArgRecord []])] else [P_SPred($1,$3)] }
    | formula_npv MULT formula_npv { pconjunction $1 $3 }
    | formula_npv OR formula_npv { if Config.parse_debug() then parse_warning "deprecated use of |"  ; pconjunction (purify $1) $3 }
    | formula_npv OROR formula_npv { mkOr ($1,$3) }
@@ -1194,38 +1110,6 @@ test_file:
    | test test_file  {$1 :: $2}
 
 
-
-
-ind_impl:
-   | formula VDASH identifier L_PAREN jargument_list R_PAREN /* consider formula_npv*/
-       {
-	 if List.length $5 = 1
-	 then ($1, $3,$5 @ [mkArgRecord []])
-	 else ($1, $3,$5)
-       }
-
-ind_con:
-   | identifier COLON ind_impl { {con_name = $1; con_def =$3} }
-
-ind_con_list:
-   |  /* empty */ { [] }
-   | ind_con {[$1]}
-   | ind_con SEMICOLON ind_con_list { $1::$3 }
-
-inductive:
-   | IMPORT STRING_CONSTANT SEMICOLON { IndImport($2) }
-   | INDUCTIVE identifier L_PAREN jargument_list R_PAREN COLON ind_con_list 
-       { 
-	 let con_args = if List.length $4 = 1
-	 then $4 @ [mkArgRecord []] else $4 in
-	 IndDef{ind_name = $2; ind_args = con_args; ind_cons = $7} 
-       }
-
-inductive_file: 
-   | EOF  { [] }
-   | inductive inductive_file  {$1 :: $2}
-
-
 symb_question_file: 
    | EOF  { [] }
    | symb_question symb_question_file  {$1 :: $2}
@@ -1249,20 +1133,19 @@ core_stmt_list:
 core_stmt: 
    |  END   { End }
    |  NOP  { Nop_stmt_core }
-   |  ASSIGN core_assn_args spec L_PAREN jargument_list_npv R_PAREN
+   |  ASSIGN core_assn_args spec L_PAREN jargument_npv_list R_PAREN
          { Assignment_core($2, $3, $5) } 
    |  GOTO label_list { Goto_stmt_core $2 } 
    |  LABEL IDENTIFIER  { Label_stmt_core $2 }
 
 core_assn_args:
-   | lvariable_list_ne_npv COLON_EQUALS { $1 }
+   | lvariable_npv_list_ne COLON_EQUALS { $1 }
    | COLON_EQUALS { [] }
    |  /* empty */  { [] }
 
 label_list:
    |  IDENTIFIER   { [$1] }
    |  IDENTIFIER COMMA label_list   { $1 :: $3 }
-
 
 
 %% (* trailer *)
