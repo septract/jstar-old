@@ -38,14 +38,14 @@ abstraction nil_neq_remove_ls :
 /*************** Junk Rules *******************/
 
 abstraction garbage_garbage :
- Garbage * Garbage 
+ Garbage() * Garbage() 
 ~~>
- Garbage 
+ Garbage()
 
 
 
 abstraction gb1_ls :
-ls(_x,?e) ~~> Garbage 
+ls(_x,?e) ~~> Garbage()
 where 
    _x notincontext 
 
@@ -58,27 +58,27 @@ where
 
 
 abstraction gb1_pto :
- NodeLL(_x,?e) ~~> Garbage 
+ NodeLL(_x,?e) ~~> Garbage()
 where 
    _x notincontext 
 
 
 abstraction gb2_ls_ls:
- ls(_x,_y) * ls(_y,_x) ~~> Garbage 
+ ls(_x,_y) * ls(_y,_x) ~~> Garbage()
 where 
    _x,_y notincontext
 
 
 
 abstraction gb2_ls_pto:
- ls(_x,_y) * NodeLL(_y,_x) ~~> Garbage 
+ ls(_x,_y) * NodeLL(_y,_x) ~~> Garbage()
 where 
    _x,_y notincontext
 
 
 
 abstraction gb2_pto_pto:
- NodeLL(_x,_y) * NodeLL(_y,_x) ~~> Garbage 
+ NodeLL(_x,_y) * NodeLL(_y,_x) ~~> Garbage()
 where 
    _x,_y notincontext
 

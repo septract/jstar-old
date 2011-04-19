@@ -472,7 +472,6 @@ let rec filtertype_spat classname spat =
   | P_Or(form1,form2) -> P_Or(filtertype classname form1, filtertype classname form2)
   | P_Wand (form1,form2) -> P_Wand(filtertype classname form1, filtertype classname form2)
   | P_Septract (form1,form2) -> P_Septract(filtertype classname form1, filtertype classname form2)
-  | P_Garbage -> P_Garbage
   | P_False -> P_False
   | P_PPred(name,al) -> spat
   | P_EQ(_,_) -> spat
@@ -492,7 +491,6 @@ let rec filterdollar_at spat =
   | P_Or(form1,form2) -> P_Or(filterdollar form1, filterdollar form2)
   | P_Wand (form1,form2) -> P_Wand(filterdollar form1, filterdollar form2)
   | P_Septract (form1,form2) -> P_Septract(filterdollar form1, filterdollar form2)
-  | P_Garbage -> P_Garbage
   | P_False -> P_False
   | P_EQ(_,_) -> spat
   | P_NEQ(_,_) -> spat

@@ -82,7 +82,6 @@ let kwd_or_else =
     "float", FLOAT;
     "Frame", FRAME;
     "from", FROM;
-    "Garbage", GARBAGE;
     "goto", GOTO;
     "if", IF;
     "implements", IMPLEMENTS;

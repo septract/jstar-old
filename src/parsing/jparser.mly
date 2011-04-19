@@ -549,7 +549,6 @@ identifier:
    | ANDALSO    { "andalso" }*/
   | FALSE   { "False" }
   | TRUE   { "True" }
-  | GARBAGE   { "Garbage" }
   | EMP    { "Emp"}
 /*  | IMPLICATION   { "Implication" }
   | FRAME   { "Frame" }
@@ -937,7 +936,6 @@ formula:
    | /*empty*/  { [] }
    | EMP  { [] }
    | FALSE { mkFalse}
-   | GARBAGE { mkGarbage}
    | lvariable DOT jargument MAPSTO  jargument { [P_SPred("field", [Arg_var $1; $3; $5] )] }
    | BANG identifier L_PAREN jargument_list R_PAREN { [P_PPred($2, $4)] } 
    | identifier L_PAREN jargument_list R_PAREN 
@@ -955,7 +953,6 @@ formula_npv:
    | /*empty*/ { [] }
    | EMP  { []}
    | FALSE { mkFalse}
-   | GARBAGE { mkGarbage}
    | lvariable_npv DOT jargument_npv MAPSTO  jargument_npv { [P_SPred("field", [Arg_var $1; $3; $5] )] }
    | BANG identifier L_PAREN jargument_npv_list R_PAREN { [P_PPred($2, $4)] } 
    | identifier L_PAREN jargument_npv_list R_PAREN 
