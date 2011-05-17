@@ -39,6 +39,7 @@ scripts:
 all: build test
 
 clean:
+	ocamlbuild -clean
 	rm -f lib/*.a lib/*.cmxa lib/*.cmxs bin/* *.subdirs corestar_src
 	$(MAKE) -C unit_tests clean
 	$(MAKE) -C scripts clean
