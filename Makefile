@@ -1,3 +1,5 @@
+# configurations
+
 ifndef CORESTAR_HOME
 	CORESTAR_HOME=$(CURDIR)/../corestar
 endif
@@ -8,10 +10,24 @@ ifndef JSTAR_HOME
 endif
 export JSTAR_HOME
 
-build:
-	$(MAKE) -C src
+SRC_DIRS=src corestar_src
+MAINS=jstar
+LIBS=dynlink str unix
 
-test: build
+# section with stuff that shouldn't change often
+
+SRC_SUBDIRS=$(addsuffix .subdirs,$(SRC_DIRS))
+OCAMLBUILD=ocamlbuild `cat $(SRC_SUBDIRS)` $(addprefix -lib ,$(LIBS))
+
+build: native
+
+native byte: $(SRC_SUBDIRS)
+	$(OCAMLBUILD) $(addsuffix .$@,$(MAINS))
+	for f in $(MAINS); do ln -sf ../`readlink $$f.$@` bin/$$f; rm $$f.$@; done
+
+test: test-native
+
+test-native test-byte: test-%: %
 	$(MAKE) -s -C unit_tests
 
 doc:
@@ -23,11 +39,17 @@ scripts:
 all: build test
 
 clean:
-	rm -f lib/*.a lib/*.cmxa lib/*.cmxs bin/*.cmxs
+	rm -f lib/*.a lib/*.cmxa lib/*.cmxs bin/*.cmxs *.subdirs corestar_src
 	$(MAKE) -C src clean
 	$(MAKE) -C unit_tests clean
 	$(MAKE) -C scripts clean
 	$(MAKE) -C doc/tutorial clean
+
+%.subdirs: %
+	ls -F $*/ | grep / | sed "s./.." | sed "s.^.-I $*/." > $*.subdirs
+
+corestar_src:
+	ln -sf $(CORESTAR_HOME)/src corestar_src
 
 .PHONY: build test test clean
 
