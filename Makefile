@@ -39,8 +39,7 @@ scripts:
 all: build test
 
 clean:
-	rm -f lib/*.a lib/*.cmxa lib/*.cmxs bin/*.cmxs *.subdirs corestar_src
-	$(MAKE) -C src clean
+	rm -f lib/*.a lib/*.cmxa lib/*.cmxs bin/* *.subdirs corestar_src
 	$(MAKE) -C unit_tests clean
 	$(MAKE) -C scripts clean
 	$(MAKE) -C doc/tutorial clean
