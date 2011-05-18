@@ -62,7 +62,7 @@ if too_old 3.11 $OCAML_VERSION; then
 fi
 # }}}
 # Generate install target {{{
-echo "install: build" > .install.mk
+echo -e "install: install.native\n\ninstall.%:%" > .install.mk
 inst "-d $PREFIX/bin"
 inst "-m=rx bin/jstar $PREFIX/bin"
 for d in `find library -type d`; do inst "-d $PREFIX/$d"; done

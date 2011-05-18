@@ -1,5 +1,5 @@
-The jStar Verification System
-=============================
+The jStar Verifier
+==================
 
 jStar is a highly-customisable automatic verification tool based on separation
 logic aiming at object-oriented programs written in Java.
@@ -16,11 +16,13 @@ Building on *nix / Mac OSX
 
 Use the standard incantation.
   ./configure --prefix DIR
-  make
   make install
 
-Then run.
-  DIR/jstar
+Assuming that DIR/bin is in your path, you should now be able to run jStar.
+  jstar
+
+Optionally, run the tests to see that all is OK.
+  make test
 
 Dependencies:
 
