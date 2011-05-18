@@ -28,12 +28,12 @@ endif
 export INDENT 
 
 all: $(addsuffix .jimple, $(TARGETS)) 
-	@for dir in ${SUBDIRS} ; do ( cd $$dir; make all ) ; done
+	@for dir in ${SUBDIRS} ; do $(MAKE) -C $$dir all; done
 
 test: all $(addsuffix .test, $(TARGETS)) $(addsuffix .test.dir, ${SUBDIRS})
 
 time :  all $(addsuffix .time, $(TARGETS))
-	@for dir in ${SUBDIRS} ; do ( cd $$dir; make time ) ; done
+	@for dir in ${SUBDIRS} ; do $(MAKE) -C $$dir time ; done
 
 %.class: $(SOURCES)
 	javac -g $?  || (echo "WARNING: Javac failed, using old class file" ; touch $@)
@@ -45,7 +45,7 @@ time :  all $(addsuffix .time, $(TARGETS))
 	@$(MAKE) -C $* test
 
 clean:: 
-	for dir in ${SUBDIRS} ; do ( cd $$dir; make clean ) ; done
+	for dir in ${SUBDIRS} ; do $(MAKE) -C $$dir clean; done
 	@rm -f $(CLEAN)
 
 %.time:
@@ -53,5 +53,7 @@ clean::
 	@time ./runtest $*.jimple >/dev/null
 
 %.test : %.jimple
-	@echo -n .
-	@( ulimit -t 5; ${JSTAR_HOME}/bin/jstar -f $*.jimple ) 2> /dev/null || echo -e "\nFailed $* in $(CURDIR)"
+	@${JSTAR_HOME}/unit_tests/jimple_tests/test.sh "${JSTAR_HOME}" "$*"
+
+.PHONY: test clean
+
