@@ -2,6 +2,8 @@ DIRS=$(wildcard *_tests)
 DIRS_TEST=$(addsuffix .test,$(DIRS))
 DIRS_CLEAN=$(addsuffix .clean,$(DIRS))
 
+SHELL=/bin/bash
+
 test: $(DIRS_TEST)
 clean: $(DIRS_CLEAN)
 

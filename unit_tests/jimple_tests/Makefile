@@ -1,3 +1,5 @@
+SHELL=/bin/bash
+
 ifndef TARGETS
   TARGETS =
 endif

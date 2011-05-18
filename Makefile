@@ -16,6 +16,7 @@ LIBS=dynlink str unix
 
 # section with stuff that shouldn't change often
 
+SHELL=/bin/bash
 SRC_SUBDIRS=$(addsuffix .subdirs,$(SRC_DIRS))
 OCAMLBUILD=ocamlbuild `cat $(SRC_SUBDIRS)` $(addprefix -lib ,$(LIBS))
 
