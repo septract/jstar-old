@@ -18,6 +18,9 @@ Use the standard incantation.
   ./configure --prefix DIR
   make install
 
+(NOTE: In some environments, such as Mac OS Leopard, dynlink.cmxa is
+unavailable, leading to a compile error. In that case, try "make install.byte".)
+
 Assuming that DIR/bin is in your path, you should now be able to run jStar.
   jstar
 
