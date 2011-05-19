@@ -53,7 +53,7 @@ clean::
 	@time ./runtest $*.jimple >/dev/null
 
 %.test : %.jimple
-	@${JSTAR_HOME}/unit_tests/jimple_tests/test.sh "${JSTAR_HOME}" "$*"
+	@"${JSTAR_HOME}/unit_tests/jimple_tests/test.sh" "${JSTAR_HOME}" "$*"
 
 .PHONY: test clean
 

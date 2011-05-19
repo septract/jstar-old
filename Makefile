@@ -50,7 +50,7 @@ clean:
 	ls -F $*/ | grep / | sed "s./.." | sed "s.^.-I $*/." > $*.subdirs
 
 corestar_src:
-	ln -sf $(CORESTAR_HOME)/src corestar_src
+	ln -sf "$(CORESTAR_HOME)/src" corestar_src
 
 .PHONY: build test test clean
 
