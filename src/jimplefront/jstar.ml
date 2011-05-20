@@ -197,6 +197,7 @@ let main () =
 
 
 let _ =
+  System.set_signal_handlers ();
   let mf = {
     mark_open_tag = (function
       | "b" -> System.terminal_red (* bad *)

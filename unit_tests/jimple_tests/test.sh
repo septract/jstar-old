@@ -3,7 +3,7 @@ if [ -z "$TIMELIMIT" ]; then
   TIMELIMIT=5
 fi
 echo -n .
-( ulimit -t $TIMELIMIT; $1/bin/jstar -f $2.jimple ) 2> /dev/null
+( ulimit -t $TIMELIMIT; "$1/bin/jstar" -v -f $2.jimple ) 2> /dev/null
 EC=$?
 case $EC in
   137)
